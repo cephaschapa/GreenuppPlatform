@@ -2,26 +2,18 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-// Import custom fonts
-const spaceGrotesk = new FontFace(
-  "Space Grotesk",
-  "url(https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap)"
-);
-const inter = new FontFace(
-  "Inter",
-  "url(https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap)"
-);
-const robotoMono = new FontFace(
-  "Roboto Mono",
-  "url(https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap)"
-);
+// Add Google Fonts
+const addGoogleFont = (family: string) => {
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = `https://fonts.googleapis.com/css2?family=${family}&display=swap`;
+  document.head.appendChild(link);
+};
 
 // Load the fonts
-Promise.all([spaceGrotesk.load(), inter.load(), robotoMono.load()]).then(() => {
-  document.fonts.add(spaceGrotesk);
-  document.fonts.add(inter);
-  document.fonts.add(robotoMono);
-});
+addGoogleFont("Space+Grotesk:wght@400;500;600;700");
+addGoogleFont("Inter:wght@300;400;500;600;700");
+addGoogleFont("Roboto+Mono:wght@400;500");
 
 // Add Font Awesome
 const fontAwesome = document.createElement("link");
