@@ -67,7 +67,21 @@ const Footer = () => {
         </div>
         
         <div className="mt-12 pt-8 border-t border-primary/10 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-500 text-sm mb-4 md:mb-0">&copy; {new Date().getFullYear()} Greenupp Technologies. All rights reserved.</p>
+          <div>
+            <p className="text-gray-500 text-sm mb-2 md:mb-0">&copy; {new Date().getFullYear()} Greenupp Technologies. All rights reserved.</p>
+            <p className="text-gray-600 text-xs font-mono mb-4 md:mb-0">
+              <span className="mr-1">Engineered by</span>
+              <a 
+                href="https://www.metatronltd.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-primary hover:text-primary/80 transition-colors inline-flex items-center"
+              >
+                Metatron Technologies Ltd
+                <span className="ml-1 text-xs opacity-60">↗</span>
+              </a>
+            </p>
+          </div>
           <div className="flex flex-wrap gap-4 text-sm">
             <a href="#" className="text-gray-500 hover:text-primary transition duration-300">Privacy Policy</a>
             <a href="#" className="text-gray-500 hover:text-primary transition duration-300">Terms of Service</a>
