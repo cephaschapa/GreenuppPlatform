@@ -8,42 +8,115 @@ interface NavbarProps {
 
 const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
   return (
-    <nav className="fixed w-full bg-secondary/90 backdrop-blur-md z-50 border-b border-primary/20">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-3 flex justify-between items-center">
+    <nav className="fixed w-full bg-secondary/95 backdrop-blur-md z-50 border-b border-primary/20 shadow-lg shadow-black/20">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-2 md:py-3 flex justify-between items-center">
         <div className="flex items-center">
-          <div className="text-primary text-3xl mr-1">
+          <div className="text-primary text-2xl md:text-3xl mr-1 relative">
             <i className="fas fa-leaf"></i>
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse"></span>
           </div>
-          <Link href="/" className="text-2xl font-bold font-space tracking-wider">
-            Green<span className="text-primary">upp</span>
+          <Link href="/" className="text-xl md:text-2xl font-bold font-space tracking-wider group">
+            Green<span className="text-primary group-hover:animate-pulse transition-all">upp</span>
           </Link>
         </div>
         
         <div className="hidden md:flex space-x-8 items-center">
-          <a href="#features" className="hover:text-primary transition duration-300">Features</a>
-          <a href="#solutions" className="hover:text-primary transition duration-300">Solutions</a>
-          <a href="#benefits" className="hover:text-primary transition duration-300">Benefits</a>
-          <a href="#community" className="hover:text-primary transition duration-300">Community</a>
-          <a href="#contact" className="bg-primary hover:bg-primary-light text-secondary px-5 py-2 rounded-md transition duration-300 font-medium">Get Started</a>
+          <a href="#features" className="hover:text-primary transition duration-300 relative group">
+            Features
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+          </a>
+          <a href="#solutions" className="hover:text-primary transition duration-300 relative group">
+            Solutions
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+          </a>
+          <a href="#benefits" className="hover:text-primary transition duration-300 relative group">
+            Benefits
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+          </a>
+          <a href="#community" className="hover:text-primary transition duration-300 relative group">
+            Community
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+          </a>
+          <a href="#contact" className="group bg-primary hover:bg-primary/90 text-secondary px-4 py-2 rounded-md transition-all duration-300 font-medium inline-flex items-center">
+            <span>Get Started</span>
+            <i className="fas fa-arrow-right ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all"></i>
+          </a>
         </div>
         
         <button 
-          className="md:hidden text-2xl" 
+          className="md:hidden flex items-center justify-center w-9 h-9 rounded-md border border-primary/30 hover:border-primary/80 hover:bg-primary/10 transition-all duration-300" 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle mobile menu"
         >
-          <i className="fas fa-bars"></i>
+          {mobileMenuOpen ? (
+            <i className="fas fa-times text-primary text-lg"></i>
+          ) : (
+            <i className="fas fa-bars text-primary text-lg"></i>
+          )}
         </button>
       </div>
       
       {/* Mobile Menu */}
-      <div className={`${mobileMenuOpen ? 'block' : 'hidden'} md:hidden bg-secondary-light border-t border-primary/20 py-4`}>
-        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl flex flex-col space-y-4">
-          <a href="#features" className="py-2 hover:text-primary transition duration-300">Features</a>
-          <a href="#solutions" className="py-2 hover:text-primary transition duration-300">Solutions</a>
-          <a href="#benefits" className="py-2 hover:text-primary transition duration-300">Benefits</a>
-          <a href="#community" className="py-2 hover:text-primary transition duration-300">Community</a>
-          <a href="#contact" className="bg-primary hover:bg-primary-light text-secondary py-2 rounded-md transition duration-300 font-medium text-center mt-2">Get Started</a>
+      <div 
+        className={`
+          ${mobileMenuOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'} 
+          md:hidden fixed left-0 right-0 top-[51px] bg-secondary/95 backdrop-blur-md border-t border-primary/20
+          transition-all duration-300 ease-in-out transform-gpu overflow-hidden
+        `}
+      >
+        <div className="container mx-auto px-4 py-2 md:px-6 lg:px-8 max-w-7xl flex flex-col space-y-2">
+          <a 
+            href="#features" 
+            className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+              <span className="font-mono text-primary text-xs">01</span>
+            </div>
+            <span>Features</span>
+            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+          </a>
+          <a 
+            href="#solutions" 
+            className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+              <span className="font-mono text-primary text-xs">02</span>
+            </div>
+            <span>Solutions</span>
+            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+          </a>
+          <a 
+            href="#benefits" 
+            className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+              <span className="font-mono text-primary text-xs">03</span>
+            </div>
+            <span>Benefits</span>
+            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+          </a>
+          <a 
+            href="#community" 
+            className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+              <span className="font-mono text-primary text-xs">04</span>
+            </div>
+            <span>Community</span>
+            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+          </a>
+          <a 
+            href="#contact" 
+            className="group bg-secondary hover:bg-primary text-primary hover:text-secondary py-3 rounded-md transition-all duration-300 font-medium text-center mt-2 border border-primary flex items-center justify-center"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <span>Get Started</span>
+            <i className="fas fa-arrow-right ml-2 group-hover:ml-3 transition-all"></i>
+          </a>
         </div>
       </div>
     </nav>

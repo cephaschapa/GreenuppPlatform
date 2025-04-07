@@ -3,7 +3,7 @@ import droneFieldImage from "../assets/drone-field.svg";
 
 const Hero = () => {
   return (
-    <header className="pt-28 pb-24 relative overflow-hidden">
+    <header className="pt-24 md:pt-28 pb-16 md:pb-24 relative overflow-hidden">
       <div className="absolute inset-0 z-0 opacity-20" 
         style={{
           backgroundImage: "radial-gradient(#00CC66 1px, transparent 1px)",
@@ -11,11 +11,11 @@ const Hero = () => {
         }}
       />
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-          <div className="order-2 md:order-1">
-            <h5 className="text-primary uppercase tracking-widest font-semibold mb-2 font-mono">AI-Powered Farming</h5>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-center">
+          <div className="order-2 md:order-1 text-center md:text-left">
+            <h5 className="text-primary uppercase tracking-widest font-semibold mb-2 font-mono text-sm md:text-base">AI-Powered Farming</h5>
             <motion.h1 
-              className="text-4xl md:text-5xl lg:text-6xl font-bold font-space mb-6 leading-tight"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-space mb-4 md:mb-6 leading-tight"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -23,7 +23,7 @@ const Hero = () => {
               The Future of <span className="bg-gradient-to-r from-[#00CC66] to-[#06E775] bg-clip-text text-transparent">Agriculture</span> Is Here
             </motion.h1>
             <motion.p 
-              className="text-lg mb-8 text-gray-300 leading-relaxed"
+              className="text-base md:text-lg mb-6 md:mb-8 text-gray-300 leading-relaxed max-w-xl mx-auto md:mx-0"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
@@ -31,43 +31,45 @@ const Hero = () => {
               Greenupp transforms traditional farming through AI, IoT, and blockchain technologies, enhancing productivity, sustainability, and profitability for farmers and livestock owners.
             </motion.p>
             <motion.div 
-              className="flex flex-wrap gap-4"
+              className="flex flex-col sm:flex-row justify-center md:justify-start gap-4 sm:gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              <a href="#contact" className="bg-primary hover:bg-[#06E775] text-secondary px-8 py-3 rounded-md transition duration-300 font-medium inline-block">
-                Start Free Trial
+              <a href="#contact" className="group bg-primary hover:bg-primary/90 text-secondary px-6 sm:px-8 py-3 rounded-md transition-all duration-300 font-medium inline-flex items-center justify-center">
+                <span>Start Free Trial</span>
+                <i className="fas fa-arrow-right ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all"></i>
               </a>
-              <a href="#features" className="border border-primary/50 hover:border-primary bg-[#2D2D2D] hover:bg-secondary px-8 py-3 rounded-md transition duration-300 font-medium inline-block">
-                Explore Features
+              <a href="#features" className="border border-primary/50 hover:border-primary bg-secondary/50 hover:bg-secondary/80 px-6 sm:px-8 py-3 rounded-md transition-all duration-300 font-medium inline-flex items-center justify-center">
+                <span>Explore Features</span>
+                <i className="fas fa-chevron-down ml-2 text-xs text-primary"></i>
               </a>
             </motion.div>
             
             <motion.div 
-              className="mt-10 flex items-center gap-6"
+              className="mt-8 md:mt-10 flex items-center justify-center md:justify-start gap-4 md:gap-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.6 }}
             >
               <div className="flex -space-x-2">
-                <div className="w-10 h-10 rounded-full border-2 border-secondary bg-gray-500"></div>
-                <div className="w-10 h-10 rounded-full border-2 border-secondary bg-gray-500"></div>
-                <div className="w-10 h-10 rounded-full border-2 border-secondary bg-gray-500"></div>
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-secondary bg-gray-500"></div>
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-secondary bg-gray-500"></div>
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-secondary bg-gray-500"></div>
               </div>
               <div>
-                <p className="text-sm text-gray-400">Trusted by <span className="text-primary font-semibold">2,500+</span> farmers worldwide</p>
+                <p className="text-xs md:text-sm text-gray-400">Trusted by <span className="text-primary font-semibold">2,500+</span> farmers worldwide</p>
               </div>
             </motion.div>
           </div>
           
           <motion.div 
-            className="order-1 md:order-2 relative"
+            className="order-1 md:order-2 relative max-w-md mx-auto md:max-w-none"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
           >
-            <div className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-lg shadow-primary/10"
+            <div className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-lg shadow-primary/10 z-10"
               style={{ animation: "float 3s ease-in-out infinite" }}
             >
               <img 
@@ -75,8 +77,8 @@ const Hero = () => {
                 alt="Futuristic farming with drone monitoring a green field" 
                 className="w-full h-auto rounded-2xl"
               />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-secondary to-transparent p-6">
-                <div className="flex items-center gap-2 text-sm">
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-secondary to-transparent p-4 md:p-6">
+                <div className="flex items-center gap-2 text-xs md:text-sm">
                   <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
                   <span className="font-mono text-[#06E775]">AI monitoring active</span>
                 </div>
@@ -84,6 +86,14 @@ const Hero = () => {
             </div>
             <div className="absolute -top-6 -right-6 w-20 h-20 bg-primary/10 rounded-full blur-xl"></div>
             <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-primary/10 rounded-full blur-xl"></div>
+            
+            {/* Tech elements decoration */}
+            <div className="absolute -top-2 -left-2 w-8 h-8 md:w-12 md:h-12 border border-primary/40 rounded-lg z-0 backdrop-blur-sm bg-black/30 hidden md:flex items-center justify-center">
+              <span className="text-xs md:text-sm font-mono text-primary">AI</span>
+            </div>
+            <div className="absolute top-1/4 -right-3 w-8 h-8 md:w-12 md:h-12 border border-primary/40 rounded-lg z-0 backdrop-blur-sm bg-black/30 hidden md:flex items-center justify-center rotate-12">
+              <span className="text-xs md:text-sm font-mono text-primary">IoT</span>
+            </div>
           </motion.div>
         </div>
       </div>

@@ -10,6 +10,8 @@
   body {
     @apply antialiased bg-background text-foreground;
     font-family: 'Rajdhani', sans-serif;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-tap-highlight-color: transparent;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -24,6 +26,33 @@
     font-family: 'JetBrains Mono', monospace;
   }
 
+  /* Improved Scrollbar for Desktop */
+  @media (min-width: 768px) {
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #1a1a1a;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 204, 102, 0.3);
+      border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 204, 102, 0.5);
+    }
+  }
+
+  /* Selection Color */
+  ::selection {
+    background-color: rgba(0, 204, 102, 0.3);
+    color: white;
+  }
+
+  /* Animations */
   @keyframes float {
     0% {
       transform: translateY(0px);
@@ -34,5 +63,59 @@
     100% {
       transform: translateY(0px);
     }
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 15px 0 rgba(0, 204, 102, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 25px 5px rgba(0, 204, 102, 0.6);
+    }
+  }
+  
+  @keyframes rotate-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+@layer components {
+  .tech-grid-bg {
+    background-image: radial-gradient(#00CC66 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  
+  .glow-effect {
+    animation: pulse-glow 3s infinite ease-in-out;
+  }
+  
+  .rotate-element {
+    animation: rotate-slow 15s linear infinite;
+  }
+
+  /* Mobile optimization classes */
+  .mobile-container {
+    @apply px-4 sm:px-6 md:px-8;
+  }
+  
+  .section-spacing {
+    @apply py-10 sm:py-16 md:py-20;
+  }
+  
+  .mobile-text-base {
+    @apply text-sm sm:text-base;
+  }
+  
+  .mobile-heading {
+    @apply text-xl sm:text-2xl md:text-3xl;
+  }
+  
+  .mobile-subheading {
+    @apply text-lg sm:text-xl;
   }
 }
