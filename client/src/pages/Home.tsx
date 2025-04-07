@@ -43,14 +43,17 @@ const Home = () => {
   }, [mobileMenuOpen]);
   
   return (
-    <div className="bg-secondary text-neutral-light overflow-x-hidden">
+    <div className="min-h-screen bg-black text-white overflow-x-hidden">
+      <div className="fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgZmlsbD0iIzMzMyIgZmlsbC1ydWxlPSJldmVub2RkIj48Y2lyY2xlIGN4PSIxIiBjeT0iMSIgcj0iMSIvPjwvZz48L3N2Zz4=')] bg-[length:20px_20px] opacity-5 pointer-events-none"></div>
       <Navbar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
-      <Hero />
-      <FeatureHighlights />
-      <SolutionShowcase />
-      <BenefitsSection />
-      <CommunitySection />
-      <ContactSection />
+      <main>
+        <Hero />
+        <FeatureHighlights />
+        <SolutionShowcase />
+        <BenefitsSection />
+        <CommunitySection />
+        <ContactSection />
+      </main>
       <Footer />
     </div>
   );
