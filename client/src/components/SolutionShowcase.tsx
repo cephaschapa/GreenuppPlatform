@@ -4,7 +4,7 @@ const SolutionShowcase = () => {
   return (
     <section id="solutions" className="py-20 relative">
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1621271857589-84189aee5667?ixlib=rb-4.0.3&auto=format&fit=crop&q=80')] bg-cover bg-center opacity-10"></div>
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl relative z-10">
         <motion.div 
           className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}

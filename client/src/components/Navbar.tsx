@@ -9,7 +9,7 @@ interface NavbarProps {
 const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
   return (
     <nav className="fixed w-full bg-secondary/90 backdrop-blur-md z-50 border-b border-primary/20">
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-3 flex justify-between items-center">
         <div className="flex items-center">
           <div className="text-primary text-3xl mr-1">
             <i className="fas fa-leaf"></i>
@@ -38,7 +38,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
       
       {/* Mobile Menu */}
       <div className={`${mobileMenuOpen ? 'block' : 'hidden'} md:hidden bg-secondary-light border-t border-primary/20 py-4`}>
-        <div className="container mx-auto px-4 flex flex-col space-y-4">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl flex flex-col space-y-4">
           <a href="#features" className="py-2 hover:text-primary transition duration-300">Features</a>
           <a href="#solutions" className="py-2 hover:text-primary transition duration-300">Solutions</a>
           <a href="#benefits" className="py-2 hover:text-primary transition duration-300">Benefits</a>

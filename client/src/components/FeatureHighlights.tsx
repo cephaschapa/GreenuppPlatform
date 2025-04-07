@@ -46,7 +46,7 @@ const FeatureHighlights = () => {
 
   return (
     <section id="features" className="py-20 bg-[#2D2D2D] relative">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
         <motion.div 
           className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
