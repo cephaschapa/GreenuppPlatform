@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import droneFieldImage from "../assets/drone-field.svg";
 
 const Hero = () => {
   return (
@@ -70,7 +71,7 @@ const Hero = () => {
               style={{ animation: "float 3s ease-in-out infinite" }}
             >
               <img 
-                src="https://images.unsplash.com/photo-1586771107445-d3ca888129ce?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80" 
+                src={droneFieldImage} 
                 alt="Futuristic farming with drone monitoring a green field" 
                 className="w-full h-auto rounded-2xl"
               />
