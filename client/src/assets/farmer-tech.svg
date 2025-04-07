@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600px" height="400px" viewBox="0 0 600 400" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
+    <rect width="600" height="400" fill="#111111"/>
+    
+    <!-- Grid pattern -->
+    <defs>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+        </pattern>
+    </defs>
+    <rect width="600" height="400" fill="url(#grid)"/>
+    
+    <!-- Farmer silhouette -->
+    <g transform="translate(240, 100)">
+        <!-- Head -->
+        <circle cx="50" cy="50" r="25" fill="#222222" stroke="#34D399" stroke-width="1.5"/>
+        
+        <!-- Hat -->
+        <path d="M 20 40 C 20 30 80 30 80 40" fill="none" stroke="#34D399" stroke-width="1.5"/>
+        <path d="M 25 40 L 25 30 L 75 30 L 75 40" fill="#222222" stroke="#34D399" stroke-width="1.5"/>
+        
+        <!-- Body -->
+        <path d="M 50 75 L 50 170" stroke="#34D399" stroke-width="2"/>
+        
+        <!-- Arms -->
+        <path d="M 50 90 L 20 130" stroke="#34D399" stroke-width="2"/>
+        <path d="M 50 90 L 110 110" stroke="#34D399" stroke-width="2"/>
+        
+        <!-- Legs -->
+        <path d="M 50 170 L 30 230" stroke="#34D399" stroke-width="2"/>
+        <path d="M 50 170 L 70 230" stroke="#34D399" stroke-width="2"/>
+        
+        <!-- Digital device in hand -->
+        <rect x="85" y="100" width="40" height="25" rx="2" fill="#222222" stroke="#34D399" stroke-width="1.5"/>
+        <rect x="90" y="105" width="30" height="15" rx="1" fill="#111111" stroke="#34D399" stroke-width="0.5"/>
+        
+        <!-- Device screen content (simplified) -->
+        <line x1="95" y1="110" x2="115" y2="110" stroke="#34D399" stroke-width="0.5" opacity="0.8"/>
+        <line x1="95" y1="115" x2="105" y2="115" stroke="#34D399" stroke-width="0.5" opacity="0.8"/>
+    </g>
+    
+    <!-- Digital interface elements -->
+    <g>
+        <!-- Left panel -->
+        <rect x="20" y="40" width="180" height="320" rx="10" fill="none" stroke="#34D399" stroke-width="1" opacity="0.5" stroke-dasharray="2 4"/>
+        
+        <!-- Farm data -->
+        <g transform="translate(40, 70)">
+            <text x="0" y="0" font-family="monospace" font-size="14" fill="#FFFFFF">FARM STATUS</text>
+            <line x1="0" y1="10" x2="140" y2="10" stroke="#34D399" stroke-width="1" opacity="0.5"/>
+            
+            <!-- Data metrics -->
+            <g transform="translate(0, 30)">
+                <text x="0" y="0" font-family="monospace" font-size="12" fill="#CCCCCC">Soil Moisture</text>
+                <rect x="0" y="10" width="120" height="8" rx="4" fill="#111111" stroke="#34D399" stroke-width="0.5"/>
+                <rect x="0" y="10" width="85" height="8" rx="4" fill="#34D399" opacity="0.7"/>
+            </g>
+            
+            <g transform="translate(0, 70)">
+                <text x="0" y="0" font-family="monospace" font-size="12" fill="#CCCCCC">Temperature</text>
+                <rect x="0" y="10" width="120" height="8" rx="4" fill="#111111" stroke="#34D399" stroke-width="0.5"/>
+                <rect x="0" y="10" width="100" height="8" rx="4" fill="#FF9747" opacity="0.7"/>
+            </g>
+            
+            <g transform="translate(0, 110)">
+                <text x="0" y="0" font-family="monospace" font-size="12" fill="#CCCCCC">Crop Health</text>
+                <rect x="0" y="10" width="120" height="8" rx="4" fill="#111111" stroke="#34D399" stroke-width="0.5"/>
+                <rect x="0" y="10" width="110" height="8" rx="4" fill="#34D399" opacity="0.7"/>
+            </g>
+            
+            <g transform="translate(0, 150)">
+                <text x="0" y="0" font-family="monospace" font-size="12" fill="#CCCCCC">Harvest Forecast</text>
+                <rect x="0" y="10" width="120" height="8" rx="4" fill="#111111" stroke="#34D399" stroke-width="0.5"/>
+                <rect x="0" y="10" width="90" height="8" rx="4" fill="#34D399" opacity="0.7"/>
+            </g>
+        </g>
+        
+        <!-- Right panel -->
+        <rect x="400" y="40" width="180" height="320" rx="10" fill="none" stroke="#34D399" stroke-width="1" opacity="0.5" stroke-dasharray="2 4"/>
+        
+        <!-- Field map -->
+        <g transform="translate(420, 70)">
+            <text x="0" y="0" font-family="monospace" font-size="14" fill="#FFFFFF">FIELD MAP</text>
+            <line x1="0" y1="10" x2="140" y2="10" stroke="#34D399" stroke-width="1" opacity="0.5"/>
+            
+            <!-- Simplified field map -->
+            <rect x="10" y="30" width="120" height="120" rx="4" fill="#111111" stroke="#34D399" stroke-width="1"/>
+            
+            <!-- Field segments -->
+            <g fill="#0d3b0d" opacity="0.7">
+                <rect x="15" y="35" width="35" height="35" rx="2"/>
+                <rect x="55" y="35" width="35" height="35" rx="2"/>
+                <rect x="95" y="35" width="30" height="35" rx="2"/>
+                <rect x="15" y="75" width="35" height="35" rx="2"/>
+                <rect x="55" y="75" width="35" height="35" rx="2"/>
+                <rect x="95" y="75" width="30" height="35" rx="2"/>
+                <rect x="15" y="115" width="35" height="30" rx="2"/>
+                <rect x="55" y="115" width="35" height="30" rx="2"/>
+                <rect x="95" y="115" width="30" height="30" rx="2"/>
+            </g>
+            
+            <!-- Highlight current section -->
+            <rect x="55" y="75" width="35" height="35" rx="2" stroke="#34D399" stroke-width="2" fill="none"/>
+            
+            <!-- Irrigation system indicators -->
+            <circle cx="25" cy="50" r="3" fill="#34D399">
+                <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="105" cy="50" r="3" fill="#34D399">
+                <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="25" cy="135" r="3" fill="#34D399">
+                <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="105" cy="135" r="3" fill="#34D399">
+                <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            
+            <!-- Weather indicator -->
+            <g transform="translate(30, 180)">
+                <text x="0" y="0" font-family="monospace" font-size="12" fill="#CCCCCC">Weather: Clear</text>
+                <circle cx="90" cy="-5" r="8" fill="#FFCA47" opacity="0.8"/>
+            </g>
+            
+            <!-- Tasks list -->
+            <g transform="translate(0, 210)">
+                <text x="0" y="0" font-family="monospace" font-size="12" fill="#FFFFFF">TASKS</text>
+                <line x1="0" y1="10" x2="140" y2="10" stroke="#34D399" stroke-width="1" opacity="0.5"/>
+                
+                <g transform="translate(5, 25)">
+                    <rect x="0" y="0" width="16" height="16" rx="2" fill="none" stroke="#34D399" stroke-width="1"/>
+                    <path d="M 3 8 L 7 12 L 13 4" stroke="#34D399" stroke-width="1.5"/>
+                    <text x="25" y="12" font-family="monospace" font-size="10" fill="#CCCCCC">Irrigation check</text>
+                </g>
+                
+                <g transform="translate(5, 50)">
+                    <rect x="0" y="0" width="16" height="16" rx="2" fill="none" stroke="#34D399" stroke-width="1"/>
+                    <text x="25" y="12" font-family="monospace" font-size="10" fill="#CCCCCC">Soil testing</text>
+                </g>
+                
+                <g transform="translate(5, 75)">
+                    <rect x="0" y="0" width="16" height="16" rx="2" fill="none" stroke="#34D399" stroke-width="1"/>
+                    <text x="25" y="12" font-family="monospace" font-size="10" fill="#CCCCCC">Schedule harvest</text>
+                </g>
+            </g>
+        </g>
+    </g>
+    
+    <!-- Connection lines between farmer and interfaces (animated) -->
+    <g stroke="#34D399" stroke-width="1" stroke-dasharray="5 3">
+        <path d="M 290 130 L 200 180">
+            <animate attributeName="opacity" values="0.2;0.8;0.2" dur="3s" repeatCount="indefinite"/>
+        </path>
+        <path d="M 330 130 L 400 180">
+            <animate attributeName="opacity" values="0.2;0.8;0.2" dur="3s" repeatCount="indefinite" begin="0.5s"/>
+        </path>
+    </g>
+    
+    <!-- Binary data stream at bottom -->
+    <g opacity="0.2">
+        <text x="20" y="370" font-family="monospace" font-size="10" fill="#34D399">01100110 01100001 01110010 01101101 00100000 01101101 01100001 01101110 01100001 01100111 01100101</text>
+        <text x="20" y="385" font-family="monospace" font-size="10" fill="#34D399">01110011 01100101 01101110 01110011 01101111 01110010 00100000 01100100 01100001 01110100 01100001</text>
+    </g>
+</svg>

@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import farmerTechSvg from "../assets/farmer-tech.svg";
 
 const benefits = [
   {
@@ -159,9 +160,9 @@ const BenefitsSection = () => {
               </a>
             </div>
             <div className="relative">
-              <div className="rounded-xl overflow-hidden border border-primary/20">
+              <div className="rounded-xl overflow-hidden border border-primary/20 bg-[#111]">
                 <img 
-                  src="https://images.unsplash.com/photo-1595508064774-5ff825520ba5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
+                  src={farmerTechSvg} 
                   alt="Farmer using digital technology in field" 
                   className="w-full"
                 />

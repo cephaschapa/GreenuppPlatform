@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600px" height="400px" viewBox="0 0 600 400" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background -->
+    <rect width="600" height="400" fill="#111111"/>
+    
+    <!-- Grid pattern -->
+    <defs>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a1a1a" stroke-width="1"/>
+        </pattern>
+    </defs>
+    <rect width="600" height="400" fill="url(#grid)"/>
+    
+    <!-- Digital crop field -->
+    <g transform="translate(50, 100)">
+        <!-- Crop rows -->
+        <g fill="#0d3b0d">
+            <rect x="0" y="0" width="500" height="40" rx="4"/>
+            <rect x="0" y="60" width="500" height="40" rx="4"/>
+            <rect x="0" y="120" width="500" height="40" rx="4"/>
+            <rect x="0" y="180" width="500" height="40" rx="4"/>
+        </g>
+        
+        <!-- Digital overlay -->
+        <g stroke="#34D399" fill="none" stroke-width="1.5" opacity="0.6">
+            <rect x="0" y="0" width="500" height="220" stroke-dasharray="4 4"/>
+            <line x1="100" y1="0" x2="100" y2="220"/>
+            <line x1="200" y1="0" x2="200" y2="220"/>
+            <line x1="300" y1="0" x2="300" y2="220"/>
+            <line x1="400" y1="0" x2="400" y2="220"/>
+            <line x1="0" y1="50" x2="500" y2="50"/>
+            <line x1="0" y1="110" x2="500" y2="110"/>
+            <line x1="0" y1="170" x2="500" y2="170"/>
+        </g>
+        
+        <!-- Scanning effect -->
+        <rect x="0" y="0" width="500" height="10" fill="#34D399" opacity="0.3">
+            <animate attributeName="y" from="0" to="220" dur="3s" repeatCount="indefinite"/>
+        </rect>
+        
+        <!-- Analysis points -->
+        <g>
+            <!-- Healthy crop point -->
+            <circle cx="120" cy="30" r="8" fill="#34D399" opacity="0.8">
+                <animate attributeName="r" values="8;10;8" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <line x1="120" y1="30" x2="170" y2="15" stroke="#34D399" stroke-width="1"/>
+            <rect x="170" y="5" width="80" height="20" rx="4" fill="#111" stroke="#34D399" stroke-width="1"/>
+            <text x="180" y="19" font-family="monospace" font-size="10" fill="#34D399">HEALTHY</text>
+            
+            <!-- Issue point 1 -->
+            <circle cx="350" cy="80" r="8" fill="#FF4747" opacity="0.8">
+                <animate attributeName="r" values="8;10;8" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <line x1="350" y1="80" x2="400" y2="65" stroke="#FF4747" stroke-width="1"/>
+            <rect x="400" y="55" width="80" height="20" rx="4" fill="#111" stroke="#FF4747" stroke-width="1"/>
+            <text x="410" y="69" font-family="monospace" font-size="10" fill="#FF4747">NUTRIENT-</text>
+            
+            <!-- Issue point 2 -->
+            <circle cx="220" cy="145" r="8" fill="#FFCB47" opacity="0.8">
+                <animate attributeName="r" values="8;10;8" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <line x1="220" y1="145" x2="270" y2="130" stroke="#FFCB47" stroke-width="1"/>
+            <rect x="270" y="120" width="80" height="20" rx="4" fill="#111" stroke="#FFCB47" stroke-width="1"/>
+            <text x="280" y="134" font-family="monospace" font-size="10" fill="#FFCB47">MOISTURE+</text>
+        </g>
+    </g>
+    
+    <!-- AI processing indicators -->
+    <g transform="translate(30, 50)">
+        <!-- Processing label -->
+        <rect x="0" y="0" width="120" height="24" rx="4" fill="none" stroke="#34D399" stroke-width="1"/>
+        <text x="10" y="16" font-family="monospace" font-size="12" fill="#34D399">AI PROCESSING</text>
+        
+        <!-- Processing dots -->
+        <circle cx="145" cy="12" r="4" fill="#34D399">
+            <animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="160" cy="12" r="4" fill="#34D399">
+            <animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite" begin="0.2s"/>
+        </circle>
+        <circle cx="175" cy="12" r="4" fill="#34D399">
+            <animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite" begin="0.4s"/>
+        </circle>
+    </g>
+    
+    <!-- Data metrics -->
+    <g transform="translate(400, 40)">
+        <!-- Metrics box -->
+        <rect x="0" y="0" width="180" height="80" rx="6" fill="none" stroke="#34D399" stroke-width="1"/>
+        
+        <!-- Metrics title -->
+        <rect x="10" y="10" width="160" height="20" rx="3" fill="#34D399" opacity="0.1"/>
+        <text x="20" y="24" font-family="monospace" font-size="12" fill="#34D399">CROP HEALTH INDEX</text>
+        
+        <!-- Metrics values -->
+        <text x="20" y="50" font-family="monospace" font-size="12" fill="#FFFFFF">SECTOR A-12: 87%</text>
+        <rect x="20" y="60" width="140" height="6" rx="3" fill="#111"/>
+        <rect x="20" y="60" width="122" height="6" rx="3" fill="#34D399">
+            <animate attributeName="width" values="0;122" dur="1.5s" begin="0s" fill="freeze"/>
+        </rect>
+    </g>
+    
+    <!-- Binary data stream -->
+    <g opacity="0.2">
+        <text x="20" y="370" font-family="monospace" font-size="10" fill="#34D399">01100101 01111000 01110000 01101111 01110010 01110100 00100000 01100100 01100001 01110100 01100001</text>
+        <text x="20" y="385" font-family="monospace" font-size="10" fill="#34D399">10110010 01011011 01100001 01101110 01100001 01101100 01111001 01110011 01101001 01110011 01011101</text>
+    </g>
+</svg>

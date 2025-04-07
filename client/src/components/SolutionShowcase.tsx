@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import aiCropAnalysisSvg from "../assets/ai-crop-analysis.svg";
 
 const SolutionShowcase = () => {
   return (
@@ -47,9 +48,9 @@ const SolutionShowcase = () => {
             </a>
           </div>
           <div className="relative">
-            <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg shadow-primary/10">
+            <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg shadow-primary/10 bg-[#111]">
               <img 
-                src="https://images.unsplash.com/photo-1612709875071-3d9972bfe9e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=928&q=80" 
+                src={aiCropAnalysisSvg} 
                 alt="AI analyzing crop health with digital overlay" 
                 className="w-full"
               />
