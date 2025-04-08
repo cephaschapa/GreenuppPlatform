@@ -27,7 +27,7 @@ export default function AuthPage() {
       <div className="w-full md:w-1/2 flex flex-col justify-center items-center p-6 md:p-10">
         <div className="max-w-md w-full">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Greenupp</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 font-space">Greenupp</h1>
             <p className="text-gray-600 dark:text-gray-400">
               Join the future of sustainable farming
             </p>
@@ -53,7 +53,7 @@ export default function AuthPage() {
       {/* Hero section */}
       <div className="hidden md:block md:w-1/2 bg-green-900 dark:bg-green-800 text-white">
         <div className="h-full flex flex-col justify-center p-10">
-          <h2 className="text-4xl font-bold mb-6">
+          <h2 className="text-4xl font-bold mb-6 font-space">
             Transform Your Farming Operations with AI-Powered Insights
           </h2>
           <p className="text-xl mb-8">
@@ -110,7 +110,7 @@ function LoginForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Login to your account</CardTitle>
+        <CardTitle className="font-space">Login to your account</CardTitle>
         <CardDescription>
           Enter your credentials to access your Greenupp dashboard
         </CardDescription>
@@ -213,7 +213,7 @@ function RegisterForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create an account</CardTitle>
+        <CardTitle className="font-space">Create an account</CardTitle>
         <CardDescription>
           Sign up to start using Greenupp's smart farming tools
         </CardDescription>

@@ -30,12 +30,12 @@ export default function DashboardPage() {
       </header>
 
       <main className="container mx-auto px-4 md:px-6 py-12">
-        <h1 className="text-4xl font-bold mb-8">Your Dashboard</h1>
+        <h1 className="text-4xl font-bold mb-8 font-space">Your Dashboard</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="bg-secondary/30 border-primary/20">
             <CardHeader className="pb-2">
-              <CardTitle className="text-xl font-medium text-white">Current Crops</CardTitle>
+              <CardTitle className="text-xl font-medium text-white font-space">Current Crops</CardTitle>
               <CardDescription className="text-gray-400">Manage your active crops</CardDescription>
             </CardHeader>
             <CardContent>
@@ -52,7 +52,7 @@ export default function DashboardPage() {
 
           <Card className="bg-secondary/30 border-primary/20">
             <CardHeader className="pb-2">
-              <CardTitle className="text-xl font-medium text-white">Weather Forecast</CardTitle>
+              <CardTitle className="text-xl font-medium text-white font-space">Weather Forecast</CardTitle>
               <CardDescription className="text-gray-400">5-day weather prediction</CardDescription>
             </CardHeader>
             <CardContent>
@@ -69,7 +69,7 @@ export default function DashboardPage() {
 
           <Card className="bg-secondary/30 border-primary/20">
             <CardHeader className="pb-2">
-              <CardTitle className="text-xl font-medium text-white">Marketplace</CardTitle>
+              <CardTitle className="text-xl font-medium text-white font-space">Marketplace</CardTitle>
               <CardDescription className="text-gray-400">Buy supplies and sell produce</CardDescription>
             </CardHeader>
             <CardContent>
@@ -88,7 +88,7 @@ export default function DashboardPage() {
         <div className="mt-12">
           <Card className="bg-secondary/30 border-primary/20">
             <CardHeader>
-              <CardTitle className="text-xl font-medium text-white">AI-Powered Insights</CardTitle>
+              <CardTitle className="text-xl font-medium text-white font-space">AI-Powered Insights</CardTitle>
               <CardDescription className="text-gray-400">Smart recommendations based on your farm data</CardDescription>
             </CardHeader>
             <CardContent>
