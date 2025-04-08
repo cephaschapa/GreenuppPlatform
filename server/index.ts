@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import session from "express-session"; // Added for typing session properties
 
 // Log environment details on startup - helpful for debugging deployment issues
 const isProduction = process.env.NODE_ENV === 'production';
@@ -15,6 +16,33 @@ log(`- PGUSER exists: ${!!process.env.PGUSER}`);
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Add CORS headers for production cross-origin access
+app.use((req, res, next) => {
+  // Allow requests from any origin in production
+  const allowedOrigins = ['https://greenupp.replit.app'];
+  const origin = req.headers.origin;
+  
+  if (isProduction && origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    log(`CORS: Allowing origin: ${origin}`);
+  } else if (!isProduction) {
+    // In development, be more permissive
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+  }
+  
+  // Essential CORS headers
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

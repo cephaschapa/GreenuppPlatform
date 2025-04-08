@@ -21,28 +21,55 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const {
-    data: user,
-    error,
-    isLoading,
-  } = useQuery<User | undefined, Error>({
+  // Fetch the current user
+  const userQuery = useQuery<User | undefined, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    retry: 1,
   });
+  
+  const { data: user, error, isLoading, refetch } = userQuery;
+  
+  // Log any auth errors but don't show toast for expected 401s
+  if (error) {
+    console.error("Auth query error:", error);
+    if (error.message && !error.message.includes("401")) {
+      toast({
+        title: "Authentication Error",
+        description: `Failed to verify authentication: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  }
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginUser) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      console.log('Login attempt with credentials:', { email: credentials.email });
+      
+      try {
+        const res = await apiRequest("POST", "/api/login", credentials);
+        console.log('Login response status:', res.status);
+        const data = await res.json();
+        console.log('Login successful, got user data:', { id: data.id, email: data.email });
+        return data;
+      } catch (err: any) {
+        console.error('Login error:', err.message);
+        throw err;
+      }
     },
     onSuccess: (user: Omit<User, "password">) => {
+      console.log('Login mutation success, setting user data');
       queryClient.setQueryData(["/api/user"], user);
+      // Force a refetch to ensure we have the correct user data
+      refetch();
+      
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.firstName || user.username}!`,
       });
     },
     onError: (error: Error) => {
+      console.error('Login mutation error:', error);
       toast({
         title: "Login failed",
         description: error.message,
@@ -92,10 +119,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Use type assertion to handle nullable user properly
+  // We know this is safe because we're using returnNull in the queryFn options
   return (
     <AuthContext.Provider
       value={{
-        user: user ?? null,
+        user: (user ?? null) as User | null,
         isLoading,
         error,
         loginMutation,
