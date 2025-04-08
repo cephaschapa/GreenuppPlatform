@@ -283,7 +283,8 @@ export function FarmerDashboard() {
       name: newFieldName,
       size: newFieldSize,
       location: newFieldLocation,
-      soilType: newFieldSoilType
+      soilType: newFieldSoilType,
+      userId: user?.id as number
     });
     
     // Reset form
@@ -309,7 +310,8 @@ export function FarmerDashboard() {
       name: newCropName,
       variety: newCropVariety,
       fieldId: newCropFieldId,
-      status: newCropStatus
+      status: newCropStatus,
+      userId: user?.id as number
     });
     
     // Reset form
