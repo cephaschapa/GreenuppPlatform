@@ -4,6 +4,14 @@ import pg from 'pg';
 // Using the environment variable
 const connectionString = process.env.DATABASE_URL;
 
+console.log('Starting database setup...');
+console.log('Database URL exists:', !!process.env.DATABASE_URL);
+console.log('PGHOST exists:', !!process.env.PGHOST);
+console.log('PGDATABASE exists:', !!process.env.PGDATABASE);
+console.log('PGUSER exists:', !!process.env.PGUSER);
+console.log('PGPASSWORD exists:', !!process.env.PGPASSWORD);
+console.log('PGPORT exists:', !!process.env.PGPORT);
+
 async function main() {
   console.log('Setting up database...');
   

@@ -3,7 +3,13 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "@shared/schema";
 
+// Configure WebSocket for Neon
 neonConfig.webSocketConstructor = ws;
+
+// Log environment for troubleshooting
+console.log('Environment settings:');
+console.log('  NODE_ENV:', process.env.NODE_ENV);
+console.log('  Database connection config available:', !!process.env.DATABASE_URL);
 
 if (!process.env.DATABASE_URL) {
   console.error("ERROR: DATABASE_URL environment variable is missing.");
