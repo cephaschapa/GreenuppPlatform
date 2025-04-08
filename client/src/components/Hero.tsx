@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import droneFieldImage from "../assets/drone-field.svg";
+import { Link } from "wouter";
 
 const Hero = () => {
   return (
@@ -36,10 +37,10 @@ const Hero = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              <a href="#contact" className="group bg-primary hover:bg-primary/90 text-secondary px-6 sm:px-8 py-3 rounded-md transition-all duration-300 font-medium inline-flex items-center justify-center">
-                <span>Start Free Trial</span>
+              <Link href="/auth" className="group bg-primary hover:bg-primary/90 text-secondary px-6 sm:px-8 py-3 rounded-md transition-all duration-300 font-medium inline-flex items-center justify-center">
+                <span>Get Started</span>
                 <i className="fas fa-arrow-right ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all"></i>
-              </a>
+              </Link>
               <a href="#features" className="border border-primary/50 hover:border-primary bg-secondary/50 hover:bg-secondary/80 px-6 sm:px-8 py-3 rounded-md transition-all duration-300 font-medium inline-flex items-center justify-center">
                 <span>Explore Features</span>
                 <i className="fas fa-chevron-down ml-2 text-xs text-primary"></i>

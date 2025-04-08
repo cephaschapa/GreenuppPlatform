@@ -9,7 +9,7 @@ import { User } from "@shared/schema";
 
 declare global {
   namespace Express {
-    interface User extends User {}
+    interface User extends Omit<User, 'password'> {}
   }
 }
 
@@ -73,8 +73,9 @@ export function setupAuth(app: Express) {
   );
 
   // Serialize user to session
-  passport.serializeUser((user, done) => {
-    done(null, user.id);
+  passport.serializeUser((user: Express.User, done) => {
+    const typedUser = user as unknown as User;
+    done(null, typedUser.id);
   });
 
   // Deserialize user from session
@@ -132,7 +133,7 @@ export function setupAuth(app: Express) {
 
   // User login route
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: Error | null, user: User | false, info: { message: string } | undefined) => {
       if (err) return next(err);
       if (!user) {
         return res.status(401).json({ message: info?.message || "Login failed" });

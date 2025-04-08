@@ -16,9 +16,9 @@ import { Loader2 } from "lucide-react";
 export default function AuthPage() {
   const { user, isLoading } = useAuth();
 
-  // If the user is already logged in, redirect to the home page
+  // If the user is already logged in, redirect to the dashboard
   if (user && !isLoading) {
-    return <Redirect to="/" />;
+    return <Redirect to="/dashboard" />;
   }
 
   return (

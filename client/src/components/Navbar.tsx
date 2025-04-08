@@ -41,10 +41,10 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             Community
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
           </a>
-          <a href="#contact" className="group bg-primary hover:bg-primary/90 text-secondary px-4 py-2 rounded-md transition-all duration-300 font-medium inline-flex items-center">
+          <Link href="/auth" className="group bg-primary hover:bg-primary/90 text-secondary px-4 py-2 rounded-md transition-all duration-300 font-medium inline-flex items-center">
             <span>Get Started</span>
             <i className="fas fa-arrow-right ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all"></i>
-          </a>
+          </Link>
         </div>
         
         <button 
@@ -124,14 +124,14 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             <span>Community</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
           </a>
-          <a 
-            href="#contact" 
+          <Link 
+            href="/auth" 
             className="group bg-secondary hover:bg-primary text-primary hover:text-secondary py-3 rounded-md transition-all duration-300 font-medium text-center mt-2 border border-primary flex items-center justify-center"
             onClick={() => setMobileMenuOpen(false)}
           >
             <span>Get Started</span>
             <i className="fas fa-arrow-right ml-2 group-hover:ml-3 transition-all"></i>
-          </a>
+          </Link>
         </div>
       </div>
     </nav>
