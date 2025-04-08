@@ -123,9 +123,9 @@ function LoginForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email or Username</FormLabel>
                   <FormControl>
-                    <Input placeholder="yourname@example.com" {...field} value={field.value || ''} />
+                    <Input placeholder="yourname@example.com or username" {...field} value={field.value || ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

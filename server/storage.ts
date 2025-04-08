@@ -5,11 +5,20 @@ import {
   type User, 
   type InsertFarmerProfile, 
   type FarmerProfile,
+  users,
+  farmerProfiles,
+  contactForm
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+import connectPg from "connect-pg-simple";
+import { Pool } from "@neondatabase/serverless";
 
+// Create session stores
 const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // User authentication and management
@@ -29,9 +38,127 @@ export interface IStorage {
   getContactInquiries(): Promise<ContactInquiry[]>;
   
   // For session storage
-  sessionStore: any; // Using any for session store to avoid type issues
+  sessionStore: session.Store;
 }
 
+// PostgreSQL implementation
+export class DatabaseStorage implements IStorage {
+  public sessionStore: session.Store;
+
+  constructor() {
+    // Initialize session store with PostgreSQL
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
+    });
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+  
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values({
+      ...insertUser,
+      firstName: insertUser.firstName || null,
+      lastName: insertUser.lastName || null,
+      profileImage: null,
+      role: insertUser.role || "farmer",
+    }).returning();
+    
+    return user;
+  }
+  
+  async updateUser(id: number, userData: Partial<User>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({
+        ...userData,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+    
+    return user;
+  }
+  
+  async getFarmerProfile(userId: number): Promise<FarmerProfile | undefined> {
+    const [profile] = await db
+      .select()
+      .from(farmerProfiles)
+      .where(eq(farmerProfiles.userId, userId));
+    
+    return profile;
+  }
+  
+  async createFarmerProfile(profileData: InsertFarmerProfile & { userId: number }): Promise<FarmerProfile> {
+    const [profile] = await db
+      .insert(farmerProfiles)
+      .values({
+        ...profileData,
+        farmName: profileData.farmName || null,
+        farmLocation: profileData.farmLocation || null,
+        farmSize: profileData.farmSize || null,
+        farmType: profileData.farmType || null,
+        bio: profileData.bio || null,
+        contactPhone: profileData.contactPhone || null,
+        mainCrops: profileData.mainCrops || null,
+        establishedYear: profileData.establishedYear || null,
+        settings: {},
+      })
+      .returning();
+    
+    return profile;
+  }
+  
+  async updateFarmerProfile(userId: number, profileData: Partial<FarmerProfile>): Promise<FarmerProfile | undefined> {
+    // First, find the profile by userId
+    const existingProfile = await this.getFarmerProfile(userId);
+    if (!existingProfile) return undefined;
+    
+    // Then update it by id
+    const [profile] = await db
+      .update(farmerProfiles)
+      .set({
+        ...profileData,
+        updatedAt: new Date()
+      })
+      .where(eq(farmerProfiles.id, existingProfile.id))
+      .returning();
+    
+    return profile;
+  }
+
+  async saveContactInquiry(data: ContactFormData): Promise<ContactInquiry> {
+    const [inquiry] = await db
+      .insert(contactForm)
+      .values({
+        ...data,
+        newsletter: data.newsletter || false,
+      })
+      .returning();
+    
+    return inquiry;
+  }
+
+  async getContactInquiries(): Promise<ContactInquiry[]> {
+    return db.select().from(contactForm);
+  }
+}
+
+// Memory Storage implementation kept for reference
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private farmerProfiles: Map<number, FarmerProfile>;
@@ -39,7 +166,7 @@ export class MemStorage implements IStorage {
   private userId: number;
   private profileId: number;
   private inquiryId: number;
-  public sessionStore: any; // Store from memorystore
+  public sessionStore: session.Store;
 
   constructor() {
     this.users = new Map();
@@ -170,4 +297,5 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Export an instance of DatabaseStorage instead of MemStorage
+export const storage = new DatabaseStorage();
