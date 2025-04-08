@@ -6,8 +6,15 @@ import * as schema from "@shared/schema";
 neonConfig.webSocketConstructor = ws;
 
 if (!process.env.DATABASE_URL) {
+  console.error("ERROR: DATABASE_URL environment variable is missing.");
+  console.error("For development: This should be set automatically by running the database.");
+  console.error("For deployment: You need to add DATABASE_URL as a secret in your Replit deployment settings.");
+  console.error("1. Go to your Replit project");
+  console.error("2. Click on 'Secrets' in the tools panel");
+  console.error("3. Add DATABASE_URL with your PostgreSQL connection string");
+  
   throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
+    "DATABASE_URL environment variable is missing. Please configure it before running the application.",
   );
 }
 
