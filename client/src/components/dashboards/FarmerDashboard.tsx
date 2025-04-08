@@ -7,10 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { FarmerProfile, Field, Crop, CropActivity } from "@shared/schema";
-import { Loader2, Cloud, Droplets, Thermometer, Wind, Calendar, AlertCircle, PlusCircle, TractorIcon, Trash2 } from "lucide-react";
+import { Loader2, Cloud, Droplets, Thermometer, Wind, Calendar, AlertCircle, PlusCircle, TractorIcon, Trash2, CalendarDays } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { queryClient } from "@/lib/queryClient";
+import CropCalendar from "../CropCalendar";
+import { CropActivityManager } from "../CropActivityManager";
+import { CropDateManager } from "../CropDateManager";
 
 export function FarmerDashboard() {
   const { user } = useAuth();
@@ -267,6 +270,38 @@ export function FarmerDashboard() {
   const [newCropFieldId, setNewCropFieldId] = useState<number | null>(null);
   const [newCropStatus, setNewCropStatus] = useState("planning");
   const [isAddCropDialogOpen, setIsAddCropDialogOpen] = useState(false);
+  
+  // State for crop activity management
+  const [selectedCrop, setSelectedCrop] = useState<Crop | null>(null);
+  const [isActivityManagerOpen, setIsActivityManagerOpen] = useState(false);
+  const [isDateManagerOpen, setIsDateManagerOpen] = useState(false);
+  
+  // Fetch crop activities
+  const { data: cropActivities, isLoading: activitiesLoading } = useQuery<CropActivity[]>({
+    queryKey: ['/api/crop-activities'],
+    queryFn: async () => {
+      if (!crops || crops.length === 0) return [];
+      
+      // In a real app, we would fetch all activities at once
+      // For now, we'll fetch activities for each crop and combine them
+      const allActivities: CropActivity[] = [];
+      
+      for (const crop of crops) {
+        try {
+          const response = await fetch(`/api/crops/${crop.id}/activities`);
+          if (response.ok) {
+            const cropActivities = await response.json();
+            allActivities.push(...cropActivities);
+          }
+        } catch (error) {
+          console.error(`Error fetching activities for crop ${crop.id}:`, error);
+        }
+      }
+      
+      return allActivities;
+    },
+    enabled: !!crops && crops.length > 0
+  });
   
   // Handle field creation
   const handleAddField = () => {
@@ -706,7 +741,19 @@ export function FarmerDashboard() {
                           </div>
                         )}
                         
-                        <div className="flex justify-end mt-2">
+                        <div className="flex justify-end mt-2 space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="border-primary/50 text-primary hover:bg-primary/20"
+                            onClick={() => {
+                              setSelectedCrop(crop);
+                              setIsActivityManagerOpen(true);
+                            }}
+                          >
+                            <CalendarDays className="h-4 w-4 mr-1" />
+                            Activities
+                          </Button>
                           <Button 
                             variant="outline" 
                             size="sm" 
@@ -981,19 +1028,70 @@ export function FarmerDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="bg-secondary/30 border-primary/20">
           <CardHeader>
-            <CardTitle className="text-xl font-medium text-white font-space">Crop Planning</CardTitle>
-            <CardDescription className="text-gray-400">Schedule and manage planting</CardDescription>
+            <CardTitle className="text-xl font-medium text-white font-space">Crop Calendar</CardTitle>
+            <CardDescription className="text-gray-400">Planting and activity schedule</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex flex-col items-center justify-center border border-dashed border-primary/40 rounded-md p-6">
-              <div className="text-center mb-4">
-                <p className="text-gray-300">Plan your planting and harvesting schedule</p>
-                <p className="text-gray-500 text-sm mt-2">Coming soon: AI-powered crop rotation suggestions</p>
+            {cropsLoading || activitiesLoading ? (
+              <div className="h-64 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-              <Button variant="default" disabled>
-                Create Planting Schedule
-              </Button>
-            </div>
+            ) : crops && crops.length > 0 ? (
+              <div className="crop-calendar-container">
+                <CropCalendar 
+                  crops={crops || []} 
+                  activities={cropActivities || []} 
+                  onEventClick={(info) => {
+                    if (info.event.extendedProps.type === 'activity') {
+                      // Handle click on activity
+                      const cropId = info.event.extendedProps.activity.cropId;
+                      const relatedCrop = crops.find(c => c.id === cropId);
+                      if (relatedCrop) {
+                        setSelectedCrop(relatedCrop);
+                        setIsActivityManagerOpen(true);
+                      }
+                    } else if (
+                      info.event.extendedProps.type === 'planting' || 
+                      info.event.extendedProps.type === 'harvest'
+                    ) {
+                      // Handle click on planting or harvest date
+                      const crop = info.event.extendedProps.crop;
+                      setSelectedCrop(crop);
+                      setIsDateManagerOpen(true);
+                    }
+                  }}
+                />
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Badge variant="outline" className="bg-green-900/20">
+                    🌱 Planting
+                  </Badge>
+                  <Badge variant="outline" className="bg-yellow-900/20">
+                    🌾 Harvesting
+                  </Badge>
+                  <Badge variant="outline" className="bg-blue-900/20">
+                    💧 Irrigation
+                  </Badge>
+                  <Badge variant="outline" className="bg-red-900/20">
+                    🐞 Pest Control
+                  </Badge>
+                </div>
+              </div>
+            ) : (
+              <div className="h-64 flex flex-col items-center justify-center border border-dashed border-primary/40 rounded-md p-6">
+                <div className="text-center mb-4">
+                  <p className="text-gray-300">Add crops to view your planting calendar</p>
+                  <p className="text-gray-500 text-sm mt-2">Your crop planting dates and activities will appear here</p>
+                </div>
+                <Button 
+                  variant="default" 
+                  onClick={() => setIsAddCropDialogOpen(true)}
+                  disabled={!fields || fields.length === 0}
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Add Your First Crop
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -1062,6 +1160,27 @@ export function FarmerDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Activity Management Dialogs */}
+      <Dialog open={isActivityManagerOpen} onOpenChange={setIsActivityManagerOpen}>
+        <DialogContent className="bg-secondary border-primary/20 text-white max-w-4xl">
+          <CropActivityManager 
+            crop={selectedCrop} 
+            onClose={() => setIsActivityManagerOpen(false)} 
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDateManagerOpen} onOpenChange={setIsDateManagerOpen}>
+        <DialogContent className="bg-secondary border-primary/20 text-white max-w-3xl">
+          {selectedCrop && (
+            <CropDateManager 
+              crop={selectedCrop} 
+              onClose={() => setIsDateManagerOpen(false)} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
