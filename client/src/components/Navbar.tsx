@@ -1,5 +1,6 @@
 import { FC } from "react";
 import { Link } from "wouter";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface NavbarProps {
   mobileMenuOpen: boolean;
@@ -41,23 +42,27 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             Community
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
           </a>
+          <ThemeToggle />
           <Link href="/auth" className="group bg-primary hover:bg-primary/90 text-secondary px-4 py-2 rounded-md transition-all duration-300 font-medium inline-flex items-center">
             <span>Get Started</span>
             <i className="fas fa-arrow-right ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all"></i>
           </Link>
         </div>
         
-        <button 
-          className="md:hidden flex items-center justify-center w-9 h-9 rounded-md border border-primary/30 hover:border-primary/80 hover:bg-primary/10 transition-all duration-300" 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle mobile menu"
-        >
-          {mobileMenuOpen ? (
-            <i className="fas fa-times text-primary text-lg"></i>
-          ) : (
-            <i className="fas fa-bars text-primary text-lg"></i>
-          )}
-        </button>
+        <div className="md:hidden flex items-center gap-3">
+          <ThemeToggle />
+          <button 
+            className="flex items-center justify-center w-9 h-9 rounded-md border border-primary/30 hover:border-primary/80 hover:bg-primary/10 transition-all duration-300" 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle mobile menu"
+          >
+            {mobileMenuOpen ? (
+              <i className="fas fa-times text-primary text-lg"></i>
+            ) : (
+              <i className="fas fa-bars text-primary text-lg"></i>
+            )}
+          </button>
+        </div>
       </div>
       
       {/* Mobile Menu */}

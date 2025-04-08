@@ -5,11 +5,21 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User } from "@shared/schema";
+import { User, UserRoleType } from "@shared/schema";
+
+// Define a specific interface for Express User to avoid circular reference
+interface ExpressUser {
+  id: number;
+  email: string;
+  username: string;
+  role: UserRoleType;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 declare global {
   namespace Express {
-    interface User extends Omit<User, 'password'> {}
+    interface User extends ExpressUser {}
   }
 }
 
@@ -64,7 +74,7 @@ export function setupAuth(app: Express) {
             return done(null, false, { message: "Invalid email or password" });
           }
           
-          return done(null, user);
+          return done(null, user as unknown as Express.User);
         } catch (error) {
           return done(error);
         }
@@ -82,7 +92,12 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
-      done(null, user);
+      if (user) {
+        // Ensure we're using the proper User type with valid UserRoleType
+        done(null, user as unknown as Express.User);
+      } else {
+        done(null, null);
+      }
     } catch (error) {
       done(error);
     }
@@ -122,7 +137,7 @@ export function setupAuth(app: Express) {
       const { password, ...userWithoutPassword } = user;
 
       // Automatically log the user in after registration
-      req.login(user, (err) => {
+      req.login(user as unknown as Express.User, (err) => {
         if (err) return next(err);
         res.status(201).json(userWithoutPassword);
       });
@@ -139,7 +154,7 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ message: info?.message || "Login failed" });
       }
       
-      req.login(user, (loginErr) => {
+      req.login(user as unknown as Express.User, (loginErr) => {
         if (loginErr) return next(loginErr);
         
         // Remove password from response
