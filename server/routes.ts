@@ -4,8 +4,12 @@ import { storage } from "./storage";
 import { contactFormSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up authentication 
+  setupAuth(app);
+
   // Contact form submission endpoint
   app.post("/api/contact", async (req, res) => {
     try {
@@ -21,6 +25,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ success: false, error: "Failed to process your request" });
       }
     }
+  });
+
+  // Catch-all route for API errors
+  app.use("/api/*", (req, res) => {
+    res.status(404).json({ message: "API endpoint not found" });
   });
 
   const httpServer = createServer(app);
