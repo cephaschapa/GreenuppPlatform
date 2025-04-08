@@ -6,6 +6,9 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { setupAuth } from "./auth";
 
+// Note: We rely on the User type definition
+// that's already declared in auth.ts
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication 
   setupAuth(app);
@@ -21,7 +24,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to check user role
   function hasRole(role: string) {
     return (req: Request, res: Response, next: NextFunction) => {
-      if (req.isAuthenticated() && req.user.role === role) {
+      if (req.isAuthenticated() && req.user && req.user.role === role) {
         return next();
       }
       res.status(403).json({ message: "Unauthorized access" });
@@ -50,7 +53,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get farmer profile
   app.get("/api/farmer-profile", isAuthenticated, async (req, res) => {
     try {
-      if (req.user.role !== 'farmer') {
+      if (!req.user || req.user.role !== 'farmer') {
         return res.status(403).json({ message: "Only farmers can access profiles" });
       }
       
@@ -69,6 +72,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create farmer profile
   app.post("/api/farmer-profile", isAuthenticated, hasRole('farmer'), async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
       // Check if profile already exists
       const existingProfile = await storage.getFarmerProfile(req.user.id);
       if (existingProfile) {
@@ -97,6 +104,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update farmer profile
   app.patch("/api/farmer-profile", isAuthenticated, hasRole('farmer'), async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
       // Check if profile exists
       const existingProfile = await storage.getFarmerProfile(req.user.id);
       if (!existingProfile) {
@@ -116,6 +127,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error updating farmer profile:", error);
         res.status(500).json({ message: "Failed to update profile" });
       }
+    }
+  });
+
+  // Weather API endpoint
+  app.get("/api/weather", isAuthenticated, async (req, res) => {
+    try {
+      const { location } = req.query;
+      
+      if (!location) {
+        return res.status(400).json({ message: "Location parameter is required" });
+      }
+      
+      // In a real application, you would make a call to a weather API service here
+      // For now, we'll return simulated weather data
+      const weatherData = {
+        location: location,
+        current: {
+          temp: 22,
+          humidity: 65,
+          wind_speed: 12,
+          weather: [{ description: 'Partly cloudy' }]
+        },
+        daily: [
+          { 
+            date: new Date(Date.now()).toLocaleDateString(), 
+            temp: { day: 22, min: 16, max: 24 }, 
+            humidity: 65, 
+            weather: [{ description: 'Partly cloudy' }] 
+          },
+          { 
+            date: new Date(Date.now() + 86400000).toLocaleDateString(), 
+            temp: { day: 24, min: 18, max: 26 }, 
+            humidity: 60, 
+            weather: [{ description: 'Sunny' }] 
+          },
+          { 
+            date: new Date(Date.now() + 86400000 * 2).toLocaleDateString(), 
+            temp: { day: 21, min: 15, max: 23 }, 
+            humidity: 70, 
+            weather: [{ description: 'Light rain' }] 
+          },
+          { 
+            date: new Date(Date.now() + 86400000 * 3).toLocaleDateString(), 
+            temp: { day: 20, min: 14, max: 22 }, 
+            humidity: 75, 
+            weather: [{ description: 'Showers' }] 
+          },
+          { 
+            date: new Date(Date.now() + 86400000 * 4).toLocaleDateString(), 
+            temp: { day: 23, min: 17, max: 25 }, 
+            humidity: 55, 
+            weather: [{ description: 'Clear sky' }] 
+          }
+        ]
+      };
+      
+      res.json(weatherData);
+    } catch (error) {
+      console.error("Error fetching weather data:", error);
+      res.status(500).json({ message: "Failed to retrieve weather data" });
     }
   });
 
