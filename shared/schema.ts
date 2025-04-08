@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, pgEnum, date, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -116,3 +116,81 @@ export const contactFormSchema = createInsertSchema(contactForm).pick({
 
 export type ContactFormData = z.infer<typeof contactFormSchema>;
 export type ContactInquiry = typeof contactForm.$inferSelect;
+
+// Crop Management System
+
+// Crop status enum
+export const cropStatusEnum = pgEnum('crop_status', ['planning', 'planted', 'growing', 'harvesting', 'completed', 'failed']);
+
+// Field management table
+export const fields = pgTable("fields", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  location: text("location"),
+  size: decimal("size", { precision: 10, scale: 2 }),
+  sizeUnit: text("size_unit").default('hectares'),
+  soilType: text("soil_type"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Crop management table
+export const crops = pgTable("crops", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  variety: text("variety"),
+  status: text("status").notNull().default('planning'),
+  fieldId: integer("field_id").references(() => fields.id),
+  plantingDate: date("planting_date"),
+  expectedHarvestDate: date("expected_harvest_date"),
+  actualHarvestDate: date("actual_harvest_date"),
+  expectedYield: decimal("expected_yield", { precision: 10, scale: 2 }),
+  actualYield: decimal("actual_yield", { precision: 10, scale: 2 }),
+  yieldUnit: text("yield_unit").default('kg'),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Crop activities table (for tracking tasks, treatments, etc.)
+export const cropActivities = pgTable("crop_activities", {
+  id: serial("id").primaryKey(),
+  cropId: integer("crop_id").notNull().references(() => crops.id),
+  activityType: text("activity_type").notNull(), // e.g., fertilizing, pest control, irrigation
+  activityDate: date("activity_date").notNull(),
+  description: text("description").notNull(),
+  cost: decimal("cost", { precision: 10, scale: 2 }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Create schemas for crop management
+export const insertFieldSchema = createInsertSchema(fields).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCropSchema = createInsertSchema(crops).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCropActivitySchema = createInsertSchema(cropActivities).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Crop management types
+export type InsertField = z.infer<typeof insertFieldSchema>;
+export type Field = typeof fields.$inferSelect;
+export type InsertCrop = z.infer<typeof insertCropSchema>;
+export type Crop = typeof crops.$inferSelect;
+export type InsertCropActivity = z.infer<typeof insertCropActivitySchema>;
+export type CropActivity = typeof cropActivities.$inferSelect;

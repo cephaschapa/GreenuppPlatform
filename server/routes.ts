@@ -1,10 +1,18 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { contactFormSchema, insertFarmerProfileSchema } from "@shared/schema";
+import { 
+  contactFormSchema, 
+  insertFarmerProfileSchema, 
+  insertFieldSchema,
+  insertCropSchema,
+  insertCropActivitySchema,
+  fields, crops, cropActivities
+} from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { setupAuth } from "./auth";
+import { eq } from "drizzle-orm";
 
 // Note: We rely on the User type definition
 // that's already declared in auth.ts
@@ -130,6 +138,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Field Management Routes
+  
+  // Get all fields for the authenticated farmer
+  app.get("/api/fields", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const fields = await storage.getFields(req.user.id);
+      res.json(fields);
+    } catch (error) {
+      console.error("Error fetching fields:", error);
+      res.status(500).json({ message: "Failed to retrieve fields" });
+    }
+  });
+  
+  // Get a specific field by ID
+  app.get("/api/fields/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const fieldId = parseInt(req.params.id);
+      if (isNaN(fieldId)) {
+        return res.status(400).json({ message: "Invalid field ID" });
+      }
+      
+      const field = await storage.getField(fieldId);
+      if (!field) {
+        return res.status(404).json({ message: "Field not found" });
+      }
+      
+      // Ensure the field belongs to the authenticated user
+      if (field.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to access this field" });
+      }
+      
+      res.json(field);
+    } catch (error) {
+      console.error("Error fetching field:", error);
+      res.status(500).json({ message: "Failed to retrieve field" });
+    }
+  });
+  
+  // Create a new field
+  app.post("/api/fields", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // Validate and create field
+      const fieldData = insertFieldSchema.parse(req.body);
+      const newField = await storage.createField({
+        ...fieldData,
+        userId: req.user.id
+      });
+      
+      res.status(201).json(newField);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error creating field:", error);
+        res.status(500).json({ message: "Failed to create field" });
+      }
+    }
+  });
+  
+  // Update a field
+  app.patch("/api/fields/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const fieldId = parseInt(req.params.id);
+      if (isNaN(fieldId)) {
+        return res.status(400).json({ message: "Invalid field ID" });
+      }
+      
+      // Check if field exists and belongs to user
+      const existingField = await storage.getField(fieldId);
+      if (!existingField) {
+        return res.status(404).json({ message: "Field not found" });
+      }
+      
+      if (existingField.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to update this field" });
+      }
+      
+      // Validate and update field
+      const fieldData = insertFieldSchema.partial().parse(req.body);
+      const updatedField = await storage.updateField(fieldId, fieldData);
+      
+      res.json(updatedField);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error updating field:", error);
+        res.status(500).json({ message: "Failed to update field" });
+      }
+    }
+  });
+  
+  // Delete a field
+  app.delete("/api/fields/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const fieldId = parseInt(req.params.id);
+      if (isNaN(fieldId)) {
+        return res.status(400).json({ message: "Invalid field ID" });
+      }
+      
+      // Check if field exists and belongs to user
+      const existingField = await storage.getField(fieldId);
+      if (!existingField) {
+        return res.status(404).json({ message: "Field not found" });
+      }
+      
+      if (existingField.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to delete this field" });
+      }
+      
+      // Delete field
+      const success = await storage.deleteField(fieldId);
+      
+      if (success) {
+        res.json({ success: true, message: "Field deleted successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to delete field" });
+      }
+    } catch (error) {
+      console.error("Error deleting field:", error);
+      res.status(500).json({ message: "Failed to delete field" });
+    }
+  });
+  
   // Weather API endpoint
   app.get("/api/weather", isAuthenticated, async (req, res) => {
     try {
@@ -190,6 +344,396 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Crop Management Routes
+  
+  // Get all crops for the authenticated farmer
+  app.get("/api/crops", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const crops = await storage.getCrops(req.user.id);
+      res.json(crops);
+    } catch (error) {
+      console.error("Error fetching crops:", error);
+      res.status(500).json({ message: "Failed to retrieve crops" });
+    }
+  });
+  
+  // Get crops for a specific field
+  app.get("/api/fields/:fieldId/crops", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const fieldId = parseInt(req.params.fieldId);
+      if (isNaN(fieldId)) {
+        return res.status(400).json({ message: "Invalid field ID" });
+      }
+      
+      // Verify field belongs to user
+      const field = await storage.getField(fieldId);
+      if (!field) {
+        return res.status(404).json({ message: "Field not found" });
+      }
+      
+      if (field.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to access this field" });
+      }
+      
+      const crops = await storage.getCropsByField(fieldId);
+      res.json(crops);
+    } catch (error) {
+      console.error("Error fetching crops for field:", error);
+      res.status(500).json({ message: "Failed to retrieve crops" });
+    }
+  });
+  
+  // Get a specific crop
+  app.get("/api/crops/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const cropId = parseInt(req.params.id);
+      if (isNaN(cropId)) {
+        return res.status(400).json({ message: "Invalid crop ID" });
+      }
+      
+      const crop = await storage.getCrop(cropId);
+      if (!crop) {
+        return res.status(404).json({ message: "Crop not found" });
+      }
+      
+      // Ensure the crop belongs to the authenticated user
+      if (crop.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to access this crop" });
+      }
+      
+      res.json(crop);
+    } catch (error) {
+      console.error("Error fetching crop:", error);
+      res.status(500).json({ message: "Failed to retrieve crop" });
+    }
+  });
+  
+  // Create a new crop
+  app.post("/api/crops", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // Validate and create crop
+      const cropData = insertCropSchema.parse(req.body);
+      
+      // If fieldId is provided, ensure it belongs to the user
+      if (cropData.fieldId) {
+        const field = await storage.getField(cropData.fieldId);
+        if (!field) {
+          return res.status(404).json({ message: "Field not found" });
+        }
+        
+        if (field.userId !== req.user.id) {
+          return res.status(403).json({ message: "You don't have permission to use this field" });
+        }
+      }
+      
+      const newCrop = await storage.createCrop({
+        ...cropData,
+        userId: req.user.id
+      });
+      
+      res.status(201).json(newCrop);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error creating crop:", error);
+        res.status(500).json({ message: "Failed to create crop" });
+      }
+    }
+  });
+  
+  // Update a crop
+  app.patch("/api/crops/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const cropId = parseInt(req.params.id);
+      if (isNaN(cropId)) {
+        return res.status(400).json({ message: "Invalid crop ID" });
+      }
+      
+      // Check if crop exists and belongs to user
+      const existingCrop = await storage.getCrop(cropId);
+      if (!existingCrop) {
+        return res.status(404).json({ message: "Crop not found" });
+      }
+      
+      if (existingCrop.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to update this crop" });
+      }
+      
+      // Validate and update crop
+      const cropData = insertCropSchema.partial().parse(req.body);
+      
+      // If changing the field, verify the new field belongs to the user
+      if (cropData.fieldId && cropData.fieldId !== existingCrop.fieldId) {
+        const field = await storage.getField(cropData.fieldId);
+        if (!field) {
+          return res.status(404).json({ message: "Field not found" });
+        }
+        
+        if (field.userId !== req.user.id) {
+          return res.status(403).json({ message: "You don't have permission to use this field" });
+        }
+      }
+      
+      const updatedCrop = await storage.updateCrop(cropId, cropData);
+      
+      res.json(updatedCrop);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error updating crop:", error);
+        res.status(500).json({ message: "Failed to update crop" });
+      }
+    }
+  });
+  
+  // Delete a crop
+  app.delete("/api/crops/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const cropId = parseInt(req.params.id);
+      if (isNaN(cropId)) {
+        return res.status(400).json({ message: "Invalid crop ID" });
+      }
+      
+      // Check if crop exists and belongs to user
+      const existingCrop = await storage.getCrop(cropId);
+      if (!existingCrop) {
+        return res.status(404).json({ message: "Crop not found" });
+      }
+      
+      if (existingCrop.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to delete this crop" });
+      }
+      
+      // Delete crop
+      const success = await storage.deleteCrop(cropId);
+      
+      if (success) {
+        res.json({ success: true, message: "Crop deleted successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to delete crop" });
+      }
+    } catch (error) {
+      console.error("Error deleting crop:", error);
+      res.status(500).json({ message: "Failed to delete crop" });
+    }
+  });
+  
+  // Crop Activity Management Routes
+  
+  // Get all activities for a crop
+  app.get("/api/crops/:cropId/activities", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const cropId = parseInt(req.params.cropId);
+      if (isNaN(cropId)) {
+        return res.status(400).json({ message: "Invalid crop ID" });
+      }
+      
+      // Verify crop belongs to user
+      const crop = await storage.getCrop(cropId);
+      if (!crop) {
+        return res.status(404).json({ message: "Crop not found" });
+      }
+      
+      if (crop.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to access this crop" });
+      }
+      
+      const activities = await storage.getCropActivities(cropId);
+      res.json(activities);
+    } catch (error) {
+      console.error("Error fetching crop activities:", error);
+      res.status(500).json({ message: "Failed to retrieve activities" });
+    }
+  });
+  
+  // Get a specific activity
+  app.get("/api/crop-activities/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const activityId = parseInt(req.params.id);
+      if (isNaN(activityId)) {
+        return res.status(400).json({ message: "Invalid activity ID" });
+      }
+      
+      const activity = await storage.getCropActivity(activityId);
+      if (!activity) {
+        return res.status(404).json({ message: "Activity not found" });
+      }
+      
+      // Verify the activity's crop belongs to the user
+      const crop = await storage.getCrop(activity.cropId);
+      if (!crop || crop.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to access this activity" });
+      }
+      
+      res.json(activity);
+    } catch (error) {
+      console.error("Error fetching crop activity:", error);
+      res.status(500).json({ message: "Failed to retrieve activity" });
+    }
+  });
+  
+  // Create a new activity for a crop
+  app.post("/api/crops/:cropId/activities", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const cropId = parseInt(req.params.cropId);
+      if (isNaN(cropId)) {
+        return res.status(400).json({ message: "Invalid crop ID" });
+      }
+      
+      // Verify crop belongs to user
+      const crop = await storage.getCrop(cropId);
+      if (!crop) {
+        return res.status(404).json({ message: "Crop not found" });
+      }
+      
+      if (crop.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to add activities to this crop" });
+      }
+      
+      // Validate and create activity
+      const activityData = insertCropActivitySchema.parse({
+        ...req.body,
+        cropId
+      });
+      
+      const newActivity = await storage.createCropActivity(activityData);
+      
+      res.status(201).json(newActivity);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error creating crop activity:", error);
+        res.status(500).json({ message: "Failed to create activity" });
+      }
+    }
+  });
+  
+  // Update an activity
+  app.patch("/api/crop-activities/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const activityId = parseInt(req.params.id);
+      if (isNaN(activityId)) {
+        return res.status(400).json({ message: "Invalid activity ID" });
+      }
+      
+      // Check if activity exists
+      const existingActivity = await storage.getCropActivity(activityId);
+      if (!existingActivity) {
+        return res.status(404).json({ message: "Activity not found" });
+      }
+      
+      // Verify the activity's crop belongs to the user
+      const crop = await storage.getCrop(existingActivity.cropId);
+      if (!crop || crop.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to update this activity" });
+      }
+      
+      // Validate and update activity
+      const activityData = insertCropActivitySchema.partial().parse(req.body);
+      
+      // Ensure the crop ID hasn't changed
+      if (activityData.cropId && activityData.cropId !== existingActivity.cropId) {
+        return res.status(400).json({ message: "Cannot change the crop an activity belongs to" });
+      }
+      
+      const updatedActivity = await storage.updateCropActivity(activityId, activityData);
+      
+      res.json(updatedActivity);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error updating crop activity:", error);
+        res.status(500).json({ message: "Failed to update activity" });
+      }
+    }
+  });
+  
+  // Delete an activity
+  app.delete("/api/crop-activities/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const activityId = parseInt(req.params.id);
+      if (isNaN(activityId)) {
+        return res.status(400).json({ message: "Invalid activity ID" });
+      }
+      
+      // Check if activity exists
+      const activity = await storage.getCropActivity(activityId);
+      if (!activity) {
+        return res.status(404).json({ message: "Activity not found" });
+      }
+      
+      // Verify the activity's crop belongs to the user
+      const crop = await storage.getCrop(activity.cropId);
+      if (!crop || crop.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to delete this activity" });
+      }
+      
+      // Delete activity
+      const success = await storage.deleteCropActivity(activityId);
+      
+      if (success) {
+        res.json({ success: true, message: "Activity deleted successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to delete activity" });
+      }
+    } catch (error) {
+      console.error("Error deleting crop activity:", error);
+      res.status(500).json({ message: "Failed to delete activity" });
+    }
+  });
+  
   // Catch-all route for API errors
   app.use("/api/*", (req, res) => {
     res.status(404).json({ message: "API endpoint not found" });
