@@ -6,6 +6,7 @@ import SolutionShowcase from "@/components/SolutionShowcase";
 import BenefitsSection from "@/components/BenefitsSection";
 import CommunitySection from "@/components/CommunitySection";
 import ContactSection from "@/components/ContactSection";
+import AdvancedFeatures from "@/components/AdvancedFeatures";
 import Footer from "@/components/Footer";
 
 const Home = () => {
@@ -50,6 +51,7 @@ const Home = () => {
         <Hero />
         <FeatureHighlights />
         <SolutionShowcase />
+        <AdvancedFeatures />
         <BenefitsSection />
         <CommunitySection />
         <ContactSection />

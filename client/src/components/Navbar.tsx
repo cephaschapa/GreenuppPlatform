@@ -20,13 +20,17 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
           </Link>
         </div>
         
-        <div className="hidden md:flex space-x-8 items-center">
+        <div className="hidden md:flex space-x-6 lg:space-x-8 items-center">
           <a href="#features" className="hover:text-primary transition duration-300 relative group">
             Features
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
           </a>
           <a href="#solutions" className="hover:text-primary transition duration-300 relative group">
             Solutions
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+          </a>
+          <a href="#advanced-features" className="hover:text-primary transition duration-300 relative group">
+            Platform
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
           </a>
           <a href="#benefits" className="hover:text-primary transition duration-300 relative group">
@@ -88,12 +92,23 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
           </a>
           <a 
-            href="#benefits" 
+            href="#advanced-features" 
             className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
               <span className="font-mono text-primary text-xs">03</span>
+            </div>
+            <span>Platform</span>
+            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+          </a>
+          <a 
+            href="#benefits" 
+            className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+              <span className="font-mono text-primary text-xs">04</span>
             </div>
             <span>Benefits</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
@@ -104,7 +119,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-              <span className="font-mono text-primary text-xs">04</span>
+              <span className="font-mono text-primary text-xs">05</span>
             </div>
             <span>Community</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
