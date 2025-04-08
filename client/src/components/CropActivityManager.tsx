@@ -127,11 +127,22 @@ export function CropActivityManager({ crop, onClose }: CropActivityManagerProps)
       return;
     }
     
+    // Format the cost as a number for the API
+    const formattedCost = activityCost ? parseFloat(activityCost) : undefined;
+    if (activityCost && isNaN(formattedCost as number)) {
+      toast({
+        title: "Invalid cost",
+        description: "Cost must be a valid number",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const activityData = {
       activityType,
       activityDate,
       description: activityDescription,
-      cost: activityCost ? parseFloat(activityCost) : undefined,
+      cost: formattedCost,
       notes: activityNotes || undefined,
       cropId: crop?.id
     };
@@ -308,7 +319,7 @@ export function CropActivityManager({ crop, onClose }: CropActivityManagerProps)
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-200">Cost</label>
                 <input
-                  type="number"
+                  type="text"
                   value={activityCost}
                   onChange={(e) => setActivityCost(e.target.value)}
                   className="w-full px-3 py-2 bg-secondary border border-primary/20 rounded-md text-white"
