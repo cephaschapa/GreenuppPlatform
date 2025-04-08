@@ -2,6 +2,16 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+// Log environment details on startup - helpful for debugging deployment issues
+const isProduction = process.env.NODE_ENV === 'production';
+log(`Starting server in ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'} mode`);
+log(`Environment variables check:`);
+log(`- DATABASE_URL exists: ${!!process.env.DATABASE_URL}`);
+log(`- SESSION_SECRET exists: ${!!process.env.SESSION_SECRET}`);
+log(`- PGHOST exists: ${!!process.env.PGHOST}`);
+log(`- PGDATABASE exists: ${!!process.env.PGDATABASE}`);
+log(`- PGUSER exists: ${!!process.env.PGUSER}`);
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
