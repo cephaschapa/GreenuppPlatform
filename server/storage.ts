@@ -11,17 +11,26 @@ import {
   type InsertCrop,
   type CropActivity,
   type InsertCropActivity,
+  type WeatherPreferences,
+  type InsertWeatherPreferences,
+  type FarmerTask,
+  type InsertFarmerTask,
+  type CropYieldPrediction,
+  type InsertCropYieldPrediction,
   users,
   farmerProfiles,
   contactForm,
   fields,
   crops,
-  cropActivities
+  cropActivities,
+  weatherPreferences,
+  farmerTasks,
+  cropYieldPredictions
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, gte, lte } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import { Pool } from "@neondatabase/serverless";
 
@@ -67,6 +76,29 @@ export interface IStorage {
   createCropActivity(activityData: InsertCropActivity): Promise<CropActivity>;
   updateCropActivity(id: number, activityData: Partial<CropActivity>): Promise<CropActivity | undefined>;
   deleteCropActivity(id: number): Promise<boolean>;
+  
+  // Weather preferences
+  getWeatherPreferences(userId: number): Promise<WeatherPreferences | undefined>;
+  createWeatherPreferences(data: InsertWeatherPreferences & { userId: number }): Promise<WeatherPreferences>;
+  updateWeatherPreferences(userId: number, data: Partial<WeatherPreferences>): Promise<WeatherPreferences | undefined>;
+  
+  // Farmer tasks and reminders
+  getTasks(userId: number): Promise<FarmerTask[]>;
+  getTasksByDate(userId: number, date: Date): Promise<FarmerTask[]>;
+  getTasksByDateRange(userId: number, startDate: Date, endDate: Date): Promise<FarmerTask[]>;
+  getTasksByPriority(userId: number, priority: string): Promise<FarmerTask[]>;
+  getTasksByCrop(cropId: number): Promise<FarmerTask[]>;
+  getTasksByField(fieldId: number): Promise<FarmerTask[]>;
+  getTask(id: number): Promise<FarmerTask | undefined>;
+  createTask(taskData: InsertFarmerTask & { userId: number }): Promise<FarmerTask>;
+  updateTask(id: number, taskData: Partial<FarmerTask>): Promise<FarmerTask | undefined>;
+  deleteTask(id: number): Promise<boolean>;
+  completeTask(id: number): Promise<FarmerTask | undefined>;
+  
+  // Crop yield predictions
+  getCropYieldPredictions(cropId: number): Promise<CropYieldPrediction[]>;
+  createCropYieldPrediction(data: InsertCropYieldPrediction): Promise<CropYieldPrediction>;
+  updateCropYieldPrediction(id: number, data: Partial<CropYieldPrediction>): Promise<CropYieldPrediction | undefined>;
   
   // For session storage
   sessionStore: session.Store;
@@ -349,6 +381,215 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
   }
+
+  // Weather preferences methods
+  async getWeatherPreferences(userId: number): Promise<WeatherPreferences | undefined> {
+    const [prefs] = await db
+      .select()
+      .from(weatherPreferences)
+      .where(eq(weatherPreferences.userId, userId));
+    
+    return prefs;
+  }
+
+  async createWeatherPreferences(data: InsertWeatherPreferences & { userId: number }): Promise<WeatherPreferences> {
+    const [prefs] = await db
+      .insert(weatherPreferences)
+      .values({
+        ...data,
+        locations: data.locations || [],
+        alertsEnabled: data.alertsEnabled ?? true,
+        temperatureUnit: data.temperatureUnit || 'celsius',
+      })
+      .returning();
+    
+    return prefs;
+  }
+
+  async updateWeatherPreferences(userId: number, data: Partial<WeatherPreferences>): Promise<WeatherPreferences | undefined> {
+    // First, find the preferences by userId
+    const existingPrefs = await this.getWeatherPreferences(userId);
+    if (!existingPrefs) return undefined;
+    
+    // Then update it by id
+    const [prefs] = await db
+      .update(weatherPreferences)
+      .set({
+        ...data,
+        updatedAt: new Date()
+      })
+      .where(eq(weatherPreferences.id, existingPrefs.id))
+      .returning();
+    
+    return prefs;
+  }
+
+  // Farmer tasks methods
+  async getTasks(userId: number): Promise<FarmerTask[]> {
+    return db
+      .select()
+      .from(farmerTasks)
+      .where(eq(farmerTasks.userId, userId));
+  }
+
+  async getTasksByDate(userId: number, date: Date): Promise<FarmerTask[]> {
+    // Format the date to match SQL date format (YYYY-MM-DD)
+    const formattedDate = date.toISOString().split('T')[0];
+    
+    return db
+      .select()
+      .from(farmerTasks)
+      .where(
+        and(
+          eq(farmerTasks.userId, userId),
+          eq(farmerTasks.dueDate, formattedDate)
+        )
+      );
+  }
+
+  async getTasksByDateRange(userId: number, startDate: Date, endDate: Date): Promise<FarmerTask[]> {
+    // Format dates to match SQL date format (YYYY-MM-DD)
+    const formattedStartDate = startDate.toISOString().split('T')[0];
+    const formattedEndDate = endDate.toISOString().split('T')[0];
+    
+    return db
+      .select()
+      .from(farmerTasks)
+      .where(
+        and(
+          eq(farmerTasks.userId, userId),
+          gte(farmerTasks.dueDate, formattedStartDate),
+          lte(farmerTasks.dueDate, formattedEndDate)
+        )
+      );
+  }
+
+  async getTasksByPriority(userId: number, priority: string): Promise<FarmerTask[]> {
+    return db
+      .select()
+      .from(farmerTasks)
+      .where(
+        and(
+          eq(farmerTasks.userId, userId),
+          eq(farmerTasks.priority, priority)
+        )
+      );
+  }
+
+  async getTasksByCrop(cropId: number): Promise<FarmerTask[]> {
+    return db
+      .select()
+      .from(farmerTasks)
+      .where(eq(farmerTasks.relatedCropId, cropId));
+  }
+
+  async getTasksByField(fieldId: number): Promise<FarmerTask[]> {
+    return db
+      .select()
+      .from(farmerTasks)
+      .where(eq(farmerTasks.relatedFieldId, fieldId));
+  }
+
+  async getTask(id: number): Promise<FarmerTask | undefined> {
+    const [task] = await db
+      .select()
+      .from(farmerTasks)
+      .where(eq(farmerTasks.id, id));
+    
+    return task;
+  }
+
+  async createTask(taskData: InsertFarmerTask & { userId: number }): Promise<FarmerTask> {
+    const [task] = await db
+      .insert(farmerTasks)
+      .values({
+        ...taskData,
+        description: taskData.description || null,
+        completed: taskData.completed || false,
+        priority: taskData.priority || 'medium',
+        relatedCropId: taskData.relatedCropId || null,
+        relatedFieldId: taskData.relatedFieldId || null,
+        notifyBefore: taskData.notifyBefore || null,
+      })
+      .returning();
+    
+    return task;
+  }
+
+  async updateTask(id: number, taskData: Partial<FarmerTask>): Promise<FarmerTask | undefined> {
+    const [task] = await db
+      .update(farmerTasks)
+      .set({
+        ...taskData,
+        updatedAt: new Date(),
+      })
+      .where(eq(farmerTasks.id, id))
+      .returning();
+    
+    return task;
+  }
+
+  async deleteTask(id: number): Promise<boolean> {
+    try {
+      await db
+        .delete(farmerTasks)
+        .where(eq(farmerTasks.id, id));
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      return false;
+    }
+  }
+
+  async completeTask(id: number): Promise<FarmerTask | undefined> {
+    const [task] = await db
+      .update(farmerTasks)
+      .set({
+        completed: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(farmerTasks.id, id))
+      .returning();
+    
+    return task;
+  }
+
+  // Crop yield prediction methods
+  async getCropYieldPredictions(cropId: number): Promise<CropYieldPrediction[]> {
+    return db
+      .select()
+      .from(cropYieldPredictions)
+      .where(eq(cropYieldPredictions.cropId, cropId));
+  }
+
+  async createCropYieldPrediction(data: InsertCropYieldPrediction): Promise<CropYieldPrediction> {
+    const [prediction] = await db
+      .insert(cropYieldPredictions)
+      .values({
+        ...data,
+        predictedYield: data.predictedYield || null,
+        yieldUnit: data.yieldUnit || 'kg',
+        confidenceLevel: data.confidenceLevel || null,
+        factorsConsidered: data.factorsConsidered || {},
+      })
+      .returning();
+    
+    return prediction;
+  }
+
+  async updateCropYieldPrediction(id: number, data: Partial<CropYieldPrediction>): Promise<CropYieldPrediction | undefined> {
+    const [prediction] = await db
+      .update(cropYieldPredictions)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(cropYieldPredictions.id, id))
+      .returning();
+    
+    return prediction;
+  }
 }
 
 // Memory Storage implementation kept for reference
@@ -359,12 +600,18 @@ export class MemStorage implements IStorage {
   private fields: Map<number, Field>;
   private crops: Map<number, Crop>;
   private cropActivities: Map<number, CropActivity>;
+  private weatherPrefs: Map<number, WeatherPreferences>;
+  private tasks: Map<number, FarmerTask>;
+  private yieldPredictions: Map<number, CropYieldPrediction>;
   private userId: number;
   private profileId: number;
   private inquiryId: number;
   private fieldId: number;
   private cropId: number;
   private activityId: number;
+  private prefsId: number;
+  private taskId: number;
+  private predictionId: number;
   public sessionStore: session.Store;
 
   constructor() {
@@ -374,12 +621,18 @@ export class MemStorage implements IStorage {
     this.fields = new Map();
     this.crops = new Map();
     this.cropActivities = new Map();
+    this.weatherPrefs = new Map();
+    this.tasks = new Map();
+    this.yieldPredictions = new Map();
     this.userId = 1;
     this.profileId = 1;
     this.inquiryId = 1;
     this.fieldId = 1;
     this.cropId = 1;
     this.activityId = 1;
+    this.prefsId = 1;
+    this.taskId = 1;
+    this.predictionId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
     });
@@ -669,6 +922,238 @@ export class MemStorage implements IStorage {
       this.cropActivities.delete(id);
     }
     return exists;
+  }
+  
+  // Weather preferences methods
+  async getWeatherPreferences(userId: number): Promise<WeatherPreferences | undefined> {
+    return Array.from(this.weatherPrefs.values()).find(
+      (prefs) => prefs.userId === userId,
+    );
+  }
+
+  async createWeatherPreferences(data: InsertWeatherPreferences & { userId: number }): Promise<WeatherPreferences> {
+    const id = this.prefsId++;
+    const now = new Date();
+    const prefs: WeatherPreferences = {
+      ...data,
+      id,
+      locations: data.locations || [],
+      alertsEnabled: data.alertsEnabled ?? true,
+      temperatureUnit: data.temperatureUnit || 'celsius',
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    this.weatherPrefs.set(id, prefs);
+    return prefs;
+  }
+
+  async updateWeatherPreferences(userId: number, data: Partial<WeatherPreferences>): Promise<WeatherPreferences | undefined> {
+    const prefs = await this.getWeatherPreferences(userId);
+    if (!prefs) return undefined;
+    
+    const updatedPrefs: WeatherPreferences = {
+      ...prefs,
+      ...data,
+      id: prefs.id, // Ensure id doesn't change
+      userId: prefs.userId, // Ensure userId doesn't change
+      updatedAt: new Date(),
+    };
+    
+    this.weatherPrefs.set(prefs.id, updatedPrefs);
+    return updatedPrefs;
+  }
+
+  // Farmer tasks methods
+  async getTasks(userId: number): Promise<FarmerTask[]> {
+    return Array.from(this.tasks.values()).filter(
+      (task) => task.userId === userId,
+    );
+  }
+
+  async getTasksByDate(userId: number, date: Date): Promise<FarmerTask[]> {
+    const dateString = date.toISOString().split('T')[0]; // Get YYYY-MM-DD format
+    
+    return Array.from(this.tasks.values()).filter(
+      (task) => {
+        // Safely convert any date format to YYYY-MM-DD string
+        let taskDate: string;
+        
+        if (typeof task.dueDate === 'string') {
+          // If it's a string, try to parse it
+          try {
+            taskDate = new Date(task.dueDate).toISOString().split('T')[0];
+          } catch (e) {
+            // If parsing fails, just use the string for comparison
+            taskDate = task.dueDate;
+          }
+        } else if (task.dueDate && typeof task.dueDate === 'object' && 'toISOString' in task.dueDate) {
+          // If it's a Date-like object, convert to string
+          taskDate = task.dueDate.toISOString().split('T')[0];
+        } else {
+          // If it's something else, return false to exclude it
+          return false;
+        }
+          
+        return task.userId === userId && taskDate === dateString;
+      }
+    );
+  }
+
+  async getTasksByDateRange(userId: number, startDate: Date, endDate: Date): Promise<FarmerTask[]> {
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+    
+    return Array.from(this.tasks.values()).filter(
+      (task) => {
+        // Safely convert any date format to YYYY-MM-DD string
+        let taskDateStr: string;
+        
+        if (typeof task.dueDate === 'string') {
+          // If it's a string, try to parse it
+          try {
+            taskDateStr = new Date(task.dueDate).toISOString().split('T')[0];
+          } catch (e) {
+            // If parsing fails, just use the string for comparison
+            taskDateStr = task.dueDate;
+          }
+        } else if (task.dueDate && typeof task.dueDate === 'object' && 'toISOString' in task.dueDate) {
+          // If it's a Date-like object, convert to string
+          taskDateStr = task.dueDate.toISOString().split('T')[0];
+        } else {
+          // If it's something else, return false to exclude it
+          return false;
+        }
+          
+        return (
+          task.userId === userId && 
+          taskDateStr >= startDateStr && 
+          taskDateStr <= endDateStr
+        );
+      }
+    );
+  }
+
+  async getTasksByPriority(userId: number, priority: string): Promise<FarmerTask[]> {
+    return Array.from(this.tasks.values()).filter(
+      (task) => task.userId === userId && task.priority === priority,
+    );
+  }
+
+  async getTasksByCrop(cropId: number): Promise<FarmerTask[]> {
+    return Array.from(this.tasks.values()).filter(
+      (task) => task.relatedCropId === cropId,
+    );
+  }
+
+  async getTasksByField(fieldId: number): Promise<FarmerTask[]> {
+    return Array.from(this.tasks.values()).filter(
+      (task) => task.relatedFieldId === fieldId,
+    );
+  }
+
+  async getTask(id: number): Promise<FarmerTask | undefined> {
+    return this.tasks.get(id);
+  }
+
+  async createTask(taskData: InsertFarmerTask & { userId: number }): Promise<FarmerTask> {
+    const id = this.taskId++;
+    const now = new Date();
+    const task: FarmerTask = {
+      ...taskData,
+      id,
+      description: taskData.description || null,
+      completed: taskData.completed || false,
+      priority: taskData.priority || 'medium',
+      relatedCropId: taskData.relatedCropId || null,
+      relatedFieldId: taskData.relatedFieldId || null,
+      notifyBefore: taskData.notifyBefore || null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    this.tasks.set(id, task);
+    return task;
+  }
+
+  async updateTask(id: number, taskData: Partial<FarmerTask>): Promise<FarmerTask | undefined> {
+    const task = await this.getTask(id);
+    if (!task) return undefined;
+    
+    const updatedTask: FarmerTask = {
+      ...task,
+      ...taskData,
+      id, // Ensure id doesn't change
+      userId: task.userId, // Ensure userId doesn't change
+      updatedAt: new Date(),
+    };
+    
+    this.tasks.set(id, updatedTask);
+    return updatedTask;
+  }
+
+  async deleteTask(id: number): Promise<boolean> {
+    const exists = this.tasks.has(id);
+    if (exists) {
+      this.tasks.delete(id);
+    }
+    return exists;
+  }
+
+  async completeTask(id: number): Promise<FarmerTask | undefined> {
+    const task = await this.getTask(id);
+    if (!task) return undefined;
+    
+    const completedTask: FarmerTask = {
+      ...task,
+      completed: true,
+      updatedAt: new Date(),
+    };
+    
+    this.tasks.set(id, completedTask);
+    return completedTask;
+  }
+
+  // Crop yield prediction methods
+  async getCropYieldPredictions(cropId: number): Promise<CropYieldPrediction[]> {
+    return Array.from(this.yieldPredictions.values()).filter(
+      (prediction) => prediction.cropId === cropId,
+    );
+  }
+
+  async createCropYieldPrediction(data: InsertCropYieldPrediction): Promise<CropYieldPrediction> {
+    const id = this.predictionId++;
+    const now = new Date();
+    const prediction: CropYieldPrediction = {
+      ...data,
+      id,
+      predictedYield: data.predictedYield || null,
+      yieldUnit: data.yieldUnit || 'kg',
+      confidenceLevel: data.confidenceLevel || null,
+      factorsConsidered: data.factorsConsidered || {},
+      predictionDate: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    this.yieldPredictions.set(id, prediction);
+    return prediction;
+  }
+
+  async updateCropYieldPrediction(id: number, data: Partial<CropYieldPrediction>): Promise<CropYieldPrediction | undefined> {
+    const prediction = this.yieldPredictions.get(id);
+    if (!prediction) return undefined;
+    
+    const updatedPrediction: CropYieldPrediction = {
+      ...prediction,
+      ...data,
+      id, // Ensure id doesn't change
+      cropId: prediction.cropId, // Ensure cropId doesn't change
+      updatedAt: new Date(),
+    };
+    
+    this.yieldPredictions.set(id, updatedPrediction);
+    return updatedPrediction;
   }
 }
 

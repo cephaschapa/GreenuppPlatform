@@ -7,7 +7,11 @@ import {
   insertFieldSchema,
   insertCropSchema,
   insertCropActivitySchema,
-  fields, crops, cropActivities
+  insertWeatherPreferencesSchema,
+  insertFarmerTaskSchema,
+  insertCropYieldPredictionSchema,
+  fields, crops, cropActivities,
+  weatherPreferences, farmerTasks, cropYieldPredictions
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -731,6 +735,585 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting crop activity:", error);
       res.status(500).json({ message: "Failed to delete activity" });
+    }
+  });
+  
+  // Weather Preferences Routes
+  
+  // Get weather preferences
+  app.get("/api/weather-preferences", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const preferences = await storage.getWeatherPreferences(req.user.id);
+      if (!preferences) {
+        return res.status(404).json({ message: "Weather preferences not found" });
+      }
+      
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error fetching weather preferences:", error);
+      res.status(500).json({ message: "Failed to retrieve weather preferences" });
+    }
+  });
+  
+  // Create weather preferences
+  app.post("/api/weather-preferences", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // Check if preferences already exist
+      const existingPrefs = await storage.getWeatherPreferences(req.user.id);
+      if (existingPrefs) {
+        return res.status(409).json({ message: "Weather preferences already exist" });
+      }
+      
+      // Validate and create preferences
+      const prefsData = insertWeatherPreferencesSchema.parse(req.body);
+      const newPrefs = await storage.createWeatherPreferences({
+        ...prefsData,
+        userId: req.user.id
+      });
+      
+      res.status(201).json(newPrefs);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error creating weather preferences:", error);
+        res.status(500).json({ message: "Failed to create weather preferences" });
+      }
+    }
+  });
+  
+  // Update weather preferences
+  app.patch("/api/weather-preferences", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // Validate and update preferences
+      const prefsData = insertWeatherPreferencesSchema.partial().parse(req.body);
+      const updatedPrefs = await storage.updateWeatherPreferences(req.user.id, prefsData);
+      
+      if (!updatedPrefs) {
+        return res.status(404).json({ message: "Weather preferences not found" });
+      }
+      
+      res.json(updatedPrefs);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error updating weather preferences:", error);
+        res.status(500).json({ message: "Failed to update weather preferences" });
+      }
+    }
+  });
+  
+  // Task Management Routes
+  
+  // Get all tasks for the authenticated farmer
+  app.get("/api/tasks", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const tasks = await storage.getTasks(req.user.id);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      res.status(500).json({ message: "Failed to retrieve tasks" });
+    }
+  });
+  
+  // Get tasks by date
+  app.get("/api/tasks/date/:date", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const dateParam = req.params.date;
+      
+      // Validate date format (YYYY-MM-DD)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+        return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD" });
+      }
+      
+      const date = new Date(dateParam);
+      const tasks = await storage.getTasksByDate(req.user.id, date);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching tasks by date:", error);
+      res.status(500).json({ message: "Failed to retrieve tasks" });
+    }
+  });
+  
+  // Get tasks by date range
+  app.get("/api/tasks/range/:startDate/:endDate", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const startDateParam = req.params.startDate;
+      const endDateParam = req.params.endDate;
+      
+      // Validate date format (YYYY-MM-DD)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(startDateParam) || !/^\d{4}-\d{2}-\d{2}$/.test(endDateParam)) {
+        return res.status(400).json({ message: "Invalid date format. Use YYYY-MM-DD" });
+      }
+      
+      const startDate = new Date(startDateParam);
+      const endDate = new Date(endDateParam);
+      
+      if (startDate > endDate) {
+        return res.status(400).json({ message: "Start date must be before end date" });
+      }
+      
+      const tasks = await storage.getTasksByDateRange(req.user.id, startDate, endDate);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching tasks by date range:", error);
+      res.status(500).json({ message: "Failed to retrieve tasks" });
+    }
+  });
+  
+  // Get tasks by priority
+  app.get("/api/tasks/priority/:priority", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const priority = req.params.priority;
+      if (!['low', 'medium', 'high'].includes(priority)) {
+        return res.status(400).json({ message: "Invalid priority. Must be 'low', 'medium', or 'high'" });
+      }
+      
+      const tasks = await storage.getTasksByPriority(req.user.id, priority);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching tasks by priority:", error);
+      res.status(500).json({ message: "Failed to retrieve tasks" });
+    }
+  });
+  
+  // Get tasks by crop
+  app.get("/api/crops/:cropId/tasks", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const cropId = parseInt(req.params.cropId);
+      if (isNaN(cropId)) {
+        return res.status(400).json({ message: "Invalid crop ID" });
+      }
+      
+      // Verify crop belongs to user
+      const crop = await storage.getCrop(cropId);
+      if (!crop) {
+        return res.status(404).json({ message: "Crop not found" });
+      }
+      
+      if (crop.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to access tasks for this crop" });
+      }
+      
+      const tasks = await storage.getTasksByCrop(cropId);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching tasks for crop:", error);
+      res.status(500).json({ message: "Failed to retrieve tasks" });
+    }
+  });
+  
+  // Get tasks by field
+  app.get("/api/fields/:fieldId/tasks", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const fieldId = parseInt(req.params.fieldId);
+      if (isNaN(fieldId)) {
+        return res.status(400).json({ message: "Invalid field ID" });
+      }
+      
+      // Verify field belongs to user
+      const field = await storage.getField(fieldId);
+      if (!field) {
+        return res.status(404).json({ message: "Field not found" });
+      }
+      
+      if (field.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to access tasks for this field" });
+      }
+      
+      const tasks = await storage.getTasksByField(fieldId);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching tasks for field:", error);
+      res.status(500).json({ message: "Failed to retrieve tasks" });
+    }
+  });
+  
+  // Get a specific task
+  app.get("/api/tasks/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const taskId = parseInt(req.params.id);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ message: "Invalid task ID" });
+      }
+      
+      const task = await storage.getTask(taskId);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      // Ensure the task belongs to the authenticated user
+      if (task.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to access this task" });
+      }
+      
+      res.json(task);
+    } catch (error) {
+      console.error("Error fetching task:", error);
+      res.status(500).json({ message: "Failed to retrieve task" });
+    }
+  });
+  
+  // Create a new task
+  app.post("/api/tasks", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // Validate and create task
+      const taskData = insertFarmerTaskSchema.parse(req.body);
+      
+      // If relatedCropId is provided, ensure it belongs to the user
+      if (taskData.relatedCropId) {
+        const crop = await storage.getCrop(taskData.relatedCropId);
+        if (!crop) {
+          return res.status(404).json({ message: "Related crop not found" });
+        }
+        
+        if (crop.userId !== req.user.id) {
+          return res.status(403).json({ message: "You don't have permission to associate tasks with this crop" });
+        }
+      }
+      
+      // If relatedFieldId is provided, ensure it belongs to the user
+      if (taskData.relatedFieldId) {
+        const field = await storage.getField(taskData.relatedFieldId);
+        if (!field) {
+          return res.status(404).json({ message: "Related field not found" });
+        }
+        
+        if (field.userId !== req.user.id) {
+          return res.status(403).json({ message: "You don't have permission to associate tasks with this field" });
+        }
+      }
+      
+      const newTask = await storage.createTask({
+        ...taskData,
+        userId: req.user.id
+      });
+      
+      res.status(201).json(newTask);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error creating task:", error);
+        res.status(500).json({ message: "Failed to create task" });
+      }
+    }
+  });
+  
+  // Update a task
+  app.patch("/api/tasks/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const taskId = parseInt(req.params.id);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ message: "Invalid task ID" });
+      }
+      
+      // Check if task exists and belongs to user
+      const existingTask = await storage.getTask(taskId);
+      if (!existingTask) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      if (existingTask.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to update this task" });
+      }
+      
+      // Validate and update task
+      const taskData = insertFarmerTaskSchema.partial().parse(req.body);
+      
+      // If relatedCropId is changed, ensure it belongs to the user
+      if (taskData.relatedCropId && taskData.relatedCropId !== existingTask.relatedCropId) {
+        const crop = await storage.getCrop(taskData.relatedCropId);
+        if (!crop) {
+          return res.status(404).json({ message: "Related crop not found" });
+        }
+        
+        if (crop.userId !== req.user.id) {
+          return res.status(403).json({ message: "You don't have permission to associate tasks with this crop" });
+        }
+      }
+      
+      // If relatedFieldId is changed, ensure it belongs to the user
+      if (taskData.relatedFieldId && taskData.relatedFieldId !== existingTask.relatedFieldId) {
+        const field = await storage.getField(taskData.relatedFieldId);
+        if (!field) {
+          return res.status(404).json({ message: "Related field not found" });
+        }
+        
+        if (field.userId !== req.user.id) {
+          return res.status(403).json({ message: "You don't have permission to associate tasks with this field" });
+        }
+      }
+      
+      const updatedTask = await storage.updateTask(taskId, taskData);
+      res.json(updatedTask);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error updating task:", error);
+        res.status(500).json({ message: "Failed to update task" });
+      }
+    }
+  });
+  
+  // Delete a task
+  app.delete("/api/tasks/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const taskId = parseInt(req.params.id);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ message: "Invalid task ID" });
+      }
+      
+      // Check if task exists and belongs to user
+      const existingTask = await storage.getTask(taskId);
+      if (!existingTask) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      if (existingTask.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to delete this task" });
+      }
+      
+      // Delete task
+      const success = await storage.deleteTask(taskId);
+      
+      if (success) {
+        res.json({ success: true, message: "Task deleted successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to delete task" });
+      }
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      res.status(500).json({ message: "Failed to delete task" });
+    }
+  });
+  
+  // Complete a task
+  app.post("/api/tasks/:id/complete", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const taskId = parseInt(req.params.id);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ message: "Invalid task ID" });
+      }
+      
+      // Check if task exists and belongs to user
+      const existingTask = await storage.getTask(taskId);
+      if (!existingTask) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      if (existingTask.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to complete this task" });
+      }
+      
+      // Complete task
+      const completedTask = await storage.completeTask(taskId);
+      
+      if (completedTask) {
+        res.json({ success: true, message: "Task completed successfully", task: completedTask });
+      } else {
+        res.status(500).json({ message: "Failed to complete task" });
+      }
+    } catch (error) {
+      console.error("Error completing task:", error);
+      res.status(500).json({ message: "Failed to complete task" });
+    }
+  });
+  
+  // Crop Yield Prediction Routes
+  
+  // Get all yield predictions for a crop
+  app.get("/api/crops/:cropId/predictions", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const cropId = parseInt(req.params.cropId);
+      if (isNaN(cropId)) {
+        return res.status(400).json({ message: "Invalid crop ID" });
+      }
+      
+      // Verify crop belongs to user
+      const crop = await storage.getCrop(cropId);
+      if (!crop) {
+        return res.status(404).json({ message: "Crop not found" });
+      }
+      
+      if (crop.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to access predictions for this crop" });
+      }
+      
+      const predictions = await storage.getCropYieldPredictions(cropId);
+      res.json(predictions);
+    } catch (error) {
+      console.error("Error fetching yield predictions:", error);
+      res.status(500).json({ message: "Failed to retrieve yield predictions" });
+    }
+  });
+  
+  // Create a yield prediction for a crop
+  app.post("/api/crops/:cropId/predictions", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const cropId = parseInt(req.params.cropId);
+      if (isNaN(cropId)) {
+        return res.status(400).json({ message: "Invalid crop ID" });
+      }
+      
+      // Verify crop belongs to user
+      const crop = await storage.getCrop(cropId);
+      if (!crop) {
+        return res.status(404).json({ message: "Crop not found" });
+      }
+      
+      if (crop.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to create predictions for this crop" });
+      }
+      
+      // Validate prediction data
+      const predictionData = insertCropYieldPredictionSchema.parse({
+        ...req.body,
+        cropId
+      });
+      
+      const newPrediction = await storage.createCropYieldPrediction(predictionData);
+      res.status(201).json(newPrediction);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        console.error("Error creating yield prediction:", error);
+        res.status(500).json({ message: "Failed to create yield prediction" });
+      }
+    }
+  });
+  
+  // Generate a yield prediction using AI
+  app.post("/api/crops/:cropId/predictions/generate", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const cropId = parseInt(req.params.cropId);
+      if (isNaN(cropId)) {
+        return res.status(400).json({ message: "Invalid crop ID" });
+      }
+      
+      // Verify crop belongs to user
+      const crop = await storage.getCrop(cropId);
+      if (!crop) {
+        return res.status(404).json({ message: "Crop not found" });
+      }
+      
+      if (crop.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to create predictions for this crop" });
+      }
+      
+      // Import the AI prediction generator dynamically to avoid circular dependencies
+      const { generateCropYieldPrediction } = await import('./ai');
+      
+      // Get additional field information if available
+      const field = crop.fieldId ? await storage.getField(crop.fieldId) : null;
+      
+      // Additional data from request body (optional)
+      const additionalData = req.body || {};
+      
+      // Prepare data for AI prediction
+      const cropData = {
+        cropId: crop.id,
+        cropType: crop.name,
+        plantingDate: crop.plantingDate,
+        harvestDate: crop.expectedHarvestDate, // Use the correct field name
+        fieldSize: field ? field.size : additionalData.fieldSize,
+        fieldLocation: field ? field.location : additionalData.location,
+        soilType: field ? field.soilType : additionalData.soilType,
+        climate: additionalData.climate,
+        irrigation: additionalData.irrigation,
+        fertilizers: additionalData.fertilizers
+      };
+      
+      // Generate prediction with OpenAI
+      const predictionData = await generateCropYieldPrediction(cropData);
+      
+      // Save prediction to database
+      const newPrediction = await storage.createCropYieldPrediction(predictionData);
+      
+      res.status(201).json({
+        success: true,
+        message: "AI-generated yield prediction created successfully",
+        prediction: newPrediction
+      });
+    } catch (error) {
+      console.error("Error generating AI yield prediction:", error);
+      res.status(500).json({ message: "Failed to generate yield prediction" });
     }
   });
   

@@ -188,9 +188,76 @@ export const insertCropActivitySchema = createInsertSchema(cropActivities).omit(
 });
 
 // Crop management types
+// Weather preferences for farmers
+export const weatherPreferences = pgTable("weather_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  locations: text("locations").array(),
+  alertsEnabled: boolean("alerts_enabled").default(true),
+  temperatureUnit: text("temperature_unit").default('celsius'),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Farmer tasks and reminders
+export const farmerTasks = pgTable("farmer_tasks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  dueDate: date("due_date").notNull(),
+  completed: boolean("completed").default(false),
+  priority: text("priority").default('medium'), // low, medium, high
+  relatedCropId: integer("related_crop_id").references(() => crops.id),
+  relatedFieldId: integer("related_field_id").references(() => fields.id),
+  notifyBefore: integer("notify_before"), // days before due date to notify
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Crop yield predictions
+export const cropYieldPredictions = pgTable("crop_yield_predictions", {
+  id: serial("id").primaryKey(),
+  cropId: integer("crop_id").notNull().references(() => crops.id),
+  predictedYield: decimal("predicted_yield", { precision: 10, scale: 2 }),
+  yieldUnit: text("yield_unit").default('kg'),
+  confidenceLevel: decimal("confidence_level", { precision: 5, scale: 2 }), // 0-100%
+  factorsConsidered: jsonb("factors_considered").$type<Record<string, any>>(), // weather, soil, etc.
+  predictionDate: timestamp("prediction_date").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Create schemas for new tables
+export const insertWeatherPreferencesSchema = createInsertSchema(weatherPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFarmerTaskSchema = createInsertSchema(farmerTasks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCropYieldPredictionSchema = createInsertSchema(cropYieldPredictions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertField = z.infer<typeof insertFieldSchema>;
 export type Field = typeof fields.$inferSelect;
 export type InsertCrop = z.infer<typeof insertCropSchema>;
 export type Crop = typeof crops.$inferSelect;
 export type InsertCropActivity = z.infer<typeof insertCropActivitySchema>;
 export type CropActivity = typeof cropActivities.$inferSelect;
+
+// New types for farmer features
+export type InsertWeatherPreferences = z.infer<typeof insertWeatherPreferencesSchema>;
+export type WeatherPreferences = typeof weatherPreferences.$inferSelect;
+export type InsertFarmerTask = z.infer<typeof insertFarmerTaskSchema>;
+export type FarmerTask = typeof farmerTasks.$inferSelect;
+export type InsertCropYieldPrediction = z.infer<typeof insertCropYieldPredictionSchema>;
+export type CropYieldPrediction = typeof cropYieldPredictions.$inferSelect;
