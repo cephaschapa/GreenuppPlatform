@@ -261,3 +261,23 @@ export type InsertFarmerTask = z.infer<typeof insertFarmerTaskSchema>;
 export type FarmerTask = typeof farmerTasks.$inferSelect;
 export type InsertCropYieldPrediction = z.infer<typeof insertCropYieldPredictionSchema>;
 export type CropYieldPrediction = typeof cropYieldPredictions.$inferSelect;
+
+// Push notification subscriptions
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;

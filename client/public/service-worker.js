@@ -1,6 +1,7 @@
 // Service Worker for Greenupp PWA
 const CACHE_NAME = 'greenupp-cache-v1';
 const DYNAMIC_CACHE_NAME = 'greenupp-dynamic-cache-v1';
+const NOTIFICATION_ICON = '/icon-192x192.png';
 
 // Assets to cache on install
 const STATIC_ASSETS = [
@@ -183,3 +184,104 @@ function getOfflineData() {
 function removeOfflineItem(id) {
   // This is a placeholder - implementation happens in indexedDB.js
 }
+
+// Handle push events for notifications
+self.addEventListener('push', (event) => {
+  if (!event.data) {
+    console.log('Push event but no data');
+    return;
+  }
+
+  try {
+    const data = event.data.json();
+    console.log('Push notification received:', data);
+    
+    // Extract data from the notification payload
+    const options = {
+      body: data.message || data.body || 'New notification from Greenupp',
+      icon: data.icon || NOTIFICATION_ICON,
+      badge: data.badge || NOTIFICATION_ICON,
+      vibrate: [100, 50, 100],
+      timestamp: data.timestamp || Date.now(),
+      tag: data.tag || 'greenupp-notification',
+      data: {
+        dateOfArrival: Date.now(),
+        primaryKey: data.id || 1,
+        url: data.url || '/',
+        ...data.data
+      },
+      actions: data.actions || []
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(data.title || 'Greenupp Notification', options)
+    );
+  } catch (error) {
+    console.error('Error processing push notification:', error);
+    
+    // Fallback for malformed push data
+    event.waitUntil(
+      self.registration.showNotification('Greenupp Notification', {
+        body: 'New notification received',
+        icon: NOTIFICATION_ICON,
+        badge: NOTIFICATION_ICON
+      })
+    );
+  }
+});
+
+// Handle notification click events
+self.addEventListener('notificationclick', (event) => {
+  console.log('Notification clicked:', event.notification);
+  
+  // Close the notification
+  event.notification.close();
+
+  // Check if action button was clicked
+  if (event.action) {
+    console.log('Action clicked:', event.action);
+    // Handle specific actions if needed
+  }
+
+  // Get the target URL from notification data
+  let url = '/';
+  try {
+    if (event.notification.data && event.notification.data.url) {
+      url = event.notification.data.url;
+    }
+  } catch (err) {
+    console.error('Error processing notification data:', err);
+  }
+
+  // This looks to see if the current window is open and focuses if it is
+  event.waitUntil(
+    clients.matchAll({
+      type: "window",
+      includeUncontrolled: true
+    }).then((clientList) => {
+      // If a window is already open, try to focus it
+      for (const client of clientList) {
+        // First try to match exact URL
+        if (client.url === url && 'focus' in client) {
+          return client.focus();
+        }
+        
+        // Then try to match origin
+        const clientUrl = new URL(client.url);
+        const targetUrl = new URL(url, self.location.origin);
+        
+        if (clientUrl.origin === targetUrl.origin && 'focus' in client) {
+          client.focus();
+          return client.navigate(url);
+        }
+      }
+      
+      // If no window is open, open a new one
+      if (clients.openWindow) {
+        return clients.openWindow(url);
+      }
+    }).catch(err => {
+      console.error('Error handling notification click:', err);
+    })
+  );
+});

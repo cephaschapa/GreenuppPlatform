@@ -1,6 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { setupPushAPI } from "./push";
 import { 
   contactFormSchema, 
   insertFarmerProfileSchema, 
@@ -1331,6 +1332,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to generate yield prediction" });
     }
   });
+  
+  // Set up push notification API
+  setupPushAPI(app);
   
   // Catch-all route for API errors
   app.use("/api/*", (req, res) => {
