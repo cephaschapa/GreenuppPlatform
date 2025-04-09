@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
-import BasicHome from "@/pages/BasicHome"; // Using simplified home page temporarily
+import BasicHome from "@/pages/BasicHome";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 function Router() {
@@ -17,38 +17,6 @@ function Router() {
     </Switch>
   );
 }
-
-// Commenting out PWA functionality temporarily to debug rendering issues
-/*
-function PWAInitializer() {
-  const { toast } = useToast();
-  
-  useEffect(() => {
-    // Setup PWA functionality
-    setupPWA();
-    
-    // Handle service worker updates
-    setupServiceWorkerUpdates(() => {
-      toast({
-        title: "Update Available",
-        description: "A new version of the app is available. Refresh to update.",
-        variant: "default",
-        action: (
-          <button 
-            className="bg-primary text-white px-3 py-1 rounded-md text-xs"
-            onClick={() => window.location.reload()}
-          >
-            Update
-          </button>
-        ),
-        duration: 0, // Don't auto-dismiss
-      });
-    });
-  }, []);
-  
-  return null;
-}
-*/
 
 function App() {
   return (

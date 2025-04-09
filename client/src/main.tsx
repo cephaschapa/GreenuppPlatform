@@ -1,11 +1,10 @@
 import { createRoot } from "react-dom/client";
-import MinimalApp from "./MinimalApp";
+import App from "./App";
 import "./index.css";
 
 // Set document title
-document.title = "Greenupp - Minimal Test";
+document.title = "Greenupp - Future of Agriculture";
 
-// Render a minimal app while we debug
 createRoot(document.getElementById("root")!).render(
-  <MinimalApp />
+  <App />
 );
