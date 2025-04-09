@@ -101,34 +101,71 @@ export async function getSubscriptionStatus(): Promise<boolean> {
 
 // Send the subscription to the server
 async function saveSubscription(subscription: PushSubscription): Promise<Response> {
-  return fetch('/api/push/subscribe', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(subscription),
-  });
+  try {
+    const response = await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(subscription),
+      credentials: 'include' // Important for authentication cookies
+    });
+    
+    if (!response.ok) {
+      console.error('Failed to save subscription', response.status, await response.text());
+      throw new Error(`Failed to save subscription: ${response.status}`);
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('Error saving subscription:', error);
+    throw error;
+  }
 }
 
 // Remove the subscription from the server
 async function deleteSubscription(subscription: PushSubscription): Promise<Response> {
-  return fetch('/api/push/unsubscribe', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(subscription),
-  });
+  try {
+    const response = await fetch('/api/push/unsubscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(subscription),
+      credentials: 'include' // Important for authentication cookies
+    });
+    
+    if (!response.ok) {
+      console.error('Failed to delete subscription', response.status, await response.text());
+      throw new Error(`Failed to delete subscription: ${response.status}`);
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('Error deleting subscription:', error);
+    throw error;
+  }
 }
 
 // Test notification - triggers a test push notification
 export async function sendTestNotification(): Promise<boolean> {
   try {
+    console.log('Sending test notification request...');
     const response = await fetch('/api/push/test', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include' // Important for authentication cookies
     });
     
-    return response.ok;
+    if (!response.ok) {
+      console.error('Failed to send test notification', response.status, await response.text());
+      return false;
+    }
+    
+    console.log('Test notification sent successfully');
+    return true;
   } catch (error) {
     console.error('Error sending test notification:', error);
     return false;

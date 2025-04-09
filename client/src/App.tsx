@@ -13,6 +13,7 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { setupPWA, setupServiceWorkerUpdates } from "@/lib/pwa";
 import { useToast } from "@/hooks/use-toast";
+import { OfflineProvider } from "@/components/OfflineProvider";
 
 // Import farmer-specific pages
 import FieldsPage from "@/pages/farmer/FieldsPage";
@@ -75,9 +76,12 @@ function App() {
     <ThemeProvider defaultTheme="dark">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <PWAInitializer />
-          <Router />
-          <Toaster />
+          {/* Temporarily disabled OfflineProvider to fix rendering issues */}
+          {/* <OfflineProvider> */}
+            <PWAInitializer />
+            <Router />
+            <Toaster />
+          {/* </OfflineProvider> */}
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>

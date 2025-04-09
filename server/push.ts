@@ -110,12 +110,19 @@ export function setupPushAPI(app: Express) {
 
   // Send test notification
   app.post("/api/push/test", async (req, res) => {
+    console.log("Test notification endpoint called");
+    
     if (!req.isAuthenticated() || !req.user) {
+      console.log("Test notification: User not authenticated");
       return res.status(401).json({ message: "Not authenticated" });
     }
 
     try {
-      const subscriptions = await storage.getUserPushSubscriptions(req.user.id);
+      const userId = req.user.id;
+      console.log(`Test notification: Getting subscriptions for user ${userId}`);
+      
+      const subscriptions = await storage.getUserPushSubscriptions(userId);
+      console.log(`Test notification: Found ${subscriptions.length} subscriptions`);
       
       if (subscriptions.length === 0) {
         return res.status(404).json({ message: "No push subscriptions found" });
@@ -127,6 +134,22 @@ export function setupPushAPI(app: Express) {
       // Send a test notification to all subscriptions
       await Promise.all(subscriptions.map(async (subscription) => {
         try {
+          console.log(`Sending test notification to: ${subscription.endpoint.substring(0, 30)}...`);
+          
+          const payload = JSON.stringify({
+            title: "Test Notification",
+            message: "This is a test notification from Greenupp!",
+            body: "This is a test notification from Greenupp!",
+            icon: "/icon-192x192.png",
+            badge: "/icon-192x192.png",
+            tag: "test-notification",
+            url: "/farmer/settings",
+            timestamp: Date.now(),
+            data: {
+              url: "/farmer/settings"
+            }
+          });
+          
           await webPush.sendNotification(
             {
               endpoint: subscription.endpoint,
@@ -135,22 +158,19 @@ export function setupPushAPI(app: Express) {
                 auth: subscription.auth
               }
             },
-            JSON.stringify({
-              title: "Test Notification",
-              message: "This is a test notification from Greenupp!",
-              icon: "/icons/icon-192.png",
-              badge: "/icons/badge-72.png",
-              timestamp: Date.now()
-            })
+            payload
           );
+          
+          console.log("Test notification sent successfully");
           successCount++;
         } catch (error) {
           console.error("Error sending test notification:", error);
           
           // If we get a 404 or 410, the subscription is invalid and should be removed
           if (error instanceof webPush.WebPushError && (error.statusCode === 404 || error.statusCode === 410)) {
-            await storage.deletePushSubscription(req.user.id, subscription.endpoint);
-            errors.push(`Subscription removed (${error.statusCode}): ${subscription.endpoint}`);
+            console.log(`Removing invalid subscription (${error.statusCode}): ${subscription.endpoint.substring(0, 30)}...`);
+            await storage.deletePushSubscription(userId, subscription.endpoint);
+            errors.push(`Subscription removed (${error.statusCode}): ${subscription.endpoint.substring(0, 20)}...`);
           } else if (error instanceof Error) {
             errors.push(`Failed to send: ${error.message}`);
           } else {
@@ -159,15 +179,18 @@ export function setupPushAPI(app: Express) {
         }
       }));
 
-      res.json({
+      const result = {
         success: successCount > 0,
         sent: successCount,
         total: subscriptions.length,
         errors: errors.length > 0 ? errors : undefined
-      });
+      };
+      
+      console.log("Test notification result:", result);
+      res.json(result);
     } catch (error) {
       console.error("Error sending test notification:", error);
-      res.status(500).json({ message: "Failed to send test notification" });
+      res.status(500).json({ message: "Failed to send test notification", error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 }

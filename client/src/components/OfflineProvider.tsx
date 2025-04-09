@@ -4,7 +4,8 @@ import {
   useContext, 
   useEffect, 
   useState,
-  useCallback
+  useCallback,
+  useMemo
 } from 'react';
 import { setOnlineStatus, setOfflineModeEnabled } from '@/lib/queryClient';
 import { 
@@ -16,6 +17,18 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Wifi, WifiOff, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
+// Skip type check for Service Worker Sync API
+declare global {
+  interface ServiceWorkerRegistration {
+    sync?: {
+      register(tag: string): Promise<void>;
+    };
+  }
+  interface Window {
+    SyncManager?: any;
+  }
+}
 
 interface OfflineContextType {
   isOnline: boolean;
@@ -41,77 +54,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
   const [serviceWorkerRegistered, setServiceWorkerRegistered] = useState<boolean>(false);
   const { toast } = useToast();
 
-  // Update the global state in queryClient.ts
-  useEffect(() => {
-    setOnlineStatus(isOnline);
-    setOfflineModeEnabled(offlineModeEnabled);
-    
-    // Save offline mode preference to localStorage
-    localStorage.setItem('offlineModeEnabled', offlineModeEnabled.toString());
-  }, [isOnline, offlineModeEnabled]);
-
-  // Listen for online/offline events
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      toast({
-        title: "You're back online",
-        description: pendingRequests > 0 
-          ? `You have ${pendingRequests} pending tasks to sync.` 
-          : "Your connection has been restored.",
-        variant: "default",
-      });
-    };
-    
-    const handleOffline = () => {
-      setIsOnline(false);
-      toast({
-        title: "You're offline",
-        description: offlineModeEnabled 
-          ? "Offline mode is enabled. Your changes will be saved locally." 
-          : "Offline mode is disabled. Some features may not work.",
-        variant: "destructive",
-      });
-    };
-
-    // Listen for service worker messages (sync complete)
-    const handleSyncMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'SYNC_COMPLETE') {
-        refreshPendingCount();
-        setIsSyncing(false);
-        
-        toast({
-          title: "Sync complete",
-          description: "Your offline changes have been synchronized.",
-          variant: "default",
-        });
-      }
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.addEventListener('message', handleSyncMessage);
-    }
-
-    // Initialize
-    refreshPendingCount();
-    if (!serviceWorkerRegistered) {
-      registerServiceWorker();
-    }
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-      
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.removeEventListener('message', handleSyncMessage);
-      }
-    };
-  }, [pendingRequests, offlineModeEnabled, serviceWorkerRegistered]);
-
-  // Get count of pending offline requests
+  // Define all callback functions first to avoid hook order issues
   const refreshPendingCount = useCallback(async () => {
     try {
       const requests = await getOfflineRequests();
@@ -121,7 +64,6 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Register service worker
   const registerServiceWorker = useCallback(async () => {
     if ('serviceWorker' in navigator) {
       try {
@@ -137,7 +79,6 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
     return false;
   }, []);
 
-  // Enable offline mode
   const enableOfflineMode = useCallback(() => {
     setOfflineModeEnabled(true);
     toast({
@@ -145,9 +86,8 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
       description: "Your data will be cached for offline use.",
       variant: "default",
     });
-  }, []);
+  }, [toast]);
 
-  // Disable offline mode
   const disableOfflineMode = useCallback(() => {
     setOfflineModeEnabled(false);
     toast({
@@ -155,66 +95,10 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
       description: "Offline caching has been turned off.",
       variant: "default",
     });
-  }, []);
+  }, [toast]);
 
-  // Sync pending offline requests
-  const syncOfflineData = useCallback(async () => {
-    if (!isOnline) {
-      toast({
-        title: "Cannot sync while offline",
-        description: "Please connect to the internet and try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSyncing(true);
-    
-    try {
-      // Get all pending requests
-      const requests = await getOfflineRequests();
-      
-      if (requests.length === 0) {
-        toast({
-          title: "No pending changes",
-          description: "There are no offline changes to sync.",
-          variant: "default",
-        });
-        setIsSyncing(false);
-        return;
-      }
-      
-      // If we have a service worker with background sync
-      if ('serviceWorker' in navigator && 'SyncManager' in window && navigator.serviceWorker.controller) {
-        try {
-          const registration = await navigator.serviceWorker.ready;
-          await registration.sync.register('sync-offline-data');
-          toast({
-            title: "Sync started",
-            description: "Your changes are being synchronized in the background.",
-            variant: "default",
-          });
-        } catch (error) {
-          console.error('Failed to register background sync:', error);
-          await manualSync(requests);
-        }
-      } else {
-        // Fallback to manual sync
-        await manualSync(requests);
-      }
-    } catch (error) {
-      console.error('Error syncing offline data:', error);
-      toast({
-        title: "Sync failed",
-        description: "There was an error synchronizing your offline changes.",
-        variant: "destructive",
-      });
-      setIsSyncing(false);
-    }
-  }, [isOnline]);
-
-  // Manual sync function for browsers that don't support background sync
-  const manualSync = async (requests: any[]) => {
+  // Manual sync function (defined separately to be used by syncOfflineData)
+  const manualSync = useCallback(async (requests: any[]) => {
     let successCount = 0;
     let failCount = 0;
     
@@ -248,9 +132,47 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
       description: `${successCount} requests synced successfully. ${failCount} failed.`,
       variant: failCount > 0 ? "destructive" : "default",
     });
-  };
+  }, [refreshPendingCount, toast]);
 
-  // Clear all pending offline data
+  const syncOfflineData = useCallback(async () => {
+    if (!isOnline) {
+      toast({
+        title: "Cannot sync while offline",
+        description: "Please connect to the internet and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSyncing(true);
+    
+    try {
+      // Get all pending requests
+      const requests = await getOfflineRequests();
+      
+      if (requests.length === 0) {
+        toast({
+          title: "No pending changes",
+          description: "There are no offline changes to sync.",
+          variant: "default",
+        });
+        setIsSyncing(false);
+        return;
+      }
+      
+      // Manual sync is more reliable for now - skip background sync
+      await manualSync(requests);
+    } catch (error) {
+      console.error('Error syncing offline data:', error);
+      toast({
+        title: "Sync failed",
+        description: "There was an error synchronizing your offline changes.",
+        variant: "destructive",
+      });
+      setIsSyncing(false);
+    }
+  }, [isOnline, toast, manualSync]);
+
   const clearOfflineData = useCallback(async () => {
     try {
       // Clear pending requests
@@ -277,22 +199,113 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
       });
     }
+  }, [refreshPendingCount, toast]);
+
+  // Effect hooks after all callback definitions
+  useEffect(() => {
+    setOnlineStatus(isOnline);
+    setOfflineModeEnabled(offlineModeEnabled);
+    
+    // Save offline mode preference to localStorage
+    localStorage.setItem('offlineModeEnabled', offlineModeEnabled.toString());
+  }, [isOnline, offlineModeEnabled]);
+
+  // Initialize pending request count
+  useEffect(() => {
+    refreshPendingCount();
   }, [refreshPendingCount]);
+  
+  // Register service worker if needed
+  useEffect(() => {
+    if (!serviceWorkerRegistered && 'serviceWorker' in navigator) {
+      registerServiceWorker();
+    }
+  }, [serviceWorkerRegistered, registerServiceWorker]);
+  
+  // Listen for online/offline events
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast({
+        title: "You're back online",
+        description: pendingRequests > 0 
+          ? `You have ${pendingRequests} pending tasks to sync.` 
+          : "Your connection has been restored.",
+        variant: "default",
+      });
+    };
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast({
+        title: "You're offline",
+        description: offlineModeEnabled 
+          ? "Offline mode is enabled. Your changes will be saved locally." 
+          : "Offline mode is disabled. Some features may not work.",
+        variant: "destructive",
+      });
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [pendingRequests, offlineModeEnabled, toast]);
+  
+  // Listen for service worker messages (sync complete)
+  useEffect(() => {
+    const handleSyncMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'SYNC_COMPLETE') {
+        refreshPendingCount();
+        setIsSyncing(false);
+        
+        toast({
+          title: "Sync complete",
+          description: "Your offline changes have been synchronized.",
+          variant: "default",
+        });
+      }
+    };
+    
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.addEventListener('message', handleSyncMessage);
+    }
+    
+    return () => {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.removeEventListener('message', handleSyncMessage);
+      }
+    };
+  }, [refreshPendingCount, toast]);
+
+  // Create stable context value with useMemo to prevent unnecessary rerenders
+  const contextValue = useMemo(() => ({
+    isOnline,
+    offlineModeEnabled,
+    pendingRequests,
+    isSyncing,
+    enableOfflineMode,
+    disableOfflineMode,
+    syncOfflineData,
+    clearOfflineData,
+    registerServiceWorker
+  }), [
+    isOnline,
+    offlineModeEnabled,
+    pendingRequests,
+    isSyncing,
+    enableOfflineMode,
+    disableOfflineMode,
+    syncOfflineData,
+    clearOfflineData,
+    registerServiceWorker
+  ]);
 
   return (
-    <OfflineContext.Provider
-      value={{
-        isOnline,
-        offlineModeEnabled,
-        pendingRequests,
-        isSyncing,
-        enableOfflineMode,
-        disableOfflineMode,
-        syncOfflineData,
-        clearOfflineData,
-        registerServiceWorker
-      }}
-    >
+    <OfflineContext.Provider value={contextValue}>
       {children}
       
       {/* Offline status indicator */}

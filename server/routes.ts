@@ -1334,10 +1334,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Set up push notification API
+  // This needs to come before the catch-all route
   setupPushAPI(app);
   
-  // Catch-all route for API errors
+  // Catch-all route for API errors - this must be the LAST route handler
   app.use("/api/*", (req, res) => {
+    console.log('API endpoint not found:', req.method, req.originalUrl);
     res.status(404).json({ message: "API endpoint not found" });
   });
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { OfflineStatusPanel } from "@/components/OfflineStatusPanel";
+// import { OfflineStatusPanel } from "@/components/OfflineStatusPanel"; // Temporarily disabled
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -302,7 +302,18 @@ export default function SettingsPage() {
         </TabsContent>
         
         <TabsContent value="offline" className="space-y-4">
-          <OfflineStatusPanel />
+          {/* Offline status panel temporarily disabled */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Offline Mode</CardTitle>
+              <CardDescription>
+                Manage offline functionality and data storage
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-500">Offline mode configuration is currently unavailable. The feature is being updated and will be available soon.</p>
+            </CardContent>
+          </Card>
         </TabsContent>
         
         <TabsContent value="security" className="space-y-4">
