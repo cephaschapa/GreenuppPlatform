@@ -17,6 +17,14 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { setupAuth } from "./auth";
 import { eq } from "drizzle-orm";
+import { 
+  getCoordinates, 
+  getCurrentWeather, 
+  getWeatherForecast, 
+  getAirQuality, 
+  getComprehensiveWeatherData,
+  getAgriculturalWeatherData 
+} from "./services/weatherService";
 
 // Note: We rely on the User type definition
 // that's already declared in auth.ts
@@ -288,63 +296,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Weather API endpoint
+  // Weather API endpoints
+  
+  // Get weather data by location (city name)
   app.get("/api/weather", isAuthenticated, async (req, res) => {
     try {
       const { location } = req.query;
       
-      if (!location) {
-        return res.status(400).json({ message: "Location parameter is required" });
+      if (!location || typeof location !== 'string') {
+        return res.status(400).json({ message: "Location parameter (city name) is required" });
       }
       
-      // In a real application, you would make a call to a weather API service here
-      // For now, we'll return simulated weather data
-      const weatherData = {
-        location: location,
-        current: {
-          temp: 22,
-          humidity: 65,
-          wind_speed: 12,
-          weather: [{ description: 'Partly cloudy' }]
-        },
-        daily: [
-          { 
-            date: new Date(Date.now()).toLocaleDateString(), 
-            temp: { day: 22, min: 16, max: 24 }, 
-            humidity: 65, 
-            weather: [{ description: 'Partly cloudy' }] 
-          },
-          { 
-            date: new Date(Date.now() + 86400000).toLocaleDateString(), 
-            temp: { day: 24, min: 18, max: 26 }, 
-            humidity: 60, 
-            weather: [{ description: 'Sunny' }] 
-          },
-          { 
-            date: new Date(Date.now() + 86400000 * 2).toLocaleDateString(), 
-            temp: { day: 21, min: 15, max: 23 }, 
-            humidity: 70, 
-            weather: [{ description: 'Light rain' }] 
-          },
-          { 
-            date: new Date(Date.now() + 86400000 * 3).toLocaleDateString(), 
-            temp: { day: 20, min: 14, max: 22 }, 
-            humidity: 75, 
-            weather: [{ description: 'Showers' }] 
-          },
-          { 
-            date: new Date(Date.now() + 86400000 * 4).toLocaleDateString(), 
-            temp: { day: 23, min: 17, max: 25 }, 
-            humidity: 55, 
-            weather: [{ description: 'Clear sky' }] 
-          }
-        ]
-      };
+      // Get coordinates from location name
+      const coordinates = await getCoordinates(location);
+      
+      // Get comprehensive weather data
+      const weatherData = await getComprehensiveWeatherData(coordinates);
       
       res.json(weatherData);
     } catch (error) {
       console.error("Error fetching weather data:", error);
       res.status(500).json({ message: "Failed to retrieve weather data" });
+    }
+  });
+  
+  // Get weather data by coordinates
+  app.get("/api/weather/coordinates", isAuthenticated, async (req, res) => {
+    try {
+      const { lat, lon } = req.query;
+      
+      if (!lat || !lon || typeof lat !== 'string' || typeof lon !== 'string') {
+        return res.status(400).json({ message: "Latitude and longitude parameters are required" });
+      }
+      
+      const latitude = parseFloat(lat);
+      const longitude = parseFloat(lon);
+      
+      if (isNaN(latitude) || isNaN(longitude)) {
+        return res.status(400).json({ message: "Invalid latitude or longitude values" });
+      }
+      
+      // Get comprehensive weather data
+      const weatherData = await getComprehensiveWeatherData({ lat: latitude, lon: longitude });
+      
+      res.json(weatherData);
+    } catch (error) {
+      console.error("Error fetching weather data by coordinates:", error);
+      res.status(500).json({ message: "Failed to retrieve weather data" });
+    }
+  });
+  
+  // Get agricultural weather insights
+  app.get("/api/weather/agricultural", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      const { location } = req.query;
+      
+      if (!location || typeof location !== 'string') {
+        return res.status(400).json({ message: "Location parameter (city name) is required" });
+      }
+      
+      // Get coordinates from location name
+      const coordinates = await getCoordinates(location);
+      
+      // Get agricultural weather data
+      const agriculturalData = await getAgriculturalWeatherData(coordinates);
+      
+      res.json(agriculturalData);
+    } catch (error) {
+      console.error("Error fetching agricultural weather data:", error);
+      res.status(500).json({ message: "Failed to retrieve agricultural weather data" });
     }
   });
 
@@ -749,20 +769,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const preferences = await storage.getWeatherPreferences(req.user.id);
       
-      // If no preferences are found, return an empty default object instead of 404
-      if (!preferences) {
-        return res.json({
-          id: 0,
-          userId: req.user.id,
-          locations: [],
-          alertsEnabled: true,
-          temperatureUnit: "celsius",
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
-      }
-      
-      res.json(preferences);
+      // If no preferences are found, return null
+      res.json(preferences || null);
     } catch (error) {
       console.error("Error fetching weather preferences:", error);
       res.status(500).json({ message: "Failed to retrieve weather preferences" });
@@ -776,25 +784,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      // Check if preferences already exist
-      const existingPrefs = await storage.getWeatherPreferences(req.user.id);
-      
       // Validate the request data
-      const prefsData = insertWeatherPreferencesSchema.parse(req.body);
+      const prefsData = insertWeatherPreferencesSchema.parse({
+        ...req.body,
+        userId: req.user.id
+      });
       
-      if (existingPrefs) {
-        // Update existing preferences
-        const updatedPrefs = await storage.updateWeatherPreferences(req.user.id, prefsData);
-        return res.json(updatedPrefs);
-      } else {
-        // Create new preferences
-        const newPrefs = await storage.createWeatherPreferences({
-          ...prefsData,
-          userId: req.user.id
-        });
-        
-        res.status(201).json(newPrefs);
-      }
+      // Create new preferences
+      const newPrefs = await storage.createWeatherPreferences(prefsData);
+      
+      res.status(201).json(newPrefs);
     } catch (error) {
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
@@ -807,19 +806,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Update weather preferences
-  app.patch("/api/weather-preferences", isAuthenticated, hasRole('farmer'), async (req, res) => {
+  app.patch("/api/weather-preferences/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
     try {
       if (!req.user) {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      // Validate and update preferences
-      const prefsData = insertWeatherPreferencesSchema.partial().parse(req.body);
-      const updatedPrefs = await storage.updateWeatherPreferences(req.user.id, prefsData);
+      const prefId = parseInt(req.params.id);
+      if (isNaN(prefId)) {
+        return res.status(400).json({ message: "Invalid preference ID" });
+      }
       
-      if (!updatedPrefs) {
+      // Get existing preferences to check ownership
+      const existingPrefs = await storage.getWeatherPreferenceById(prefId);
+      
+      if (!existingPrefs) {
         return res.status(404).json({ message: "Weather preferences not found" });
       }
+      
+      // Check if the preferences belong to the user
+      if (existingPrefs.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to update these preferences" });
+      }
+      
+      // Validate and update preferences
+      const prefsData = insertWeatherPreferencesSchema.partial().parse(req.body);
+      const updatedPrefs = await storage.updateWeatherPreferences(prefId, prefsData);
       
       res.json(updatedPrefs);
     } catch (error) {

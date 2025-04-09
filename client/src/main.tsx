@@ -1,7 +1,8 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { OfflineProvider } from "@/components/OfflineProvider";
+// Temporarily disable OfflineProvider to fix React hook issues
+// import { OfflineProvider } from "@/components/OfflineProvider";
 
 // Add Font Awesome
 const fontAwesome = document.createElement("link");
@@ -30,9 +31,7 @@ appleIcon.rel = "apple-touch-icon";
 appleIcon.href = "/apple-touch-icon.png";
 document.head.appendChild(appleIcon);
 
-// Render the app with Offline Provider
+// Render the app (temporarily removed OfflineProvider)
 createRoot(document.getElementById("root")!).render(
-  <OfflineProvider>
-    <App />
-  </OfflineProvider>
+  <App />
 );
