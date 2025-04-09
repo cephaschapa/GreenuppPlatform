@@ -55,10 +55,10 @@ export function CropPredictions({ crops }: { crops: any[] }) {
   const [selectedCropId, setSelectedCropId] = useState<number | null>(null);
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   
-  // Fetch predictions for the selected crop
+  // Fetch predictions for the selected crop - only if a crop is selected
   const { data: predictions, isLoading, error } = 
     useCropPredictions().fetchPredictionsForCrop(
-      selectedCropId ? selectedCropId : 0
+      selectedCropId || undefined
     );
   
   // Mutations for generating predictions
@@ -249,11 +249,11 @@ export function CropPredictions({ crops }: { crops: any[] }) {
                           <TooltipContent className="max-w-sm">
                             <div className="space-y-2 p-2">
                               {prediction.factorsConsidered && typeof prediction.factorsConsidered === 'string'
-                                ? prediction.factorsConsidered.split(',').map((factor: string, i: number) => (
+                                ? (prediction.factorsConsidered as string).split(',').map((factor: string, i: number) => (
                                     <p key={i} className="text-sm">• {factor.trim()}</p>
                                   ))
                                 : prediction.factorsConsidered && typeof prediction.factorsConsidered === 'object'
-                                  ? Object.entries(prediction.factorsConsidered).map(([key, value], i) => (
+                                  ? Object.entries(prediction.factorsConsidered as Record<string, any>).map(([key, value], i) => (
                                       <p key={i} className="text-sm">• {key}: {value}</p>
                                     ))
                                   : <p className="text-sm">No factors recorded</p>

@@ -7,10 +7,12 @@ export function useCropPredictions() {
   const { toast } = useToast();
 
   // Fetch predictions for a specific crop
-  const fetchPredictionsForCrop = (cropId: number) => {
+  const fetchPredictionsForCrop = (cropId: number | undefined) => {
     return useQuery<CropYieldPrediction[]>({
       queryKey: ["/api/crops", cropId, "predictions"],
+      enabled: !!cropId, // Only run the query if cropId is defined
       queryFn: async () => {
+        if (!cropId) return [];
         const res = await apiRequest("GET", `/api/crops/${cropId}/predictions`);
         return res.json();
       },

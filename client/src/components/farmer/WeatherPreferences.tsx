@@ -86,6 +86,9 @@ export function WeatherPreferences() {
 
   // Handle form submission
   const onSubmit = (values: z.infer<typeof preferencesSchema>) => {
+    // Log form values to help debugging
+    console.log('Form values being submitted:', values);
+    
     // Map the form values to match the schema expected by the server
     const serverData = {
       locations: values.locations,
@@ -93,11 +96,17 @@ export function WeatherPreferences() {
       temperatureUnit: values.temperatureUnit
     };
     
+    console.log('Mapped server data:', serverData);
+    console.log('Using mutation:', preferences ? 'update' : 'create');
+    
     if (preferences) {
       updatePreferencesMutation.mutate(serverData);
     } else {
       createPreferencesMutation.mutate(serverData);
     }
+    
+    // Add a click event to the submit button for debugging
+    console.log('Form submitted');
   };
 
   // Check if mutation is in progress

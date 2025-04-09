@@ -25,10 +25,19 @@ export function useWeatherPreferences() {
   // Create weather preferences
   const createPreferencesMutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await apiRequest("POST", "/api/weather-preferences", data);
-      return res.json();
+      console.log('Creating weather preferences with data:', data);
+      try {
+        const res = await apiRequest("POST", "/api/weather-preferences", data);
+        const jsonResponse = await res.json();
+        console.log('Create response:', jsonResponse);
+        return jsonResponse;
+      } catch (error) {
+        console.error('Error creating weather preferences:', error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Weather preferences successfully created:', data);
       toast({
         title: "Weather preferences saved",
         description: "Your weather preferences have been saved successfully",
@@ -36,6 +45,7 @@ export function useWeatherPreferences() {
       queryClient.invalidateQueries({ queryKey: ["/api/weather-preferences"] });
     },
     onError: (error) => {
+      console.error('Error in create mutation:', error);
       toast({
         title: "Failed to save preferences",
         description: error.message,
@@ -47,10 +57,19 @@ export function useWeatherPreferences() {
   // Update weather preferences
   const updatePreferencesMutation = useMutation({
     mutationFn: async (data: any) => {
-      const res = await apiRequest("PATCH", "/api/weather-preferences", data);
-      return res.json();
+      console.log('Updating weather preferences with data:', data);
+      try {
+        const res = await apiRequest("PATCH", "/api/weather-preferences", data);
+        const jsonResponse = await res.json();
+        console.log('Update response:', jsonResponse);
+        return jsonResponse;
+      } catch (error) {
+        console.error('Error updating weather preferences:', error);
+        throw error;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Weather preferences successfully updated:', data);
       toast({
         title: "Weather preferences updated",
         description: "Your weather preferences have been updated successfully",
@@ -58,6 +77,7 @@ export function useWeatherPreferences() {
       queryClient.invalidateQueries({ queryKey: ["/api/weather-preferences"] });
     },
     onError: (error) => {
+      console.error('Error in update mutation:', error);
       toast({
         title: "Failed to update preferences",
         description: error.message,
