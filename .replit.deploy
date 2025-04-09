@@ -1,1 +1,1 @@
-run = "node setup-db.js && npm run build"
+run = "node setup-db.js && npm run build && npm run start"

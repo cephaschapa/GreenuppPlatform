@@ -47,18 +47,24 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // Log environment for debugging
-  console.log('NODE_ENV:', process.env.NODE_ENV);
-  console.log('App environment:', app.get("env"));
+  // Log environment for debugging if needed
+  if (process.env.DEBUG_APP) {
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('App environment:', app.get("env"));
+  }
   
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
-    console.log('Setting up Vite for development');
+    if (process.env.DEBUG_APP) {
+      console.log('Setting up Vite for development');
+    }
     await setupVite(app, server);
   } else {
-    console.log('Setting up static serving for production');
+    if (process.env.DEBUG_APP) {
+      console.log('Setting up static serving for production');
+    }
     serveStatic(app);
   }
 

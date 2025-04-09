@@ -158,28 +158,40 @@ export function setupAuth(app: Express) {
 
   // User login route
   app.post("/api/login", (req, res, next) => {
-    console.log('Login attempt:', { email: req.body.email });
+    if (process.env.DEBUG_AUTH) {
+      console.log('Login attempt:', { email: req.body.email });
+    }
     
     passport.authenticate("local", (err: Error | null, user: User | false, info: { message: string } | undefined) => {
       if (err) {
-        console.log('Login error:', err);
+        if (process.env.DEBUG_AUTH) {
+          console.log('Login error:', err);
+        }
         return next(err);
       }
       
       if (!user) {
-        console.log('Login failed:', info);
+        if (process.env.DEBUG_AUTH) {
+          console.log('Login failed:', info);
+        }
         return res.status(401).json({ message: info?.message || "Login failed" });
       }
       
-      console.log('User authenticated successfully:', { id: user.id, username: user.username });
+      if (process.env.DEBUG_AUTH) {
+        console.log('User authenticated successfully:', { id: user.id, username: user.username });
+      }
       
       req.login(user as unknown as Express.User, (loginErr) => {
         if (loginErr) {
-          console.log('Login session error:', loginErr);
+          if (process.env.DEBUG_AUTH) {
+            console.log('Login session error:', loginErr);
+          }
           return next(loginErr);
         }
         
-        console.log('Session established, ID:', req.sessionID);
+        if (process.env.DEBUG_AUTH) {
+          console.log('Session established, ID:', req.sessionID);
+        }
         
         // Remove password from response
         const { password, ...userWithoutPassword } = user;
@@ -200,9 +212,12 @@ export function setupAuth(app: Express) {
 
   // Get current authenticated user
   app.get("/api/user", (req, res) => {
-    console.log('Session ID:', req.sessionID);
-    console.log('Is authenticated:', req.isAuthenticated());
-    console.log('Session:', req.session);
+    // Debugging can be enabled with environment variable
+    if (process.env.DEBUG_AUTH) {
+      console.log('Session ID:', req.sessionID);
+      console.log('Is authenticated:', req.isAuthenticated());
+      console.log('Session:', req.session);
+    }
     
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Not authenticated" });
@@ -210,7 +225,11 @@ export function setupAuth(app: Express) {
     
     // Remove password from response
     const { password, ...userWithoutPassword } = req.user as User;
-    console.log('User found:', userWithoutPassword);
+    
+    if (process.env.DEBUG_AUTH) {
+      console.log('User found:', userWithoutPassword);
+    }
+    
     res.json(userWithoutPassword);
   });
 
