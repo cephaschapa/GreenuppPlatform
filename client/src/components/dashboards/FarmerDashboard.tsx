@@ -7,13 +7,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { FarmerProfile, Field, Crop, CropActivity } from "@shared/schema";
-import { Loader2, Cloud, Droplets, Thermometer, Wind, Calendar, AlertCircle, PlusCircle, TractorIcon, Trash2, CalendarDays } from "lucide-react";
+import { Loader2, Cloud, Droplets, Thermometer, Wind, Calendar, AlertCircle, PlusCircle, TractorIcon, Trash2, CalendarDays, ClipboardList, Settings, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { queryClient } from "@/lib/queryClient";
 import CropCalendar from "../CropCalendar";
 import { CropActivityManager } from "../CropActivityManager";
 import { CropDateManager } from "../CropDateManager";
+import { TaskManager } from "../farmer/TaskManager";
+import { WeatherPreferences } from "../farmer/WeatherPreferences";
+import { CropPredictions } from "../farmer/CropPredictions";
 
 export function FarmerDashboard() {
   const { user } = useAuth();
@@ -1181,6 +1184,64 @@ export function FarmerDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Advanced Features Section */}
+      <Card className="bg-secondary/30 border-primary/20">
+        <CardHeader>
+          <CardTitle className="text-xl font-medium text-white font-space">Advanced Farm Management</CardTitle>
+          <CardDescription className="text-gray-400">
+            Intelligent tools powered by AI and data analytics
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="tasks" className="mb-4">
+            <TabsList className="bg-secondary/50 border border-primary/20">
+              <TabsTrigger value="tasks" className="data-[state=active]:bg-primary data-[state=active]:text-secondary">
+                <ClipboardList className="h-4 w-4 mr-2" />
+                Task Manager
+              </TabsTrigger>
+              <TabsTrigger value="predictions" className="data-[state=active]:bg-primary data-[state=active]:text-secondary">
+                <Sparkles className="h-4 w-4 mr-2" />
+                Crop Predictions
+              </TabsTrigger>
+              <TabsTrigger value="weather" className="data-[state=active]:bg-primary data-[state=active]:text-secondary">
+                <Settings className="h-4 w-4 mr-2" />
+                Weather Preferences
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="tasks" className="mt-4">
+              <TaskManager />
+            </TabsContent>
+            
+            <TabsContent value="predictions" className="mt-4">
+              {crops && crops.length > 0 ? (
+                <CropPredictions crops={crops} />
+              ) : (
+                <Card>
+                  <CardContent className="pt-6 text-center">
+                    <p className="text-muted-foreground mb-4">
+                      Add crops to generate AI-powered yield predictions
+                    </p>
+                    <Button 
+                      onClick={() => setIsAddCropDialogOpen(true)}
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      Add Your First Crop
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="weather" className="mt-4">
+              <WeatherPreferences />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 }
