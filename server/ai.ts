@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { InsertCropYieldPrediction, InsertPlantingRecommendation, WeatherHistory } from "@shared/schema";
+import { InsertCropYieldPrediction } from "@shared/schema";
 
 // The newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const MODEL = "gpt-4o";
@@ -8,18 +8,6 @@ const MODEL = "gpt-4o";
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-/**
- * Interface for weather planting recommendation request
- */
-interface PlantingRecommendationRequest {
-  userId: number;
-  location: string;
-  cropType: string;
-  weatherHistory: WeatherHistory[];
-  soilType?: string;
-  fieldSize?: number | string;
-}
 
 interface CropData {
   cropId: number;
@@ -117,93 +105,6 @@ export async function generateCropYieldPrediction(data: CropData): Promise<Inser
       confidenceLevel: null,
       factorsConsidered: {
         error: "Failed to generate AI prediction. Please try again later."
-      },
-    };
-  }
-}
-
-/**
- * Generate planting recommendations based on historical weather data
- */
-export async function generatePlantingRecommendations(data: PlantingRecommendationRequest): Promise<InsertPlantingRecommendation> {
-  try {
-    // Format historical weather data for the prompt
-    const weatherSummary = data.weatherHistory.map(record => ({
-      date: new Date(record.date).toISOString().split('T')[0],
-      temperature: record.temperature,
-      precipitation: record.precipitation,
-      humidity: record.humidity,
-      windSpeed: record.windSpeed,
-      conditions: record.conditions
-    }));
-
-    // Create AI prompt with weather history and crop information
-    const prompt = `
-      I need a planting recommendation based on historical weather data for growing ${data.cropType} in ${data.location}.
-      
-      Additional information:
-      Soil Type: ${data.soilType || 'Unknown'}
-      Field Size: ${data.fieldSize || 'Unknown'}
-      
-      Historical weather data for this location:
-      ${JSON.stringify(weatherSummary, null, 2)}
-      
-      Based on agricultural science and the historical weather patterns provided:
-      1. Recommend an optimal planting window (start and end dates) for ${data.cropType} in this location
-      2. Provide a confidence level for this recommendation (0-1 scale)
-      3. Explain the key weather factors that influenced this recommendation
-      
-      Respond with JSON in this format:
-      {
-        "recommendedStartDate": "YYYY-MM-DD",
-        "recommendedEndDate": "YYYY-MM-DD",
-        "confidenceLevel": "number between 0 and 1 as string",
-        "reasonsConsidered": {
-          "key factors": "explanation of how each factor influenced the recommendation"
-        }
-      }
-    `;
-
-    // Call OpenAI
-    const response = await openai.chat.completions.create({
-      model: MODEL,
-      messages: [
-        { 
-          role: "system", 
-          content: "You are an agricultural weather expert who analyzes historical weather patterns to recommend ideal planting times for crops."
-        },
-        { role: "user", content: prompt }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.3, // More deterministic for date recommendations
-    });
-
-    // Parse response
-    const result = JSON.parse(response.choices[0].message.content || "{}");
-    
-    // Format response for database
-    return {
-      userId: data.userId,
-      location: data.location,
-      cropType: data.cropType,
-      recommendedStartDate: result.recommendedStartDate || null,
-      recommendedEndDate: result.recommendedEndDate || null,
-      confidenceLevel: result.confidenceLevel || null,
-      reasonsConsidered: result.reasonsConsidered || {},
-    };
-  } catch (error) {
-    console.error("Error generating AI planting recommendations:", error);
-    
-    // Return a basic recommendation if AI fails
-    return {
-      userId: data.userId,
-      location: data.location,
-      cropType: data.cropType,
-      recommendedStartDate: null,
-      recommendedEndDate: null,
-      confidenceLevel: null,
-      reasonsConsidered: {
-        error: "Failed to generate AI planting recommendations. Please try again later."
       },
     };
   }

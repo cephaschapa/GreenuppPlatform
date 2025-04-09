@@ -17,11 +17,6 @@ import {
   type InsertFarmerTask,
   type CropYieldPrediction,
   type InsertCropYieldPrediction,
-  type PushSubscription,
-  type WeatherHistory,
-  type InsertWeatherHistory,
-  type PlantingRecommendation,
-  type InsertPlantingRecommendation,
   users,
   farmerProfiles,
   contactForm,
@@ -30,10 +25,7 @@ import {
   cropActivities,
   weatherPreferences,
   farmerTasks,
-  cropYieldPredictions,
-  pushSubscriptions,
-  weatherHistory,
-  plantingRecommendations
+  cropYieldPredictions
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -90,15 +82,6 @@ export interface IStorage {
   createWeatherPreferences(data: InsertWeatherPreferences & { userId: number }): Promise<WeatherPreferences>;
   updateWeatherPreferences(userId: number, data: Partial<WeatherPreferences>): Promise<WeatherPreferences | undefined>;
   
-  // Historical weather data
-  getWeatherHistory(location: string, startDate: Date, endDate: Date): Promise<WeatherHistory[]>;
-  saveWeatherHistory(data: InsertWeatherHistory): Promise<WeatherHistory>;
-  
-  // Planting recommendations
-  getPlantingRecommendations(userId: number, location: string, cropType?: string): Promise<PlantingRecommendation[]>;
-  getPlantingRecommendation(id: number): Promise<PlantingRecommendation | undefined>;
-  createPlantingRecommendation(data: InsertPlantingRecommendation): Promise<PlantingRecommendation>;
-  
   // Farmer tasks and reminders
   getTasks(userId: number): Promise<FarmerTask[]>;
   getTasksByDate(userId: number, date: Date): Promise<FarmerTask[]>;
@@ -116,11 +99,6 @@ export interface IStorage {
   getCropYieldPredictions(cropId: number): Promise<CropYieldPrediction[]>;
   createCropYieldPrediction(data: InsertCropYieldPrediction): Promise<CropYieldPrediction>;
   updateCropYieldPrediction(id: number, data: Partial<CropYieldPrediction>): Promise<CropYieldPrediction | undefined>;
-  
-  // Push notification subscriptions
-  savePushSubscription(userId: number, subscription: PushSubscription): Promise<PushSubscription>;
-  deletePushSubscription(userId: number, endpoint: string): Promise<boolean>;
-  getUserPushSubscriptions(userId: number): Promise<PushSubscription[]>;
   
   // For session storage
   sessionStore: session.Store;
@@ -445,84 +423,6 @@ export class DatabaseStorage implements IStorage {
     
     return prefs;
   }
-  
-  // Weather history methods
-  async getWeatherHistory(location: string, startDate: Date, endDate: Date): Promise<WeatherHistory[]> {
-    // Format dates to match SQL date format (YYYY-MM-DD)
-    const formattedStartDate = startDate.toISOString().split('T')[0];
-    const formattedEndDate = endDate.toISOString().split('T')[0];
-    
-    return db
-      .select()
-      .from(weatherHistory)
-      .where(
-        and(
-          eq(weatherHistory.location, location),
-          gte(weatherHistory.date, formattedStartDate),
-          lte(weatherHistory.date, formattedEndDate)
-        )
-      );
-  }
-  
-  async saveWeatherHistory(data: InsertWeatherHistory): Promise<WeatherHistory> {
-    const [record] = await db
-      .insert(weatherHistory)
-      .values({
-        ...data,
-        temperature: data.temperature || null,
-        precipitation: data.precipitation || null,
-        humidity: data.humidity || null,
-        windSpeed: data.windSpeed || null,
-        conditions: data.conditions || null,
-      })
-      .returning();
-    
-    return record;
-  }
-  
-  // Planting recommendations methods
-  async getPlantingRecommendations(userId: number, location: string, cropType?: string): Promise<PlantingRecommendation[]> {
-    let query = db
-      .select()
-      .from(plantingRecommendations)
-      .where(
-        and(
-          eq(plantingRecommendations.userId, userId),
-          eq(plantingRecommendations.location, location)
-        )
-      );
-    
-    // Add crop type filter if provided
-    if (cropType) {
-      query = query.where(eq(plantingRecommendations.cropType, cropType));
-    }
-    
-    return query;
-  }
-  
-  async getPlantingRecommendation(id: number): Promise<PlantingRecommendation | undefined> {
-    const [recommendation] = await db
-      .select()
-      .from(plantingRecommendations)
-      .where(eq(plantingRecommendations.id, id));
-    
-    return recommendation;
-  }
-  
-  async createPlantingRecommendation(data: InsertPlantingRecommendation): Promise<PlantingRecommendation> {
-    const [recommendation] = await db
-      .insert(plantingRecommendations)
-      .values({
-        ...data,
-        recommendedStartDate: data.recommendedStartDate || null,
-        recommendedEndDate: data.recommendedEndDate || null,
-        confidenceLevel: data.confidenceLevel || null,
-        reasonsConsidered: data.reasonsConsidered || {},
-      })
-      .returning();
-    
-    return recommendation;
-  }
 
   // Farmer tasks methods
   async getTasks(userId: number): Promise<FarmerTask[]> {
@@ -690,150 +590,6 @@ export class DatabaseStorage implements IStorage {
     
     return prediction;
   }
-  
-  // Push notification subscription methods
-  async savePushSubscription(userId: number, subscription: any): Promise<PushSubscription> {
-    try {
-      // Check if a subscription with this endpoint already exists
-      const [existingSub] = await db
-        .select()
-        .from(pushSubscriptions)
-        .where(
-          and(
-            eq(pushSubscriptions.userId, userId),
-            eq(pushSubscriptions.endpoint, subscription.endpoint)
-          )
-        );
-        
-      if (existingSub) {
-        // Update existing subscription
-        const [updated] = await db
-          .update(pushSubscriptions)
-          .set({
-            p256dh: subscription.keys.p256dh,
-            auth: subscription.keys.auth,
-            updatedAt: new Date(),
-          })
-          .where(eq(pushSubscriptions.id, existingSub.id))
-          .returning();
-          
-        return updated;
-      }
-      
-      // Create new subscription
-      const [newSub] = await db
-        .insert(pushSubscriptions)
-        .values({
-          userId,
-          endpoint: subscription.endpoint,
-          p256dh: subscription.keys.p256dh,
-          auth: subscription.keys.auth,
-        })
-        .returning();
-        
-      return newSub;
-    } catch (error) {
-      console.error('Error saving push subscription:', error);
-      throw error;
-    }
-  }
-  
-  async deletePushSubscription(userId: number, endpoint: string): Promise<boolean> {
-    try {
-      await db
-        .delete(pushSubscriptions)
-        .where(
-          and(
-            eq(pushSubscriptions.userId, userId),
-            eq(pushSubscriptions.endpoint, endpoint)
-          )
-        );
-        
-      return true;
-    } catch (error) {
-      console.error('Error deleting push subscription:', error);
-      return false;
-    }
-  }
-  
-  async getUserPushSubscriptions(userId: number): Promise<PushSubscription[]> {
-    return db
-      .select()
-      .from(pushSubscriptions)
-      .where(eq(pushSubscriptions.userId, userId));
-  }
-  
-  // Push notification subscription methods
-  async savePushSubscription(userId: number, subscription: any): Promise<PushSubscription> {
-    try {
-      // Check if a subscription with this endpoint already exists
-      const [existingSub] = await db
-        .select()
-        .from(pushSubscriptions)
-        .where(
-          and(
-            eq(pushSubscriptions.userId, userId),
-            eq(pushSubscriptions.endpoint, subscription.endpoint)
-          )
-        );
-        
-      if (existingSub) {
-        // Update existing subscription
-        const [updated] = await db
-          .update(pushSubscriptions)
-          .set({
-            p256dh: subscription.keys.p256dh,
-            auth: subscription.keys.auth,
-            updatedAt: new Date(),
-          })
-          .where(eq(pushSubscriptions.id, existingSub.id))
-          .returning();
-          
-        return updated;
-      }
-      
-      // Create new subscription
-      const [newSub] = await db
-        .insert(pushSubscriptions)
-        .values({
-          userId,
-          endpoint: subscription.endpoint,
-          p256dh: subscription.keys.p256dh,
-          auth: subscription.keys.auth,
-        })
-        .returning();
-        
-      return newSub;
-    } catch (error) {
-      console.error('Error saving push subscription:', error);
-      throw error;
-    }
-  }
-  
-  async deletePushSubscription(userId: number, endpoint: string): Promise<boolean> {
-    try {
-      await db
-        .delete(pushSubscriptions)
-        .where(
-          and(
-            eq(pushSubscriptions.userId, userId),
-            eq(pushSubscriptions.endpoint, endpoint)
-          )
-        );
-        
-      return true;
-    } catch (error) {
-      console.error('Error deleting push subscription:', error);
-      return false;
-    }
-  }
-  
-  async getUserPushSubscriptions(userId: number): Promise<PushSubscription[]> {
-    return db
-      .select()
-      .from(pushSubscriptions)
-      .where(eq(pushSubscriptions.userId, userId));
-  }
 }
 
 // Memory Storage implementation kept for reference
@@ -847,9 +603,6 @@ export class MemStorage implements IStorage {
   private weatherPrefs: Map<number, WeatherPreferences>;
   private tasks: Map<number, FarmerTask>;
   private yieldPredictions: Map<number, CropYieldPrediction>;
-  private weatherHistory: Map<number, WeatherHistory>;
-  private plantingRecs: Map<number, PlantingRecommendation>;
-  private pushSubs: Map<string, PushSubscription>;
   private userId: number;
   private profileId: number;
   private inquiryId: number;
@@ -859,8 +612,6 @@ export class MemStorage implements IStorage {
   private prefsId: number;
   private taskId: number;
   private predictionId: number;
-  private weatherHistoryId: number;
-  private plantingRecId: number;
   public sessionStore: session.Store;
 
   constructor() {
@@ -873,9 +624,6 @@ export class MemStorage implements IStorage {
     this.weatherPrefs = new Map();
     this.tasks = new Map();
     this.yieldPredictions = new Map();
-    this.weatherHistory = new Map();
-    this.plantingRecs = new Map();
-    this.pushSubs = new Map();
     this.userId = 1;
     this.profileId = 1;
     this.inquiryId = 1;
@@ -885,8 +633,6 @@ export class MemStorage implements IStorage {
     this.prefsId = 1;
     this.taskId = 1;
     this.predictionId = 1;
-    this.weatherHistoryId = 1;
-    this.plantingRecId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
     });
@@ -1408,127 +1154,6 @@ export class MemStorage implements IStorage {
     
     this.yieldPredictions.set(id, updatedPrediction);
     return updatedPrediction;
-  }
-  
-  // Push notifications implementation for MemStorage
-  private pushSubscriptions: Map<number, PushSubscription[]> = new Map();
-  
-  async savePushSubscription(userId: number, subscription: any): Promise<PushSubscription> {
-    // Get existing subscriptions for this user
-    let userSubscriptions = this.pushSubscriptions.get(userId) || [];
-    
-    // Check if subscription with this endpoint already exists
-    const existingIndex = userSubscriptions.findIndex(
-      sub => sub.endpoint === subscription.endpoint
-    );
-    
-    const now = new Date();
-    
-    if (existingIndex >= 0) {
-      // Update existing subscription
-      const updated = {
-        ...userSubscriptions[existingIndex],
-        p256dh: subscription.keys.p256dh,
-        auth: subscription.keys.auth,
-        updatedAt: now
-      };
-      
-      userSubscriptions[existingIndex] = updated;
-      this.pushSubscriptions.set(userId, userSubscriptions);
-      
-      return updated;
-    }
-    
-    // Create new subscription
-    const newSubscription: PushSubscription = {
-      id: Date.now(), // Use timestamp as ID for simplicity
-      userId,
-      endpoint: subscription.endpoint,
-      p256dh: subscription.keys.p256dh,
-      auth: subscription.keys.auth,
-      createdAt: now,
-      updatedAt: now
-    };
-    
-    userSubscriptions.push(newSubscription);
-    this.pushSubscriptions.set(userId, userSubscriptions);
-    
-    return newSubscription;
-  }
-  
-  async deletePushSubscription(userId: number, endpoint: string): Promise<boolean> {
-    // Get existing subscriptions for this user
-    const userSubscriptions = this.pushSubscriptions.get(userId) || [];
-    
-    // Find the subscription to delete
-    const index = userSubscriptions.findIndex(
-      sub => sub.endpoint === endpoint
-    );
-    
-    if (index >= 0) {
-      // Remove the subscription
-      userSubscriptions.splice(index, 1);
-      this.pushSubscriptions.set(userId, userSubscriptions);
-      return true;
-    }
-    
-    return false;
-  }
-  
-  async getUserPushSubscriptions(userId: number): Promise<PushSubscription[]> {
-    return this.pushSubscriptions.get(userId) || [];
-  }
-  
-  // Weather history methods
-  async getWeatherHistory(location: string, startDate: Date, endDate: Date): Promise<WeatherHistory[]> {
-    // Convert dates to comparable format (YYYY-MM-DD strings)
-    const startDateStr = startDate.toISOString().split('T')[0];
-    const endDateStr = endDate.toISOString().split('T')[0];
-    
-    // For in-memory implementation, just return empty array
-    return [];
-  }
-  
-  async saveWeatherHistory(data: InsertWeatherHistory): Promise<WeatherHistory> {
-    // Create a simple record
-    return {
-      id: 1,
-      location: data.location,
-      date: data.date,
-      temperature: data.temperature || null,
-      precipitation: data.precipitation || null,
-      humidity: data.humidity || null,
-      windSpeed: data.windSpeed || null,
-      conditions: data.conditions || null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-  }
-  
-  // Planting recommendation methods
-  async getPlantingRecommendations(userId: number, location: string, cropType?: string): Promise<PlantingRecommendation[]> {
-    // For in-memory implementation, just return empty array
-    return [];
-  }
-  
-  async getPlantingRecommendation(id: number): Promise<PlantingRecommendation | undefined> {
-    return undefined;
-  }
-  
-  async createPlantingRecommendation(data: InsertPlantingRecommendation): Promise<PlantingRecommendation> {
-    // Create a simple recommendation
-    return {
-      id: 1,
-      userId: data.userId,
-      location: data.location,
-      cropType: data.cropType,
-      recommendedStartDate: data.recommendedStartDate || null,
-      recommendedEndDate: data.recommendedEndDate || null,
-      confidenceLevel: data.confidenceLevel || null,
-      reasonsConsidered: data.reasonsConsidered || {},
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
   }
 }
 

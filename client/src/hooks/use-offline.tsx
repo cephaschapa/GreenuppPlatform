@@ -7,18 +7,6 @@ import {
   getCachedData
 } from '@/lib/indexedDB';
 
-// Skip type check for Service Worker Sync API
-declare global {
-  interface ServiceWorkerRegistration {
-    sync?: {
-      register(tag: string): Promise<void>;
-    };
-  }
-  interface Window {
-    SyncManager?: any;
-  }
-}
-
 export function useOffline() {
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const [pendingRequests, setPendingRequests] = useState<number>(0);
@@ -169,81 +157,51 @@ export function useOffline() {
 
     setIsSyncing(true);
 
-    // Always use manual sync as it's more reliable for now
-    try {
-      const requests = await getOfflineRequests();
-      
-      if (requests.length === 0) {
-        setIsSyncing(false);
-        return { success: true, message: 'No pending requests to sync' };
-      }
-      
-      let successCount = 0;
-      let failCount = 0;
-      
-      console.log(`Syncing ${requests.length} offline requests...`);
-      
-      for (const request of requests) {
-        try {
-          console.log(`Processing request: ${request.method} ${request.url}`);
-          const response = await fetch(request.url, {
-            method: request.method,
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(request.data)
-          });
-
-          if (response.ok) {
-            await removeOfflineRequest(request.id!);
-            successCount++;
-            console.log(`Request succeeded: ${request.method} ${request.url}`);
-          } else {
-            failCount++;
-            console.error(`Request failed with status ${response.status}: ${request.method} ${request.url}`);
-          }
-        } catch (error) {
-          failCount++;
-          console.error('Failed to process offline request:', error);
-        }
-      }
-
-      // Update pending count after sync
-      await refreshPendingCount();
-      setIsSyncing(false);
-      
-      const message = `Sync completed: ${successCount} succeeded, ${failCount} failed`;
-      console.log(message);
-      return { 
-        success: true, 
-        message,
-        details: { succeeded: successCount, failed: failCount }
-      };
-    } catch (error) {
-      console.error('Manual sync failed:', error);
-      setIsSyncing(false);
-      return { success: false, message: 'Manual sync failed', error };
-    }
-    
-    /* Background sync disabled due to compatibility issues
     // If we have ServiceWorker and SyncManager, use background sync
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
       try {
         const registration = await navigator.serviceWorker.ready;
-        if (registration.sync) {
-          await registration.sync.register('sync-offline-data');
-          // The rest will be handled by the service worker and the sync event
-          return { success: true, message: 'Sync initiated' };
-        } else {
-          throw new Error('Sync API not available');
-        }
+        await registration.sync.register('sync-offline-data');
+        // The rest will be handled by the service worker and the sync event
+        return { success: true, message: 'Sync initiated' };
       } catch (error) {
         console.error('Failed to register background sync:', error);
         setIsSyncing(false);
         return { success: false, message: 'Failed to initiate sync' };
       }
+    } else {
+      // Manual sync for browsers that don't support background sync
+      try {
+        const requests = await getOfflineRequests();
+        
+        for (const request of requests) {
+          try {
+            const response = await fetch(request.url, {
+              method: request.method,
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(request.data)
+            });
+
+            if (response.ok) {
+              await removeOfflineRequest(request.id!);
+            }
+          } catch (error) {
+            console.error('Failed to process offline request:', error);
+          }
+        }
+
+        // Update pending count after sync
+        await refreshPendingCount();
+        setIsSyncing(false);
+        return { success: true, message: 'Manual sync completed' };
+      } catch (error) {
+        console.error('Manual sync failed:', error);
+        setIsSyncing(false);
+        return { success: false, message: 'Manual sync failed' };
+      }
     }
-    */
   }, [isOnline, refreshPendingCount]);
 
   // Clear all pending offline requests

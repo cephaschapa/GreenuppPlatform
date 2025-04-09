@@ -73,19 +73,12 @@ export async function queueOfflineRequest(url: string, method: string, data: any
       request.onsuccess = () => {
         resolve(request.result as number);
         
-        // Register for sync if available - currently disabled due to browser compatibility issues
-        /*
+        // Register for sync if available
         if ('serviceWorker' in navigator && 'SyncManager' in window) {
           navigator.serviceWorker.ready
-            .then(registration => {
-              if (registration.sync) {
-                return registration.sync.register('sync-offline-data');
-              }
-              throw new Error('Sync not supported');
-            })
+            .then(registration => registration.sync.register('sync-offline-data'))
             .catch(err => console.error('Failed to register background sync:', err));
         }
-        */
       };
       
       request.onerror = () => {

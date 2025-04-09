@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, pgEnum, date, decimal, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, pgEnum, date, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -261,68 +261,3 @@ export type InsertFarmerTask = z.infer<typeof insertFarmerTaskSchema>;
 export type FarmerTask = typeof farmerTasks.$inferSelect;
 export type InsertCropYieldPrediction = z.infer<typeof insertCropYieldPredictionSchema>;
 export type CropYieldPrediction = typeof cropYieldPredictions.$inferSelect;
-
-// Weather data history for analysis
-export const weatherHistory = pgTable("weather_history", {
-  id: serial("id").primaryKey(),
-  location: text("location").notNull(),
-  date: date("date").notNull(),
-  temperature: text("temperature"),
-  precipitation: text("precipitation"),
-  humidity: text("humidity"),
-  windSpeed: text("wind_speed"),
-  conditions: text("conditions"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow()
-});
-
-// Weather planting recommendations from AI
-export const plantingRecommendations = pgTable("planting_recommendations", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  location: text("location").notNull(),
-  cropType: text("crop_type").notNull(),
-  recommendedStartDate: date("recommended_start_date"),
-  recommendedEndDate: date("recommended_end_date"),
-  confidenceLevel: decimal("confidence_level", { precision: 5, scale: 2 }),
-  reasonsConsidered: jsonb("reasons_considered").$type<Record<string, any>>(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow()
-});
-
-export const insertWeatherHistorySchema = createInsertSchema(weatherHistory).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-
-export const insertPlantingRecommendationSchema = createInsertSchema(plantingRecommendations).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-
-export type InsertWeatherHistory = z.infer<typeof insertWeatherHistorySchema>;
-export type WeatherHistory = typeof weatherHistory.$inferSelect;
-export type InsertPlantingRecommendation = z.infer<typeof insertPlantingRecommendationSchema>;
-export type PlantingRecommendation = typeof plantingRecommendations.$inferSelect;
-
-// Push notification subscriptions
-export const pushSubscriptions = pgTable("push_subscriptions", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
-  endpoint: text("endpoint").notNull(),
-  p256dh: text("p256dh").notNull(),
-  auth: text("auth").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow()
-});
-
-export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
-
-export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
-export type PushSubscription = typeof pushSubscriptions.$inferSelect;
