@@ -125,15 +125,15 @@ export async function apiRequest(
  * Enhanced query function with offline support
  */
 type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
+export const getQueryFn = <TQueryFnData = unknown>(options: {
   on401: UnauthorizedBehavior;
   offlineOptions?: {
     cacheKey?: string;
     cacheExpiry?: number;
   };
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior, offlineOptions }) =>
+}): QueryFunction<TQueryFnData> =>
   async ({ queryKey }) => {
+    const { on401: unauthorizedBehavior, offlineOptions } = options;
     const url = queryKey[0] as string;
     const cacheKey = offlineOptions?.cacheKey || url;
     
@@ -142,7 +142,7 @@ export const getQueryFn: <T>(options: {
       if (!isOnline && offlineModeEnabled) {
         const cachedData = await getCachedData(cacheKey);
         if (cachedData) {
-          return cachedData as T;
+          return cachedData as unknown as TQueryFnData;
         }
       }
       
@@ -152,7 +152,7 @@ export const getQueryFn: <T>(options: {
       });
 
       if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-        return null;
+        return null as unknown as TQueryFnData;
       }
 
       await throwIfResNotOk(res);
@@ -169,7 +169,7 @@ export const getQueryFn: <T>(options: {
       if (!isOnline && offlineModeEnabled) {
         const cachedData = await getCachedData(cacheKey);
         if (cachedData) {
-          return cachedData as T;
+          return cachedData as unknown as TQueryFnData;
         }
       }
       

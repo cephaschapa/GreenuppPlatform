@@ -13,7 +13,8 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { setupPWA, setupServiceWorkerUpdates } from "@/lib/pwa";
 import { useToast } from "@/hooks/use-toast";
-import { OfflineProvider } from "@/components/OfflineProvider";
+// Temporarily removed due to hook errors
+// import { OfflineProvider } from "@/components/OfflineProvider";
 
 // Import farmer-specific pages
 import FieldsPage from "@/pages/farmer/FieldsPage";
