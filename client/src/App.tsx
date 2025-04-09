@@ -1,4 +1,5 @@
 import { Switch, Route } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,12 +11,15 @@ import ProfileCreationPage from "@/pages/profile-creation-page";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { setupPWA, setupServiceWorkerUpdates } from "@/lib/pwa";
+import { useToast } from "@/hooks/use-toast";
 
 // Import farmer-specific pages
 import FieldsPage from "@/pages/farmer/FieldsPage";
 import TasksPage from "@/pages/farmer/TasksPage";
 import WeatherPage from "@/pages/farmer/WeatherPage";
 import PredictionsPage from "@/pages/farmer/PredictionsPage";
+import SettingsPage from "@/pages/farmer/SettingsPage";
 
 function Router() {
   return (
@@ -29,6 +33,7 @@ function Router() {
       <ProtectedRoute path="/dashboard/tasks" component={TasksPage} />
       <ProtectedRoute path="/dashboard/weather" component={WeatherPage} />
       <ProtectedRoute path="/dashboard/predictions" component={PredictionsPage} />
+      <ProtectedRoute path="/dashboard/settings" component={SettingsPage} />
       <ProtectedRoute path="/profile-creation" component={ProfileCreationPage} />
       
       <Route component={NotFound} />
@@ -36,11 +41,41 @@ function Router() {
   );
 }
 
+function PWAInitializer() {
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    // Setup PWA functionality
+    setupPWA();
+    
+    // Handle service worker updates
+    setupServiceWorkerUpdates(() => {
+      toast({
+        title: "Update Available",
+        description: "A new version of the app is available. Refresh to update.",
+        variant: "default",
+        action: (
+          <button 
+            className="bg-primary text-white px-3 py-1 rounded-md text-xs"
+            onClick={() => window.location.reload()}
+          >
+            Update
+          </button>
+        ),
+        duration: 0, // Don't auto-dismiss
+      });
+    });
+  }, []);
+  
+  return null;
+}
+
 function App() {
   return (
     <ThemeProvider defaultTheme="dark">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <PWAInitializer />
           <Router />
           <Toaster />
         </AuthProvider>
