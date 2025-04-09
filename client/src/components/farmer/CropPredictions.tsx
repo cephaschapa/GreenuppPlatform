@@ -54,68 +54,60 @@ const formatDate = (date: string | Date | null | undefined) => {
 export function CropPredictions({ crops }: { crops: any[] }) {
   const [selectedCropId, setSelectedCropId] = useState<number | null>(null);
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
-  
+
   // Fetch predictions for the selected crop - only if a crop is selected
-  const { data: predictions, isLoading, error } = 
-    useCropPredictions().fetchPredictionsForCrop(
-      selectedCropId || undefined
-    );
-  
+  const {
+    data: predictions,
+    isLoading,
+    error,
+  } = useCropPredictions().fetchPredictionsForCrop(selectedCropId || undefined);
+
   // Mutations for generating predictions
   const { generateAIPredictionMutation } = useCropPredictions();
-  
+
   // Handler for generating a new AI prediction
   const handleGeneratePrediction = () => {
     if (!selectedCropId) return;
-    
+
     generateAIPredictionMutation.mutate(
       { cropId: selectedCropId },
       {
         onSuccess: () => {
           setShowGenerateDialog(false);
-        }
-      }
+        },
+      },
     );
   };
-  
+
   // Get the selected crop data
-  const selectedCrop = crops.find(crop => crop.id === selectedCropId);
-  
+  const selectedCrop = crops.find((crop) => crop.id === selectedCropId);
+
   // Format prediction confidence as a percentage with color coding
   const formatConfidence = (confidenceLevel: string | null) => {
     if (!confidenceLevel) return <Badge>Unknown</Badge>;
-    
+
     // Parse from string like "75%" to number 0.75
-    const confidenceValue = parseFloat(confidenceLevel.replace('%', '')) / 100;
+    const confidenceValue = parseFloat(confidenceLevel.replace("%", "")) / 100;
     const percent = (confidenceValue * 100).toFixed(1);
-    let color = "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-    
+    let color =
+      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+
     if (confidenceValue < 0.5) {
       color = "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
     } else if (confidenceValue < 0.8) {
-      color = "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      color =
+        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
     }
-    
-    return (
-      <Badge className={color}>
-        {confidenceLevel}
-      </Badge>
-    );
+
+    return <Badge className={color}>{confidenceLevel}</Badge>;
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Crop Yield Predictions</h2>
-          <p className="text-muted-foreground">
-            AI-powered predictions to help you plan your harvest
-          </p>
-        </div>
-        
+      <div className="flex flex-col md:flex-row justify-end md:items-center gap-4">
         <div className="flex flex-col sm:flex-row gap-3">
-          <Select 
-            value={selectedCropId?.toString()} 
+          <Select
+            value={selectedCropId?.toString()}
             onValueChange={(value) => setSelectedCropId(Number(value))}
           >
             <SelectTrigger className="w-[180px]">
@@ -129,11 +121,14 @@ export function CropPredictions({ crops }: { crops: any[] }) {
               ))}
             </SelectContent>
           </Select>
-          
-          <Dialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
+
+          <Dialog
+            open={showGenerateDialog}
+            onOpenChange={setShowGenerateDialog}
+          >
             <DialogTrigger asChild>
-              <Button 
-                variant="default" 
+              <Button
+                variant="default"
                 className="gap-2"
                 disabled={!selectedCropId}
               >
@@ -145,17 +140,31 @@ export function CropPredictions({ crops }: { crops: any[] }) {
               <DialogHeader>
                 <DialogTitle>Generate AI Prediction</DialogTitle>
                 <DialogDescription>
-                  Our AI will analyze your crop data and generate a yield prediction based on historical data, current conditions, and agricultural best practices.
+                  Our AI will analyze your crop data and generate a yield
+                  prediction based on historical data, current conditions, and
+                  agricultural best practices.
                 </DialogDescription>
               </DialogHeader>
               <div className="py-4">
                 <h4 className="font-medium mb-2">Crop Information:</h4>
                 {selectedCrop && (
                   <div className="space-y-2 text-sm">
-                    <p><span className="font-medium">Name:</span> {selectedCrop.name}</p>
-                    <p><span className="font-medium">Variety:</span> {selectedCrop.variety}</p>
-                    <p><span className="font-medium">Planting Date:</span> {formatDate(selectedCrop.plantingDate)}</p>
-                    <p><span className="font-medium">Field Size:</span> {selectedCrop.fieldSize} {selectedCrop.sizeUnit}</p>
+                    <p>
+                      <span className="font-medium">Name:</span>{" "}
+                      {selectedCrop.name}
+                    </p>
+                    <p>
+                      <span className="font-medium">Variety:</span>{" "}
+                      {selectedCrop.variety}
+                    </p>
+                    <p>
+                      <span className="font-medium">Planting Date:</span>{" "}
+                      {formatDate(selectedCrop.plantingDate)}
+                    </p>
+                    <p>
+                      <span className="font-medium">Field Size:</span>{" "}
+                      {selectedCrop.fieldSize} {selectedCrop.sizeUnit}
+                    </p>
                   </div>
                 )}
               </div>
@@ -178,11 +187,13 @@ export function CropPredictions({ crops }: { crops: any[] }) {
           </Dialog>
         </div>
       </div>
-      
+
       {!selectedCropId ? (
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-muted-foreground">Select a crop to view or generate predictions</p>
+            <p className="text-muted-foreground">
+              Select a crop to view or generate predictions
+            </p>
           </CardContent>
         </Card>
       ) : isLoading ? (
@@ -199,8 +210,10 @@ export function CropPredictions({ crops }: { crops: any[] }) {
       ) : !predictions || predictions.length === 0 ? (
         <Card>
           <CardContent className="pt-6 text-center">
-            <p className="text-muted-foreground mb-4">No predictions found for this crop</p>
-            <Button 
+            <p className="text-muted-foreground mb-4">
+              No predictions found for this crop
+            </p>
+            <Button
               onClick={() => setShowGenerateDialog(true)}
               variant="outline"
               className="gap-2"
@@ -213,7 +226,10 @@ export function CropPredictions({ crops }: { crops: any[] }) {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Yield Predictions for {selectedCrop?.name} ({selectedCrop?.variety})</CardTitle>
+            <CardTitle>
+              Yield Predictions for {selectedCrop?.name} (
+              {selectedCrop?.variety})
+            </CardTitle>
             <CardDescription>
               View AI-generated yield predictions and their confidence levels
             </CardDescription>
@@ -248,16 +264,32 @@ export function CropPredictions({ crops }: { crops: any[] }) {
                           </TooltipTrigger>
                           <TooltipContent className="max-w-sm">
                             <div className="space-y-2 p-2">
-                              {prediction.factorsConsidered && typeof prediction.factorsConsidered === 'string'
-                                ? (prediction.factorsConsidered as string).split(',').map((factor: string, i: number) => (
-                                    <p key={i} className="text-sm">• {factor.trim()}</p>
+                              {prediction.factorsConsidered &&
+                              typeof prediction.factorsConsidered ===
+                                "string" ? (
+                                (prediction.factorsConsidered as string)
+                                  .split(",")
+                                  .map((factor: string, i: number) => (
+                                    <p key={i} className="text-sm">
+                                      • {factor.trim()}
+                                    </p>
                                   ))
-                                : prediction.factorsConsidered && typeof prediction.factorsConsidered === 'object'
-                                  ? Object.entries(prediction.factorsConsidered as Record<string, any>).map(([key, value], i) => (
-                                      <p key={i} className="text-sm">• {key}: {value}</p>
-                                    ))
-                                  : <p className="text-sm">No factors recorded</p>
-                              }
+                              ) : prediction.factorsConsidered &&
+                                typeof prediction.factorsConsidered ===
+                                  "object" ? (
+                                Object.entries(
+                                  prediction.factorsConsidered as Record<
+                                    string,
+                                    any
+                                  >,
+                                ).map(([key, value], i) => (
+                                  <p key={i} className="text-sm">
+                                    • {key}: {value}
+                                  </p>
+                                ))
+                              ) : (
+                                <p className="text-sm">No factors recorded</p>
+                              )}
                             </div>
                           </TooltipContent>
                         </Tooltip>
