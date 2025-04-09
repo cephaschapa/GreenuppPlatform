@@ -748,8 +748,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const preferences = await storage.getWeatherPreferences(req.user.id);
+      
+      // If no preferences are found, return an empty default object instead of 404
       if (!preferences) {
-        return res.status(404).json({ message: "Weather preferences not found" });
+        return res.json({
+          id: 0,
+          userId: req.user.id,
+          locations: [],
+          alertsEnabled: true,
+          temperatureUnit: "celsius",
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
       }
       
       res.json(preferences);

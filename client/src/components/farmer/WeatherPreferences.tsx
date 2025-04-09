@@ -33,9 +33,12 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Plus, X } from "lucide-react";
 
-// Weather preference form schema
+// Weather preference form schema with validation
 const preferencesSchema = insertWeatherPreferencesSchema.extend({
+  // Make sure we properly handle array typing to match our schema
   locations: z.array(z.string()).min(1, "Add at least one location"),
+  alertsEnabled: z.boolean().default(true),
+  temperatureUnit: z.enum(['celsius', 'fahrenheit']).default('celsius'),
 });
 
 export function WeatherPreferences() {
@@ -48,7 +51,7 @@ export function WeatherPreferences() {
     defaultValues: {
       locations: preferences?.locations || [],
       alertsEnabled: preferences?.alertsEnabled ?? true,
-      temperatureUnit: preferences?.temperatureUnit || "celsius",
+      temperatureUnit: (preferences?.temperatureUnit as "celsius" | "fahrenheit") || "celsius",
     },
   });
 
@@ -58,7 +61,7 @@ export function WeatherPreferences() {
       form.reset({
         locations: preferences.locations || [],
         alertsEnabled: preferences.alertsEnabled ?? true,
-        temperatureUnit: preferences.temperatureUnit || "celsius",
+        temperatureUnit: (preferences.temperatureUnit as "celsius" | "fahrenheit") || "celsius",
       });
     }
   }, [preferences, form]);
@@ -83,10 +86,17 @@ export function WeatherPreferences() {
 
   // Handle form submission
   const onSubmit = (values: z.infer<typeof preferencesSchema>) => {
+    // Map the form values to match the schema expected by the server
+    const serverData = {
+      locations: values.locations,
+      alertsEnabled: values.alertsEnabled,
+      temperatureUnit: values.temperatureUnit
+    };
+    
     if (preferences) {
-      updatePreferencesMutation.mutate(values);
+      updatePreferencesMutation.mutate(serverData);
     } else {
-      createPreferencesMutation.mutate(values);
+      createPreferencesMutation.mutate(serverData);
     }
   };
 
