@@ -1,9 +1,24 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
-import { queueOfflineRequest, getCachedData, cacheData } from '@/lib/indexedDB';
 
-// This is set by the OfflineProvider in main.tsx
+// Default values since OfflineProvider is temporarily disabled
 let isOnline = navigator.onLine;
-let offlineModeEnabled = false;
+let offlineModeEnabled = localStorage.getItem('offlineModeEnabled') === 'true';
+
+// Stubs for offline storage until we properly implement IndexedDB
+async function queueOfflineRequest(url: string, method: string, data?: unknown) {
+  console.log('Offline request queued (stub):', { url, method, data });
+  return Promise.resolve();
+}
+
+async function getCachedData(key: string) {
+  console.log('Getting cached data (stub):', key);
+  return null;
+}
+
+async function cacheData(key: string, data: unknown, expiry?: number) {
+  console.log('Caching data (stub):', { key, data, expiry });
+  return Promise.resolve();
+}
 
 // Update online status
 export function setOnlineStatus(status: boolean) {
@@ -13,6 +28,7 @@ export function setOnlineStatus(status: boolean) {
 // Enable/disable offline mode features
 export function setOfflineModeEnabled(enabled: boolean) {
   offlineModeEnabled = enabled;
+  localStorage.setItem('offlineModeEnabled', enabled.toString());
 }
 
 // Error handler for API requests

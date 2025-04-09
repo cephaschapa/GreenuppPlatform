@@ -29,7 +29,14 @@ import {
 // Note: We rely on the User type definition
 // that's already declared in auth.ts
 
+import path from "path";
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add route for static HTML test page
+  app.get("/static-test", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "client", "static-test.html"));
+  });
+  
   // Set up authentication 
   setupAuth(app);
 
