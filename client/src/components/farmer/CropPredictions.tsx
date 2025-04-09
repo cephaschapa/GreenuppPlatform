@@ -248,7 +248,7 @@ export function CropPredictions({ crops }: { crops: any[] }) {
                           </TooltipTrigger>
                           <TooltipContent className="max-w-sm">
                             <div className="space-y-2 p-2">
-                              {prediction.factorsConsidered 
+                              {prediction.factorsConsidered && typeof prediction.factorsConsidered === 'string'
                                 ? prediction.factorsConsidered.split(',').map((factor: string, i: number) => (
                                     <p key={i} className="text-sm">• {factor.trim()}</p>
                                   ))
