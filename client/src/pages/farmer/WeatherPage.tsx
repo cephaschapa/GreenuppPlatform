@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { WeatherPreferences } from "@/components/farmer/WeatherPreferences";
+import { PlantingRecommendations } from "@/components/farmer/PlantingRecommendations";
 import { useWeatherPreferences } from "@/hooks/use-weather-preferences";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Cloud, Droplets, Thermometer, Wind, CloudRain, Sun, RefreshCw } from "lucide-react";
+import { Loader2, Cloud, Droplets, Thermometer, Wind, CloudRain, Sun, RefreshCw, Sparkles } from "lucide-react";
 
 export default function WeatherPage() {
   const [weatherData, setWeatherData] = useState<any>(null);
@@ -67,13 +68,19 @@ export default function WeatherPage() {
   return (
     <DashboardLayout
       title="Weather Services"
-      description="Monitor weather conditions and set up your preferences"
+      description="Monitor weather conditions and get AI-powered planting recommendations"
     >
       <div className="grid gap-8">
         <Tabs defaultValue="current" className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="current">Current Weather</TabsTrigger>
             <TabsTrigger value="forecast">Forecast</TabsTrigger>
+            <TabsTrigger value="planting">
+              <div className="flex items-center gap-1">
+                <Sparkles className="h-4 w-4" />
+                Planting Recommendations
+              </div>
+            </TabsTrigger>
             <TabsTrigger value="preferences">Preferences</TabsTrigger>
           </TabsList>
           
@@ -261,6 +268,10 @@ export default function WeatherPage() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+          
+          <TabsContent value="planting">
+            <PlantingRecommendations />
           </TabsContent>
           
           <TabsContent value="preferences">
