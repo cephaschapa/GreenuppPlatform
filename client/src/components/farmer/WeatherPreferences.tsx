@@ -35,17 +35,23 @@ import { Loader2, Plus, X } from "lucide-react";
 
 // Weather preference form schema with validation
 const preferencesSchema = insertWeatherPreferencesSchema.extend({
-  location: z.string().min(1, "Location is required"),
+  // Make sure we properly handle array typing to match our schema
+  locations: z.array(z.string()).min(1, "Add at least one location"),
+  alertsEnabled: z.boolean().default(true),
+  temperatureUnit: z.enum(['celsius', 'fahrenheit']).default('celsius'),
 });
 
 export function WeatherPreferences() {
-  const { preferences, isLoading, error, createWeatherPreference, updateWeatherPreference, isCreating, isUpdating } = useWeatherPreferences();
+  const [newLocation, setNewLocation] = useState("");
+  const { preferences, isLoading, createPreferencesMutation, updatePreferencesMutation } = useWeatherPreferences();
 
   // Form setup with defaults from existing preferences
   const form = useForm<z.infer<typeof preferencesSchema>>({
     resolver: zodResolver(preferencesSchema),
     defaultValues: {
-      location: preferences?.location || "",
+      locations: preferences?.locations || [],
+      alertsEnabled: preferences?.alertsEnabled ?? true,
+      temperatureUnit: (preferences?.temperatureUnit as "celsius" | "fahrenheit") || "celsius",
     },
   });
 
@@ -53,32 +59,58 @@ export function WeatherPreferences() {
   useEffect(() => {
     if (preferences) {
       form.reset({
-        location: preferences.location || "",
+        locations: preferences.locations || [],
+        alertsEnabled: preferences.alertsEnabled ?? true,
+        temperatureUnit: (preferences.temperatureUnit as "celsius" | "fahrenheit") || "celsius",
       });
     }
   }, [preferences, form]);
+
+  // Handle adding a new location
+  const handleAddLocation = () => {
+    if (!newLocation.trim()) return;
+    
+    const currentLocations = form.getValues("locations") || [];
+    form.setValue("locations", [...currentLocations, newLocation.trim()]);
+    setNewLocation("");
+  };
+
+  // Handle removing a location
+  const handleRemoveLocation = (index: number) => {
+    const currentLocations = form.getValues("locations") || [];
+    form.setValue(
+      "locations",
+      currentLocations.filter((_, i) => i !== index)
+    );
+  };
 
   // Handle form submission
   const onSubmit = (values: z.infer<typeof preferencesSchema>) => {
     // Log form values to help debugging
     console.log('Form values being submitted:', values);
     
+    // Map the form values to match the schema expected by the server
+    const serverData = {
+      locations: values.locations,
+      alertsEnabled: values.alertsEnabled,
+      temperatureUnit: values.temperatureUnit
+    };
+    
+    console.log('Mapped server data:', serverData);
+    console.log('Using mutation:', preferences ? 'update' : 'create');
+    
     if (preferences) {
-      updateWeatherPreference({
-        id: preferences.id,
-        location: values.location
-      });
+      updatePreferencesMutation.mutate(serverData);
     } else {
-      createWeatherPreference({
-        location: values.location
-      });
+      createPreferencesMutation.mutate(serverData);
     }
     
+    // Add a click event to the submit button for debugging
     console.log('Form submitted');
   };
 
   // Check if mutation is in progress
-  const isMutating = isCreating || isUpdating;
+  const isMutating = createPreferencesMutation.isPending || updatePreferencesMutation.isPending;
 
   return (
     <Card className="w-full">
@@ -98,19 +130,106 @@ export function WeatherPreferences() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="location"
+                name="temperatureUnit"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel>Temperature Unit</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select temperature unit" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="celsius">Celsius (°C)</SelectItem>
+                        <SelectItem value="fahrenheit">Fahrenheit (°F)</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormDescription>
-                      Enter the location you want to track weather for
+                      Choose your preferred temperature measurement unit
                     </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="alertsEnabled"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Weather Alerts</FormLabel>
+                      <FormDescription>
+                        Receive notifications about significant weather changes
+                      </FormDescription>
+                    </div>
                     <FormControl>
-                      <Input 
-                        placeholder="Enter a location (city, region)"
-                        {...field}
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
                       />
                     </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="locations"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Locations</FormLabel>
+                    <FormDescription>
+                      Add locations you want to track weather for
+                    </FormDescription>
+                    
+                    <div className="flex flex-col space-y-2">
+                      <div className="flex space-x-2">
+                        <Input
+                          placeholder="Add a location (city, region)"
+                          value={newLocation}
+                          onChange={(e) => setNewLocation(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleAddLocation}
+                          size="icon"
+                          variant="outline"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="flex flex-col space-y-2 mt-2">
+                        {field.value?.length ? (
+                          field.value.map((location, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-2 bg-muted rounded-md"
+                            >
+                              <span className="text-sm">{location}</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveLocation(index)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-muted-foreground p-2">
+                            No locations added yet
+                          </p>
+                        )}
+                      </div>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}

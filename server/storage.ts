@@ -79,9 +79,8 @@ export interface IStorage {
   
   // Weather preferences
   getWeatherPreferences(userId: number): Promise<WeatherPreferences | undefined>;
-  getWeatherPreferenceById(id: number): Promise<WeatherPreferences | undefined>;
   createWeatherPreferences(data: InsertWeatherPreferences & { userId: number }): Promise<WeatherPreferences>;
-  updateWeatherPreferences(id: number, data: Partial<InsertWeatherPreferences>): Promise<WeatherPreferences | undefined>;
+  updateWeatherPreferences(userId: number, data: Partial<WeatherPreferences>): Promise<WeatherPreferences | undefined>;
   
   // Farmer tasks and reminders
   getTasks(userId: number): Promise<FarmerTask[]>;
@@ -392,36 +391,34 @@ export class DatabaseStorage implements IStorage {
     
     return prefs;
   }
-  
-  async getWeatherPreferenceById(id: number): Promise<WeatherPreferences | undefined> {
-    const [prefs] = await db
-      .select()
-      .from(weatherPreferences)
-      .where(eq(weatherPreferences.id, id));
-    
-    return prefs;
-  }
 
   async createWeatherPreferences(data: InsertWeatherPreferences & { userId: number }): Promise<WeatherPreferences> {
     const [prefs] = await db
       .insert(weatherPreferences)
       .values({
-        userId: data.userId,
-        location: data.location
+        ...data,
+        locations: data.locations || [],
+        alertsEnabled: data.alertsEnabled ?? true,
+        temperatureUnit: data.temperatureUnit || 'celsius',
       })
       .returning();
     
     return prefs;
   }
 
-  async updateWeatherPreferences(id: number, data: Partial<InsertWeatherPreferences>): Promise<WeatherPreferences | undefined> {
+  async updateWeatherPreferences(userId: number, data: Partial<WeatherPreferences>): Promise<WeatherPreferences | undefined> {
+    // First, find the preferences by userId
+    const existingPrefs = await this.getWeatherPreferences(userId);
+    if (!existingPrefs) return undefined;
+    
+    // Then update it by id
     const [prefs] = await db
       .update(weatherPreferences)
       .set({
         ...data,
         updatedAt: new Date()
       })
-      .where(eq(weatherPreferences.id, id))
+      .where(eq(weatherPreferences.id, existingPrefs.id))
       .returning();
     
     return prefs;
@@ -933,18 +930,16 @@ export class MemStorage implements IStorage {
       (prefs) => prefs.userId === userId,
     );
   }
-  
-  async getWeatherPreferenceById(id: number): Promise<WeatherPreferences | undefined> {
-    return this.weatherPrefs.get(id);
-  }
 
   async createWeatherPreferences(data: InsertWeatherPreferences & { userId: number }): Promise<WeatherPreferences> {
     const id = this.prefsId++;
     const now = new Date();
     const prefs: WeatherPreferences = {
+      ...data,
       id,
-      userId: data.userId,
-      location: data.location,
+      locations: data.locations || [],
+      alertsEnabled: data.alertsEnabled ?? true,
+      temperatureUnit: data.temperatureUnit || 'celsius',
       createdAt: now,
       updatedAt: now,
     };
@@ -953,19 +948,19 @@ export class MemStorage implements IStorage {
     return prefs;
   }
 
-  async updateWeatherPreferences(id: number, data: Partial<InsertWeatherPreferences>): Promise<WeatherPreferences | undefined> {
-    const prefs = this.weatherPrefs.get(id);
+  async updateWeatherPreferences(userId: number, data: Partial<WeatherPreferences>): Promise<WeatherPreferences | undefined> {
+    const prefs = await this.getWeatherPreferences(userId);
     if (!prefs) return undefined;
     
     const updatedPrefs: WeatherPreferences = {
       ...prefs,
       ...data,
-      id, // Ensure id doesn't change
+      id: prefs.id, // Ensure id doesn't change
       userId: prefs.userId, // Ensure userId doesn't change
       updatedAt: new Date(),
     };
     
-    this.weatherPrefs.set(id, updatedPrefs);
+    this.weatherPrefs.set(prefs.id, updatedPrefs);
     return updatedPrefs;
   }
 

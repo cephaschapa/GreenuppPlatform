@@ -192,7 +192,9 @@ export const insertCropActivitySchema = createInsertSchema(cropActivities).omit(
 export const weatherPreferences = pgTable("weather_preferences", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  location: text("location").notNull(),
+  locations: text("locations").array(),
+  alertsEnabled: boolean("alerts_enabled").default(true),
+  temperatureUnit: text("temperature_unit").default('celsius'),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
