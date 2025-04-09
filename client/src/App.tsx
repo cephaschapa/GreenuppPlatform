@@ -76,12 +76,10 @@ function App() {
     <ThemeProvider defaultTheme="dark">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          {/* Temporarily disabled OfflineProvider to fix rendering issues */}
-          {/* <OfflineProvider> */}
+          {/* Use only one offline implementation - we'll use the one in main.tsx */}
             <PWAInitializer />
             <Router />
             <Toaster />
-          {/* </OfflineProvider> */}
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>

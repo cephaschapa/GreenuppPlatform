@@ -30,7 +30,7 @@ appleIcon.rel = "apple-touch-icon";
 appleIcon.href = "/apple-touch-icon.png";
 document.head.appendChild(appleIcon);
 
-// Render the app with Offline Provider
+// Render the app with the OfflineProvider wrapper
 createRoot(document.getElementById("root")!).render(
   <OfflineProvider>
     <App />

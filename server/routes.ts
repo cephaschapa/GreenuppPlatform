@@ -342,10 +342,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ]
       };
       
+      // Store this weather data in history for AI analysis
+      const today = new Date();
+      try {
+        await storage.saveWeatherHistory({
+          location: location as string,
+          date: today.toISOString().split('T')[0], // Convert to string format
+          temperature: String(weatherData.current.temp),
+          precipitation: "0", // Placeholder, would come from actual API
+          humidity: String(weatherData.current.humidity),
+          windSpeed: String(weatherData.current.wind_speed),
+          conditions: weatherData.current.weather[0].description
+        });
+      } catch (historyError) {
+        console.error("Error saving weather history:", historyError);
+        // Continue anyway, as this is just for data collection
+      }
+      
       res.json(weatherData);
     } catch (error) {
       console.error("Error fetching weather data:", error);
       res.status(500).json({ message: "Failed to retrieve weather data" });
+    }
+  });
+  
+  // Get weather history for a location
+  app.get("/api/weather-history", isAuthenticated, async (req, res) => {
+    try {
+      const { location, startDate, endDate } = req.query;
+      
+      if (!location || !startDate || !endDate) {
+        return res.status(400).json({ 
+          message: "Location, startDate, and endDate parameters are required" 
+        });
+      }
+      
+      const history = await storage.getWeatherHistory(
+        location as string,
+        new Date(startDate as string),
+        new Date(endDate as string)
+      );
+      
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching weather history:", error);
+      res.status(500).json({ message: "Failed to retrieve weather history" });
+    }
+  });
+  
+  // Generate planting recommendation based on weather data
+  app.post("/api/planting-recommendations", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      const { location, cropType, startDate, endDate, soilType, fieldSize } = req.body;
+      
+      if (!location || !cropType || !startDate || !endDate) {
+        return res.status(400).json({ 
+          message: "Location, cropType, startDate, and endDate are required fields" 
+        });
+      }
+      
+      // Get the historical weather data for this location
+      const weatherHistory = await storage.getWeatherHistory(
+        location,
+        new Date(startDate),
+        new Date(endDate)
+      );
+      
+      if (weatherHistory.length === 0) {
+        return res.status(404).json({ 
+          message: "No weather history found for this location and date range" 
+        });
+      }
+      
+      // Import the AI service for generating recommendations
+      const { generatePlantingRecommendations } = await import('./ai');
+      
+      // Generate the recommendation using AI
+      const recommendation = await generatePlantingRecommendations({
+        userId: req.user?.id || 0, // Provide fallback value
+        location,
+        cropType,
+        weatherHistory,
+        soilType,
+        fieldSize
+      });
+      
+      // Save the recommendation to the database
+      const savedRecommendation = await storage.createPlantingRecommendation(recommendation);
+      
+      res.json(savedRecommendation);
+    } catch (error) {
+      console.error("Error generating planting recommendation:", error);
+      res.status(500).json({ message: "Failed to generate planting recommendation" });
+    }
+  });
+  
+  // Get all planting recommendations for a user
+  app.get("/api/planting-recommendations", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      const { location, cropType } = req.query;
+      
+      if (!location) {
+        return res.status(400).json({ message: "Location parameter is required" });
+      }
+      
+      const recommendations = await storage.getPlantingRecommendations(
+        req.user?.id || 0, // Provide fallback value
+        location as string,
+        cropType as string | undefined
+      );
+      
+      res.json(recommendations);
+    } catch (error) {
+      console.error("Error fetching planting recommendations:", error);
+      res.status(500).json({ message: "Failed to retrieve planting recommendations" });
+    }
+  });
+  
+  // Get a specific planting recommendation by ID
+  app.get("/api/planting-recommendations/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const recommendation = await storage.getPlantingRecommendation(parseInt(id));
+      
+      if (!recommendation) {
+        return res.status(404).json({ message: "Planting recommendation not found" });
+      }
+      
+      // Ensure the user can only access their own recommendations
+      if (recommendation.userId !== req.user?.id) {
+        return res.status(403).json({ message: "Unauthorized access to this recommendation" });
+      }
+      
+      res.json(recommendation);
+    } catch (error) {
+      console.error("Error fetching planting recommendation:", error);
+      res.status(500).json({ message: "Failed to retrieve planting recommendation" });
     }
   });
 
