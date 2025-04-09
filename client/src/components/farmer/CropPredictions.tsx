@@ -252,7 +252,11 @@ export function CropPredictions({ crops }: { crops: any[] }) {
                                 ? prediction.factorsConsidered.split(',').map((factor: string, i: number) => (
                                     <p key={i} className="text-sm">• {factor.trim()}</p>
                                   ))
-                                : <p className="text-sm">No factors recorded</p>
+                                : prediction.factorsConsidered && typeof prediction.factorsConsidered === 'object'
+                                  ? Object.entries(prediction.factorsConsidered).map(([key, value], i) => (
+                                      <p key={i} className="text-sm">• {key}: {value}</p>
+                                    ))
+                                  : <p className="text-sm">No factors recorded</p>
                               }
                             </div>
                           </TooltipContent>

@@ -768,18 +768,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if preferences already exist
       const existingPrefs = await storage.getWeatherPreferences(req.user.id);
-      if (existingPrefs) {
-        return res.status(409).json({ message: "Weather preferences already exist" });
-      }
       
-      // Validate and create preferences
+      // Validate the request data
       const prefsData = insertWeatherPreferencesSchema.parse(req.body);
-      const newPrefs = await storage.createWeatherPreferences({
-        ...prefsData,
-        userId: req.user.id
-      });
       
-      res.status(201).json(newPrefs);
+      if (existingPrefs) {
+        // Update existing preferences
+        const updatedPrefs = await storage.updateWeatherPreferences(req.user.id, prefsData);
+        return res.json(updatedPrefs);
+      } else {
+        // Create new preferences
+        const newPrefs = await storage.createWeatherPreferences({
+          ...prefsData,
+          userId: req.user.id
+        });
+        
+        res.status(201).json(newPrefs);
+      }
     } catch (error) {
       if (error instanceof ZodError) {
         const validationError = fromZodError(error);
