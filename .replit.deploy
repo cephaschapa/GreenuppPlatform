@@ -1,13 +1,1 @@
-{
-  "compile": ["sh", "-c", "node deployment-check.js && node setup-db.js && npm run build"],
-  "run": ["sh", "-c", "NODE_ENV=production node dist/server/index.js"],
-  "secrets": [
-    "DATABASE_URL", 
-    "SESSION_SECRET",
-    "PGHOST",
-    "PGPORT",
-    "PGUSER",
-    "PGPASSWORD",
-    "PGDATABASE"
-  ]
-}
+run = "node setup-db.js && npm run build"

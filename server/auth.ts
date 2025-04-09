@@ -43,12 +43,6 @@ async function comparePasswords(supplied: string, stored: string) {
 // Setup authentication middleware and routes
 export function setupAuth(app: Express) {
   // Configure session settings
-  const isProduction = process.env.NODE_ENV === "production";
-  
-  // Log session configuration
-  console.log(`Auth configuration: Environment is ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`);
-  console.log(`Auth configuration: Session SECRET exists: ${!!process.env.SESSION_SECRET}`);
-  
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "greenupp-secret-key",
     resave: false,
@@ -56,11 +50,8 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      secure: isProduction,
-      httpOnly: true,
-      sameSite: isProduction ? 'none' : 'lax' // For cross-site cookies in production
-    },
-    name: 'greenupp.sid' // Custom name helps avoid conflicts
+      secure: process.env.NODE_ENV === "production",
+    }
   };
 
   // Setup session middleware
@@ -163,29 +154,14 @@ export function setupAuth(app: Express) {
 
   // User login route
   app.post("/api/login", (req, res, next) => {
-    console.log('POST /api/login - Starting authentication process');
-    
     passport.authenticate("local", (err: Error | null, user: User | false, info: { message: string } | undefined) => {
-      if (err) {
-        console.log('POST /api/login - Authentication error:', err.message);
-        return next(err);
-      }
-      
+      if (err) return next(err);
       if (!user) {
-        console.log('POST /api/login - Authentication failed:', info?.message || 'No info provided');
         return res.status(401).json({ message: info?.message || "Login failed" });
       }
       
-      console.log('POST /api/login - Authentication successful, logging in user ID:', user.id);
-      
       req.login(user as unknown as Express.User, (loginErr) => {
-        if (loginErr) {
-          console.log('POST /api/login - Login error:', loginErr.message);
-          return next(loginErr);
-        }
-        
-        console.log('POST /api/login - Login successful, session created with ID:', req.sessionID);
-        console.log('POST /api/login - Cookie being set:', res.getHeader('set-cookie'));
+        if (loginErr) return next(loginErr);
         
         // Remove password from response
         const { password, ...userWithoutPassword } = user;
@@ -206,12 +182,6 @@ export function setupAuth(app: Express) {
 
   // Get current authenticated user
   app.get("/api/user", (req, res) => {
-    // Add debugging info about session
-    console.log('GET /api/user - Session ID:', req.sessionID);
-    console.log('GET /api/user - isAuthenticated:', req.isAuthenticated());
-    console.log('GET /api/user - has session:', !!req.session);
-    console.log('GET /api/user - session cookie:', req.headers.cookie);
-    
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Not authenticated" });
     }

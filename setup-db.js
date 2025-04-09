@@ -1,32 +1,8 @@
 // setup-db.js
 import pg from 'pg';
 
-// Try to construct DATABASE_URL from individual PG environment variables if needed
-if (!process.env.DATABASE_URL && process.env.PGHOST && process.env.PGUSER && 
-    process.env.PGPASSWORD && process.env.PGDATABASE) {
-  const port = process.env.PGPORT || '5432';
-  process.env.DATABASE_URL = `postgres://${process.env.PGUSER}:${process.env.PGPASSWORD}@${process.env.PGHOST}:${port}/${process.env.PGDATABASE}`;
-  console.log('Constructed DATABASE_URL from individual PG environment variables.');
-}
-
 // Using the environment variable
 const connectionString = process.env.DATABASE_URL;
-
-console.log('Starting database setup...');
-console.log('Database configuration:');
-console.log('- DATABASE_URL exists:', !!process.env.DATABASE_URL);
-console.log('- PGHOST exists:', !!process.env.PGHOST);
-console.log('- PGDATABASE exists:', !!process.env.PGDATABASE);
-console.log('- PGUSER exists:', !!process.env.PGUSER);
-console.log('- PGPASSWORD exists:', !!process.env.PGPASSWORD);
-console.log('- PGPORT exists:', !!process.env.PGPORT);
-
-// Verify we have what we need
-if (!connectionString) {
-  console.error('ERROR: No database connection string available. Cannot continue setup.');
-  console.error('Please set either DATABASE_URL or all PostgreSQL connection variables.');
-  process.exit(1);
-}
 
 async function main() {
   console.log('Setting up database...');
