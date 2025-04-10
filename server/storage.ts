@@ -17,6 +17,8 @@ import {
   type InsertFarmerTask,
   type CropYieldPrediction,
   type InsertCropYieldPrediction,
+  type PlantAnalysis,
+  type InsertPlantAnalysis,
   users,
   farmerProfiles,
   contactForm,
@@ -25,7 +27,8 @@ import {
   cropActivities,
   weatherPreferences,
   farmerTasks,
-  cropYieldPredictions
+  cropYieldPredictions,
+  plantAnalyses
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -708,6 +711,7 @@ export class MemStorage implements IStorage {
   private weatherPrefs: Map<number, WeatherPreferences>;
   private tasks: Map<number, FarmerTask>;
   private yieldPredictions: Map<number, CropYieldPrediction>;
+  private plantAnalyses: Map<number, PlantAnalysis>;
   private userId: number;
   private profileId: number;
   private inquiryId: number;
@@ -717,6 +721,7 @@ export class MemStorage implements IStorage {
   private prefsId: number;
   private taskId: number;
   private predictionId: number;
+  private analysisId: number;
   public sessionStore: session.Store;
 
   constructor() {
@@ -729,6 +734,7 @@ export class MemStorage implements IStorage {
     this.weatherPrefs = new Map();
     this.tasks = new Map();
     this.yieldPredictions = new Map();
+    this.plantAnalyses = new Map();
     this.userId = 1;
     this.profileId = 1;
     this.inquiryId = 1;
@@ -738,6 +744,7 @@ export class MemStorage implements IStorage {
     this.prefsId = 1;
     this.taskId = 1;
     this.predictionId = 1;
+    this.analysisId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
     });
@@ -1259,6 +1266,77 @@ export class MemStorage implements IStorage {
     
     this.yieldPredictions.set(id, updatedPrediction);
     return updatedPrediction;
+  }
+  
+  // Plant analysis methods
+  async getPlantAnalyses(userId: number): Promise<PlantAnalysis[]> {
+    return Array.from(this.plantAnalyses.values()).filter(
+      (analysis) => analysis.userId === userId,
+    );
+  }
+  
+  async getPlantAnalysisByField(fieldId: number): Promise<PlantAnalysis[]> {
+    return Array.from(this.plantAnalyses.values()).filter(
+      (analysis) => analysis.fieldId === fieldId,
+    );
+  }
+  
+  async getPlantAnalysisByCrop(cropId: number): Promise<PlantAnalysis[]> {
+    return Array.from(this.plantAnalyses.values()).filter(
+      (analysis) => analysis.cropId === cropId,
+    );
+  }
+  
+  async getPlantAnalysis(id: number): Promise<PlantAnalysis | undefined> {
+    return this.plantAnalyses.get(id);
+  }
+  
+  async createPlantAnalysis(data: InsertPlantAnalysis): Promise<PlantAnalysis> {
+    const id = this.analysisId++;
+    const now = new Date();
+    const analysis: PlantAnalysis = {
+      ...data,
+      id,
+      fieldId: data.fieldId || null,
+      cropId: data.cropId || null,
+      diseaseDetected: data.diseaseDetected || null,
+      diseaseProbability: data.diseaseProbability || null,
+      diseaseDescription: data.diseaseDescription || null,
+      nutrientDeficiencies: data.nutrientDeficiencies || null,
+      nutrientExcess: data.nutrientExcess || null,
+      recommendations: data.recommendations || null,
+      additionalObservations: data.additionalObservations || null,
+      notes: data.notes || null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    this.plantAnalyses.set(id, analysis);
+    return analysis;
+  }
+  
+  async updatePlantAnalysis(id: number, data: Partial<PlantAnalysis>): Promise<PlantAnalysis | undefined> {
+    const analysis = this.plantAnalyses.get(id);
+    if (!analysis) return undefined;
+    
+    const updatedAnalysis: PlantAnalysis = {
+      ...analysis,
+      ...data,
+      id,
+      userId: analysis.userId,
+      updatedAt: new Date(),
+    };
+    
+    this.plantAnalyses.set(id, updatedAnalysis);
+    return updatedAnalysis;
+  }
+  
+  async deletePlantAnalysis(id: number): Promise<boolean> {
+    const exists = this.plantAnalyses.has(id);
+    if (exists) {
+      this.plantAnalyses.delete(id);
+    }
+    return exists;
   }
 }
 
