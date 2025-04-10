@@ -16,44 +16,70 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             <i className="fas fa-leaf"></i>
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse"></span>
           </div>
-          <Link href="/" className="text-xl md:text-2xl font-bold font-space tracking-wider group relative">
-            Green<span className="text-primary group-hover:animate-pulse transition-all">upp</span>
-            <span className="absolute -top-2 -right-12 bg-primary text-black text-xs px-2 py-0.5 rounded-full font-semibold">BETA</span>
+          <Link
+            href="/"
+            className="text-xl md:text-2xl font-bold font-space tracking-wider group relative"
+          >
+            Green
+            <span className="text-primary group-hover:animate-pulse transition-all">
+              upp
+            </span>
+            <span className="absolute -top-2 -right-12  text-white text-xs px-2 py-0.5 rounded-full font-semibold">
+              BETA
+            </span>
           </Link>
         </div>
-        
+
         <div className="hidden md:flex space-x-6 lg:space-x-8 items-center">
-          <a href="#features" className="hover:text-primary transition duration-300 relative group">
+          <a
+            href="#features"
+            className="hover:text-primary transition duration-300 relative group"
+          >
             Features
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
           </a>
-          <a href="#solutions" className="hover:text-primary transition duration-300 relative group">
+          <a
+            href="#solutions"
+            className="hover:text-primary transition duration-300 relative group"
+          >
             Solutions
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
           </a>
-          <a href="#advanced-features" className="hover:text-primary transition duration-300 relative group">
+          <a
+            href="#advanced-features"
+            className="hover:text-primary transition duration-300 relative group"
+          >
             Platform
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
           </a>
-          <a href="#benefits" className="hover:text-primary transition duration-300 relative group">
+          <a
+            href="#benefits"
+            className="hover:text-primary transition duration-300 relative group"
+          >
             Benefits
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
           </a>
-          <a href="#community" className="hover:text-primary transition duration-300 relative group">
+          <a
+            href="#community"
+            className="hover:text-primary transition duration-300 relative group"
+          >
             Community
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
           </a>
           <ThemeToggle />
-          <Link href="/auth" className="group bg-primary hover:bg-primary/90 text-secondary px-4 py-2 rounded-md transition-all duration-300 font-medium inline-flex items-center">
+          <Link
+            href="/auth"
+            className="group bg-primary hover:bg-primary/90 text-secondary px-4 py-2 rounded-md transition-all duration-300 font-medium inline-flex items-center"
+          >
             <span>Get Started</span>
             <i className="fas fa-arrow-right ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all"></i>
           </Link>
         </div>
-        
+
         <div className="md:hidden flex items-center gap-3">
           <ThemeToggle />
-          <button 
-            className="flex items-center justify-center w-9 h-9 rounded-md border border-primary/30 hover:border-primary/80 hover:bg-primary/10 transition-all duration-300" 
+          <button
+            className="flex items-center justify-center w-9 h-9 rounded-md border border-primary/30 hover:border-primary/80 hover:bg-primary/10 transition-all duration-300"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle mobile menu"
           >
@@ -65,18 +91,18 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
           </button>
         </div>
       </div>
-      
+
       {/* Mobile Menu */}
-      <div 
+      <div
         className={`
-          ${mobileMenuOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'} 
+          ${mobileMenuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0 pointer-events-none"} 
           md:hidden fixed left-0 right-0 top-[51px] bg-secondary/95 backdrop-blur-md border-t border-primary/20
           transition-all duration-300 ease-in-out transform-gpu overflow-hidden
         `}
       >
         <div className="container mx-auto px-4 py-2 md:px-6 lg:px-8 max-w-7xl flex flex-col space-y-2">
-          <a 
-            href="#features" 
+          <a
+            href="#features"
             className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
@@ -86,8 +112,8 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             <span>Features</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
           </a>
-          <a 
-            href="#solutions" 
+          <a
+            href="#solutions"
             className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
@@ -97,8 +123,8 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             <span>Solutions</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
           </a>
-          <a 
-            href="#advanced-features" 
+          <a
+            href="#advanced-features"
             className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
@@ -108,8 +134,8 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             <span>Platform</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
           </a>
-          <a 
-            href="#benefits" 
+          <a
+            href="#benefits"
             className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
@@ -119,8 +145,8 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             <span>Benefits</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
           </a>
-          <a 
-            href="#community" 
+          <a
+            href="#community"
             className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
@@ -130,8 +156,8 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             <span>Community</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
           </a>
-          <Link 
-            href="/auth" 
+          <Link
+            href="/auth"
             className="group bg-secondary hover:bg-primary text-primary hover:text-secondary py-3 rounded-md transition-all duration-300 font-medium text-center mt-2 border border-primary flex items-center justify-center"
             onClick={() => setMobileMenuOpen(false)}
           >
