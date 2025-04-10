@@ -393,7 +393,14 @@ export default function WeatherPage() {
                           key={location}
                           variant={activeLocation === location ? "default" : "outline"}
                           className="cursor-pointer px-3 py-1 text-sm"
-                          onClick={() => setActiveLocation(location)}
+                          onClick={() => {
+                            // Reset all data when changing location
+                            setWeatherData(null);
+                            setClimateData(null);
+                            setCropRecommendations(null);
+                            setHistoricalData(null);
+                            setActiveLocation(location);
+                          }}
                         >
                           {location}
                         </Badge>
