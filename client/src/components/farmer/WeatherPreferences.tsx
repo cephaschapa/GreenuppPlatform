@@ -188,11 +188,11 @@ export function WeatherPreferences() {
     console.log("Mapped server data:", serverData);
     console.log("Using mutation:", preferences ? "update" : "create");
 
-    // if (preferences) {
-    //   updatePreferencesMutation.mutate(serverData);
-    // } else {
-    //   createPreferencesMutation.mutate(serverData);
-    // }
+    if (preferences) {
+      updatePreferencesMutation.mutate(serverData);
+    } else {
+      createPreferencesMutation.mutate(serverData);
+    }
 
     // Add a click event to the submit button for debugging
     console.log("Form submitted");
