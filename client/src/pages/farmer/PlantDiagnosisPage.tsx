@@ -99,14 +99,53 @@ const PlantDiagnosisPage = () => {
     }
   });
 
-  // Handler for file upload
+  // Image compression function
+  const compressImage = (dataURL: string, maxWidth = 800, quality = 0.7): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = dataURL;
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // Calculate new dimensions while maintaining aspect ratio
+        if (width > maxWidth) {
+          const ratio = maxWidth / width;
+          width = maxWidth;
+          height = height * ratio;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          // Get compressed image as data URL
+          const compressedDataURL = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedDataURL);
+        } else {
+          // Fallback to original if compression fails
+          resolve(dataURL);
+        }
+      };
+    });
+  };
+
+  // Handler for file upload with compression
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setImageFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
+      reader.onloadend = async () => {
+        if (reader.result && typeof reader.result === 'string') {
+          // Compress the image before setting it
+          const compressed = await compressImage(reader.result);
+          setSelectedImage(compressed);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -153,8 +192,8 @@ const PlantDiagnosisPage = () => {
     }
   };
 
-  // Capture image from camera
-  const captureImage = () => {
+  // Capture image from camera with compression
+  const captureImage = async () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -165,9 +204,12 @@ const PlantDiagnosisPage = () => {
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // Convert canvas to base64 image
-        const imageData = canvas.toDataURL('image/jpeg');
-        setSelectedImage(imageData);
+        // Convert canvas to base64 image with higher compression (0.6 quality)
+        const imageData = canvas.toDataURL('image/jpeg', 0.6);
+        
+        // Further compress the image
+        const compressedImage = await compressImage(imageData, 800, 0.6);
+        setSelectedImage(compressedImage);
         stopCamera();
       }
     }
