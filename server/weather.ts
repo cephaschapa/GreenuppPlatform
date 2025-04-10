@@ -246,7 +246,7 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
       
       // Handle API key error specifically
       if (error.response.status === 401) {
-        throw new Error('Weather data unavailable - API key issue. Please contact support.');
+        throw new Error('Weather data unavailable - API key issue. The One Call API may require a paid subscription. Please contact support.');
       }
     }
     
@@ -342,7 +342,7 @@ export async function getHistoricalWeatherData(location: string, startDate: Date
       
       // Handle API key error specifically
       if (error.response.status === 401) {
-        throw new Error('Historical weather data unavailable - API key issue. Please contact support.');
+        throw new Error('Historical weather data unavailable - API key issue. The Time Machine API may require a paid subscription. Please contact support.');
       }
     }
     
