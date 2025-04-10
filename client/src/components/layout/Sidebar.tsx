@@ -82,10 +82,10 @@ export function Sidebar() {
     },
     {
       title: "Marketplace",
-      href: "/farmer/marketplace",
+      href: "/dashboard/marketplace",
       icon: <ShoppingBag className="h-5 w-5" />,
       mobileIcon: <ShoppingBag className="h-6 w-6" />,
-      active: location.startsWith("/farmer/marketplace"),
+      active: location.startsWith("/dashboard/marketplace"),
       showInMobileNav: true,
     },
     {
@@ -133,10 +133,10 @@ export function Sidebar() {
     },
     {
       title: "Marketplace",
-      href: "/farmer/marketplace",
+      href: "/dashboard/marketplace",
       icon: <ShoppingBag className="h-5 w-5" />,
       mobileIcon: <ShoppingBag className="h-6 w-6" />,
-      active: location.startsWith("/farmer/marketplace"),
+      active: location.startsWith("/dashboard/marketplace"),
       showInMobileNav: true,
     },
     // Add more supplier-specific navigation items here
@@ -153,10 +153,10 @@ export function Sidebar() {
     },
     {
       title: "Marketplace",
-      href: "/farmer/marketplace",
+      href: "/dashboard/marketplace",
       icon: <ShoppingBag className="h-5 w-5" />,
       mobileIcon: <ShoppingBag className="h-6 w-6" />,
-      active: location.startsWith("/farmer/marketplace"),
+      active: location.startsWith("/dashboard/marketplace"),
       showInMobileNav: true,
     },
     // Add more buyer-specific navigation items here
