@@ -32,6 +32,8 @@ import { eq } from "drizzle-orm";
 import multer from "multer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  console.log("Registering all API routes...");
+  
   // Set up authentication 
   setupAuth(app);
 
@@ -2594,6 +2596,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Log all registered routes for debugging
+  console.log("Registered routes:");
+  const registeredRoutes = [];
+  
+  app._router.stack.forEach(middleware => {
+    if (middleware.route) {
+      // Routes registered directly
+      const path = middleware.route.path;
+      const methods = Object.keys(middleware.route.methods).join(', ').toUpperCase();
+      registeredRoutes.push(`${methods} ${path}`);
+    } else if (middleware.name === 'router') {
+      // Routes registered via router
+      middleware.handle.stack.forEach(handler => {
+        if (handler.route) {
+          const path = handler.route.path;
+          const methods = Object.keys(handler.route.methods).join(', ').toUpperCase();
+          registeredRoutes.push(`${methods} ${path}`);
+        }
+      });
+    }
+  });
+  
+  // Sort and log all routes
+  registeredRoutes.sort().forEach(route => console.log(`- ${route}`));
+  
+  // Specifically check for the marketplace route
+  if (registeredRoutes.some(r => r.includes("/api/marketplace/listings"))) {
+    console.log("✅ Marketplace listings routes are properly registered");
+  } else {
+    console.log("❌ WARNING: Marketplace listings routes not found in registered routes!");
+  }
+  
   const httpServer = createServer(app);
 
   return httpServer;

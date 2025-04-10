@@ -27,15 +27,29 @@ export async function apiRequest(
     }
   }
   
-  const res = await fetch(url, {
-    method,
-    headers,
-    body,
-    credentials: "include",
-  });
+  console.log(`Making ${method} request to: ${url}`);
+  
+  try {
+    const res = await fetch(url, {
+      method,
+      headers,
+      body,
+      credentials: "include",
+    });
 
-  await throwIfResNotOk(res);
-  return res;
+    console.log(`Response status: ${res.status}`);
+    
+    if (!res.ok) {
+      const text = await res.text();
+      console.error(`API error: ${res.status}`, text);
+      throw new Error(`${res.status}: ${text || res.statusText}`);
+    }
+    
+    return res;
+  } catch (error) {
+    console.error(`Request error for ${method} ${url}:`, error);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
