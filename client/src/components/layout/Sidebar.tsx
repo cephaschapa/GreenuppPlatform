@@ -18,6 +18,7 @@ import {
   Bell,
   Home,
   MoreHorizontal,
+  Sprout,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -68,6 +69,14 @@ export function Sidebar() {
       icon: <Cloud className="h-5 w-5" />,
       mobileIcon: <Cloud className="h-6 w-6" />,
       active: location === "/dashboard/weather",
+      showInMobileNav: true,
+    },
+    {
+      title: "Plant Diagnosis",
+      href: "/dashboard/plant-diagnosis",
+      icon: <Sprout className="h-5 w-5" />,
+      mobileIcon: <Sprout className="h-6 w-6" />,
+      active: location === "/dashboard/plant-diagnosis",
       showInMobileNav: true,
     },
     {
