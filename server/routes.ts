@@ -428,7 +428,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(weatherData);
     } catch (error) {
       console.error("Error fetching weather data:", error);
-      if (error.message === 'OpenWeather API key not configured') {
+      if (error instanceof Error && error.message === 'OpenWeather API key not configured') {
         res.status(503).json({ 
           message: "Weather service is not properly configured. Please contact system administrator.",
           details: "API key missing"
@@ -462,7 +462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(historicalData);
     } catch (error) {
       console.error("Error fetching historical weather data:", error);
-      if (error.message === 'OpenWeather API key not configured') {
+      if (error instanceof Error && error.message === 'OpenWeather API key not configured') {
         res.status(503).json({ 
           message: "Weather service is not properly configured. Please contact system administrator.",
           details: "API key missing"
