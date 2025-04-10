@@ -44,8 +44,8 @@ function Router() {
       
       {/* Marketplace routes */}
       <ProtectedRoute path="/dashboard/marketplace" component={MarketplacePage} />
-      <ProtectedRoute path="/dashboard/marketplace/:id" component={MarketplaceDetailPage} />
       <ProtectedRoute path="/dashboard/marketplace/new" component={CreateListingPage} />
+      <ProtectedRoute path="/dashboard/marketplace/:id" component={MarketplaceDetailPage} />
       
       <Route component={NotFound} />
     </Switch>

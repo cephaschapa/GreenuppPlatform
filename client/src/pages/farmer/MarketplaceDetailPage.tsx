@@ -502,7 +502,7 @@ export default function MarketplaceDetailPage() {
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-semibold">Similar Listings</h2>
-                  <Button variant="link" className="p-0" onClick={() => setLocation("/farmer/marketplace")}>
+                  <Button variant="link" className="p-0" onClick={() => setLocation("/dashboard/marketplace")}>
                     View All <ArrowRight className="h-4 w-4 ml-1" />
                   </Button>
                 </div>
@@ -526,7 +526,7 @@ export default function MarketplaceDetailPage() {
                     <div 
                       key={item.id} 
                       className="flex gap-3 cursor-pointer hover:bg-muted p-2 rounded-lg transition-colors"
-                      onClick={() => setLocation(`/farmer/marketplace/${item.id}`)}
+                      onClick={() => setLocation(`/dashboard/marketplace/${item.id}`)}
                     >
                       <div className="w-20 h-20 rounded-md bg-muted overflow-hidden">
                         <img 

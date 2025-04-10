@@ -216,7 +216,7 @@ export default function CreateListingPage() {
       });
       
       // Navigate back to marketplace
-      setLocation("/farmer/marketplace");
+      setLocation("/dashboard/marketplace");
     },
     onError: (error: Error) => {
       toast({
@@ -273,7 +273,7 @@ export default function CreateListingPage() {
   };
   
   const navigateBack = () => {
-    setLocation("/farmer/marketplace");
+    setLocation("/dashboard/marketplace");
   };
   
   return (
