@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSettingsSimple } from "@/hooks/use-settings-simple";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -109,46 +110,21 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
 
-  // Fetch user settings (this would typically come from the user's profile or a dedicated settings endpoint)
-  const { data: settings, isLoading: settingsLoading } = useQuery({
-    queryKey: ["/api/settings"],
-    queryFn: async () => {
-      // For now, return default settings since we haven't implemented a settings endpoint yet
-      return {
-        notifications: {
-          emailNotifications: true,
-          pushNotifications: true,
-          weatherAlerts: true,
-          marketPriceAlerts: false,
-          taskReminders: true,
-        },
-        display: {
-          theme: theme,
-          fontSize: 100,
-          reducedMotion: false,
-          highContrast: false,
-        },
-        security: {
-          twoFactorAuth: false,
-          sessionTimeout: "never",
-          loginNotifications: true,
-        },
-        privacy: {
-          shareData: true,
-          profileVisibility: "public",
-          locationSharing: true,
-        },
-        units: {
-          temperatureUnit: "celsius",
-          distanceUnit: "metric",
-          weightUnit: "metric",
-          dateFormat: "DMY",
-        },
-      };
-    },
-    // Disable for now since we don't have an endpoint
-    enabled: false,
-  });
+  // Use our settings hook to fetch and update settings
+  const { 
+    settings, 
+    isLoading: settingsLoading,
+    updateDisplaySettings: updateDisplaySettingsApi,
+    updateNotificationSettings: updateNotificationSettingsApi,
+    updateSecuritySettings: updateSecuritySettingsApi,
+    updatePrivacySettings: updatePrivacySettingsApi,
+    updateUnitSettings: updateUnitSettingsApi,
+    isUpdatingDisplay,
+    isUpdatingNotifications,
+    isUpdatingSecurity,
+    isUpdatingPrivacy,
+    isUpdatingUnits
+  } = useSettingsSimple();
 
   // Set default settings
   const defaultSettings = {
@@ -331,23 +307,27 @@ export default function SettingsPage() {
 
   // Submit handlers
   const onNotificationSubmit = (data: NotificationSettings) => {
-    updateNotificationSettings.mutate(data);
+    updateNotificationSettingsApi(data);
+    // Also update the theme in ThemeProvider when changing display settings
+    setTheme(displayForm.getValues().theme);
   };
 
   const onDisplaySubmit = (data: DisplaySettings) => {
-    updateDisplaySettings.mutate(data);
+    updateDisplaySettingsApi(data);
+    // Also update the theme in ThemeProvider when changing display settings
+    setTheme(data.theme);
   };
 
   const onSecuritySubmit = (data: SecuritySettings) => {
-    updateSecuritySettings.mutate(data);
+    updateSecuritySettingsApi(data);
   };
 
   const onPrivacySubmit = (data: PrivacySettings) => {
-    updatePrivacySettings.mutate(data);
+    updatePrivacySettingsApi(data);
   };
 
   const onUnitSubmit = (data: UnitSettings) => {
-    updateUnitSettings.mutate(data);
+    updateUnitSettingsApi(data);
   };
 
   if (settingsLoading) {
@@ -527,9 +507,9 @@ export default function SettingsPage() {
                     <Button
                       type="submit"
                       className="gap-2"
-                      disabled={updateDisplaySettings.isPending}
+                      disabled={isUpdatingDisplay}
                     >
-                      {updateDisplaySettings.isPending ? (
+                      {isUpdatingDisplay ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
                           Saving...
