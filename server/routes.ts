@@ -29,9 +29,20 @@ import { eq } from "drizzle-orm";
 // Note: We rely on the User type definition
 // that's already declared in auth.ts
 
+import multer from "multer";
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication 
   setupAuth(app);
+
+  // Configure multer for file uploads
+  const storage = multer.memoryStorage();
+  const upload = multer({ 
+    storage,
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    }
+  });
 
   // Middleware to check authentication
   function isAuthenticated(req: Request, res: Response, next: NextFunction) {
