@@ -16,6 +16,8 @@ import FieldsPage from "@/pages/farmer/FieldsPage";
 import TasksPage from "@/pages/farmer/TasksPage";
 import WeatherPage from "@/pages/farmer/WeatherPage";
 import PredictionsPage from "@/pages/farmer/PredictionsPage";
+import ProfilePage from "@/pages/farmer/ProfilePage";
+import SettingsPage from "@/pages/farmer/SettingsPage";
 
 function Router() {
   return (
@@ -29,6 +31,8 @@ function Router() {
       <ProtectedRoute path="/dashboard/tasks" component={TasksPage} />
       <ProtectedRoute path="/dashboard/weather" component={WeatherPage} />
       <ProtectedRoute path="/dashboard/predictions" component={PredictionsPage} />
+      <ProtectedRoute path="/dashboard/profile" component={ProfilePage} />
+      <ProtectedRoute path="/dashboard/settings" component={SettingsPage} />
       <ProtectedRoute path="/profile-creation" component={ProfileCreationPage} />
       
       <Route component={NotFound} />
