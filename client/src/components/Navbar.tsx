@@ -16,8 +16,9 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             <i className="fas fa-leaf"></i>
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse"></span>
           </div>
-          <Link href="/" className="text-xl md:text-2xl font-bold font-space tracking-wider group">
+          <Link href="/" className="text-xl md:text-2xl font-bold font-space tracking-wider group relative">
             Green<span className="text-primary group-hover:animate-pulse transition-all">upp</span>
+            <span className="absolute -top-2 -right-12 bg-primary text-black text-xs px-2 py-0.5 rounded-full font-semibold">BETA</span>
           </Link>
         </div>
         

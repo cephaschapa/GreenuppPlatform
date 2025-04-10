@@ -30,7 +30,10 @@ export default function DashboardPage() {
       return (
         <div className="min-h-screen bg-black text-white flex items-center justify-center">
           <div className="flex flex-col items-center justify-center max-w-md text-center">
-            <h1 className="text-3xl font-bold mb-4">Welcome to Greenupp</h1>
+            <h1 className="text-3xl font-bold mb-4 relative inline-block">
+              Welcome to Greenupp
+              <span className="absolute -top-2 -right-12 bg-primary text-black text-xs px-2 py-0.5 rounded-full font-semibold">BETA</span>
+            </h1>
             <p className="text-gray-300 mb-4">
               Your role-specific dashboard is currently unavailable. Please contact support.
             </p>
