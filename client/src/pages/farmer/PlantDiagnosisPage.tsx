@@ -14,8 +14,8 @@ import { PlantAnalysis } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
 import { Loader2, Upload, Camera, AlertCircle, Sprout, LineChart, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-// We'll use a normal layout instead of FarmerLayout since it doesn't exist
-import DashboardLayout from '@/components/layout/DashboardLayout';
+// We'll use a normal layout
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 
 const PlantDiagnosisPage = () => {
   const [activeTab, setActiveTab] = useState('upload');
@@ -213,7 +213,9 @@ const PlantDiagnosisPage = () => {
       hour: '2-digit',
       minute: '2-digit'
     };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    // Ensure we have a valid date string before parsing
+    const date = dateString ? new Date(dateString) : new Date();
+    return date.toLocaleDateString(undefined, options);
   };
 
   // Get status color based on health score
@@ -236,7 +238,7 @@ const PlantDiagnosisPage = () => {
   };
 
   return (
-    <FarmerLayout>
+    <DashboardLayout title="Plant Disease Diagnosis">
       <div className="container mx-auto py-6">
         <div className="space-y-6">
           <div>
@@ -468,7 +470,7 @@ const PlantDiagnosisPage = () => {
                     </div>
                   ) : analyses.length === 0 ? (
                     <div className="text-center py-8">
-                      <Plant className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <Sprout className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <h3 className="text-lg font-medium">No analyses yet</h3>
                       <p className="text-sm text-muted-foreground mt-1">
                         Upload your first plant image to get a diagnosis
@@ -567,7 +569,7 @@ const PlantDiagnosisPage = () => {
           </Tabs>
         </div>
       </div>
-    </FarmerLayout>
+    </DashboardLayout>
   );
 };
 
