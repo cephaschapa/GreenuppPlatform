@@ -36,16 +36,21 @@ import { useToast } from "@/hooks/use-toast";
 
 // Weather preference form schema with validation
 const preferencesSchema = insertWeatherPreferencesSchema.extend({
-  // Make sure we properly handle array typing to match our schema
-  locations: z.array(z.string()).min(1, "Add at least one location"),
+  // Allow empty array for locations
+  locations: z.array(z.string()).default([]),
   alertsEnabled: z.boolean().default(true),
-  temperatureUnit: z.enum(['celsius', 'fahrenheit']).default('celsius'),
+  temperatureUnit: z.enum(["celsius", "fahrenheit"]).default("celsius"),
 });
 
 export function WeatherPreferences() {
   const [newLocation, setNewLocation] = useState("");
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
-  const { preferences, isLoading, createPreferencesMutation, updatePreferencesMutation } = useWeatherPreferences();
+  const {
+    preferences,
+    isLoading,
+    createPreferencesMutation,
+    updatePreferencesMutation,
+  } = useWeatherPreferences();
   const { toast } = useToast();
 
   // Form setup with defaults from existing preferences
@@ -54,7 +59,8 @@ export function WeatherPreferences() {
     defaultValues: {
       locations: preferences?.locations || [],
       alertsEnabled: preferences?.alertsEnabled ?? true,
-      temperatureUnit: (preferences?.temperatureUnit as "celsius" | "fahrenheit") || "celsius",
+      temperatureUnit:
+        (preferences?.temperatureUnit as "celsius" | "fahrenheit") || "celsius",
     },
   });
 
@@ -64,7 +70,9 @@ export function WeatherPreferences() {
       form.reset({
         locations: preferences.locations || [],
         alertsEnabled: preferences.alertsEnabled ?? true,
-        temperatureUnit: (preferences.temperatureUnit as "celsius" | "fahrenheit") || "celsius",
+        temperatureUnit:
+          (preferences.temperatureUnit as "celsius" | "fahrenheit") ||
+          "celsius",
       });
     }
   }, [preferences, form]);
@@ -72,7 +80,7 @@ export function WeatherPreferences() {
   // Handle adding a new location
   const handleAddLocation = () => {
     if (!newLocation.trim()) return;
-    
+
     const currentLocations = form.getValues("locations") || [];
     form.setValue("locations", [...currentLocations, newLocation.trim()]);
     setNewLocation("");
@@ -83,23 +91,23 @@ export function WeatherPreferences() {
     const currentLocations = form.getValues("locations") || [];
     form.setValue(
       "locations",
-      currentLocations.filter((_, i) => i !== index)
+      currentLocations.filter((_, i) => i !== index),
     );
   };
-  
+
   // Auto-detect user's location
   const detectCurrentLocation = () => {
     if (!navigator.geolocation) {
       toast({
         title: "Location detection failed",
         description: "Geolocation is not supported by your browser",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
-    
+
     setIsDetectingLocation(true);
-    
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
@@ -107,19 +115,19 @@ export function WeatherPreferences() {
           const { latitude, longitude } = position.coords;
           const response = await fetch(
             `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${process.env.OPENWEATHER_API_KEY || process.env.VITE_OPENWEATHER_API_KEY}`,
-            { method: "GET" }
+            { method: "GET" },
           );
-          
+
           if (!response.ok) {
             throw new Error("Failed to fetch location data");
           }
-          
+
           const data = await response.json();
-          
+
           if (data && data.length > 0) {
             const locationName = data[0].name;
             const currentLocations = form.getValues("locations") || [];
-            
+
             // Only add if not already in the list
             if (!currentLocations.includes(locationName)) {
               form.setValue("locations", [...currentLocations, locationName]);
@@ -140,8 +148,9 @@ export function WeatherPreferences() {
           console.error("Error detecting location:", error);
           toast({
             title: "Location detection failed",
-            description: "Unable to determine your current location. Please add it manually.",
-            variant: "destructive"
+            description:
+              "Unable to determine your current location. Please add it manually.",
+            variant: "destructive",
           });
         } finally {
           setIsDetectingLocation(false);
@@ -152,40 +161,42 @@ export function WeatherPreferences() {
         setIsDetectingLocation(false);
         toast({
           title: "Location detection failed",
-          description: "Please allow location access or enter your location manually",
-          variant: "destructive"
+          description:
+            "Please allow location access or enter your location manually",
+          variant: "destructive",
         });
-      }
+      },
     );
   };
 
   // Handle form submission
   const onSubmit = (values: z.infer<typeof preferencesSchema>) => {
     // Log form values to help debugging
-    console.log('Form values being submitted:', values);
-    
+    console.log("Form values being submitted:", values);
+
     // Map the form values to match the schema expected by the server
     const serverData = {
       locations: values.locations,
       alertsEnabled: values.alertsEnabled,
-      temperatureUnit: values.temperatureUnit
+      temperatureUnit: values.temperatureUnit,
     };
-    
-    console.log('Mapped server data:', serverData);
-    console.log('Using mutation:', preferences ? 'update' : 'create');
-    
+
+    console.log("Mapped server data:", serverData);
+    console.log("Using mutation:", preferences ? "update" : "create");
+
     if (preferences) {
       updatePreferencesMutation.mutate(serverData);
     } else {
       createPreferencesMutation.mutate(serverData);
     }
-    
+
     // Add a click event to the submit button for debugging
-    console.log('Form submitted');
+    console.log("Form submitted");
   };
 
   // Check if mutation is in progress
-  const isMutating = createPreferencesMutation.isPending || updatePreferencesMutation.isPending;
+  const isMutating =
+    createPreferencesMutation.isPending || updatePreferencesMutation.isPending;
 
   return (
     <Card className="w-full">
@@ -220,7 +231,9 @@ export function WeatherPreferences() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="celsius">Celsius (°C)</SelectItem>
-                        <SelectItem value="fahrenheit">Fahrenheit (°F)</SelectItem>
+                        <SelectItem value="fahrenheit">
+                          Fahrenheit (°F)
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormDescription>
@@ -237,7 +250,9 @@ export function WeatherPreferences() {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Weather Alerts</FormLabel>
+                      <FormLabel className="text-base">
+                        Weather Alerts
+                      </FormLabel>
                       <FormDescription>
                         Receive notifications about significant weather changes
                       </FormDescription>
@@ -261,7 +276,7 @@ export function WeatherPreferences() {
                     <FormDescription>
                       Add locations you want to track weather for
                     </FormDescription>
-                    
+
                     <div className="flex flex-col space-y-2">
                       <div className="space-y-2">
                         <div className="flex space-x-2">
@@ -280,7 +295,7 @@ export function WeatherPreferences() {
                             <Plus className="h-4 w-4" />
                           </Button>
                         </div>
-                        
+
                         {/* Auto-detect location button */}
                         <Button
                           type="button"
@@ -294,10 +309,12 @@ export function WeatherPreferences() {
                           ) : (
                             <MapPin className="mr-2 h-4 w-4" />
                           )}
-                          {isDetectingLocation ? "Detecting Location..." : "Auto-Detect My Location"}
+                          {isDetectingLocation
+                            ? "Detecting Location..."
+                            : "Auto-Detect My Location"}
                         </Button>
                       </div>
-                      
+
                       <div className="flex flex-col space-y-2 mt-2">
                         {field.value?.length ? (
                           field.value.map((location, index) => (
