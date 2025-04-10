@@ -284,12 +284,12 @@ export async function getHistoricalWeatherData(location: string, startDate: Date
     const weatherPromises = dates.map(async (date) => {
       const timestamp = Math.floor(date.getTime() / 1000);
       
-      // Note: In v3.0 API, we use a different endpoint structure
-      const response = await axios.get(`${OPENWEATHER_BASE_URL}/onecall/day_summary`, {
+      // Using the timemachine endpoint for historical data
+      const response = await axios.get(`${OPENWEATHER_BASE_URL}/onecall/timemachine`, {
         params: {
           lat: geoData.lat,
           lon: geoData.lon,
-          date: new Date(timestamp * 1000).toISOString().split('T')[0], // Convert to YYYY-MM-DD
+          dt: timestamp, // Unix timestamp
           units: 'metric',
           appid: OPENWEATHER_API_KEY
         }
@@ -309,20 +309,38 @@ export async function getHistoricalWeatherData(location: string, startDate: Date
       dates: results.map(result => {
         const day = result.data;
         
-        // The v3.0 API has a different structure for day summary data
-        // Extract the temperature summary data
-        const temperature = day.temperature || {};
-        const humidity = day.humidity || {};
-        const precipitation = day.precipitation || {};
+        // The timemachine API returns data in a different format
+        // Use hourly data to calculate min/max/average
+        const hourlyData = day.hourly || [];
+        const currentData = day.data && day.data[0] || day.current || {};
         
-        // Use the summary data when available, otherwise use reasonable defaults
+        let minTemp = currentData.temp || 15;
+        let maxTemp = currentData.temp || 25;
+        let totalTemp = currentData.temp || 20;
+        let totalHumidity = currentData.humidity || 60;
+        let precipitation = currentData.rain?.["1h"] || 0;
+        
+        // Calculate from hourly data if available
+        if (hourlyData.length > 0) {
+          const temps = hourlyData.map((hour: any) => hour.temp);
+          minTemp = Math.min(...temps);
+          maxTemp = Math.max(...temps);
+          totalTemp = temps.reduce((sum: number, temp: number) => sum + temp, 0) / temps.length;
+          
+          const humidities = hourlyData.map((hour: any) => hour.humidity);
+          totalHumidity = humidities.reduce((sum: number, humidity: number) => sum + humidity, 0) / humidities.length;
+          
+          // Sum up precipitation for the day
+          precipitation = hourlyData.reduce((sum: number, hour: any) => sum + (hour.rain?.["1h"] || 0), 0);
+        }
+        
         return {
           date: result.date,
-          averageTemp: temperature.average || (temperature.morning + temperature.afternoon + temperature.evening + temperature.night) / 4 || 20,
-          minTemp: temperature.min || 15,
-          maxTemp: temperature.max || 25,
-          humidity: humidity.afternoon || 60,
-          precipitation: precipitation.total || 0
+          averageTemp: totalTemp,
+          minTemp,
+          maxTemp,
+          humidity: totalHumidity,
+          precipitation
         };
       })
     };
