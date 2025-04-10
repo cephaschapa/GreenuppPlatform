@@ -31,7 +31,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, X, MapPin } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 // Weather preference form schema with validation
 const preferencesSchema = insertWeatherPreferencesSchema.extend({
@@ -43,7 +44,9 @@ const preferencesSchema = insertWeatherPreferencesSchema.extend({
 
 export function WeatherPreferences() {
   const [newLocation, setNewLocation] = useState("");
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const { preferences, isLoading, createPreferencesMutation, updatePreferencesMutation } = useWeatherPreferences();
+  const { toast } = useToast();
 
   // Form setup with defaults from existing preferences
   const form = useForm<z.infer<typeof preferencesSchema>>({
@@ -81,6 +84,78 @@ export function WeatherPreferences() {
     form.setValue(
       "locations",
       currentLocations.filter((_, i) => i !== index)
+    );
+  };
+  
+  // Auto-detect user's location
+  const detectCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "Location detection failed",
+        description: "Geolocation is not supported by your browser",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsDetectingLocation(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          // Use reverse geocoding to get city name from coordinates
+          const { latitude, longitude } = position.coords;
+          const response = await fetch(
+            `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${process.env.OPENWEATHER_API_KEY || process.env.VITE_OPENWEATHER_API_KEY}`,
+            { method: "GET" }
+          );
+          
+          if (!response.ok) {
+            throw new Error("Failed to fetch location data");
+          }
+          
+          const data = await response.json();
+          
+          if (data && data.length > 0) {
+            const locationName = data[0].name;
+            const currentLocations = form.getValues("locations") || [];
+            
+            // Only add if not already in the list
+            if (!currentLocations.includes(locationName)) {
+              form.setValue("locations", [...currentLocations, locationName]);
+              toast({
+                title: "Location detected",
+                description: `${locationName} has been added to your locations`,
+              });
+            } else {
+              toast({
+                title: "Location already exists",
+                description: `${locationName} is already in your locations`,
+              });
+            }
+          } else {
+            throw new Error("Location not found");
+          }
+        } catch (error) {
+          console.error("Error detecting location:", error);
+          toast({
+            title: "Location detection failed",
+            description: "Unable to determine your current location. Please add it manually.",
+            variant: "destructive"
+          });
+        } finally {
+          setIsDetectingLocation(false);
+        }
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        setIsDetectingLocation(false);
+        toast({
+          title: "Location detection failed",
+          description: "Please allow location access or enter your location manually",
+          variant: "destructive"
+        });
+      }
     );
   };
 
