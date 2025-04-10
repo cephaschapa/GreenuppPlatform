@@ -775,7 +775,7 @@ export async function generateCropYieldPrediction(cropId: number, location: stri
     // For this example, we'll use a simplified approach
     const confidenceLevel = 60 + Math.random() * 20; // 60-80% confidence
     
-    const factorsConsidered = {
+    const factorsConsidered = JSON.stringify({
       climate: {
         averageTemp: climateData.monthlyAverages.reduce((sum, m) => sum + m.averageTemp, 0) / 12,
         averagePrecipitation: climateData.monthlyAverages.reduce((sum, m) => sum + m.averagePrecipitation, 0) / 12,
@@ -786,7 +786,7 @@ export async function generateCropYieldPrediction(cropId: number, location: stri
         forecastConditions: weatherData.forecast.slice(0, 5).map(day => day.condition)
       },
       soil: climateData.soilConditions
-    };
+    });
     
     // Simulate a yield prediction
     const basePredictedYield = 3.5; // Base yield in tons/hectare
@@ -803,9 +803,9 @@ export async function generateCropYieldPrediction(cropId: number, location: stri
     // Create the prediction object
     const yieldPrediction: InsertCropYieldPrediction = {
       cropId,
-      predictedYield,
+      predictedYield: String(predictedYield.toFixed(2)),
       yieldUnit: 'tons/hectare',
-      confidenceLevel,
+      confidenceLevel: String(confidenceLevel.toFixed(2)),
       factorsConsidered
     };
     
