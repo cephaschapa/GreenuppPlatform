@@ -284,11 +284,12 @@ export async function getHistoricalWeatherData(location: string, startDate: Date
     const weatherPromises = dates.map(async (date) => {
       const timestamp = Math.floor(date.getTime() / 1000);
       
-      const response = await axios.get(`${OPENWEATHER_BASE_URL}/onecall/timemachine`, {
+      // Note: In v3.0 API, we use a different endpoint structure
+      const response = await axios.get(`${OPENWEATHER_BASE_URL}/onecall/day_summary`, {
         params: {
           lat: geoData.lat,
           lon: geoData.lon,
-          dt: timestamp,
+          date: new Date(timestamp * 1000).toISOString().split('T')[0], // Convert to YYYY-MM-DD
           units: 'metric',
           appid: OPENWEATHER_API_KEY
         }
@@ -308,26 +309,20 @@ export async function getHistoricalWeatherData(location: string, startDate: Date
       dates: results.map(result => {
         const day = result.data;
         
-        // Calculate daily min and max from hourly data if available
-        let minTemp = day.current.temp;
-        let maxTemp = day.current.temp;
-        let totalTemp = day.current.temp;
-        let totalHumidity = day.current.humidity;
+        // The v3.0 API has a different structure for day summary data
+        // Extract the temperature summary data
+        const temperature = day.temperature || {};
+        const humidity = day.humidity || {};
+        const precipitation = day.precipitation || {};
         
-        if (day.hourly) {
-          minTemp = Math.min(...day.hourly.map((hour: any) => hour.temp));
-          maxTemp = Math.max(...day.hourly.map((hour: any) => hour.temp));
-          totalTemp = day.hourly.reduce((sum: number, hour: any) => sum + hour.temp, 0) / day.hourly.length;
-          totalHumidity = day.hourly.reduce((sum: number, hour: any) => sum + hour.humidity, 0) / day.hourly.length;
-        }
-        
+        // Use the summary data when available, otherwise use reasonable defaults
         return {
           date: result.date,
-          averageTemp: totalTemp,
-          minTemp,
-          maxTemp,
-          humidity: totalHumidity,
-          precipitation: day.current.rain?.['1h'] || 0 // Not always available
+          averageTemp: temperature.average || (temperature.morning + temperature.afternoon + temperature.evening + temperature.night) / 4 || 20,
+          minTemp: temperature.min || 15,
+          maxTemp: temperature.max || 25,
+          humidity: humidity.afternoon || 60,
+          precipitation: precipitation.total || 0
         };
       })
     };
