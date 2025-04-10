@@ -350,12 +350,12 @@ export default function SettingsPage() {
   return (
     <DashboardLayout title="Settings" description="Customize your application settings">
       <Tabs defaultValue="display" className="w-full">
-        <TabsList className="grid w-full max-w-3xl grid-cols-5">
-          <TabsTrigger value="display">Display</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="units">Units</TabsTrigger>
-          <TabsTrigger value="privacy">Privacy</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
+        <TabsList className="grid w-full max-w-3xl grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+          <TabsTrigger value="display" className="px-2 text-xs sm:text-sm truncate">Display</TabsTrigger>
+          <TabsTrigger value="notifications" className="px-2 text-xs sm:text-sm truncate">Notifications</TabsTrigger>
+          <TabsTrigger value="units" className="px-2 text-xs sm:text-sm truncate">Units</TabsTrigger>
+          <TabsTrigger value="privacy" className="px-2 text-xs sm:text-sm truncate">Privacy</TabsTrigger>
+          <TabsTrigger value="security" className="px-2 text-xs sm:text-sm truncate">Security</TabsTrigger>
         </TabsList>
         
         {/* Display Settings */}
@@ -420,7 +420,7 @@ export default function SettingsPage() {
                             onValueChange={(value) => field.onChange(value[0])}
                           />
                         </FormControl>
-                        <FormDescription>
+                        <FormDescription className="text-xs sm:text-sm line-clamp-2">
                           Adjust the text size throughout the application
                         </FormDescription>
                         <FormMessage />
@@ -433,10 +433,10 @@ export default function SettingsPage() {
                       control={displayForm.control}
                       name="reducedMotion"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Reduced Motion</FormLabel>
-                            <FormDescription>
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:p-4">
+                          <div className="space-y-0.5 max-w-[70%]">
+                            <FormLabel className="text-sm sm:text-base line-clamp-1">Reduced Motion</FormLabel>
+                            <FormDescription className="text-xs sm:text-sm line-clamp-2">
                               Minimize animations across the interface
                             </FormDescription>
                           </div>
@@ -454,10 +454,10 @@ export default function SettingsPage() {
                       control={displayForm.control}
                       name="highContrast"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">High Contrast</FormLabel>
-                            <FormDescription>
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:p-4">
+                          <div className="space-y-0.5 max-w-[70%]">
+                            <FormLabel className="text-sm sm:text-base line-clamp-1">High Contrast</FormLabel>
+                            <FormDescription className="text-xs sm:text-sm line-clamp-2">
                               Increase contrast for better readability
                             </FormDescription>
                           </div>
@@ -515,10 +515,10 @@ export default function SettingsPage() {
                       control={notificationForm.control}
                       name="emailNotifications"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Email Notifications</FormLabel>
-                            <FormDescription>
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:p-4">
+                          <div className="space-y-0.5 max-w-[70%]">
+                            <FormLabel className="text-sm sm:text-base line-clamp-1">Email Notifications</FormLabel>
+                            <FormDescription className="text-xs sm:text-sm line-clamp-2">
                               Receive important updates via email
                             </FormDescription>
                           </div>
@@ -536,10 +536,10 @@ export default function SettingsPage() {
                       control={notificationForm.control}
                       name="pushNotifications"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Push Notifications</FormLabel>
-                            <FormDescription>
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:p-4">
+                          <div className="space-y-0.5 max-w-[70%]">
+                            <FormLabel className="text-sm sm:text-base line-clamp-1">Push Notifications</FormLabel>
+                            <FormDescription className="text-xs sm:text-sm line-clamp-2">
                               Receive alerts directly in your browser
                             </FormDescription>
                           </div>
@@ -557,10 +557,10 @@ export default function SettingsPage() {
                       control={notificationForm.control}
                       name="weatherAlerts"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Weather Alerts</FormLabel>
-                            <FormDescription>
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:p-4">
+                          <div className="space-y-0.5 max-w-[70%]">
+                            <FormLabel className="text-sm sm:text-base line-clamp-1">Weather Alerts</FormLabel>
+                            <FormDescription className="text-xs sm:text-sm line-clamp-2">
                               Get notified about important weather changes
                             </FormDescription>
                           </div>
@@ -578,10 +578,10 @@ export default function SettingsPage() {
                       control={notificationForm.control}
                       name="marketPriceAlerts"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Market Price Alerts</FormLabel>
-                            <FormDescription>
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:p-4">
+                          <div className="space-y-0.5 max-w-[70%]">
+                            <FormLabel className="text-sm sm:text-base line-clamp-1">Market Price Alerts</FormLabel>
+                            <FormDescription className="text-xs sm:text-sm line-clamp-2">
                               Stay informed about significant market price changes
                             </FormDescription>
                           </div>
@@ -599,10 +599,10 @@ export default function SettingsPage() {
                       control={notificationForm.control}
                       name="taskReminders"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel className="text-base">Task Reminders</FormLabel>
-                            <FormDescription>
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:p-4">
+                          <div className="space-y-0.5 max-w-[70%]">
+                            <FormLabel className="text-sm sm:text-base line-clamp-1">Task Reminders</FormLabel>
+                            <FormDescription className="text-xs sm:text-sm line-clamp-2">
                               Get reminded about upcoming and due tasks
                             </FormDescription>
                           </div>
@@ -673,7 +673,7 @@ export default function SettingsPage() {
                               <SelectItem value="fahrenheit">Fahrenheit (°F)</SelectItem>
                             </SelectContent>
                           </Select>
-                          <FormDescription>
+                          <FormDescription className="text-xs sm:text-sm line-clamp-2">
                             Used for weather and temperature data
                           </FormDescription>
                           <FormMessage />
@@ -698,7 +698,7 @@ export default function SettingsPage() {
                               <SelectItem value="imperial">Imperial (feet, miles)</SelectItem>
                             </SelectContent>
                           </Select>
-                          <FormDescription>
+                          <FormDescription className="text-xs sm:text-sm line-clamp-2">
                             Used for field sizes and distances
                           </FormDescription>
                           <FormMessage />
@@ -723,7 +723,7 @@ export default function SettingsPage() {
                               <SelectItem value="imperial">Imperial (pounds, tons)</SelectItem>
                             </SelectContent>
                           </Select>
-                          <FormDescription>
+                          <FormDescription className="text-xs sm:text-sm line-clamp-2">
                             Used for crop yields and input weights
                           </FormDescription>
                           <FormMessage />
@@ -749,7 +749,7 @@ export default function SettingsPage() {
                               <SelectItem value="YMD">Year/Month/Day (2024/12/31)</SelectItem>
                             </SelectContent>
                           </Select>
-                          <FormDescription>
+                          <FormDescription className="text-xs sm:text-sm line-clamp-2">
                             How dates are displayed throughout the app
                           </FormDescription>
                           <FormMessage />
@@ -800,10 +800,10 @@ export default function SettingsPage() {
                     control={privacyForm.control}
                     name="shareData"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Share Agricultural Data</FormLabel>
-                          <FormDescription>
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:p-4">
+                        <div className="space-y-0.5 max-w-[70%]">
+                          <FormLabel className="text-sm sm:text-base line-clamp-1">Share Agricultural Data</FormLabel>
+                          <FormDescription className="text-xs sm:text-sm line-clamp-2">
                             Allow your anonymized farm data to be used for research and improvements
                           </FormDescription>
                         </div>
@@ -835,7 +835,7 @@ export default function SettingsPage() {
                             <SelectItem value="private">Private (Only Me)</SelectItem>
                           </SelectContent>
                         </Select>
-                        <FormDescription>
+                        <FormDescription className="text-xs sm:text-sm line-clamp-2">
                           Control who can view your farmer profile
                         </FormDescription>
                         <FormMessage />
@@ -847,10 +847,10 @@ export default function SettingsPage() {
                     control={privacyForm.control}
                     name="locationSharing"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Location Sharing</FormLabel>
-                          <FormDescription>
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:p-4">
+                        <div className="space-y-0.5 max-w-[70%]">
+                          <FormLabel className="text-sm sm:text-base line-clamp-1">Location Sharing</FormLabel>
+                          <FormDescription className="text-xs sm:text-sm line-clamp-2">
                             Share your farm location for improved local services
                           </FormDescription>
                         </div>
@@ -917,10 +917,10 @@ export default function SettingsPage() {
                     control={securityForm.control}
                     name="twoFactorAuth"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Two-Factor Authentication</FormLabel>
-                          <FormDescription>
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:p-4">
+                        <div className="space-y-0.5 max-w-[70%]">
+                          <FormLabel className="text-sm sm:text-base line-clamp-1">Two-Factor Authentication</FormLabel>
+                          <FormDescription className="text-xs sm:text-sm line-clamp-2">
                             Add an extra layer of security to your account
                           </FormDescription>
                         </div>
@@ -954,7 +954,7 @@ export default function SettingsPage() {
                             <SelectItem value="24hours">After 24 hours</SelectItem>
                           </SelectContent>
                         </Select>
-                        <FormDescription>
+                        <FormDescription className="text-xs sm:text-sm line-clamp-2">
                           Automatically log out after a period of inactivity
                         </FormDescription>
                         <FormMessage />
@@ -966,10 +966,10 @@ export default function SettingsPage() {
                     control={securityForm.control}
                     name="loginNotifications"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Login Notifications</FormLabel>
-                          <FormDescription>
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:p-4">
+                        <div className="space-y-0.5 max-w-[70%]">
+                          <FormLabel className="text-sm sm:text-base line-clamp-1">Login Notifications</FormLabel>
+                          <FormDescription className="text-xs sm:text-sm line-clamp-2">
                             Get alerted about new logins to your account
                           </FormDescription>
                         </div>
