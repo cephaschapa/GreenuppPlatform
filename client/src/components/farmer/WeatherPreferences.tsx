@@ -36,8 +36,9 @@ import { useToast } from "@/hooks/use-toast";
 
 // Weather preference form schema with validation
 const preferencesSchema = insertWeatherPreferencesSchema.extend({
-  // Allow empty array for locations
-  locations: z.array(z.string()).default([]),
+  userId: z.number().optional(),
+  // Make sure we properly handle array typing to match our schema
+  locations: z.array(z.string()).min(1, "Add at least one location"),
   alertsEnabled: z.boolean().default(true),
   temperatureUnit: z.enum(["celsius", "fahrenheit"]).default("celsius"),
 });
@@ -57,8 +58,9 @@ export function WeatherPreferences() {
   const form = useForm<z.infer<typeof preferencesSchema>>({
     resolver: zodResolver(preferencesSchema),
     defaultValues: {
+      userId: preferences?.userId,
       locations: preferences?.locations || [],
-      alertsEnabled: preferences?.alertsEnabled ?? true,
+      alertsEnabled: preferences?.alertsEnabled!,
       temperatureUnit:
         (preferences?.temperatureUnit as "celsius" | "fahrenheit") || "celsius",
     },
@@ -68,6 +70,7 @@ export function WeatherPreferences() {
   useEffect(() => {
     if (preferences) {
       form.reset({
+        userId: preferences.userId,
         locations: preferences.locations || [],
         alertsEnabled: preferences.alertsEnabled ?? true,
         temperatureUnit:
@@ -176,6 +179,7 @@ export function WeatherPreferences() {
 
     // Map the form values to match the schema expected by the server
     const serverData = {
+      userId: values.userId,
       locations: values.locations,
       alertsEnabled: values.alertsEnabled,
       temperatureUnit: values.temperatureUnit,
@@ -184,11 +188,11 @@ export function WeatherPreferences() {
     console.log("Mapped server data:", serverData);
     console.log("Using mutation:", preferences ? "update" : "create");
 
-    if (preferences) {
-      updatePreferencesMutation.mutate(serverData);
-    } else {
-      createPreferencesMutation.mutate(serverData);
-    }
+    // if (preferences) {
+    //   updatePreferencesMutation.mutate(serverData);
+    // } else {
+    //   createPreferencesMutation.mutate(serverData);
+    // }
 
     // Add a click event to the submit button for debugging
     console.log("Form submitted");
@@ -316,7 +320,12 @@ export function WeatherPreferences() {
                       </div>
 
                       <div className="flex flex-col space-y-2 mt-2">
-                        {field.value?.length ? (
+                        {/* Debug info */}
+                        <div className="text-xs text-muted-foreground">
+                          Current locations: {JSON.stringify(field.value)}
+                        </div>
+                        
+                        {Array.isArray(field.value) && field.value.length > 0 ? (
                           field.value.map((location, index) => (
                             <div
                               key={index}

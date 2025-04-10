@@ -411,15 +411,33 @@ export class DatabaseStorage implements IStorage {
     const existingPrefs = await this.getWeatherPreferences(userId);
     if (!existingPrefs) return undefined;
     
+    // Make sure locations is always an array
+    const updatedData: any = { ...data };
+    
+    // If locations is provided, ensure it's an array
+    if ('locations' in updatedData) {
+      if (!Array.isArray(updatedData.locations)) {
+        // If it's not an array, make it an empty array
+        updatedData.locations = [];
+        console.log("Converted non-array locations to empty array");
+      } else {
+        console.log("Locations is already an array:", updatedData.locations);
+      }
+    }
+    
+    console.log("Updating weather preferences with data:", updatedData);
+    
     // Then update it by id
     const [prefs] = await db
       .update(weatherPreferences)
       .set({
-        ...data,
+        ...updatedData,
         updatedAt: new Date()
       })
       .where(eq(weatherPreferences.id, existingPrefs.id))
       .returning();
+    
+    console.log("Updated preferences:", prefs);
     
     return prefs;
   }
