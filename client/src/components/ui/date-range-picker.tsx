@@ -1,27 +1,30 @@
-import * as React from "react";
-import { format } from "date-fns";
-import { DateRange } from "react-day-picker";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+"use client"
+
+import * as React from "react"
+import { format } from "date-fns"
+import { Calendar as CalendarIcon } from "lucide-react"
+import { DateRange } from "react-day-picker"
+
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+} from "@/components/ui/popover"
 
-interface CalendarDateRangePickerProps {
-  date?: DateRange;
-  setDate: (date: DateRange | undefined) => void;
-  className?: string;
+interface DateRangePickerProps {
+  date: DateRange | undefined
+  onDateChange: (date: DateRange | undefined) => void
+  className?: string
 }
 
-export function CalendarDateRangePicker({
+export function DateRangePicker({
   date,
-  setDate,
+  onDateChange,
   className,
-}: CalendarDateRangePickerProps) {
+}: DateRangePickerProps) {
   return (
     <div className={cn("grid gap-2", className)}>
       <Popover>
@@ -38,8 +41,7 @@ export function CalendarDateRangePicker({
             {date?.from ? (
               date.to ? (
                 <>
-                  {format(date.from, "LLL dd, y")} -{" "}
-                  {format(date.to, "LLL dd, y")}
+                  {format(date.from, "LLL dd, y")} - {format(date.to, "LLL dd, y")}
                 </>
               ) : (
                 format(date.from, "LLL dd, y")
@@ -55,11 +57,11 @@ export function CalendarDateRangePicker({
             mode="range"
             defaultMonth={date?.from}
             selected={date}
-            onSelect={setDate}
+            onSelect={onDateChange}
             numberOfMonths={2}
           />
         </PopoverContent>
       </Popover>
     </div>
-  );
+  )
 }

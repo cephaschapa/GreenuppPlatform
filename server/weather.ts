@@ -136,7 +136,7 @@ async function geocodeLocation(location: string): Promise<GeoLocation> {
     } else {
       throw new Error('Location not found');
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error geocoding location:', error);
     throw new Error('Failed to geocode location');
   }
@@ -237,7 +237,7 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
     };
 
     return weatherData;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching weather data:', error);
     if (error.response) {
       console.error('API response error:', error.response.data);
@@ -325,7 +325,7 @@ export async function getHistoricalWeatherData(location: string, startDate: Date
     };
     
     return historicalData;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching historical weather data:', error);
     throw new Error('Failed to retrieve historical weather data');
   }
@@ -507,7 +507,7 @@ export async function getClimateData(location: string): Promise<ClimateData> {
       },
       growingSeasonLength
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating climate data:', error);
     throw new Error('Failed to retrieve climate data');
   }
@@ -692,15 +692,17 @@ export async function getCropRecommendations(location: string): Promise<CropReco
       }
       
       // Determine optimal planting window
-      const seasonToMonthMap = {
+      const seasonToMonthMap: Record<string, string[]> = {
         Spring: ['March', 'April', 'May'],
         Summer: ['June', 'July', 'August'],
         Fall: ['September', 'October', 'November'],
-        Winter: ['December', 'January', 'February']
+        Winter: ['December', 'January', 'February'],
+        Perennial: ['January'] // Just a placeholder for perennial crops
       };
       
-      const plantingMonths = crop.seasonality.flatMap(season => seasonToMonthMap[season])
-        .filter(month => suitablePlantingMonths.includes(month));
+      const plantingMonths = crop.seasonality.flatMap(season => {
+        return seasonToMonthMap[season as keyof typeof seasonToMonthMap] || [];
+      }).filter(month => suitablePlantingMonths.includes(month));
       
       const startMonth = plantingMonths[0] || 'March';
       const endMonth = plantingMonths[plantingMonths.length - 1] || 'May';
@@ -748,7 +750,7 @@ export async function getCropRecommendations(location: string): Promise<CropReco
     
     // Sort by suitability score (highest first)
     return recommendations.sort((a, b) => b.suitabilityScore - a.suitabilityScore);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating crop recommendations:', error);
     throw new Error('Failed to generate crop recommendations');
   }
@@ -800,15 +802,15 @@ export async function generateCropYieldPrediction(cropId: number, location: stri
     
     // Create the prediction object
     const yieldPrediction: InsertCropYieldPrediction = {
-      cropId: cropId,
-      predictedYield: predictedYield,
+      cropId,
+      predictedYield,
       yieldUnit: 'tons/hectare',
-      confidenceLevel: confidenceLevel,
-      factorsConsidered: factorsConsidered
+      confidenceLevel,
+      factorsConsidered
     };
     
     return yieldPrediction;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating crop yield prediction:', error);
     throw new Error('Failed to generate crop yield prediction');
   }
@@ -821,7 +823,7 @@ export async function saveCropYieldPrediction(prediction: InsertCropYieldPredict
   try {
     const [result] = await db.insert(cropYieldPredictions).values(prediction).returning();
     return result;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving crop yield prediction:', error);
     throw new Error('Failed to save crop yield prediction');
   }
