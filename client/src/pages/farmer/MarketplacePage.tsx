@@ -21,7 +21,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { formatDistanceToNow } from "date-fns";
-import DashboardLayout from "../components/layout/DashboardLayout";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 // Marketplace category list
 const MARKETPLACE_CATEGORIES = [
@@ -208,7 +208,7 @@ export default function MarketplacePage() {
   });
 
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Marketplace" description="Buy and sell agricultural products and services">
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">

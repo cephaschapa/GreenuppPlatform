@@ -21,6 +21,9 @@ import PredictionsPage from "@/pages/farmer/PredictionsPage";
 import ProfilePage from "@/pages/farmer/ProfilePage";
 import SettingsPage from "@/pages/farmer/SettingsPage";
 import PlantDiagnosisPage from "@/pages/farmer/PlantDiagnosisPage";
+import MarketplacePage from "@/pages/farmer/MarketplacePage";
+import MarketplaceDetailPage from "@/pages/farmer/MarketplaceDetailPage";
+import CreateListingPage from "@/pages/farmer/CreateListingPage";
 
 function Router() {
   return (
@@ -38,6 +41,11 @@ function Router() {
       <ProtectedRoute path="/dashboard/profile" component={ProfilePage} />
       <ProtectedRoute path="/dashboard/settings" component={SettingsPage} />
       <ProtectedRoute path="/profile-creation" component={ProfileCreationPage} />
+      
+      {/* Marketplace routes */}
+      <ProtectedRoute path="/dashboard/marketplace" component={MarketplacePage} />
+      <ProtectedRoute path="/dashboard/marketplace/:id" component={MarketplaceDetailPage} />
+      <ProtectedRoute path="/dashboard/marketplace/new" component={CreateListingPage} />
       
       <Route component={NotFound} />
     </Switch>
