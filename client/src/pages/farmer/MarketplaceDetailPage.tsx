@@ -114,7 +114,7 @@ export default function MarketplaceDetailPage() {
   const displayedListing = MOCK_LISTING;
   
   const navigateBack = () => {
-    setLocation("/farmer/marketplace");
+    setLocation("/dashboard/marketplace");
   };
   
   const handleFavoriteToggle = () => {

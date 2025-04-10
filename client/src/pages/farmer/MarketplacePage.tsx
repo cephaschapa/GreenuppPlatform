@@ -180,11 +180,11 @@ export default function MarketplacePage() {
   };
 
   const navigateToDetail = (id: number) => {
-    setLocation(`/farmer/marketplace/${id}`);
+    setLocation(`/dashboard/marketplace/${id}`);
   };
 
   const navigateToCreate = () => {
-    setLocation("/farmer/marketplace/new");
+    setLocation("/dashboard/marketplace/new");
   };
 
   // For development we'll use mock data until the API is connected
@@ -192,7 +192,7 @@ export default function MarketplacePage() {
     if (filters.search && !listing.title.toLowerCase().includes(filters.search.toLowerCase())) {
       return false;
     }
-    if (filters.category && listing.category !== filters.category) {
+    if (filters.category && filters.category !== 'all' && listing.category !== filters.category) {
       return false;
     }
     if (listing.price < filters.minPrice || listing.price > filters.maxPrice) {
@@ -247,7 +247,7 @@ export default function MarketplacePage() {
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {MARKETPLACE_CATEGORIES.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
