@@ -123,7 +123,12 @@ const PlantDiagnosisPage = () => {
   const startCamera = async () => {
     try {
       setIsCameraActive(true);
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      // Specify environment facing (back camera) with video constraints
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: "environment" // Use back camera
+        } 
+      });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
