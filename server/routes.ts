@@ -421,54 +421,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Location parameter is required" });
       }
       
-      // In a real application, you would make a call to a weather API service here
-      // For now, we'll return simulated weather data
-      const weatherData = {
-        location: location,
-        current: {
-          temp: 22,
-          humidity: 65,
-          wind_speed: 12,
-          weather: [{ description: 'Partly cloudy' }]
-        },
-        daily: [
-          { 
-            date: new Date(Date.now()).toLocaleDateString(), 
-            temp: { day: 22, min: 16, max: 24 }, 
-            humidity: 65, 
-            weather: [{ description: 'Partly cloudy' }] 
-          },
-          { 
-            date: new Date(Date.now() + 86400000).toLocaleDateString(), 
-            temp: { day: 24, min: 18, max: 26 }, 
-            humidity: 60, 
-            weather: [{ description: 'Sunny' }] 
-          },
-          { 
-            date: new Date(Date.now() + 86400000 * 2).toLocaleDateString(), 
-            temp: { day: 21, min: 15, max: 23 }, 
-            humidity: 70, 
-            weather: [{ description: 'Light rain' }] 
-          },
-          { 
-            date: new Date(Date.now() + 86400000 * 3).toLocaleDateString(), 
-            temp: { day: 20, min: 14, max: 22 }, 
-            humidity: 75, 
-            weather: [{ description: 'Showers' }] 
-          },
-          { 
-            date: new Date(Date.now() + 86400000 * 4).toLocaleDateString(), 
-            temp: { day: 23, min: 17, max: 25 }, 
-            humidity: 55, 
-            weather: [{ description: 'Clear sky' }] 
-          }
-        ]
-      };
+      // Use our dedicated weather service
+      const { getWeatherData } = await import('./weather');
+      const weatherData = await getWeatherData(location as string);
       
       res.json(weatherData);
     } catch (error) {
       console.error("Error fetching weather data:", error);
-      res.status(500).json({ message: "Failed to retrieve weather data" });
+      if (error.message === 'OpenWeather API key not configured') {
+        res.status(503).json({ 
+          message: "Weather service is not properly configured. Please contact system administrator.",
+          details: "API key missing"
+        });
+      } else {
+        res.status(500).json({ message: "Failed to retrieve weather data" });
+      }
+    }
+  });
+  
+  // Historical weather data endpoint
+  app.get("/api/weather/historical", isAuthenticated, async (req, res) => {
+    try {
+      const { location, startDate, endDate } = req.query;
+      
+      if (!location) {
+        return res.status(400).json({ message: "Location parameter is required" });
+      }
+      
+      if (!startDate || !endDate) {
+        return res.status(400).json({ message: "Start and end dates are required" });
+      }
+      
+      const { getHistoricalWeatherData } = await import('./weather');
+      const historicalData = await getHistoricalWeatherData(
+        location as string, 
+        new Date(startDate as string), 
+        new Date(endDate as string)
+      );
+      
+      res.json(historicalData);
+    } catch (error) {
+      console.error("Error fetching historical weather data:", error);
+      if (error.message === 'OpenWeather API key not configured') {
+        res.status(503).json({ 
+          message: "Weather service is not properly configured. Please contact system administrator.",
+          details: "API key missing"
+        });
+      } else {
+        res.status(500).json({ message: "Failed to retrieve historical weather data" });
+      }
+    }
+  });
+  
+  // Climate data endpoint
+  app.get("/api/weather/climate", isAuthenticated, async (req, res) => {
+    try {
+      const { location } = req.query;
+      
+      if (!location) {
+        return res.status(400).json({ message: "Location parameter is required" });
+      }
+      
+      const { getClimateData } = await import('./weather');
+      const climateData = await getClimateData(location as string);
+      
+      res.json(climateData);
+    } catch (error) {
+      console.error("Error fetching climate data:", error);
+      res.status(500).json({ message: "Failed to retrieve climate data" });
+    }
+  });
+  
+  // Crop recommendations based on weather and climate
+  app.get("/api/crop-recommendations", isAuthenticated, async (req, res) => {
+    try {
+      const { location } = req.query;
+      
+      if (!location) {
+        return res.status(400).json({ message: "Location parameter is required" });
+      }
+      
+      const { getCropRecommendations } = await import('./weather');
+      const recommendations = await getCropRecommendations(location as string);
+      
+      res.json(recommendations);
+    } catch (error) {
+      console.error("Error fetching crop recommendations:", error);
+      res.status(500).json({ message: "Failed to generate crop recommendations" });
+    }
+  });
+  
+  // Generate and save crop yield prediction
+  app.post("/api/crop-yield-predictions", isAuthenticated, async (req, res) => {
+    try {
+      const { cropId, location } = req.body;
+      
+      if (!cropId || !location) {
+        return res.status(400).json({ message: "CropId and location are required" });
+      }
+      
+      const { generateCropYieldPrediction, saveCropYieldPrediction } = await import('./weather');
+      const prediction = await generateCropYieldPrediction(cropId, location);
+      const savedPrediction = await saveCropYieldPrediction(prediction);
+      
+      res.status(201).json(savedPrediction);
+    } catch (error) {
+      console.error("Error generating crop yield prediction:", error);
+      res.status(500).json({ message: "Failed to generate crop yield prediction" });
     }
   });
 
