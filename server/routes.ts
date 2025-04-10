@@ -10,8 +10,10 @@ import {
   insertWeatherPreferencesSchema,
   insertFarmerTaskSchema,
   insertCropYieldPredictionSchema,
+  insertPlantAnalysisSchema,
   fields, crops, cropActivities,
-  weatherPreferences, farmerTasks, cropYieldPredictions
+  weatherPreferences, farmerTasks, cropYieldPredictions,
+  plantAnalyses
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -1539,6 +1541,220 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Catch-all route for API errors
   app.use("/api/*", (req, res) => {
     res.status(404).json({ message: "API endpoint not found" });
+  });
+
+  // Plant Disease Analysis Endpoints
+  
+  // Get all plant analyses for the authenticated farmer
+  app.get("/api/plant-analyses", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const analyses = await storage.getPlantAnalyses(req.user.id);
+      res.json(analyses);
+    } catch (error) {
+      console.error("Error fetching plant analyses:", error);
+      res.status(500).json({ message: "Failed to retrieve plant analyses" });
+    }
+  });
+  
+  // Get a specific plant analysis by ID
+  app.get("/api/plant-analyses/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const analysisId = parseInt(req.params.id);
+      if (isNaN(analysisId)) {
+        return res.status(400).json({ message: "Invalid analysis ID" });
+      }
+      
+      const analysis = await storage.getPlantAnalysis(analysisId);
+      if (!analysis) {
+        return res.status(404).json({ message: "Analysis not found" });
+      }
+      
+      // Ensure the analysis belongs to the authenticated user
+      if (analysis.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to access this analysis" });
+      }
+      
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error fetching plant analysis:", error);
+      res.status(500).json({ message: "Failed to retrieve plant analysis" });
+    }
+  });
+  
+  // Get plant analyses for a specific field
+  app.get("/api/fields/:fieldId/plant-analyses", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const fieldId = parseInt(req.params.fieldId);
+      if (isNaN(fieldId)) {
+        return res.status(400).json({ message: "Invalid field ID" });
+      }
+      
+      // Check if field exists and belongs to the user
+      const field = await storage.getField(fieldId);
+      if (!field) {
+        return res.status(404).json({ message: "Field not found" });
+      }
+      
+      if (field.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to access this field's analyses" });
+      }
+      
+      const analyses = await storage.getPlantAnalysisByField(fieldId);
+      res.json(analyses);
+    } catch (error) {
+      console.error("Error fetching field plant analyses:", error);
+      res.status(500).json({ message: "Failed to retrieve field plant analyses" });
+    }
+  });
+  
+  // Get plant analyses for a specific crop
+  app.get("/api/crops/:cropId/plant-analyses", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const cropId = parseInt(req.params.cropId);
+      if (isNaN(cropId)) {
+        return res.status(400).json({ message: "Invalid crop ID" });
+      }
+      
+      // Check if crop exists and belongs to the user
+      const crop = await storage.getCrop(cropId);
+      if (!crop) {
+        return res.status(404).json({ message: "Crop not found" });
+      }
+      
+      if (crop.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to access this crop's analyses" });
+      }
+      
+      const analyses = await storage.getPlantAnalysisByCrop(cropId);
+      res.json(analyses);
+    } catch (error) {
+      console.error("Error fetching crop plant analyses:", error);
+      res.status(500).json({ message: "Failed to retrieve crop plant analyses" });
+    }
+  });
+  
+  // Submit a plant image for analysis
+  app.post("/api/plant-analyses", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const { imageData, plantType, fieldId, cropId, notes } = req.body;
+      
+      if (!imageData) {
+        return res.status(400).json({ message: "Image data is required" });
+      }
+      
+      // Validate field and crop IDs if provided
+      if (fieldId) {
+        const field = await storage.getField(parseInt(fieldId));
+        if (!field) {
+          return res.status(404).json({ message: "Field not found" });
+        }
+        if (field.userId !== req.user.id) {
+          return res.status(403).json({ message: "You don't have permission to use this field" });
+        }
+      }
+      
+      if (cropId) {
+        const crop = await storage.getCrop(parseInt(cropId));
+        if (!crop) {
+          return res.status(404).json({ message: "Crop not found" });
+        }
+        if (crop.userId !== req.user.id) {
+          return res.status(403).json({ message: "You don't have permission to use this crop" });
+        }
+      }
+      
+      // Process the image with AI
+      const { analyzePlantImage, createPlantAnalysis } = await import('./services/plant-analysis');
+      
+      // Analyze the image
+      const analysisResult = await analyzePlantImage(
+        imageData,
+        plantType,
+        notes
+      );
+      
+      // Create the database record
+      const plantAnalysisData = createPlantAnalysis(
+        imageData,
+        analysisResult,
+        req.user.id,
+        plantType,
+        fieldId ? parseInt(fieldId) : undefined,
+        cropId ? parseInt(cropId) : undefined,
+        notes
+      );
+      
+      // Save to database
+      const savedAnalysis = await storage.createPlantAnalysis(plantAnalysisData);
+      
+      res.status(201).json(savedAnalysis);
+    } catch (error) {
+      console.error("Error analyzing plant image:", error);
+      if (error instanceof Error && error.message.includes("OpenAI API")) {
+        res.status(503).json({ 
+          message: "Plant analysis service is not properly configured. Please contact system administrator.",
+          details: "API key missing or invalid"
+        });
+      } else {
+        res.status(500).json({ message: "Failed to analyze plant image" });
+      }
+    }
+  });
+  
+  // Delete a plant analysis
+  app.delete("/api/plant-analyses/:id", isAuthenticated, hasRole('farmer'), async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const analysisId = parseInt(req.params.id);
+      if (isNaN(analysisId)) {
+        return res.status(400).json({ message: "Invalid analysis ID" });
+      }
+      
+      // Check if analysis exists and belongs to user
+      const existingAnalysis = await storage.getPlantAnalysis(analysisId);
+      if (!existingAnalysis) {
+        return res.status(404).json({ message: "Analysis not found" });
+      }
+      
+      if (existingAnalysis.userId !== req.user.id) {
+        return res.status(403).json({ message: "You don't have permission to delete this analysis" });
+      }
+      
+      // Delete analysis
+      const success = await storage.deletePlantAnalysis(analysisId);
+      
+      if (success) {
+        res.json({ success: true, message: "Plant analysis deleted successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to delete plant analysis" });
+      }
+    } catch (error) {
+      console.error("Error deleting plant analysis:", error);
+      res.status(500).json({ message: "Failed to delete plant analysis" });
+    }
   });
 
   const httpServer = createServer(app);
