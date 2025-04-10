@@ -5,7 +5,7 @@ import { cropYieldPredictions } from '@shared/schema';
 
 // We'll use OpenWeatherMap API as it provides both current, forecast and historical data
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
-const OPENWEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5';
+const OPENWEATHER_BASE_URL = 'https://api.openweathermap.org/data/3.0';
 const OPENWEATHER_GEO_URL = 'https://api.openweathermap.org/geo/1.0';
 
 // Cache for weather data to minimize API calls
