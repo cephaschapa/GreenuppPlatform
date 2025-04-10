@@ -51,7 +51,7 @@ import {
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import { db } from "./db";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { eq, and, gte, lte, or, isNotNull, asc, desc, sql } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 import { Pool } from "@neondatabase/serverless";
 
@@ -831,12 +831,6 @@ export class MemStorage implements IStorage {
     this.yieldPredictions = new Map();
     this.plantAnalyses = new Map();
     
-    // Initialize marketplace maps
-    this.locations = new Map();
-    this.marketplaceListings = new Map();
-    this.marketplaceReviews = new Map();
-    this.marketplaceFavorites = new Map();
-    this.marketplaceMessages = new Map();
     // Initialize marketplace maps
     this.locations = new Map();
     this.marketplaceListings = new Map();
