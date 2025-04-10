@@ -211,6 +211,11 @@ export class DatabaseStorage implements IStorage {
       createTableIfMissing: true,
     });
   }
+  
+  // Helper method for calculating distance using Haversine formula
+  private deg2rad(deg: number): number {
+    return deg * (Math.PI/180);
+  }
 
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -733,6 +738,606 @@ export class DatabaseStorage implements IStorage {
       .where(eq(plantAnalyses.id, id));
     
     return analysis;
+  }
+  
+  // ============== MARKETPLACE METHODS ==============//
+  
+  // Location methods
+  async getLocations(): Promise<Location[]> {
+    return await db.select().from(locations);
+  }
+  
+  async getLocation(id: number): Promise<Location | undefined> {
+    const [location] = await db
+      .select()
+      .from(locations)
+      .where(eq(locations.id, id));
+    return location;
+  }
+  
+  async getLocationByCoordinates(latitude: number, longitude: number): Promise<Location | undefined> {
+    // Use a small threshold to find a location with similar coordinates
+    const threshold = 0.0001; // Approximately 10 meters
+    
+    const nearbyLocations = await db
+      .select()
+      .from(locations)
+      .where(
+        and(
+          sql`ABS(${locations.latitude}::float - ${latitude}) < ${threshold}`,
+          sql`ABS(${locations.longitude}::float - ${longitude}) < ${threshold}`
+        )
+      );
+    
+    return nearbyLocations[0];
+  }
+  
+  async createLocation(locationData: InsertLocation): Promise<Location> {
+    const [location] = await db
+      .insert(locations)
+      .values(locationData)
+      .returning();
+    return location;
+  }
+  
+  async updateLocation(id: number, locationData: Partial<Location>): Promise<Location | undefined> {
+    const [updatedLocation] = await db
+      .update(locations)
+      .set({
+        ...locationData,
+        updatedAt: new Date(),
+      })
+      .where(eq(locations.id, id))
+      .returning();
+    return updatedLocation;
+  }
+  
+  async deleteLocation(id: number): Promise<boolean> {
+    try {
+      await db
+        .delete(locations)
+        .where(eq(locations.id, id));
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting location:", error);
+      return false;
+    }
+  }
+  
+  // Marketplace Listing methods
+  async getMarketplaceListings(params?: {
+    category?: string;
+    search?: string;
+    sellerId?: number;
+    minPrice?: number;
+    maxPrice?: number;
+    condition?: string;
+    status?: string;
+    locationId?: number;
+    radius?: number;
+    sortBy?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<MarketplaceListing[]> {
+    let query = db.select().from(marketplaceListings);
+    
+    if (params) {
+      const whereConditions = [];
+      
+      if (params.category) {
+        whereConditions.push(eq(marketplaceListings.category, params.category));
+      }
+      
+      if (params.sellerId) {
+        whereConditions.push(eq(marketplaceListings.sellerId, params.sellerId));
+      }
+      
+      if (params.condition) {
+        whereConditions.push(eq(marketplaceListings.condition, params.condition));
+      }
+      
+      if (params.status) {
+        whereConditions.push(eq(marketplaceListings.status, params.status));
+      }
+      
+      if (params.locationId) {
+        whereConditions.push(eq(marketplaceListings.locationId, params.locationId));
+      }
+      
+      if (params.minPrice !== undefined) {
+        whereConditions.push(sql`${marketplaceListings.price}::float >= ${params.minPrice}`);
+      }
+      
+      if (params.maxPrice !== undefined) {
+        whereConditions.push(sql`${marketplaceListings.price}::float <= ${params.maxPrice}`);
+      }
+      
+      if (params.search) {
+        whereConditions.push(
+          or(
+            sql`${marketplaceListings.title} ILIKE ${'%' + params.search + '%'}`,
+            sql`${marketplaceListings.description} ILIKE ${'%' + params.search + '%'}`
+          )
+        );
+      }
+      
+      if (whereConditions.length > 0) {
+        query = query.where(and(...whereConditions));
+      }
+      
+      // Apply sorting
+      if (params.sortBy) {
+        const [field, direction] = params.sortBy.split(':');
+        const isDesc = direction === 'desc';
+        
+        switch (field) {
+          case 'price':
+            query = isDesc 
+              ? query.orderBy(desc(marketplaceListings.price)) 
+              : query.orderBy(asc(marketplaceListings.price));
+            break;
+          case 'createdAt':
+            query = isDesc 
+              ? query.orderBy(desc(marketplaceListings.createdAt)) 
+              : query.orderBy(asc(marketplaceListings.createdAt));
+            break;
+          case 'title':
+            query = isDesc 
+              ? query.orderBy(desc(marketplaceListings.title)) 
+              : query.orderBy(asc(marketplaceListings.title));
+            break;
+          case 'views':
+            query = isDesc 
+              ? query.orderBy(desc(marketplaceListings.views)) 
+              : query.orderBy(asc(marketplaceListings.views));
+            break;
+          default:
+            // Default sorting by most recent
+            query = query.orderBy(desc(marketplaceListings.createdAt));
+        }
+      } else {
+        // Default sorting by most recent
+        query = query.orderBy(desc(marketplaceListings.createdAt));
+      }
+      
+      // Apply pagination
+      if (params.limit !== undefined) {
+        query = query.limit(params.limit);
+        
+        if (params.offset !== undefined) {
+          query = query.offset(params.offset);
+        }
+      }
+    }
+    
+    return await query;
+  }
+  
+  async getMarketplaceListingsByLocation(
+    latitude: number, 
+    longitude: number, 
+    radiusKm: number, 
+    filters?: Partial<MarketplaceListing>
+  ): Promise<MarketplaceListing[]> {
+    // Get all listings with locations
+    const listingsWithLocations = await db
+      .select({
+        listing: marketplaceListings,
+        location: locations,
+      })
+      .from(marketplaceListings)
+      .leftJoin(locations, eq(marketplaceListings.locationId, locations.id))
+      .where(
+        and(
+          isNotNull(marketplaceListings.locationId),
+          isNotNull(locations.latitude),
+          isNotNull(locations.longitude)
+        )
+      );
+    
+    // Filter listings by distance
+    const filteredListings = listingsWithLocations
+      .filter(({ location }) => {
+        if (!location || !location.latitude || !location.longitude) return false;
+        
+        // Calculate distance using Haversine formula
+        const R = 6371; // Earth's radius in km
+        const dLat = this.deg2rad(Number(location.latitude) - latitude);
+        const dLon = this.deg2rad(Number(location.longitude) - longitude);
+        const a = 
+          Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(this.deg2rad(latitude)) * Math.cos(this.deg2rad(Number(location.latitude))) * 
+          Math.sin(dLon/2) * Math.sin(dLon/2); 
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+        const distance = R * c; // Distance in km
+        
+        return distance <= radiusKm;
+      })
+      .map(({ listing }) => listing);
+    
+    // Apply additional filters if needed
+    if (filters) {
+      return filteredListings.filter(listing => {
+        for (const [key, value] of Object.entries(filters)) {
+          if (key === 'minPrice') {
+            if (Number(listing.price) < Number(value)) return false;
+          } else if (key === 'maxPrice') {
+            if (Number(listing.price) > Number(value)) return false;
+          } else if (listing[key as keyof MarketplaceListing] !== value) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+    
+    return filteredListings;
+  }
+  
+  async getMarketplaceListingsBySellerLocation(
+    sellerId: number, 
+    radiusKm: number
+  ): Promise<MarketplaceListing[]> {
+    // First get all listings by this seller
+    const sellerListings = await this.getMarketplaceListingsBySeller(sellerId);
+    
+    // Filter by radius from seller's location
+    const result: MarketplaceListing[] = [];
+    
+    for (const listing of sellerListings) {
+      if (!listing.locationId) continue;
+      
+      const location = await this.getLocation(listing.locationId);
+      if (!location || !location.latitude || !location.longitude) continue;
+      
+      // Get other listings within radius of this listing
+      const nearbyListings = await this.getMarketplaceListingsByLocation(
+        Number(location.latitude),
+        Number(location.longitude),
+        radiusKm
+      );
+      
+      // Add unique listings to result
+      for (const nearby of nearbyListings) {
+        if (!result.some(l => l.id === nearby.id)) {
+          result.push(nearby);
+        }
+      }
+    }
+    
+    return result;
+  }
+  
+  async getMarketplaceListing(id: number): Promise<MarketplaceListing | undefined> {
+    const [listing] = await db
+      .select()
+      .from(marketplaceListings)
+      .where(eq(marketplaceListings.id, id));
+    return listing;
+  }
+  
+  async getMarketplaceListingsBySeller(sellerId: number): Promise<MarketplaceListing[]> {
+    return await db
+      .select()
+      .from(marketplaceListings)
+      .where(eq(marketplaceListings.sellerId, sellerId));
+  }
+  
+  async createMarketplaceListing(listingData: InsertMarketplaceListing): Promise<MarketplaceListing> {
+    const [listing] = await db
+      .insert(marketplaceListings)
+      .values({
+        ...listingData,
+        status: listingData.status || 'active',
+        priceCurrency: listingData.priceCurrency || 'USD',
+        views: 0,
+        favoriteCount: 0,
+      })
+      .returning();
+    return listing;
+  }
+  
+  async updateMarketplaceListing(id: number, listingData: Partial<MarketplaceListing>): Promise<MarketplaceListing | undefined> {
+    const [updatedListing] = await db
+      .update(marketplaceListings)
+      .set({
+        ...listingData,
+        updatedAt: new Date(),
+      })
+      .where(eq(marketplaceListings.id, id))
+      .returning();
+    return updatedListing;
+  }
+  
+  async deleteMarketplaceListing(id: number): Promise<boolean> {
+    try {
+      await db
+        .delete(marketplaceListings)
+        .where(eq(marketplaceListings.id, id));
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting marketplace listing:", error);
+      return false;
+    }
+  }
+  
+  async incrementListingViews(id: number): Promise<boolean> {
+    try {
+      const [listing] = await db
+        .select()
+        .from(marketplaceListings)
+        .where(eq(marketplaceListings.id, id));
+      
+      if (!listing) return false;
+      
+      await db
+        .update(marketplaceListings)
+        .set({
+          views: (listing.views || 0) + 1,
+        })
+        .where(eq(marketplaceListings.id, id));
+      
+      return true;
+    } catch (error) {
+      console.error("Error incrementing listing views:", error);
+      return false;
+    }
+  }
+  
+  // Marketplace Review methods
+  async getMarketplaceReviews(listingId?: number, sellerId?: number): Promise<MarketplaceReview[]> {
+    if (listingId && sellerId) {
+      return await db
+        .select()
+        .from(marketplaceReviews)
+        .where(
+          and(
+            eq(marketplaceReviews.listingId, listingId),
+            eq(marketplaceReviews.sellerId, sellerId)
+          )
+        );
+    } else if (listingId) {
+      return await db
+        .select()
+        .from(marketplaceReviews)
+        .where(eq(marketplaceReviews.listingId, listingId));
+    } else if (sellerId) {
+      return await db
+        .select()
+        .from(marketplaceReviews)
+        .where(eq(marketplaceReviews.sellerId, sellerId));
+    } else {
+      return await db.select().from(marketplaceReviews);
+    }
+  }
+  
+  async getMarketplaceReview(id: number): Promise<MarketplaceReview | undefined> {
+    const [review] = await db
+      .select()
+      .from(marketplaceReviews)
+      .where(eq(marketplaceReviews.id, id));
+    return review;
+  }
+  
+  async createMarketplaceReview(reviewData: InsertMarketplaceReview): Promise<MarketplaceReview> {
+    const [review] = await db
+      .insert(marketplaceReviews)
+      .values({
+        ...reviewData,
+        listingId: reviewData.listingId || null,
+      })
+      .returning();
+    return review;
+  }
+  
+  async updateMarketplaceReview(id: number, reviewData: Partial<MarketplaceReview>): Promise<MarketplaceReview | undefined> {
+    const [updatedReview] = await db
+      .update(marketplaceReviews)
+      .set({
+        ...reviewData,
+        updatedAt: new Date(),
+      })
+      .where(eq(marketplaceReviews.id, id))
+      .returning();
+    return updatedReview;
+  }
+  
+  async deleteMarketplaceReview(id: number): Promise<boolean> {
+    try {
+      await db
+        .delete(marketplaceReviews)
+        .where(eq(marketplaceReviews.id, id));
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting marketplace review:", error);
+      return false;
+    }
+  }
+  
+  // Marketplace Favorites methods
+  async getMarketplaceFavorites(userId: number): Promise<MarketplaceFavorite[]> {
+    return await db
+      .select()
+      .from(marketplaceFavorites)
+      .where(eq(marketplaceFavorites.userId, userId));
+  }
+  
+  async getMarketplaceFavorite(id: number): Promise<MarketplaceFavorite | undefined> {
+    const [favorite] = await db
+      .select()
+      .from(marketplaceFavorites)
+      .where(eq(marketplaceFavorites.id, id));
+    return favorite;
+  }
+  
+  async createMarketplaceFavorite(favoriteData: InsertMarketplaceFavorite): Promise<MarketplaceFavorite> {
+    const [favorite] = await db
+      .insert(marketplaceFavorites)
+      .values(favoriteData)
+      .returning();
+      
+    // Increment the favorite count on the listing
+    if (favoriteData.listingId) {
+      try {
+        const [listing] = await db
+          .select()
+          .from(marketplaceListings)
+          .where(eq(marketplaceListings.id, favoriteData.listingId));
+        
+        if (listing) {
+          await db
+            .update(marketplaceListings)
+            .set({
+              favoriteCount: (listing.favoriteCount || 0) + 1,
+            })
+            .where(eq(marketplaceListings.id, favoriteData.listingId));
+        }
+      } catch (error) {
+        console.error("Error incrementing favorite count:", error);
+      }
+    }
+    
+    return favorite;
+  }
+  
+  async deleteMarketplaceFavorite(id: number): Promise<boolean> {
+    try {
+      // First, get the favorite to know which listing to update
+      const [favorite] = await db
+        .select()
+        .from(marketplaceFavorites)
+        .where(eq(marketplaceFavorites.id, id));
+      
+      // Delete the favorite
+      await db
+        .delete(marketplaceFavorites)
+        .where(eq(marketplaceFavorites.id, id));
+      
+      // Decrement the favorite count on the listing
+      if (favorite && favorite.listingId) {
+        const [listing] = await db
+          .select()
+          .from(marketplaceListings)
+          .where(eq(marketplaceListings.id, favorite.listingId));
+        
+        if (listing && listing.favoriteCount && listing.favoriteCount > 0) {
+          await db
+            .update(marketplaceListings)
+            .set({
+              favoriteCount: listing.favoriteCount - 1,
+            })
+            .where(eq(marketplaceListings.id, favorite.listingId));
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting marketplace favorite:", error);
+      return false;
+    }
+  }
+  
+  // Marketplace Messages methods
+  async getMarketplaceMessages(
+    senderId?: number,
+    recipientId?: number,
+    listingId?: number
+  ): Promise<MarketplaceMessage[]> {
+    let query = db.select().from(marketplaceMessages);
+    
+    const whereConditions = [];
+    
+    if (senderId) {
+      whereConditions.push(eq(marketplaceMessages.senderId, senderId));
+    }
+    
+    if (recipientId) {
+      whereConditions.push(eq(marketplaceMessages.recipientId, recipientId));
+    }
+    
+    if (listingId) {
+      whereConditions.push(eq(marketplaceMessages.listingId, listingId));
+    }
+    
+    if (whereConditions.length > 0) {
+      query = query.where(and(...whereConditions));
+    }
+    
+    // Sort by date (newest first)
+    query = query.orderBy(desc(marketplaceMessages.createdAt));
+    
+    return await query;
+  }
+  
+  async getMarketplaceMessage(id: number): Promise<MarketplaceMessage | undefined> {
+    const [message] = await db
+      .select()
+      .from(marketplaceMessages)
+      .where(eq(marketplaceMessages.id, id));
+    return message;
+  }
+  
+  async createMarketplaceMessage(messageData: InsertMarketplaceMessage): Promise<MarketplaceMessage> {
+    const [message] = await db
+      .insert(marketplaceMessages)
+      .values({
+        ...messageData,
+        read: false,
+      })
+      .returning();
+    return message;
+  }
+  
+  async markMessageAsRead(id: number): Promise<boolean> {
+    try {
+      const [updatedMessage] = await db
+        .update(marketplaceMessages)
+        .set({
+          read: true,
+        })
+        .where(eq(marketplaceMessages.id, id))
+        .returning();
+      
+      return !!updatedMessage;
+    } catch (error) {
+      console.error("Error marking message as read:", error);
+      return false;
+    }
+  }
+  
+  async deleteMarketplaceMessage(id: number): Promise<boolean> {
+    try {
+      await db
+        .delete(marketplaceMessages)
+        .where(eq(marketplaceMessages.id, id));
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting marketplace message:", error);
+      return false;
+    }
+  }
+  
+  async getUnreadMessageCount(userId: number): Promise<number> {
+    try {
+      const result = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(marketplaceMessages)
+        .where(
+          and(
+            eq(marketplaceMessages.recipientId, userId),
+            eq(marketplaceMessages.read, false)
+          )
+        );
+      
+      return Number(result[0]?.count || 0);
+    } catch (error) {
+      console.error("Error getting unread message count:", error);
+      return 0;
+    }
   }
 
   async createPlantAnalysis(data: InsertPlantAnalysis): Promise<PlantAnalysis> {
