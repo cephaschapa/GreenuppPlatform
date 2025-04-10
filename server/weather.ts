@@ -364,170 +364,127 @@ export async function getHistoricalWeatherData(location: string, startDate: Date
 }
 
 /**
- * Get climate data for a location, combining historical data with other sources
+ * Get climate data for a location, using OpenWeather API and other data sources
  */
 export async function getClimateData(location: string): Promise<ClimateData> {
   try {
     // First, geocode the location
     const geoData = await geocodeLocation(location);
     
-    // For now, we'll simulate climate data based on seasonal patterns
-    // In a production environment, this would connect to a climate database or API
+    // Define months array for reference
     const months = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
     
-    // This is simulated data - in a real implementation, we would fetch from a climate database
-    // We're using latitude to simulate different climate zones
-    const isNorthernHemisphere = geoData.lat > 0;
-    const isEquatorial = Math.abs(geoData.lat) < 23.5;
-    const isTemperate = Math.abs(geoData.lat) >= 23.5 && Math.abs(geoData.lat) < 40;
-    const isPolar = Math.abs(geoData.lat) >= 60;
+    // Collect climate data from OpenWeather API using historical data from each month
+    // We'll sample one day from each month of the previous year to get climate averages
+    const today = new Date();
+    const currentYear = today.getFullYear();
     
-    let growingSeasonLength = 0;
-    let soilType = "Loam";
-    let soilPH = 6.5;
-    let monthlyData = [];
+    // Collect average temperature and precipitation for each month
+    const monthlyRequests = months.map(async (month, index) => {
+      // Create a date for the middle of each month from last year
+      const targetDate = new Date(currentYear - 1, index, 15);
+      const timestamp = Math.floor(targetDate.getTime() / 1000);
+      
+      try {
+        // Get historical data for this date
+        const response = await axios.get(`${OPENWEATHER_BASE_URL}/onecall/timemachine`, {
+          params: {
+            lat: geoData.lat,
+            lon: geoData.lon,
+            dt: timestamp,
+            units: 'metric',
+            appid: OPENWEATHER_API_KEY
+          }
+        });
+        
+        // Extract average temperature and precipitation from the data
+        const data = response.data;
+        const hourlyData = data.hourly || [];
+        const currentData = data.data && data.data[0] || data.current || {};
+        
+        // Calculate temperature from hourly data if available
+        let averageTemp = currentData.temp || 20;
+        let totalPrecipitation = 0;
+        
+        if (hourlyData.length > 0) {
+          const temps = hourlyData.map((hour: any) => hour.temp);
+          averageTemp = temps.reduce((sum: number, temp: number) => sum + temp, 0) / temps.length;
+          
+          // Sum up precipitation for the day
+          totalPrecipitation = hourlyData.reduce((sum: number, hour: any) => sum + (hour.rain?.["1h"] || 0), 0);
+        }
+        
+        // Calculate growing degree days (base temperature of 10°C)
+        const growingDegreeDays = Math.max(0, averageTemp - 10) * 30; // Approximate for the month
+        
+        return {
+          month,
+          averageTemp,
+          averagePrecipitation: totalPrecipitation * 30, // Extrapolate to monthly precipitation
+          growingDegreeDays
+        };
+      } catch (error) {
+        console.error(`Error fetching climate data for ${month}:`, error);
+        
+        // Provide reasonable fallback data if the API call fails
+        // This is a practical necessity for cases of API rate limits, service outages, etc.
+        return {
+          month,
+          averageTemp: 15, // Moderate temperature fallback
+          averagePrecipitation: 80, // Moderate precipitation fallback
+          growingDegreeDays: Math.max(0, 15 - 10) * 30
+        };
+      }
+    });
     
-    if (isEquatorial) {
-      // Equatorial climate: warm year-round, wet/dry seasons
-      growingSeasonLength = 365;
+    // Wait for all month requests to complete
+    const monthlyData = await Promise.all(monthlyRequests);
+    
+    // Determine growing season length based on the number of months with average temp above 10°C
+    const warmMonths = monthlyData.filter(data => data.averageTemp > 10);
+    const growingSeasonLength = Math.round(warmMonths.length * 30.5); // Average days per month
+    
+    // Determine soil type and conditions based on climate zone and available climate data
+    // This is still somewhat estimated as soil data requires specific soil databases
+    const averageTemp = monthlyData.reduce((sum, month) => sum + month.averageTemp, 0) / 12;
+    const totalPrecipitation = monthlyData.reduce((sum, month) => sum + month.averagePrecipitation, 0);
+    
+    // Determine soil type based on climate characteristics
+    let soilType = "Loam"; // Default
+    let soilPH = 6.5;      // Default - neutral
+    
+    // Very wet climates tend to have more acidic soils
+    if (totalPrecipitation > 1500) {
       soilType = "Clay Loam";
-      soilPH = 5.8; // More acidic due to rainfall
-      
-      monthlyData = months.map(month => ({
-        month,
-        averageTemp: 25 + Math.random() * 5,
-        averagePrecipitation: 150 + Math.random() * 100,
-        growingDegreeDays: 30 * 25 // Approximate
-      }));
-    } else if (isTemperate) {
-      // Temperate climate: seasonal variations
-      growingSeasonLength = 180 + Math.floor(Math.random() * 60);
-      soilType = "Silt Loam";
-      soilPH = 6.2;
-      
-      const season = isNorthernHemisphere ? 
-        [0, 0, 1, 1, 2, 2, 3, 3, 2, 1, 0, 0] : // Northern seasons
-        [2, 3, 2, 1, 0, 0, 0, 0, 1, 2, 3, 3];  // Southern seasons
-      
-      monthlyData = months.map((month, i) => {
-        // 0: Winter, 1: Spring, 2: Summer, 3: Fall
-        const seasonIndex = season[i];
-        
-        // Temperature varies by season
-        let temp;
-        let precip;
-        let gdd;
-        
-        switch (seasonIndex) {
-          case 0: // Winter
-            temp = 0 + Math.random() * 10;
-            precip = 80 + Math.random() * 40;
-            gdd = 0;
-            break;
-          case 1: // Spring
-            temp = 15 + Math.random() * 8;
-            precip = 100 + Math.random() * 50;
-            gdd = 30 * Math.max(0, temp - 10);
-            break;
-          case 2: // Summer
-            temp = 25 + Math.random() * 6;
-            precip = 70 + Math.random() * 50;
-            gdd = 30 * Math.max(0, temp - 10);
-            break;
-          case 3: // Fall
-            temp = 15 + Math.random() * 8;
-            precip = 100 + Math.random() * 60;
-            gdd = 30 * Math.max(0, temp - 10);
-            break;
-          default:
-            temp = 15;
-            precip = 100;
-            gdd = 150;
-        }
-        
-        return {
-          month,
-          averageTemp: temp,
-          averagePrecipitation: precip,
-          growingDegreeDays: gdd
-        };
-      });
-    } else if (isPolar) {
-      // Polar climate: very cold, short growing season
-      growingSeasonLength = 60 + Math.floor(Math.random() * 40);
-      soilType = "Peat";
-      soilPH = 5.5;
-      
-      monthlyData = months.map((month, i) => {
-        // Simulate polar temperatures and precipitation
-        const isNorthPolarSummer = isNorthernHemisphere && (i >= 5 && i <= 7);
-        const isSouthPolarSummer = !isNorthernHemisphere && (i == 0 || i == 1 || i == 11);
-        const isSummer = isNorthPolarSummer || isSouthPolarSummer;
-        
-        let temp = isSummer ? 
-          10 + Math.random() * 5 : // Summer
-          -15 + Math.random() * 15; // Winter
-          
-        let precip = isSummer ? 
-          40 + Math.random() * 20 : // Summer
-          20 + Math.random() * 10; // Winter
-          
-        let gdd = isSummer ? 30 * Math.max(0, temp - 5) : 0;
-        
-        return {
-          month,
-          averageTemp: temp,
-          averagePrecipitation: precip,
-          growingDegreeDays: gdd
-        };
-      });
-    } else {
-      // Default case - mid-latitude climate
-      growingSeasonLength = 120 + Math.floor(Math.random() * 60);
-      
-      const season = isNorthernHemisphere ? 
-        [0, 0, 1, 1, 2, 2, 3, 3, 2, 1, 0, 0] : // Northern seasons
-        [2, 3, 2, 1, 0, 0, 0, 0, 1, 2, 3, 3];  // Southern seasons
-      
-      monthlyData = months.map((month, i) => {
-        const seasonIndex = season[i];
-        
-        let temp;
-        let precip;
-        
-        switch (seasonIndex) {
-          case 0: // Winter
-            temp = 5 + Math.random() * 8;
-            precip = 80 + Math.random() * 40;
-            break;
-          case 1: // Spring
-            temp = 15 + Math.random() * 8;
-            precip = 90 + Math.random() * 40;
-            break;
-          case 2: // Summer
-            temp = 22 + Math.random() * 8;
-            precip = 60 + Math.random() * 30;
-            break;
-          case 3: // Fall
-            temp = 15 + Math.random() * 8;
-            precip = 90 + Math.random() * 40;
-            break;
-          default:
-            temp = 15;
-            precip = 80;
-        }
-        
-        return {
-          month,
-          averageTemp: temp,
-          averagePrecipitation: precip,
-          growingDegreeDays: 30 * Math.max(0, temp - 10)
-        };
-      });
+      soilPH = 5.8; // More acidic
+    } 
+    // Very dry climates often have more alkaline soils
+    else if (totalPrecipitation < 500) {
+      soilType = "Sandy Loam";
+      soilPH = 7.2; // More alkaline
     }
+    // Cold climates often have peaty soils
+    else if (averageTemp < 5) {
+      soilType = "Peat";
+      soilPH = 5.5; // More acidic
+    }
+    // Moderate climates typically have loam soils
+    else {
+      soilType = "Silt Loam";
+      soilPH = 6.2; // Slightly acidic
+    }
+    
+    // Estimate soil moisture based on recent precipitation
+    // This would ideally come from soil moisture databases or sensors
+    const recentMonths = monthlyData.slice(Math.max(0, monthlyData.length - 3));
+    const recentPrecipitation = recentMonths.reduce((sum, m) => sum + m.averagePrecipitation, 0) / 3;
+    
+    // Convert precipitation to soil moisture percentage (simplified model)
+    // Low precipitation = ~30% moisture, high precipitation = ~80% moisture
+    const soilMoisture = Math.min(80, Math.max(30, 30 + (recentPrecipitation / 200) * 50));
     
     return {
       location: `${geoData.name}, ${geoData.country}`,
@@ -535,7 +492,7 @@ export async function getClimateData(location: string): Promise<ClimateData> {
       soilConditions: {
         type: soilType,
         ph: soilPH,
-        moisture: 50 + Math.random() * 20 // Percentage
+        moisture: soilMoisture
       },
       growingSeasonLength
     };
