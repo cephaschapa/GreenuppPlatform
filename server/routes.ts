@@ -996,12 +996,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      // Validate and update preferences
+      // First check if preferences exist, create if they don't
+      let prefs = await storage.getWeatherPreferences(req.user.id);
+      
+      // Parse the update data
       const prefsData = insertWeatherPreferencesSchema.partial().parse(req.body);
+      
+      if (!prefs) {
+        // Create new preferences with the provided data
+        const newPrefsData = {
+          userId: req.user.id,
+          ...prefsData,
+          locations: prefsData.locations || [],
+          alertsEnabled: prefsData.alertsEnabled ?? true,
+          temperatureUnit: prefsData.temperatureUnit || 'celsius'
+        };
+        
+        console.log("Creating new weather preferences:", newPrefsData);
+        const createdPrefs = await storage.createWeatherPreferences(newPrefsData);
+        return res.status(201).json(createdPrefs);
+      }
+      
+      // Update existing preferences
+      console.log("Updating weather preferences for user", req.user.id, "with data:", prefsData);
       const updatedPrefs = await storage.updateWeatherPreferences(req.user.id, prefsData);
       
       if (!updatedPrefs) {
-        return res.status(404).json({ message: "Weather preferences not found" });
+        return res.status(500).json({ message: "Failed to update weather preferences" });
       }
       
       res.json(updatedPrefs);

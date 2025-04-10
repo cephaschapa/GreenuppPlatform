@@ -263,20 +263,38 @@ export function WeatherPreferences() {
                     </FormDescription>
                     
                     <div className="flex flex-col space-y-2">
-                      <div className="flex space-x-2">
-                        <Input
-                          placeholder="Add a location (city, region)"
-                          value={newLocation}
-                          onChange={(e) => setNewLocation(e.target.value)}
-                          className="flex-1"
-                        />
+                      <div className="space-y-2">
+                        <div className="flex space-x-2">
+                          <Input
+                            placeholder="Add a location (city, region)"
+                            value={newLocation}
+                            onChange={(e) => setNewLocation(e.target.value)}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleAddLocation}
+                            size="icon"
+                            variant="outline"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        {/* Auto-detect location button */}
                         <Button
                           type="button"
-                          onClick={handleAddLocation}
-                          size="icon"
                           variant="outline"
+                          className="w-full"
+                          onClick={detectCurrentLocation}
+                          disabled={isDetectingLocation}
                         >
-                          <Plus className="h-4 w-4" />
+                          {isDetectingLocation ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <MapPin className="mr-2 h-4 w-4" />
+                          )}
+                          {isDetectingLocation ? "Detecting Location..." : "Auto-Detect My Location"}
                         </Button>
                       </div>
                       
