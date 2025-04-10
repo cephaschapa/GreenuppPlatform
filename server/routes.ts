@@ -311,7 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Settings endpoint - placeholder for now
+  // Settings endpoints
   app.get("/api/settings", isAuthenticated, async (req, res) => {
     try {
       if (!req.user) {
@@ -354,6 +354,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching settings:", error);
       res.status(500).json({ message: "Failed to retrieve settings" });
+    }
+  });
+  
+  // Update settings endpoint
+  app.patch("/api/settings", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const { type, settings } = req.body;
+      
+      if (!type || !settings) {
+        return res.status(400).json({ message: "Missing type or settings data" });
+      }
+      
+      // In a real implementation, this would update settings in a database
+      // For now, we'll just return the updated settings object
+      // In a real app, we would save these settings to the database
+      
+      // Return the full settings object with the updated section
+      res.json({
+        notifications: type === 'notifications' ? settings : {
+          emailNotifications: true,
+          pushNotifications: true,
+          weatherAlerts: true,
+          marketPriceAlerts: false,
+          taskReminders: true,
+        },
+        display: type === 'display' ? settings : {
+          theme: "dark",
+          fontSize: 100,
+          reducedMotion: false,
+          highContrast: false,
+        },
+        security: type === 'security' ? settings : {
+          twoFactorAuth: false,
+          sessionTimeout: "never",
+          loginNotifications: true,
+        },
+        privacy: type === 'privacy' ? settings : {
+          shareData: true,
+          profileVisibility: "public",
+          locationSharing: true,
+        },
+        units: type === 'units' ? settings : {
+          temperatureUnit: "celsius",
+          distanceUnit: "metric",
+          weightUnit: "metric",
+          dateFormat: "DMY",
+        }
+      });
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      res.status(500).json({ message: "Failed to update settings" });
     }
   });
   
