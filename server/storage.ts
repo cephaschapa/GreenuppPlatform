@@ -100,6 +100,15 @@ export interface IStorage {
   createCropYieldPrediction(data: InsertCropYieldPrediction): Promise<CropYieldPrediction>;
   updateCropYieldPrediction(id: number, data: Partial<CropYieldPrediction>): Promise<CropYieldPrediction | undefined>;
   
+  // Plant analysis
+  getPlantAnalyses(userId: number): Promise<PlantAnalysis[]>;
+  getPlantAnalysisByField(fieldId: number): Promise<PlantAnalysis[]>;
+  getPlantAnalysisByCrop(cropId: number): Promise<PlantAnalysis[]>;
+  getPlantAnalysis(id: number): Promise<PlantAnalysis | undefined>;
+  createPlantAnalysis(data: InsertPlantAnalysis): Promise<PlantAnalysis>;
+  updatePlantAnalysis(id: number, data: Partial<PlantAnalysis>): Promise<PlantAnalysis | undefined>;
+  deletePlantAnalysis(id: number): Promise<boolean>;
+  
   // For session storage
   sessionStore: session.Store;
 }
@@ -607,6 +616,84 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return prediction;
+  }
+
+  // Plant analysis methods
+  async getPlantAnalyses(userId: number): Promise<PlantAnalysis[]> {
+    return db
+      .select()
+      .from(plantAnalyses)
+      .where(eq(plantAnalyses.userId, userId));
+  }
+
+  async getPlantAnalysisByField(fieldId: number): Promise<PlantAnalysis[]> {
+    return db
+      .select()
+      .from(plantAnalyses)
+      .where(eq(plantAnalyses.fieldId, fieldId));
+  }
+
+  async getPlantAnalysisByCrop(cropId: number): Promise<PlantAnalysis[]> {
+    return db
+      .select()
+      .from(plantAnalyses)
+      .where(eq(plantAnalyses.cropId, cropId));
+  }
+
+  async getPlantAnalysis(id: number): Promise<PlantAnalysis | undefined> {
+    const [analysis] = await db
+      .select()
+      .from(plantAnalyses)
+      .where(eq(plantAnalyses.id, id));
+    
+    return analysis;
+  }
+
+  async createPlantAnalysis(data: InsertPlantAnalysis): Promise<PlantAnalysis> {
+    const [analysis] = await db
+      .insert(plantAnalyses)
+      .values({
+        ...data,
+        fieldId: data.fieldId || null,
+        cropId: data.cropId || null,
+        diseaseDetected: data.diseaseDetected || null,
+        diseaseProbability: data.diseaseProbability || null,
+        diseaseDescription: data.diseaseDescription || null,
+        nutrientDeficiencies: data.nutrientDeficiencies || null,
+        nutrientExcess: data.nutrientExcess || null,
+        recommendations: data.recommendations || null,
+        additionalObservations: data.additionalObservations || null,
+        notes: data.notes || null,
+      })
+      .returning();
+    
+    return analysis;
+  }
+
+  async updatePlantAnalysis(id: number, data: Partial<PlantAnalysis>): Promise<PlantAnalysis | undefined> {
+    const [analysis] = await db
+      .update(plantAnalyses)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(plantAnalyses.id, id))
+      .returning();
+    
+    return analysis;
+  }
+
+  async deletePlantAnalysis(id: number): Promise<boolean> {
+    try {
+      await db
+        .delete(plantAnalyses)
+        .where(eq(plantAnalyses.id, id));
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting plant analysis:", error);
+      return false;
+    }
   }
 }
 

@@ -261,3 +261,35 @@ export type InsertFarmerTask = z.infer<typeof insertFarmerTaskSchema>;
 export type FarmerTask = typeof farmerTasks.$inferSelect;
 export type InsertCropYieldPrediction = z.infer<typeof insertCropYieldPredictionSchema>;
 export type CropYieldPrediction = typeof cropYieldPredictions.$inferSelect;
+
+// Plant Disease Analysis
+export const plantAnalyses = pgTable("plant_analyses", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  imageData: text("image_data").notNull(), // Base64 encoded image
+  plantType: text("plant_type"),
+  fieldId: integer("field_id").references(() => fields.id),
+  cropId: integer("crop_id").references(() => crops.id),
+  analysisDate: timestamp("analysis_date").notNull().defaultNow(),
+  diseaseDetected: text("disease_detected"),
+  diseaseProbability: decimal("disease_probability", { precision: 5, scale: 2 }),
+  diseaseDescription: text("disease_description"),
+  healthStatus: text("health_status").notNull(),
+  healthScore: integer("health_score").notNull(),
+  nutrientDeficiencies: text("nutrient_deficiencies"),
+  nutrientExcess: text("nutrient_excess"),
+  recommendations: text("recommendations"),
+  additionalObservations: text("additional_observations"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertPlantAnalysisSchema = createInsertSchema(plantAnalyses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPlantAnalysis = z.infer<typeof insertPlantAnalysisSchema>;
+export type PlantAnalysis = typeof plantAnalyses.$inferSelect;
