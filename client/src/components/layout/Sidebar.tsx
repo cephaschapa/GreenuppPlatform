@@ -162,9 +162,10 @@ export function Sidebar() {
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-black border-b border-primary/20 flex items-center justify-between px-4">
         <Link
           href="/dashboard"
-          className="text-xl font-bold font-space tracking-wider"
+          className="text-xl font-bold font-space tracking-wider relative"
         >
           Green<span className="text-primary">upp</span>
+          <span className="absolute -top-1 -right-10 bg-primary text-black text-[10px] px-1.5 py-0.5 rounded-full font-semibold">BETA</span>
         </Link>
 
         <div className="flex items-center gap-2">
@@ -264,12 +265,13 @@ export function Sidebar() {
         <div className="p-6">
           <Link
             href="/"
-            className="text-2xl font-bold font-space tracking-wider group flex items-center"
+            className="text-2xl font-bold font-space tracking-wider group flex items-center relative"
           >
             Green
             <span className="text-primary group-hover:animate-pulse transition-all">
               upp
             </span>
+            <span className="absolute -top-1 -right-12 bg-primary text-black text-xs px-2 py-0.5 rounded-full font-semibold">BETA</span>
           </Link>
         </div>
 

@@ -1,30 +1,52 @@
-import { useState, useRef, ChangeEvent } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { PlantAnalysis } from '@shared/schema';
-import { apiRequest } from '@/lib/queryClient';
-import { Loader2, Upload, Camera, AlertCircle, Sprout, LineChart, ThumbsUp, ThumbsDown } from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useState, useRef, ChangeEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { PlantAnalysis } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import {
+  Loader2,
+  Upload,
+  Camera,
+  AlertCircle,
+  Sprout,
+  LineChart,
+  ThumbsUp,
+  ThumbsDown,
+} from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 // We'll use a normal layout
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 const PlantDiagnosisPage = () => {
-  const [activeTab, setActiveTab] = useState('upload');
+  const [activeTab, setActiveTab] = useState("upload");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [plantType, setPlantType] = useState<string>('');
-  const [notes, setNotes] = useState<string>('');
-  const [selectedField, setSelectedField] = useState<string>('none');
-  const [selectedCrop, setSelectedCrop] = useState<string>('none');
+  const [plantType, setPlantType] = useState<string>("");
+  const [notes, setNotes] = useState<string>("");
+  const [selectedField, setSelectedField] = useState<string>("none");
+  const [selectedCrop, setSelectedCrop] = useState<string>("none");
   const [isCameraActive, setIsCameraActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -34,34 +56,41 @@ const PlantDiagnosisPage = () => {
 
   // Query for getting all fields
   const { data: fields = [], isLoading: isLoadingFields } = useQuery({
-    queryKey: ['/api/fields'],
+    queryKey: ["/api/fields"],
     queryFn: async () => {
-      const response = await fetch('/api/fields');
-      if (!response.ok) throw new Error('Failed to fetch fields');
+      const response = await fetch("/api/fields");
+      if (!response.ok) throw new Error("Failed to fetch fields");
       return response.json();
-    }
+    },
   });
 
   // Query for getting all previous analyses
   const { data: analyses = [], isLoading: isLoadingAnalyses } = useQuery({
-    queryKey: ['/api/plant-analyses'],
+    queryKey: ["/api/plant-analyses"],
     queryFn: async () => {
-      const response = await fetch('/api/plant-analyses');
-      if (!response.ok) throw new Error('Failed to fetch analyses');
+      const response = await fetch("/api/plant-analyses");
+      if (!response.ok) throw new Error("Failed to fetch analyses");
       return response.json();
-    }
+    },
+  });
+
+  // sort analysis by date created
+  analyses.sort((a: PlantAnalysis, b: PlantAnalysis) => {
+    return (
+      new Date(b.analysisDate).getTime() - new Date(a.analysisDate).getTime()
+    );
   });
 
   // Crops query - dependent on selected field
   const { data: crops = [], isLoading: isLoadingCrops } = useQuery({
-    queryKey: ['/api/fields', selectedField, 'crops'],
+    queryKey: ["/api/fields", selectedField, "crops"],
     queryFn: async () => {
-      if (!selectedField || selectedField === 'none') return [];
+      if (!selectedField || selectedField === "none") return [];
       const response = await fetch(`/api/fields/${selectedField}/crops`);
-      if (!response.ok) throw new Error('Failed to fetch crops');
+      if (!response.ok) throw new Error("Failed to fetch crops");
       return response.json();
     },
-    enabled: !!selectedField && selectedField !== 'none'
+    enabled: !!selectedField && selectedField !== "none",
   });
 
   // Mutation for submitting image for analysis
@@ -73,58 +102,69 @@ const PlantDiagnosisPage = () => {
       cropId?: string;
       notes?: string;
     }) => {
-      const response = await apiRequest('POST', '/api/plant-analyses', formData);
+      const response = await apiRequest(
+        "POST",
+        "/api/plant-analyses",
+        formData,
+      );
       return response.json();
     },
     onSuccess: (data) => {
       toast({
-        title: 'Analysis Complete',
-        description: 'Your plant has been successfully analyzed.',
+        title: "Analysis Complete",
+        description: "Your plant has been successfully analyzed.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/plant-analyses'] });
-      setActiveTab('history');
+      queryClient.invalidateQueries({ queryKey: ["/api/plant-analyses"] });
+      setActiveTab("history");
       setSelectedImage(null);
       setImageFile(null);
-      setPlantType('');
-      setNotes('');
-      setSelectedField('none');
-      setSelectedCrop('none');
+      setPlantType("");
+      setNotes("");
+      setSelectedField("none");
+      setSelectedCrop("none");
     },
     onError: (error) => {
       toast({
-        title: 'Analysis Failed',
-        description: error instanceof Error ? error.message : 'Failed to analyze plant image',
-        variant: 'destructive',
+        title: "Analysis Failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to analyze plant image",
+        variant: "destructive",
       });
-    }
+    },
   });
 
   // Image compression function
-  const compressImage = (dataURL: string, maxWidth = 800, quality = 0.7): Promise<string> => {
+  const compressImage = (
+    dataURL: string,
+    maxWidth = 800,
+    quality = 0.7,
+  ): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
       img.src = dataURL;
-      
+
       img.onload = () => {
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         let width = img.width;
         let height = img.height;
-        
+
         // Calculate new dimensions while maintaining aspect ratio
         if (width > maxWidth) {
           const ratio = maxWidth / width;
           width = maxWidth;
           height = height * ratio;
         }
-        
+
         canvas.width = width;
         canvas.height = height;
-        
-        const ctx = canvas.getContext('2d');
+
+        const ctx = canvas.getContext("2d");
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
           // Get compressed image as data URL
-          const compressedDataURL = canvas.toDataURL('image/jpeg', quality);
+          const compressedDataURL = canvas.toDataURL("image/jpeg", quality);
           resolve(compressedDataURL);
         } else {
           // Fallback to original if compression fails
@@ -141,7 +181,7 @@ const PlantDiagnosisPage = () => {
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = async () => {
-        if (reader.result && typeof reader.result === 'string') {
+        if (reader.result && typeof reader.result === "string") {
           // Compress the image before setting it
           const compressed = await compressImage(reader.result);
           setSelectedImage(compressed);
@@ -163,20 +203,20 @@ const PlantDiagnosisPage = () => {
     try {
       setIsCameraActive(true);
       // Specify environment facing (back camera) with video constraints
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: "environment" // Use back camera
-        } 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "environment", // Use back camera
+        },
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
     } catch (error) {
-      console.error('Error accessing camera:', error);
+      console.error("Error accessing camera:", error);
       toast({
-        title: 'Camera Error',
-        description: 'Unable to access camera. Please check permissions.',
-        variant: 'destructive',
+        title: "Camera Error",
+        description: "Unable to access camera. Please check permissions.",
+        variant: "destructive",
       });
       setIsCameraActive(false);
     }
@@ -186,7 +226,7 @@ const PlantDiagnosisPage = () => {
   const stopCamera = () => {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach((track) => track.stop());
       videoRef.current.srcObject = null;
       setIsCameraActive(false);
     }
@@ -197,16 +237,16 @@ const PlantDiagnosisPage = () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
-      
+      const context = canvas.getContext("2d");
+
       if (context) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
+
         // Convert canvas to base64 image with higher compression (0.6 quality)
-        const imageData = canvas.toDataURL('image/jpeg', 0.6);
-        
+        const imageData = canvas.toDataURL("image/jpeg", 0.6);
+
         // Further compress the image
         const compressedImage = await compressImage(imageData, 800, 0.6);
         setSelectedImage(compressedImage);
@@ -219,21 +259,22 @@ const PlantDiagnosisPage = () => {
   const handleSubmitAnalysis = () => {
     if (!selectedImage) {
       toast({
-        title: 'Image Required',
-        description: 'Please upload or capture an image of the plant.',
-        variant: 'destructive',
+        title: "Image Required",
+        description: "Please upload or capture an image of the plant.",
+        variant: "destructive",
       });
       return;
     }
 
     // Extract base64 data from the full data URL
-    const base64Data = selectedImage.split(',')[1];
+    const base64Data = selectedImage.split(",")[1];
 
     analyzeImage({
       imageData: base64Data,
       plantType: plantType || undefined,
-      fieldId: selectedField === 'none' ? undefined : selectedField || undefined,
-      cropId: selectedCrop === 'none' ? undefined : selectedCrop || undefined,
+      fieldId:
+        selectedField === "none" ? undefined : selectedField || undefined,
+      cropId: selectedCrop === "none" ? undefined : selectedCrop || undefined,
       notes: notes || undefined,
     });
   };
@@ -242,10 +283,10 @@ const PlantDiagnosisPage = () => {
   const handleReset = () => {
     setSelectedImage(null);
     setImageFile(null);
-    setPlantType('');
-    setNotes('');
-    setSelectedField('none');
-    setSelectedCrop('none');
+    setPlantType("");
+    setNotes("");
+    setSelectedField("none");
+    setSelectedCrop("none");
     if (isCameraActive) {
       stopCamera();
     }
@@ -253,12 +294,12 @@ const PlantDiagnosisPage = () => {
 
   // Format date
   const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     };
     // Ensure we have a valid date string before parsing
     const date = dateString ? new Date(dateString) : new Date();
@@ -267,20 +308,25 @@ const PlantDiagnosisPage = () => {
 
   // Get status color based on health score
   const getHealthColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 60) return 'bg-yellow-500';
-    if (score >= 40) return 'bg-orange-500';
-    return 'bg-red-500';
+    if (score >= 80) return "bg-green-500";
+    if (score >= 60) return "bg-yellow-500";
+    if (score >= 40) return "bg-orange-500";
+    return "bg-red-500";
   };
 
   // Get status label based on health status
   const getHealthLabel = (status: string) => {
     switch (status) {
-      case 'healthy': return 'Healthy';
-      case 'minor issues': return 'Minor Issues';
-      case 'moderate issues': return 'Moderate Issues';
-      case 'severe issues': return 'Severe Issues';
-      default: return status;
+      case "healthy":
+        return "Healthy";
+      case "minor issues":
+        return "Minor Issues";
+      case "moderate issues":
+        return "Moderate Issues";
+      case "severe issues":
+        return "Severe Issues";
+      default:
+        return status;
     }
   };
 
@@ -289,13 +335,20 @@ const PlantDiagnosisPage = () => {
       <div className="container mx-auto py-6">
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Plant Disease Diagnosis</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Plant Disease Diagnosis
+            </h1>
             <p className="text-muted-foreground">
-              Upload photos of your plants to identify diseases and get treatment recommendations
+              Upload photos of your plants to identify diseases and get
+              treatment recommendations
             </p>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="upload">Analyze Plant</TabsTrigger>
               <TabsTrigger value="history">Analysis History</TabsTrigger>
@@ -306,28 +359,36 @@ const PlantDiagnosisPage = () => {
                 <CardHeader>
                   <CardTitle>Upload or Capture Image</CardTitle>
                   <CardDescription>
-                    Take a clear photo of the affected plant part (leaves, stem, etc.)
+                    Take a clear photo of the affected plant part (leaves, stem,
+                    etc.)
                   </CardDescription>
                 </CardHeader>
 
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                      <RadioGroup className="flex space-x-4" defaultValue="upload">
+                      <RadioGroup
+                        className="flex space-x-4"
+                        defaultValue="upload"
+                      >
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="upload" id="upload" 
+                          <RadioGroupItem
+                            value="upload"
+                            id="upload"
                             onClick={() => {
                               if (isCameraActive) stopCamera();
-                              setActiveTab('upload');
-                            }} 
+                              setActiveTab("upload");
+                            }}
                           />
                           <Label htmlFor="upload">Upload Image</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="camera" id="camera" 
+                          <RadioGroupItem
+                            value="camera"
+                            id="camera"
                             onClick={() => {
                               startCamera();
-                              setActiveTab('upload');
+                              setActiveTab("upload");
                             }}
                           />
                           <Label htmlFor="camera">Use Camera</Label>
@@ -335,14 +396,14 @@ const PlantDiagnosisPage = () => {
                       </RadioGroup>
 
                       {!isCameraActive ? (
-                        <div 
+                        <div
                           className="border-2 border-dashed rounded-lg p-4 h-64 flex flex-col items-center justify-center cursor-pointer"
                           onClick={handleUploadClick}
                         >
                           {selectedImage ? (
-                            <img 
-                              src={selectedImage} 
-                              alt="Selected plant" 
+                            <img
+                              src={selectedImage}
+                              alt="Selected plant"
                               className="max-h-full max-w-full object-contain"
                             />
                           ) : (
@@ -366,13 +427,13 @@ const PlantDiagnosisPage = () => {
                         </div>
                       ) : (
                         <div className="relative h-64">
-                          <video 
-                            ref={videoRef} 
-                            autoPlay 
+                          <video
+                            ref={videoRef}
+                            autoPlay
                             playsInline
                             className="w-full h-full object-cover rounded-lg"
                           ></video>
-                          <Button 
+                          <Button
                             className="absolute bottom-3 left-1/2 transform -translate-x-1/2"
                             onClick={captureImage}
                           >
@@ -386,7 +447,9 @@ const PlantDiagnosisPage = () => {
 
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="plant-type">Plant Type (Optional)</Label>
+                        <Label htmlFor="plant-type">
+                          Plant Type (Optional)
+                        </Label>
                         <Select value={plantType} onValueChange={setPlantType}>
                           <SelectTrigger id="plant-type">
                             <SelectValue placeholder="Select plant type" />
@@ -402,7 +465,9 @@ const PlantDiagnosisPage = () => {
                             <SelectItem value="coffee">Coffee</SelectItem>
                             <SelectItem value="cassava">Cassava</SelectItem>
                             <SelectItem value="sorghum">Sorghum</SelectItem>
-                            <SelectItem value="sugar-cane">Sugar Cane</SelectItem>
+                            <SelectItem value="sugar-cane">
+                              Sugar Cane
+                            </SelectItem>
                             <SelectItem value="groundnut">Groundnut</SelectItem>
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
@@ -411,18 +476,24 @@ const PlantDiagnosisPage = () => {
 
                       <div className="space-y-2">
                         <Label htmlFor="field">Field (Optional)</Label>
-                        <Select value={selectedField} onValueChange={(value) => {
+                        <Select
+                          value={selectedField}
+                          onValueChange={(value) => {
                             setSelectedField(value);
                             // Reset crop selection when changing fields
-                            setSelectedCrop('none');
-                          }}>
+                            setSelectedCrop("none");
+                          }}
+                        >
                           <SelectTrigger id="field">
                             <SelectValue placeholder="Select field" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">None</SelectItem>
                             {fields.map((field: any) => (
-                              <SelectItem key={field.id} value={field.id.toString()}>
+                              <SelectItem
+                                key={field.id}
+                                value={field.id.toString()}
+                              >
                                 {field.name}
                               </SelectItem>
                             ))}
@@ -432,8 +503,8 @@ const PlantDiagnosisPage = () => {
 
                       <div className="space-y-2">
                         <Label htmlFor="crop">Crop (Optional)</Label>
-                        <Select 
-                          value={selectedCrop} 
+                        <Select
+                          value={selectedCrop}
                           onValueChange={setSelectedCrop}
                           disabled={!selectedField || isLoadingCrops}
                         >
@@ -443,7 +514,10 @@ const PlantDiagnosisPage = () => {
                           <SelectContent>
                             <SelectItem value="none">None</SelectItem>
                             {crops.map((crop: any) => (
-                              <SelectItem key={crop.id} value={crop.id.toString()}>
+                              <SelectItem
+                                key={crop.id}
+                                value={crop.id.toString()}
+                              >
                                 {crop.name}
                               </SelectItem>
                             ))}
@@ -452,7 +526,9 @@ const PlantDiagnosisPage = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="notes">Additional Notes (Optional)</Label>
+                        <Label htmlFor="notes">
+                          Additional Notes (Optional)
+                        </Label>
                         <Textarea
                           id="notes"
                           placeholder="Describe any symptoms or concerns"
@@ -470,8 +546,8 @@ const PlantDiagnosisPage = () => {
                   <Button variant="outline" onClick={handleReset}>
                     Reset
                   </Button>
-                  <Button 
-                    onClick={handleSubmitAnalysis} 
+                  <Button
+                    onClick={handleSubmitAnalysis}
                     disabled={!selectedImage || isAnalyzing}
                   >
                     {isAnalyzing ? (
@@ -480,9 +556,7 @@ const PlantDiagnosisPage = () => {
                         Analyzing...
                       </>
                     ) : (
-                      <>
-                        Analyze Plant
-                      </>
+                      <>Analyze Plant</>
                     )}
                   </Button>
                 </CardFooter>
@@ -493,13 +567,15 @@ const PlantDiagnosisPage = () => {
                   <CardHeader>
                     <CardTitle>Analysis in Progress</CardTitle>
                     <CardDescription>
-                      Our AI is examining your plant image. This may take a moment.
+                      Our AI is examining your plant image. This may take a
+                      moment.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <Progress value={45} className="h-2" />
                     <p className="text-sm text-muted-foreground mt-2">
-                      Analyzing leaf patterns, discoloration, and disease markers...
+                      Analyzing leaf patterns, discoloration, and disease
+                      markers...
                     </p>
                   </CardContent>
                 </Card>
@@ -526,9 +602,9 @@ const PlantDiagnosisPage = () => {
                       <p className="text-sm text-muted-foreground mt-1">
                         Upload your first plant image to get a diagnosis
                       </p>
-                      <Button 
-                        className="mt-4" 
-                        onClick={() => setActiveTab('upload')}
+                      <Button
+                        className="mt-4"
+                        onClick={() => setActiveTab("upload")}
                       >
                         Analyze Plant
                       </Button>
@@ -539,9 +615,9 @@ const PlantDiagnosisPage = () => {
                         <Card key={analysis.id} className="overflow-hidden">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="p-4 h-full flex items-center">
-                              <img 
+                              <img
                                 src={`data:image/jpeg;base64,${analysis.imageData}`}
-                                alt="Plant" 
+                                alt="Plant"
                                 className="w-full h-48 object-cover rounded-md"
                               />
                             </div>
@@ -561,50 +637,68 @@ const PlantDiagnosisPage = () => {
                                   </p>
                                 </div>
                                 <div className="flex items-center">
-                                  <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                    analysis.healthStatus === 'healthy' 
-                                      ? 'bg-green-100 text-green-800' 
-                                      : 'bg-red-100 text-red-800'
-                                  }`}>
+                                  <div
+                                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                      analysis.healthStatus === "healthy"
+                                        ? "bg-green-100 text-green-800"
+                                        : "bg-red-100 text-red-800"
+                                    }`}
+                                  >
                                     {getHealthLabel(analysis.healthStatus)}
                                   </div>
                                 </div>
                               </div>
-                              
+
                               <div className="mt-4">
                                 <div className="flex items-center space-x-2 mb-1">
                                   <p className="text-sm">Health Score:</p>
                                   <div className="w-full max-w-[200px] h-2 bg-gray-200 rounded-full overflow-hidden">
-                                    <div 
+                                    <div
                                       className={`h-full ${getHealthColor(analysis.healthScore)}`}
-                                      style={{ width: `${analysis.healthScore}%` }}
+                                      style={{
+                                        width: `${analysis.healthScore}%`,
+                                      }}
                                     ></div>
                                   </div>
-                                  <p className="text-sm font-medium">{analysis.healthScore}%</p>
+                                  <p className="text-sm font-medium">
+                                    {analysis.healthScore}%
+                                  </p>
                                 </div>
                               </div>
-                              
+
                               {analysis.diseaseDetected && (
                                 <div className="mt-3">
-                                  <p className="text-sm font-medium">Diagnosis:</p>
-                                  <p className="text-sm mt-1">{analysis.diseaseDescription}</p>
+                                  <p className="text-sm font-medium">
+                                    Diagnosis:
+                                  </p>
+                                  <p className="text-sm mt-1">
+                                    {analysis.diseaseDescription}
+                                  </p>
                                 </div>
                               )}
-                              
+
                               <Separator className="my-3" />
-                              
+
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {analysis.nutrientDeficiencies && (
                                   <div>
-                                    <p className="text-sm font-medium">Nutrient Issues:</p>
-                                    <p className="text-sm mt-1">{analysis.nutrientDeficiencies}</p>
+                                    <p className="text-sm font-medium">
+                                      Nutrient Issues:
+                                    </p>
+                                    <p className="text-sm mt-1">
+                                      {analysis.nutrientDeficiencies}
+                                    </p>
                                   </div>
                                 )}
-                                
+
                                 {analysis.recommendations && (
                                   <div>
-                                    <p className="text-sm font-medium">Recommendations:</p>
-                                    <p className="text-sm mt-1">{analysis.recommendations}</p>
+                                    <p className="text-sm font-medium">
+                                      Recommendations:
+                                    </p>
+                                    <p className="text-sm mt-1">
+                                      {analysis.recommendations}
+                                    </p>
                                   </div>
                                 )}
                               </div>
