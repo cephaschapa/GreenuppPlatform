@@ -23,8 +23,8 @@ const PlantDiagnosisPage = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [plantType, setPlantType] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
-  const [selectedField, setSelectedField] = useState<string>('');
-  const [selectedCrop, setSelectedCrop] = useState<string>('');
+  const [selectedField, setSelectedField] = useState<string>('none');
+  const [selectedCrop, setSelectedCrop] = useState<string>('none');
   const [isCameraActive, setIsCameraActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -56,12 +56,12 @@ const PlantDiagnosisPage = () => {
   const { data: crops = [], isLoading: isLoadingCrops } = useQuery({
     queryKey: ['/api/fields', selectedField, 'crops'],
     queryFn: async () => {
-      if (!selectedField) return [];
+      if (!selectedField || selectedField === 'none') return [];
       const response = await fetch(`/api/fields/${selectedField}/crops`);
       if (!response.ok) throw new Error('Failed to fetch crops');
       return response.json();
     },
-    enabled: !!selectedField
+    enabled: !!selectedField && selectedField !== 'none'
   });
 
   // Mutation for submitting image for analysis
@@ -87,8 +87,8 @@ const PlantDiagnosisPage = () => {
       setImageFile(null);
       setPlantType('');
       setNotes('');
-      setSelectedField('');
-      setSelectedCrop('');
+      setSelectedField('none');
+      setSelectedCrop('none');
     },
     onError: (error) => {
       toast({
@@ -185,8 +185,8 @@ const PlantDiagnosisPage = () => {
     analyzeImage({
       imageData: base64Data,
       plantType: plantType || undefined,
-      fieldId: selectedField || undefined,
-      cropId: selectedCrop || undefined,
+      fieldId: selectedField === 'none' ? undefined : selectedField || undefined,
+      cropId: selectedCrop === 'none' ? undefined : selectedCrop || undefined,
       notes: notes || undefined,
     });
   };
@@ -197,8 +197,8 @@ const PlantDiagnosisPage = () => {
     setImageFile(null);
     setPlantType('');
     setNotes('');
-    setSelectedField('');
-    setSelectedCrop('');
+    setSelectedField('none');
+    setSelectedCrop('none');
     if (isCameraActive) {
       stopCamera();
     }
@@ -364,12 +364,16 @@ const PlantDiagnosisPage = () => {
 
                       <div className="space-y-2">
                         <Label htmlFor="field">Field (Optional)</Label>
-                        <Select value={selectedField} onValueChange={setSelectedField}>
+                        <Select value={selectedField} onValueChange={(value) => {
+                            setSelectedField(value);
+                            // Reset crop selection when changing fields
+                            setSelectedCrop('none');
+                          }}>
                           <SelectTrigger id="field">
                             <SelectValue placeholder="Select field" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value="none">None</SelectItem>
                             {fields.map((field: any) => (
                               <SelectItem key={field.id} value={field.id.toString()}>
                                 {field.name}
@@ -390,7 +394,7 @@ const PlantDiagnosisPage = () => {
                             <SelectValue placeholder="Select crop" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value="none">None</SelectItem>
                             {crops.map((crop: any) => (
                               <SelectItem key={crop.id} value={crop.id.toString()}>
                                 {crop.name}
