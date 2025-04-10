@@ -1538,11 +1538,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Catch-all route for API errors
-  app.use("/api/*", (req, res) => {
-    res.status(404).json({ message: "API endpoint not found" });
-  });
-
   // Plant Disease Analysis Endpoints
   
   // Get all plant analyses for the authenticated farmer
@@ -1757,6 +1752,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Catch-all route for API errors - must be after all API routes
+  app.use("/api/*", (req, res) => {
+    res.status(404).json({ message: "API endpoint not found" });
+  });
+  
   const httpServer = createServer(app);
 
   return httpServer;
