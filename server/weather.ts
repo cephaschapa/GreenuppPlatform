@@ -239,10 +239,18 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
     return weatherData;
   } catch (error: any) {
     console.error('Error fetching weather data:', error);
+    
+    // Check for specific API errors
     if (error.response) {
       console.error('API response error:', error.response.data);
+      
+      // Handle API key error specifically
+      if (error.response.status === 401) {
+        throw new Error('Weather data unavailable - API key issue. Please contact support.');
+      }
     }
-    throw new Error('Failed to retrieve weather data');
+    
+    throw new Error('Failed to retrieve weather data. Please try again later.');
   }
 }
 
@@ -327,7 +335,18 @@ export async function getHistoricalWeatherData(location: string, startDate: Date
     return historicalData;
   } catch (error: any) {
     console.error('Error fetching historical weather data:', error);
-    throw new Error('Failed to retrieve historical weather data');
+    
+    // Check for specific API errors
+    if (error.response) {
+      console.error('API response error:', error.response.data);
+      
+      // Handle API key error specifically
+      if (error.response.status === 401) {
+        throw new Error('Historical weather data unavailable - API key issue. Please contact support.');
+      }
+    }
+    
+    throw new Error('Failed to retrieve historical weather data. Please try again later.');
   }
 }
 
