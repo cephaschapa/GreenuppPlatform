@@ -36,9 +36,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
   // Configure multer for file uploads
-  const storage = multer.memoryStorage();
+  const multerStorage = multer.memoryStorage();
   const upload = multer({ 
-    storage,
+    storage: multerStorage,
     limits: {
       fileSize: 10 * 1024 * 1024, // 10MB limit
     }
@@ -2043,15 +2043,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Create listing (authenticated users only)
-  app.post("/api/marketplace/listings", isAuthenticated, async (req, res) => {
+  app.post("/api/marketplace/listings", isAuthenticated, upload.array('images', 10), async (req, res) => {
     try {
       if (!req.user) {
         return res.status(401).json({ message: "Not authenticated" });
       }
       
+      console.log("Request body:", req.body);
+      console.log("Files:", req.files);
+      
+      // Process files if any
+      let images: string[] = [];
+      const files = req.files as Express.Multer.File[];
+      
+      if (files && files.length > 0) {
+        // Convert Buffer to base64 string for storage
+        images = files.map(file => {
+          const base64 = file.buffer.toString('base64');
+          return `data:${file.mimetype};base64,${base64}`;
+        });
+      }
+      
+      // Combine form data with processed images
       const listingData = insertMarketplaceListingSchema.parse({
         ...req.body,
-        sellerId: req.user.id
+        sellerId: req.user.id,
+        images: images.length > 0 ? images : undefined
       });
       
       const newListing = await storage.createMarketplaceListing(listingData);
@@ -2069,7 +2086,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Update listing (authenticated users only, must be seller)
-  app.patch("/api/marketplace/listings/:id", isAuthenticated, async (req, res) => {
+  app.patch("/api/marketplace/listings/:id", isAuthenticated, upload.array('images', 10), async (req, res) => {
     try {
       if (!req.user) {
         return res.status(401).json({ message: "Not authenticated" });
@@ -2090,7 +2107,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "You don't have permission to update this listing" });
       }
       
-      const listingData = insertMarketplaceListingSchema.partial().parse(req.body);
+      // Process files if any
+      let images: string[] | undefined;
+      const files = req.files as Express.Multer.File[];
+      
+      if (files && files.length > 0) {
+        // Convert Buffer to base64 string for storage
+        const newImages = files.map(file => {
+          const base64 = file.buffer.toString('base64');
+          return `data:${file.mimetype};base64,${base64}`;
+        });
+        
+        // Combine with existing images if needed
+        if (req.body.keepExistingImages === 'true' && existingListing.images) {
+          images = [...existingListing.images, ...newImages];
+        } else {
+          images = newImages;
+        }
+      }
+      
+      const listingData = insertMarketplaceListingSchema.partial().parse({
+        ...req.body,
+        images
+      });
       
       // Ensure user cannot change sellerId
       delete listingData.sellerId;
