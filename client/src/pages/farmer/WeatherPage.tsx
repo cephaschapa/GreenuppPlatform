@@ -145,18 +145,35 @@ export default function WeatherPage() {
       setLoadingWeather(true);
       try {
         const response = await fetch(`/api/weather?location=${encodeURIComponent(activeLocation)}`);
+        
+        // Handle different response statuses
         if (!response.ok) {
-          throw new Error("Failed to fetch weather data");
+          const errorData = await response.json().catch(() => ({}));
+          
+          // Check for specific API key issues
+          if (response.status === 500 && errorData.message?.includes("API key")) {
+            throw new Error("API key issue - Weather service temporarily unavailable");
+          } else if (response.status === 401) {
+            throw new Error("Authentication required to access weather data");
+          } else {
+            throw new Error("Failed to fetch weather data");
+          }
         }
+        
         const data = await response.json();
         setWeatherData(data);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching weather:", error);
+        
+        // Provide a user-friendly error message
         toast({
-          title: "Error fetching weather data",
-          description: "Please check your connection and try again",
+          title: "Weather Data Unavailable",
+          description: error.message || "Please check your connection and try again later",
           variant: "destructive",
         });
+        
+        // Set a null weather data state to show the error UI
+        setWeatherData(null);
       } finally {
         setLoadingWeather(false);
       }
@@ -192,18 +209,34 @@ export default function WeatherPage() {
     setLoadingClimate(true);
     try {
       const response = await fetch(`/api/weather/climate?location=${encodeURIComponent(activeLocation)}`);
+      
+      // Handle different response statuses
       if (!response.ok) {
-        throw new Error("Failed to fetch climate data");
+        const errorData = await response.json().catch(() => ({}));
+        
+        // Check for specific API key issues
+        if (response.status === 500 && errorData.message?.includes("API key")) {
+          throw new Error("API key issue - Climate service temporarily unavailable");
+        } else if (response.status === 401) {
+          throw new Error("Authentication required to access climate data");
+        } else {
+          throw new Error("Failed to fetch climate data");
+        }
       }
+      
       const data = await response.json();
       setClimateData(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching climate data:", error);
+      
       toast({
-        title: "Error fetching climate data",
-        description: "Please check your connection and try again",
+        title: "Climate Data Unavailable",
+        description: error.message || "Please check your connection and try again later",
         variant: "destructive",
       });
+      
+      // Set null climate data to show the error UI
+      setClimateData(null);
     } finally {
       setLoadingClimate(false);
     }
@@ -216,18 +249,34 @@ export default function WeatherPage() {
     setLoadingRecommendations(true);
     try {
       const response = await fetch(`/api/crop-recommendations?location=${encodeURIComponent(activeLocation)}`);
+      
+      // Handle different response statuses
       if (!response.ok) {
-        throw new Error("Failed to fetch crop recommendations");
+        const errorData = await response.json().catch(() => ({}));
+        
+        // Check for specific API key issues
+        if (response.status === 500 && errorData.message?.includes("API key")) {
+          throw new Error("API key issue - Crop recommendation service temporarily unavailable");
+        } else if (response.status === 401) {
+          throw new Error("Authentication required to access crop recommendations");
+        } else {
+          throw new Error("Failed to fetch crop recommendations");
+        }
       }
+      
       const data = await response.json();
       setCropRecommendations(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching crop recommendations:", error);
+      
       toast({
-        title: "Error fetching crop recommendations",
-        description: "Please check your connection and try again",
+        title: "Crop Recommendations Unavailable",
+        description: error.message || "Please check your connection and try again later",
         variant: "destructive",
       });
+      
+      // Set null recommendations to show the error UI
+      setCropRecommendations(null);
     } finally {
       setLoadingRecommendations(false);
     }
@@ -246,19 +295,33 @@ export default function WeatherPage() {
         `/api/weather/historical?location=${encodeURIComponent(activeLocation)}&startDate=${startDate}&endDate=${endDate}`
       );
       
+      // Handle different response statuses
       if (!response.ok) {
-        throw new Error("Failed to fetch historical weather data");
+        const errorData = await response.json().catch(() => ({}));
+        
+        // Check for specific API key issues
+        if (response.status === 500 && errorData.message?.includes("API key")) {
+          throw new Error("API key issue - Historical weather data temporarily unavailable");
+        } else if (response.status === 401) {
+          throw new Error("Authentication required to access historical data");
+        } else {
+          throw new Error("Failed to fetch historical weather data");
+        }
       }
       
       const data = await response.json();
       setHistoricalData(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching historical data:", error);
+      
       toast({
-        title: "Error fetching historical weather data",
-        description: "Please check your connection and try again",
+        title: "Historical Weather Data Unavailable",
+        description: error.message || "Please check your connection and try again later",
         variant: "destructive",
       });
+      
+      // Set null historical data to show the error UI
+      setHistoricalData(null);
     } finally {
       setLoadingHistorical(false);
     }
@@ -389,8 +452,19 @@ export default function WeatherPage() {
                         <Loader2 className="h-10 w-10 animate-spin text-primary" />
                       </div>
                     ) : !weatherData ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <p>No weather data available for this location.</p>
+                      <div className="text-center py-8 space-y-4">
+                        <div className="flex justify-center">
+                          <AlertTriangle className="h-12 w-12 text-yellow-500" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-lg">Weather data unavailable</p>
+                          <p className="text-muted-foreground">
+                            The system cannot retrieve weather data at this time.
+                          </p>
+                          <p className="text-muted-foreground mt-2">
+                            This may be due to an API key configuration issue. Please contact support.
+                          </p>
+                        </div>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
