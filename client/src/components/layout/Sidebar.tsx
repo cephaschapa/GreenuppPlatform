@@ -19,6 +19,7 @@ import {
   Home,
   MoreHorizontal,
   Sprout,
+  ShoppingBag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -80,6 +81,14 @@ export function Sidebar() {
       showInMobileNav: true,
     },
     {
+      title: "Marketplace",
+      href: "/farmer/marketplace",
+      icon: <ShoppingBag className="h-5 w-5" />,
+      mobileIcon: <ShoppingBag className="h-6 w-6" />,
+      active: location.startsWith("/farmer/marketplace"),
+      showInMobileNav: true,
+    },
+    {
       title: "Predictions",
       href: "/dashboard/predictions",
       icon: <Sparkles className="h-5 w-5" />,
@@ -122,7 +131,15 @@ export function Sidebar() {
       active: location === "/dashboard",
       showInMobileNav: true,
     },
-    // Add supplier-specific navigation items here
+    {
+      title: "Marketplace",
+      href: "/farmer/marketplace",
+      icon: <ShoppingBag className="h-5 w-5" />,
+      mobileIcon: <ShoppingBag className="h-6 w-6" />,
+      active: location.startsWith("/farmer/marketplace"),
+      showInMobileNav: true,
+    },
+    // Add more supplier-specific navigation items here
   ];
 
   const buyerNavItems = [
@@ -134,7 +151,15 @@ export function Sidebar() {
       active: location === "/dashboard",
       showInMobileNav: true,
     },
-    // Add buyer-specific navigation items here
+    {
+      title: "Marketplace",
+      href: "/farmer/marketplace",
+      icon: <ShoppingBag className="h-5 w-5" />,
+      mobileIcon: <ShoppingBag className="h-6 w-6" />,
+      active: location.startsWith("/farmer/marketplace"),
+      showInMobileNav: true,
+    },
+    // Add more buyer-specific navigation items here
   ];
 
   // Select the appropriate navigation items based on user role
@@ -180,7 +205,7 @@ export function Sidebar() {
               <Button variant="ghost" className="rounded-full h-8 w-8 p-0">
                 <Avatar className="h-8 w-8 border border-primary/20">
                   <AvatarFallback className="text-sm bg-primary/20 text-primary">
-                    {user?.firstName?.[0] || user?.username?.[0] || "U"}
+                    {user && (user.firstName?.[0] || user.username?.[0]) || "U"}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -311,7 +336,7 @@ export function Sidebar() {
           <div className="flex items-center gap-3 px-3 py-2 mb-4">
             <Avatar className="h-9 w-9 border border-primary/20">
               <AvatarFallback className="bg-primary/20 text-primary">
-                {user?.firstName?.[0] || user?.username?.[0] || "U"}
+                {user && (user.firstName?.[0] || user.username?.[0]) || "U"}
               </AvatarFallback>
             </Avatar>
             <div className="truncate">
@@ -319,7 +344,7 @@ export function Sidebar() {
                 {user?.firstName || user?.username}
               </p>
               <p className="text-xs text-gray-500">
-                {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)}
+                {user && user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User"}
               </p>
             </div>
           </div>
