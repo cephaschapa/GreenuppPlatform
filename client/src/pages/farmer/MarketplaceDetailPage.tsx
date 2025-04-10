@@ -106,7 +106,7 @@ export default function MarketplaceDetailPage() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["/api/marketplace-listings", params.id],
+    queryKey: ["/api/marketplace/listings", params.id],
     enabled: false, // Disabled until API is implemented
   });
   

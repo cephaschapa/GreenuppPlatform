@@ -201,14 +201,14 @@ export default function CreateListingPage() {
   // Create listing mutation
   const createListingMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await apiRequest("POST", "/api/marketplace-listings", formData, {
+      const response = await apiRequest("POST", "/api/marketplace/listings", formData, {
         isFormData: true
       });
       return await response.json();
     },
     onSuccess: () => {
       // Invalidate the listings query to refetch the updated list
-      queryClient.invalidateQueries({ queryKey: ["/api/marketplace-listings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/marketplace/listings"] });
       
       toast({
         title: "Listing created",
