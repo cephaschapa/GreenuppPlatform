@@ -162,13 +162,24 @@ export default function SettingsPage() {
   // Notification settings form
   const notificationForm = useForm<NotificationSettings>({
     resolver: zodResolver(notificationSettingsSchema),
-    defaultValues: settings?.notifications || defaultSettings.notifications,
+    defaultValues: settings?.notifications ? {
+      emailNotifications: settings.notifications.emailNotifications,
+      pushNotifications: settings.notifications.pushNotifications,
+      weatherAlerts: settings.notifications.weatherAlerts,
+      marketPriceAlerts: settings.notifications.marketPriceAlerts,
+      taskReminders: settings.notifications.taskReminders,
+    } : defaultSettings.notifications,
   });
 
   // Display settings form
   const displayForm = useForm<DisplaySettings>({
     resolver: zodResolver(displaySettingsSchema),
-    defaultValues: {
+    defaultValues: settings?.display ? {
+      theme: settings.display.theme as "light" | "dark" | "system",
+      fontSize: settings.display.fontSize,
+      reducedMotion: settings.display.reducedMotion,
+      highContrast: settings.display.highContrast,
+    } : {
       ...defaultSettings.display,
       theme: theme as "light" | "dark" | "system",
     },
@@ -177,19 +188,32 @@ export default function SettingsPage() {
   // Security settings form
   const securityForm = useForm<SecuritySettings>({
     resolver: zodResolver(securitySettingsSchema),
-    defaultValues: settings?.security || defaultSettings.security,
+    defaultValues: settings?.security ? {
+      twoFactorAuth: settings.security.twoFactorAuth,
+      sessionTimeout: settings.security.sessionTimeout as "never" | "1hour" | "8hours" | "24hours",
+      loginNotifications: settings.security.loginNotifications
+    } : defaultSettings.security,
   });
 
   // Privacy settings form
   const privacyForm = useForm<PrivacySettings>({
     resolver: zodResolver(privacySettingsSchema),
-    defaultValues: settings?.privacy || defaultSettings.privacy,
+    defaultValues: settings?.privacy ? {
+      shareData: settings.privacy.shareData,
+      profileVisibility: settings.privacy.profileVisibility as "public" | "private" | "connections",
+      locationSharing: settings.privacy.locationSharing
+    } : defaultSettings.privacy,
   });
 
   // Unit settings form
   const unitForm = useForm<UnitSettings>({
     resolver: zodResolver(unitSettingsSchema),
-    defaultValues: settings?.units || defaultSettings.units,
+    defaultValues: settings?.units ? {
+      temperatureUnit: settings.units.temperatureUnit as "celsius" | "fahrenheit",
+      distanceUnit: settings.units.distanceUnit as "metric" | "imperial",
+      weightUnit: settings.units.weightUnit as "metric" | "imperial",
+      dateFormat: settings.units.dateFormat as "DMY" | "MDY" | "YMD",
+    } : defaultSettings.units,
   });
 
   // Handle notification settings update
@@ -329,6 +353,55 @@ export default function SettingsPage() {
   const onUnitSubmit = (data: UnitSettings) => {
     updateUnitSettingsApi(data);
   };
+
+  // Update form values when settings are loaded
+  useEffect(() => {
+    if (settings) {
+      if (settings.display) {
+        displayForm.reset({
+          theme: settings.display.theme as "light" | "dark" | "system",
+          fontSize: settings.display.fontSize,
+          reducedMotion: settings.display.reducedMotion,
+          highContrast: settings.display.highContrast,
+        });
+      }
+      
+      if (settings.notifications) {
+        notificationForm.reset({
+          emailNotifications: settings.notifications.emailNotifications,
+          pushNotifications: settings.notifications.pushNotifications,
+          weatherAlerts: settings.notifications.weatherAlerts,
+          marketPriceAlerts: settings.notifications.marketPriceAlerts,
+          taskReminders: settings.notifications.taskReminders,
+        });
+      }
+      
+      if (settings.security) {
+        securityForm.reset({
+          twoFactorAuth: settings.security.twoFactorAuth,
+          sessionTimeout: settings.security.sessionTimeout as "never" | "1hour" | "8hours" | "24hours",
+          loginNotifications: settings.security.loginNotifications
+        });
+      }
+      
+      if (settings.privacy) {
+        privacyForm.reset({
+          shareData: settings.privacy.shareData,
+          profileVisibility: settings.privacy.profileVisibility as "public" | "private" | "connections",
+          locationSharing: settings.privacy.locationSharing
+        });
+      }
+      
+      if (settings.units) {
+        unitForm.reset({
+          temperatureUnit: settings.units.temperatureUnit as "celsius" | "fahrenheit",
+          distanceUnit: settings.units.distanceUnit as "metric" | "imperial",
+          weightUnit: settings.units.weightUnit as "metric" | "imperial",
+          dateFormat: settings.units.dateFormat as "DMY" | "MDY" | "YMD",
+        });
+      }
+    }
+  }, [settings, displayForm, notificationForm, securityForm, privacyForm, unitForm]);
 
   if (settingsLoading) {
     return (
@@ -666,9 +739,9 @@ export default function SettingsPage() {
                     <Button
                       type="submit"
                       className="gap-2"
-                      disabled={updateNotificationSettings.isPending}
+                      disabled={isUpdatingNotifications}
                     >
-                      {updateNotificationSettings.isPending ? (
+                      {isUpdatingNotifications ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
                           Saving...
@@ -840,9 +913,9 @@ export default function SettingsPage() {
                     <Button
                       type="submit"
                       className="gap-2"
-                      disabled={updateUnitSettings.isPending}
+                      disabled={isUpdatingUnits}
                     >
-                      {updateUnitSettings.isPending ? (
+                      {isUpdatingUnits ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
                           Saving...
@@ -976,9 +1049,9 @@ export default function SettingsPage() {
                     <Button
                       type="submit"
                       className="gap-2"
-                      disabled={updatePrivacySettings.isPending}
+                      disabled={isUpdatingPrivacy}
                     >
-                      {updatePrivacySettings.isPending ? (
+                      {isUpdatingPrivacy ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
                           Saving...
@@ -1134,9 +1207,9 @@ export default function SettingsPage() {
                     <Button
                       type="submit"
                       className="gap-2"
-                      disabled={updateSecuritySettings.isPending}
+                      disabled={isUpdatingSecurity}
                     >
-                      {updateSecuritySettings.isPending ? (
+                      {isUpdatingSecurity ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
                           Saving...
