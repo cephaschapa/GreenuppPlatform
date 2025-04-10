@@ -64,6 +64,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
   }
 
+  // TEST MARKETPLACE ENDPOINT - CRITICAL DEBUG ROUTE
+  app.post("/api/test-marketplace", isAuthenticated, async (req, res) => {
+    console.log("TEST MARKETPLACE endpoint hit");
+    res.status(200).json({ success: true, message: "Test marketplace endpoint working" });
+  });
+  
+  // DIRECT TEST for marketplace listings endpoint
+  app.post("/api/marketplace-listings-test", isAuthenticated, async (req, res) => {
+    console.log("DIRECT TEST marketplace listings endpoint hit");
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      console.log("User authenticated in test:", req.user.id);
+      console.log("Request body:", req.body);
+      
+      res.status(200).json({ 
+        success: true, 
+        message: "Test marketplace listings endpoint working",
+        user: req.user.id
+      });
+    } catch (error) {
+      console.error("Error in test endpoint:", error);
+      res.status(500).json({ message: "Test endpoint error" });
+    }
+  });
+  
   // Contact form submission endpoint
   app.post("/api/contact", async (req, res) => {
     try {
@@ -2598,9 +2626,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Log all registered routes for debugging
   console.log("Registered routes:");
-  const registeredRoutes = [];
+  const registeredRoutes: string[] = [];
   
-  app._router.stack.forEach(middleware => {
+  // Type assertion for Express router stack
+  app._router.stack.forEach((middleware: any) => {
     if (middleware.route) {
       // Routes registered directly
       const path = middleware.route.path;
@@ -2608,7 +2637,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       registeredRoutes.push(`${methods} ${path}`);
     } else if (middleware.name === 'router') {
       // Routes registered via router
-      middleware.handle.stack.forEach(handler => {
+      middleware.handle.stack.forEach((handler: any) => {
         if (handler.route) {
           const path = handler.route.path;
           const methods = Object.keys(handler.route.methods).join(', ').toUpperCase();

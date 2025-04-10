@@ -202,7 +202,7 @@ export default function CreateListingPage() {
   const createListingMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       console.log("Creating listing with form data");
-      console.log("API endpoint:", "/api/marketplace/listings");
+      console.log("API endpoint:", "/api/marketplace-listings-test");
       
       // Log form data entries in a safer way
       const entries: string[] = [];
@@ -216,8 +216,9 @@ export default function CreateListingPage() {
       console.log("Form data entries:", entries.join(", "));
       
       try {
-        // Use the full API URL - start with a slash for absolute path from origin
-        const response = await apiRequest("POST", "/api/marketplace/listings", formData, {
+        // TEMPORARY: Use test endpoint instead to diagnose the routing issue
+        console.log("USING TEST ENDPOINT FOR DEBUGGING");
+        const response = await apiRequest("POST", "/api/marketplace-listings-test", formData, {
           isFormData: true
         });
         return await response.json();
