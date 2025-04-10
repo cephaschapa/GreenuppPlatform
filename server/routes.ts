@@ -60,6 +60,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User profile endpoints
+  
+  // Update user information
+  app.patch("/api/user", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const userId = req.user.id;
+      const updatedUser = await storage.updateUser(userId, req.body);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.status(200).json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user information" });
+    }
+  });
+  
   // Farmer profile endpoints
   
   // Get farmer profile
@@ -285,6 +308,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting field:", error);
       res.status(500).json({ message: "Failed to delete field" });
+    }
+  });
+  
+  // Settings endpoint - placeholder for now
+  app.get("/api/settings", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // In a real implementation, this would fetch settings from a database
+      // For now, we'll just return a default settings object
+      res.json({
+        notifications: {
+          emailNotifications: true,
+          pushNotifications: true,
+          weatherAlerts: true,
+          marketPriceAlerts: false,
+          taskReminders: true,
+        },
+        display: {
+          theme: "dark",
+          fontSize: 100,
+          reducedMotion: false,
+          highContrast: false,
+        },
+        security: {
+          twoFactorAuth: false,
+          sessionTimeout: "never",
+          loginNotifications: true,
+        },
+        privacy: {
+          shareData: true,
+          profileVisibility: "public",
+          locationSharing: true,
+        },
+        units: {
+          temperatureUnit: "celsius",
+          distanceUnit: "metric",
+          weightUnit: "metric",
+          dateFormat: "DMY",
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      res.status(500).json({ message: "Failed to retrieve settings" });
     }
   });
   
