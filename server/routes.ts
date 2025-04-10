@@ -2044,10 +2044,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Create listing (authenticated users only)
   app.post("/api/marketplace/listings", isAuthenticated, upload.array('images', 10), async (req, res) => {
+    console.log("POST /api/marketplace/listings endpoint hit");
     try {
       if (!req.user) {
+        console.log("User not authenticated in marketplace listings POST");
         return res.status(401).json({ message: "Not authenticated" });
       }
+      console.log("User authenticated:", req.user.id);
+      console.log("Request body:", req.body);
+      console.log("Request files:", req.files ? (req.files as Express.Multer.File[]).length : "no files");
       
       console.log("Request body:", req.body);
       console.log("Files:", req.files);

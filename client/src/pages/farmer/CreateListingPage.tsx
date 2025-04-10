@@ -201,10 +201,30 @@ export default function CreateListingPage() {
   // Create listing mutation
   const createListingMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await apiRequest("POST", "/api/marketplace/listings", formData, {
-        isFormData: true
+      console.log("Creating listing with form data");
+      console.log("API endpoint:", "/api/marketplace/listings");
+      
+      // Log form data entries in a safer way
+      const entries: string[] = [];
+      formData.forEach((value, key) => {
+        if (key === 'images') {
+          entries.push(`${key}: [File object]`);
+        } else {
+          entries.push(`${key}: ${value}`);
+        }
       });
-      return await response.json();
+      console.log("Form data entries:", entries.join(", "));
+      
+      try {
+        // Use the full API URL - start with a slash for absolute path from origin
+        const response = await apiRequest("POST", "/api/marketplace/listings", formData, {
+          isFormData: true
+        });
+        return await response.json();
+      } catch (error) {
+        console.error("Error in createListingMutation:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       // Invalidate the listings query to refetch the updated list
