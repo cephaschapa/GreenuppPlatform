@@ -830,6 +830,13 @@ export class MemStorage implements IStorage {
     this.tasks = new Map();
     this.yieldPredictions = new Map();
     this.plantAnalyses = new Map();
+    
+    // Initialize marketplace maps
+    this.locations = new Map();
+    this.marketplaceListings = new Map();
+    this.marketplaceReviews = new Map();
+    this.marketplaceFavorites = new Map();
+    this.marketplaceMessages = new Map();
     // Initialize marketplace maps
     this.locations = new Map();
     this.marketplaceListings = new Map();
@@ -1444,6 +1451,513 @@ export class MemStorage implements IStorage {
       this.plantAnalyses.delete(id);
     }
     return exists;
+  }
+
+  //============== MARKETPLACE METHODS ==============//
+
+  // Location methods
+  async getLocations(): Promise<Location[]> {
+    return Array.from(this.locations.values());
+  }
+
+  async getLocation(id: number): Promise<Location | undefined> {
+    return this.locations.get(id);
+  }
+
+  async getLocationByCoordinates(latitude: number, longitude: number): Promise<Location | undefined> {
+    // Find the location with the closest coordinates (within a small threshold)
+    const threshold = 0.0001; // Approximately 10 meters
+    
+    return Array.from(this.locations.values()).find(
+      (location) => 
+        Math.abs(Number(location.latitude) - latitude) < threshold && 
+        Math.abs(Number(location.longitude) - longitude) < threshold
+    );
+  }
+
+  async createLocation(locationData: InsertLocation): Promise<Location> {
+    const id = this.locationId++;
+    const now = new Date();
+    const location: Location = {
+      ...locationData,
+      id,
+      neighborhood: locationData.neighborhood || null,
+      postalCode: locationData.postalCode || null,
+      latitude: locationData.latitude || null,
+      longitude: locationData.longitude || null,
+      formattedAddress: locationData.formattedAddress || null,
+      placeId: locationData.placeId || null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    this.locations.set(id, location);
+    return location;
+  }
+
+  async updateLocation(id: number, locationData: Partial<Location>): Promise<Location | undefined> {
+    const location = await this.getLocation(id);
+    if (!location) return undefined;
+    
+    const updatedLocation: Location = {
+      ...location,
+      ...locationData,
+      id, // Ensure id doesn't change
+      updatedAt: new Date(),
+    };
+    
+    this.locations.set(id, updatedLocation);
+    return updatedLocation;
+  }
+
+  async deleteLocation(id: number): Promise<boolean> {
+    const exists = this.locations.has(id);
+    if (exists) {
+      this.locations.delete(id);
+    }
+    return exists;
+  }
+
+  // Marketplace Listing methods
+  async getMarketplaceListings(params?: {
+    category?: string;
+    search?: string;
+    sellerId?: number;
+    minPrice?: number;
+    maxPrice?: number;
+    condition?: string;
+    status?: string;
+    locationId?: number;
+    radius?: number;
+    sortBy?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<MarketplaceListing[]> {
+    let listings = Array.from(this.marketplaceListings.values());
+    
+    // Apply filters
+    if (params) {
+      if (params.category) {
+        listings = listings.filter(listing => listing.category === params.category);
+      }
+      
+      if (params.search) {
+        const searchLower = params.search.toLowerCase();
+        listings = listings.filter(listing => 
+          listing.title.toLowerCase().includes(searchLower) || 
+          (listing.description && listing.description.toLowerCase().includes(searchLower))
+        );
+      }
+      
+      if (params.sellerId) {
+        listings = listings.filter(listing => listing.sellerId === params.sellerId);
+      }
+      
+      if (params.minPrice !== undefined) {
+        listings = listings.filter(listing => Number(listing.price) >= params.minPrice!);
+      }
+      
+      if (params.maxPrice !== undefined) {
+        listings = listings.filter(listing => Number(listing.price) <= params.maxPrice!);
+      }
+      
+      if (params.condition) {
+        listings = listings.filter(listing => listing.condition === params.condition);
+      }
+      
+      if (params.status) {
+        listings = listings.filter(listing => listing.status === params.status);
+      }
+      
+      if (params.locationId) {
+        listings = listings.filter(listing => listing.locationId === params.locationId);
+      }
+      
+      // Apply sorting
+      if (params.sortBy) {
+        const [field, direction] = params.sortBy.split(':');
+        const isDesc = direction === 'desc';
+        
+        listings.sort((a, b) => {
+          let valueA: any;
+          let valueB: any;
+          
+          switch (field) {
+            case 'price':
+              valueA = Number(a.price);
+              valueB = Number(b.price);
+              break;
+            case 'createdAt':
+              valueA = new Date(a.createdAt).getTime();
+              valueB = new Date(b.createdAt).getTime();
+              break;
+            case 'title':
+              valueA = a.title;
+              valueB = b.title;
+              break;
+            case 'views':
+              valueA = a.views;
+              valueB = b.views;
+              break;
+            default:
+              valueA = a.createdAt;
+              valueB = b.createdAt;
+          }
+          
+          if (isDesc) {
+            return valueB - valueA;
+          } else {
+            return valueA - valueB;
+          }
+        });
+      } else {
+        // Default sort by latest
+        listings.sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+      
+      // Apply pagination
+      if (params.limit !== undefined && params.offset !== undefined) {
+        listings = listings.slice(params.offset, params.offset + params.limit);
+      } else if (params.limit !== undefined) {
+        listings = listings.slice(0, params.limit);
+      }
+    }
+    
+    return listings;
+  }
+
+  async getMarketplaceListingsByLocation(
+    latitude: number, 
+    longitude: number, 
+    radiusKm: number, 
+    filters?: Partial<MarketplaceListing>
+  ): Promise<MarketplaceListing[]> {
+    const listings = Array.from(this.marketplaceListings.values());
+    const filteredListings = filters ? this.filterListings(listings, filters) : listings;
+    
+    return filteredListings.filter(listing => {
+      if (!listing.locationId) return false;
+      
+      const location = this.locations.get(listing.locationId);
+      if (!location || !location.latitude || !location.longitude) return false;
+      
+      // Calculate distance using Haversine formula
+      const distance = this.calculateDistance(
+        latitude, 
+        longitude, 
+        Number(location.latitude), 
+        Number(location.longitude)
+      );
+      
+      return distance <= radiusKm;
+    });
+  }
+
+  // Helper function to calculate distance between two points using Haversine formula
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Earth's radius in km
+    const dLat = this.deg2rad(lat2 - lat1);
+    const dLon = this.deg2rad(lon2 - lon1);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2); 
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    const distance = R * c; // Distance in km
+    return distance;
+  }
+  
+  private deg2rad(deg: number): number {
+    return deg * (Math.PI/180);
+  }
+  
+  // Helper function to filter listings
+  private filterListings(listings: MarketplaceListing[], filters: Partial<MarketplaceListing>): MarketplaceListing[] {
+    return listings.filter(listing => {
+      for (const [key, value] of Object.entries(filters)) {
+        if (key === 'price') {
+          if (Number(listing.price) !== Number(value)) return false;
+        } else if (listing[key as keyof MarketplaceListing] !== value) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  async getMarketplaceListingsBySellerLocation(
+    sellerId: number, 
+    radiusKm: number
+  ): Promise<MarketplaceListing[]> {
+    // First get all listings by this seller
+    const sellerListings = await this.getMarketplaceListingsBySeller(sellerId);
+    
+    // Filter by radius from seller's location
+    const result: MarketplaceListing[] = [];
+    
+    for (const listing of sellerListings) {
+      if (!listing.locationId) continue;
+      
+      const location = this.locations.get(listing.locationId);
+      if (!location || !location.latitude || !location.longitude) continue;
+      
+      // Get other listings within radius of this listing
+      const nearbyListings = await this.getMarketplaceListingsByLocation(
+        Number(location.latitude),
+        Number(location.longitude),
+        radiusKm
+      );
+      
+      // Add unique listings to result
+      for (const nearby of nearbyListings) {
+        if (!result.some(l => l.id === nearby.id)) {
+          result.push(nearby);
+        }
+      }
+    }
+    
+    return result;
+  }
+
+  async getMarketplaceListing(id: number): Promise<MarketplaceListing | undefined> {
+    return this.marketplaceListings.get(id);
+  }
+
+  async getMarketplaceListingsBySeller(sellerId: number): Promise<MarketplaceListing[]> {
+    return Array.from(this.marketplaceListings.values()).filter(
+      listing => listing.sellerId === sellerId
+    );
+  }
+
+  async createMarketplaceListing(listingData: InsertMarketplaceListing): Promise<MarketplaceListing> {
+    const id = this.listingId++;
+    const now = new Date();
+    
+    const listing: MarketplaceListing = {
+      ...listingData,
+      id,
+      subcategory: listingData.subcategory || null,
+      priceUnit: listingData.priceUnit || null,
+      quantity: listingData.quantity || null,
+      quantityUnit: listingData.quantityUnit || null,
+      condition: listingData.condition || null,
+      locationId: listingData.locationId || null,
+      contactPhone: listingData.contactPhone || null,
+      contactEmail: listingData.contactEmail || null,
+      availableFrom: listingData.availableFrom || now,
+      availableUntil: listingData.availableUntil || null,
+      deliveryRadius: listingData.deliveryRadius || null,
+      deliveryRadiusUnit: listingData.deliveryRadiusUnit || 'km',
+      status: listingData.status || 'active',
+      images: listingData.images || [],
+      views: 0,
+      featured: listingData.featured || false,
+      verified: listingData.verified || false,
+      tags: listingData.tags || [],
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    this.marketplaceListings.set(id, listing);
+    return listing;
+  }
+
+  async updateMarketplaceListing(id: number, listingData: Partial<MarketplaceListing>): Promise<MarketplaceListing | undefined> {
+    const listing = await this.getMarketplaceListing(id);
+    if (!listing) return undefined;
+    
+    const updatedListing: MarketplaceListing = {
+      ...listing,
+      ...listingData,
+      id, // Ensure id doesn't change
+      sellerId: listing.sellerId, // Ensure sellerId doesn't change
+      updatedAt: new Date(),
+    };
+    
+    this.marketplaceListings.set(id, updatedListing);
+    return updatedListing;
+  }
+
+  async deleteMarketplaceListing(id: number): Promise<boolean> {
+    const exists = this.marketplaceListings.has(id);
+    if (exists) {
+      this.marketplaceListings.delete(id);
+    }
+    return exists;
+  }
+
+  async incrementListingViews(id: number): Promise<boolean> {
+    const listing = await this.getMarketplaceListing(id);
+    if (!listing) return false;
+    
+    listing.views++;
+    this.marketplaceListings.set(id, listing);
+    return true;
+  }
+
+  // Marketplace Review methods
+  async getMarketplaceReviews(listingId?: number, sellerId?: number): Promise<MarketplaceReview[]> {
+    let reviews = Array.from(this.marketplaceReviews.values());
+    
+    if (listingId) {
+      reviews = reviews.filter(review => review.listingId === listingId);
+    }
+    
+    if (sellerId) {
+      reviews = reviews.filter(review => review.sellerId === sellerId);
+    }
+    
+    return reviews;
+  }
+
+  async getMarketplaceReview(id: number): Promise<MarketplaceReview | undefined> {
+    return this.marketplaceReviews.get(id);
+  }
+
+  async createMarketplaceReview(reviewData: InsertMarketplaceReview): Promise<MarketplaceReview> {
+    const id = this.reviewId++;
+    const now = new Date();
+    
+    const review: MarketplaceReview = {
+      ...reviewData,
+      id,
+      review: reviewData.review || null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    this.marketplaceReviews.set(id, review);
+    return review;
+  }
+
+  async updateMarketplaceReview(id: number, reviewData: Partial<MarketplaceReview>): Promise<MarketplaceReview | undefined> {
+    const review = await this.getMarketplaceReview(id);
+    if (!review) return undefined;
+    
+    const updatedReview: MarketplaceReview = {
+      ...review,
+      ...reviewData,
+      id, // Ensure id doesn't change
+      sellerId: review.sellerId, // Ensure sellerId doesn't change
+      reviewerId: review.reviewerId, // Ensure reviewerId doesn't change
+      updatedAt: new Date(),
+    };
+    
+    this.marketplaceReviews.set(id, updatedReview);
+    return updatedReview;
+  }
+
+  async deleteMarketplaceReview(id: number): Promise<boolean> {
+    const exists = this.marketplaceReviews.has(id);
+    if (exists) {
+      this.marketplaceReviews.delete(id);
+    }
+    return exists;
+  }
+
+  // Marketplace Favorites methods
+  async getMarketplaceFavorites(userId: number): Promise<MarketplaceFavorite[]> {
+    return Array.from(this.marketplaceFavorites.values()).filter(
+      favorite => favorite.userId === userId
+    );
+  }
+
+  async getMarketplaceFavorite(id: number): Promise<MarketplaceFavorite | undefined> {
+    return this.marketplaceFavorites.get(id);
+  }
+
+  async createMarketplaceFavorite(favoriteData: InsertMarketplaceFavorite): Promise<MarketplaceFavorite> {
+    const id = this.favoriteId++;
+    const now = new Date();
+    
+    const favorite: MarketplaceFavorite = {
+      ...favoriteData,
+      id,
+      createdAt: now,
+    };
+    
+    this.marketplaceFavorites.set(id, favorite);
+    return favorite;
+  }
+
+  async deleteMarketplaceFavorite(id: number): Promise<boolean> {
+    const exists = this.marketplaceFavorites.has(id);
+    if (exists) {
+      this.marketplaceFavorites.delete(id);
+    }
+    return exists;
+  }
+
+  // Marketplace Messages methods
+  async getMarketplaceMessages(
+    senderId?: number,
+    recipientId?: number,
+    listingId?: number
+  ): Promise<MarketplaceMessage[]> {
+    let messages = Array.from(this.marketplaceMessages.values());
+    
+    if (senderId) {
+      messages = messages.filter(message => message.senderId === senderId);
+    }
+    
+    if (recipientId) {
+      messages = messages.filter(message => message.recipientId === recipientId);
+    }
+    
+    if (listingId) {
+      messages = messages.filter(message => message.listingId === listingId);
+    }
+    
+    // Sort by date (newest first)
+    return messages.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getMarketplaceMessage(id: number): Promise<MarketplaceMessage | undefined> {
+    return this.marketplaceMessages.get(id);
+  }
+
+  async createMarketplaceMessage(messageData: InsertMarketplaceMessage): Promise<MarketplaceMessage> {
+    const id = this.messageId++;
+    const now = new Date();
+    
+    const message: MarketplaceMessage = {
+      ...messageData,
+      id,
+      listingId: messageData.listingId || null,
+      read: false,
+      createdAt: now,
+    };
+    
+    this.marketplaceMessages.set(id, message);
+    return message;
+  }
+
+  async markMessageAsRead(id: number): Promise<boolean> {
+    const message = await this.getMarketplaceMessage(id);
+    if (!message) return false;
+    
+    message.read = true;
+    this.marketplaceMessages.set(id, message);
+    return true;
+  }
+
+  async deleteMarketplaceMessage(id: number): Promise<boolean> {
+    const exists = this.marketplaceMessages.has(id);
+    if (exists) {
+      this.marketplaceMessages.delete(id);
+    }
+    return exists;
+  }
+
+  async getUnreadMessageCount(userId: number): Promise<number> {
+    const messages = Array.from(this.marketplaceMessages.values());
+    return messages.filter(message => 
+      message.recipientId === userId && !message.read
+    ).length;
   }
 }
 
