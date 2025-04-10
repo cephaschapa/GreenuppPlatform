@@ -10,6 +10,8 @@ import ProfileCreationPage from "@/pages/profile-creation-page";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import InstallPWA from "@/components/ui/InstallPWA";
+import OfflineIndicator from "@/components/ui/OfflineIndicator";
 
 // Import farmer-specific pages
 import FieldsPage from "@/pages/farmer/FieldsPage";
@@ -47,6 +49,9 @@ function App() {
         <AuthProvider>
           <Router />
           <Toaster />
+          {/* PWA Components */}
+          <InstallPWA />
+          <OfflineIndicator />
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>

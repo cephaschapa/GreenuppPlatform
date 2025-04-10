@@ -7,6 +7,20 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1"
     />
     <title>Greenupp - Future of Agriculture</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#00FF00" />
+    <meta name="description" content="Comprehensive digital agriculture platform with advanced weather tracking and farm management" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Greenupp" />
+    
+    <!-- Manifest and Icons -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" />
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -17,6 +31,13 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- This script injects a replit badge into the page, please feel free to remove this line -->
+    
+    <!-- No JavaScript Fallback -->
+    <noscript>
+      <div style="padding: 2rem; text-align: center; font-family: 'Space Grotesk', sans-serif;">
+        <h1 style="color: #00FF00;">JavaScript Required</h1>
+        <p>Greenupp requires JavaScript to function. Please enable JavaScript in your browser settings.</p>
+      </div>
+    </noscript>
   </body>
 </html>
