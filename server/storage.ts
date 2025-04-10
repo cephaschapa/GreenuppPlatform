@@ -19,6 +19,18 @@ import {
   type InsertCropYieldPrediction,
   type PlantAnalysis,
   type InsertPlantAnalysis,
+  // Marketplace types
+  type Location,
+  type InsertLocation,
+  type MarketplaceListing,
+  type InsertMarketplaceListing,
+  type MarketplaceReview,
+  type InsertMarketplaceReview,
+  type MarketplaceFavorite,
+  type InsertMarketplaceFavorite,
+  type MarketplaceMessage,
+  type InsertMarketplaceMessage,
+  // Database tables
   users,
   farmerProfiles,
   contactForm,
@@ -28,7 +40,13 @@ import {
   weatherPreferences,
   farmerTasks,
   cropYieldPredictions,
-  plantAnalyses
+  plantAnalyses,
+  // Marketplace tables
+  locations,
+  marketplaceListings,
+  marketplaceReviews,
+  marketplaceFavorites,
+  marketplaceMessages
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -111,6 +129,71 @@ export interface IStorage {
   createPlantAnalysis(data: InsertPlantAnalysis): Promise<PlantAnalysis>;
   updatePlantAnalysis(id: number, data: Partial<PlantAnalysis>): Promise<PlantAnalysis | undefined>;
   deletePlantAnalysis(id: number): Promise<boolean>;
+  
+  // Marketplace Location management
+  getLocations(): Promise<Location[]>;
+  getLocation(id: number): Promise<Location | undefined>;
+  getLocationByCoordinates(latitude: number, longitude: number): Promise<Location | undefined>;
+  createLocation(locationData: InsertLocation): Promise<Location>;
+  updateLocation(id: number, locationData: Partial<Location>): Promise<Location | undefined>;
+  deleteLocation(id: number): Promise<boolean>;
+  
+  // Marketplace Listings
+  getMarketplaceListings(params?: {
+    category?: string;
+    search?: string;
+    sellerId?: number;
+    minPrice?: number;
+    maxPrice?: number;
+    condition?: string;
+    status?: string;
+    locationId?: number;
+    radius?: number; // km from location
+    sortBy?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<MarketplaceListing[]>;
+  getMarketplaceListingsByLocation(
+    latitude: number, 
+    longitude: number, 
+    radiusKm: number, 
+    filters?: Partial<MarketplaceListing>
+  ): Promise<MarketplaceListing[]>;
+  getMarketplaceListingsBySellerLocation(
+    sellerId: number, 
+    radiusKm: number
+  ): Promise<MarketplaceListing[]>;
+  getMarketplaceListing(id: number): Promise<MarketplaceListing | undefined>;
+  getMarketplaceListingsBySeller(sellerId: number): Promise<MarketplaceListing[]>;
+  createMarketplaceListing(listingData: InsertMarketplaceListing): Promise<MarketplaceListing>;
+  updateMarketplaceListing(id: number, listingData: Partial<MarketplaceListing>): Promise<MarketplaceListing | undefined>;
+  deleteMarketplaceListing(id: number): Promise<boolean>;
+  incrementListingViews(id: number): Promise<boolean>;
+  
+  // Marketplace Reviews
+  getMarketplaceReviews(listingId?: number, sellerId?: number): Promise<MarketplaceReview[]>;
+  getMarketplaceReview(id: number): Promise<MarketplaceReview | undefined>;
+  createMarketplaceReview(reviewData: InsertMarketplaceReview): Promise<MarketplaceReview>;
+  updateMarketplaceReview(id: number, reviewData: Partial<MarketplaceReview>): Promise<MarketplaceReview | undefined>;
+  deleteMarketplaceReview(id: number): Promise<boolean>;
+  
+  // Marketplace Favorites/Saved Listings
+  getMarketplaceFavorites(userId: number): Promise<MarketplaceFavorite[]>;
+  getMarketplaceFavorite(id: number): Promise<MarketplaceFavorite | undefined>;
+  createMarketplaceFavorite(favoriteData: InsertMarketplaceFavorite): Promise<MarketplaceFavorite>;
+  deleteMarketplaceFavorite(id: number): Promise<boolean>;
+  
+  // Marketplace Messages
+  getMarketplaceMessages(
+    senderId?: number,
+    recipientId?: number,
+    listingId?: number
+  ): Promise<MarketplaceMessage[]>;
+  getMarketplaceMessage(id: number): Promise<MarketplaceMessage | undefined>;
+  createMarketplaceMessage(messageData: InsertMarketplaceMessage): Promise<MarketplaceMessage>;
+  markMessageAsRead(id: number): Promise<boolean>;
+  deleteMarketplaceMessage(id: number): Promise<boolean>;
+  getUnreadMessageCount(userId: number): Promise<number>;
   
   // For session storage
   sessionStore: session.Store;
@@ -712,6 +795,13 @@ export class MemStorage implements IStorage {
   private tasks: Map<number, FarmerTask>;
   private yieldPredictions: Map<number, CropYieldPrediction>;
   private plantAnalyses: Map<number, PlantAnalysis>;
+  // Marketplace maps
+  private locations: Map<number, Location>;
+  private marketplaceListings: Map<number, MarketplaceListing>;
+  private marketplaceReviews: Map<number, MarketplaceReview>;
+  private marketplaceFavorites: Map<number, MarketplaceFavorite>;
+  private marketplaceMessages: Map<number, MarketplaceMessage>;
+  // ID counters
   private userId: number;
   private profileId: number;
   private inquiryId: number;
@@ -722,6 +812,11 @@ export class MemStorage implements IStorage {
   private taskId: number;
   private predictionId: number;
   private analysisId: number;
+  private locationId: number;
+  private listingId: number;
+  private reviewId: number;
+  private favoriteId: number;
+  private messageId: number;
   public sessionStore: session.Store;
 
   constructor() {
@@ -735,6 +830,13 @@ export class MemStorage implements IStorage {
     this.tasks = new Map();
     this.yieldPredictions = new Map();
     this.plantAnalyses = new Map();
+    // Initialize marketplace maps
+    this.locations = new Map();
+    this.marketplaceListings = new Map();
+    this.marketplaceReviews = new Map();
+    this.marketplaceFavorites = new Map();
+    this.marketplaceMessages = new Map();
+    // Initialize ID counters
     this.userId = 1;
     this.profileId = 1;
     this.inquiryId = 1;
@@ -745,6 +847,11 @@ export class MemStorage implements IStorage {
     this.taskId = 1;
     this.predictionId = 1;
     this.analysisId = 1;
+    this.locationId = 1;
+    this.listingId = 1;
+    this.reviewId = 1;
+    this.favoriteId = 1;
+    this.messageId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000 // prune expired entries every 24h
     });

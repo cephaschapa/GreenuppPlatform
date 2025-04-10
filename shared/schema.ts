@@ -293,3 +293,165 @@ export const insertPlantAnalysisSchema = createInsertSchema(plantAnalyses).omit(
 
 export type InsertPlantAnalysis = z.infer<typeof insertPlantAnalysisSchema>;
 export type PlantAnalysis = typeof plantAnalyses.$inferSelect;
+
+// Marketplace Schema
+
+// Product categories enum
+export const productCategoryEnum = pgEnum('product_category', [
+  'seeds', 
+  'fertilizers', 
+  'pesticides',
+  'equipment',
+  'tools',
+  'irrigation',
+  'livestock',
+  'feed',
+  'produce',
+  'grains',
+  'fruits',
+  'vegetables',
+  'dairy',
+  'meat',
+  'services',
+  'other'
+]);
+
+// Product condition enum
+export const productConditionEnum = pgEnum('product_condition', [
+  'new',
+  'like_new',
+  'good',
+  'fair',
+  'poor'
+]);
+
+// Listing status enum
+export const listingStatusEnum = pgEnum('listing_status', [
+  'active',
+  'pending',
+  'sold',
+  'expired',
+  'suspended'
+]);
+
+// Location table for precise geo-tracking
+export const locations = pgTable("locations", {
+  id: serial("id").primaryKey(),
+  country: text("country").notNull(),
+  region: text("region").notNull(), // state/province
+  city: text("city").notNull(),     // city/municipality
+  neighborhood: text("neighborhood"), // optional neighborhood
+  postalCode: text("postal_code"),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  formattedAddress: text("formatted_address"),
+  placeId: text("place_id"), // For Google Maps integration
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Marketplace listings table
+export const marketplaceListings = pgTable("marketplace_listings", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(),
+  subcategory: text("subcategory"),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  priceCurrency: text("price_currency").notNull().default('USD'),
+  priceUnit: text("price_unit"), // per kg, per ton, per unit, etc.
+  quantity: decimal("quantity", { precision: 10, scale: 2 }),
+  quantityUnit: text("quantity_unit"), // kg, ton, unit, etc.
+  condition: text("condition"), // new, used, etc.
+  locationId: integer("location_id").references(() => locations.id),
+  contactPhone: text("contact_phone"),
+  contactEmail: text("contact_email"),
+  availableFrom: timestamp("available_from").defaultNow(),
+  availableUntil: timestamp("available_until"),
+  deliveryAvailable: boolean("delivery_available").default(false),
+  deliveryRadius: decimal("delivery_radius", { precision: 10, scale: 2 }),
+  deliveryRadiusUnit: text("delivery_radius_unit").default('km'),
+  status: text("status").notNull().default('active'),
+  images: text("images").array(), // Array of image URLs or Base64
+  views: integer("views").notNull().default(0),
+  featured: boolean("featured").default(false),
+  verified: boolean("verified").default(false),
+  tags: text("tags").array(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Marketplace reviews
+export const marketplaceReviews = pgTable("marketplace_reviews", {
+  id: serial("id").primaryKey(),
+  listingId: integer("listing_id").references(() => marketplaceListings.id),
+  sellerId: integer("seller_id").notNull().references(() => users.id),
+  reviewerId: integer("reviewer_id").notNull().references(() => users.id),
+  rating: integer("rating").notNull(), // 1-5 stars
+  review: text("review"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Marketplace favorites/saved listings
+export const marketplaceFavorites = pgTable("marketplace_favorites", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  listingId: integer("listing_id").notNull().references(() => marketplaceListings.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Marketplace messages/inquiries
+export const marketplaceMessages = pgTable("marketplace_messages", {
+  id: serial("id").primaryKey(),
+  listingId: integer("listing_id").references(() => marketplaceListings.id),
+  senderId: integer("sender_id").notNull().references(() => users.id),
+  recipientId: integer("recipient_id").notNull().references(() => users.id),
+  message: text("message").notNull(),
+  read: boolean("read").default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Create schemas for marketplace
+export const insertLocationSchema = createInsertSchema(locations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMarketplaceListingSchema = createInsertSchema(marketplaceListings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  views: true,
+});
+
+export const insertMarketplaceReviewSchema = createInsertSchema(marketplaceReviews).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMarketplaceFavoriteSchema = createInsertSchema(marketplaceFavorites).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMarketplaceMessageSchema = createInsertSchema(marketplaceMessages).omit({
+  id: true,
+  createdAt: true,
+  read: true,
+});
+
+// Export marketplace types
+export type InsertLocation = z.infer<typeof insertLocationSchema>;
+export type Location = typeof locations.$inferSelect;
+export type InsertMarketplaceListing = z.infer<typeof insertMarketplaceListingSchema>;
+export type MarketplaceListing = typeof marketplaceListings.$inferSelect;
+export type InsertMarketplaceReview = z.infer<typeof insertMarketplaceReviewSchema>;
+export type MarketplaceReview = typeof marketplaceReviews.$inferSelect;
+export type InsertMarketplaceFavorite = z.infer<typeof insertMarketplaceFavoriteSchema>;
+export type MarketplaceFavorite = typeof marketplaceFavorites.$inferSelect;
+export type InsertMarketplaceMessage = z.infer<typeof insertMarketplaceMessageSchema>;
+export type MarketplaceMessage = typeof marketplaceMessages.$inferSelect;
