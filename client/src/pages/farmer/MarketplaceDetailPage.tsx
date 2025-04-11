@@ -1,8 +1,107 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { Loader2, ArrowLeft, MapPin, Calendar, MessageCircle, Share2, Flag, Heart, User, Star, ArrowRight, Send } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
+import { MarketplaceListing } from "@shared/schema";
+
+// Interface to adapt database model to UI needs
+interface ListingDisplayData {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  subcategory: string | null;
+  price: number;
+  priceCurrency: string;
+  quantity: string | null;
+  quantityUnit: string | null;
+  images: string[];
+  createdAt: Date;
+  isNegotiable: boolean;
+  // Seller information - placeholders until we implement seller details
+  sellerId: number;
+  sellerName: string;
+  sellerImage: string | null;
+  sellerRating: number;
+  sellerReviewCount: number;
+  sellerJoined: Date;
+  contactPhone: string | null;
+  // Location information - placeholders until we implement location details
+  location: string;
+  address: string | null;
+  coordinates: { lat: number; lng: number } | null;
+  distance: number;
+  // Reviews - placeholder until we implement reviews
+  reviews: Array<{
+    id: number;
+    reviewerName: string;
+    reviewerImage: string | null;
+    rating: number;
+    comment: string;
+    date: Date;
+  }>;
+}
+
+// Function to adapt the database model to the display model
+function adaptListingForDisplay(listing: MarketplaceListing): ListingDisplayData {
+  // Convert price from string/decimal to number for display
+  const price = typeof listing.price === 'string' 
+    ? parseFloat(listing.price) 
+    : typeof listing.price === 'number' 
+      ? listing.price 
+      : 0;
+      
+  // Create a safe array of images
+  const images = Array.isArray(listing.images) && listing.images 
+    ? listing.images 
+    : [];
+    
+  // Ensure isNegotiable is a boolean
+  const isNegotiable = listing.isNegotiable === true || 
+    listing.isNegotiable === 'true' || 
+    listing.isNegotiable === 1 || 
+    listing.isNegotiable === '1';
+    
+  // Create a placeholder location display
+  const location = listing.location || "Unknown location";
+  
+  // Placeholder coordinates for map display
+  const coordinates = {
+    lat: 0.0,
+    lng: 0.0
+  };
+    
+  return {
+    id: listing.id,
+    title: listing.title || "Untitled Listing",
+    description: listing.description || "No description provided",
+    category: listing.category || "Uncategorized",
+    subcategory: listing.subcategory,
+    price: price,
+    priceCurrency: listing.priceCurrency || 'USD',
+    quantity: listing.quantity?.toString() || null,
+    quantityUnit: listing.quantityUnit || null,
+    images: images.length > 0 ? images : ["https://placehold.co/700x500/green/white?text=No+Image"],
+    createdAt: new Date(listing.createdAt),
+    isNegotiable: isNegotiable,
+    // Seller information
+    sellerId: listing.sellerId || 0,
+    sellerName: "Seller", // Will be populated from user data
+    sellerImage: null,
+    sellerRating: 4.5, // Placeholder
+    sellerReviewCount: 0, // Placeholder
+    sellerJoined: new Date(), // Placeholder  
+    contactPhone: listing.contactPhone || null,
+    // Location information
+    location: location,
+    address: "Address information unavailable", // Placeholder
+    coordinates: coordinates, // Placeholder
+    distance: 0, // Placeholder
+    // Reviews placeholder
+    reviews: [] // Empty array for now
+  };
+}
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -100,18 +199,29 @@ export default function MarketplaceDetailPage() {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isContactDrawerOpen, setIsContactDrawerOpen] = useState(false);
   
-  // In a real implementation, fetch the listing data
+  // Fetch the actual listing data from the API
   const {
     data: listing,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<MarketplaceListing>({
     queryKey: ["/api/marketplace/listings", params.id],
-    enabled: false, // Disabled until API is implemented
   });
   
-  // For development, use mock data
-  const displayedListing = MOCK_LISTING;
+  // Use the actual listing data from the API, with fallback defaults
+  const [displayedListing, setDisplayedListing] = useState<ListingDisplayData | null>(null);
+  
+  // When listing data changes, adapt it for display
+  useEffect(() => {
+    if (listing) {
+      try {
+        const adaptedListing = adaptListingForDisplay(listing);
+        setDisplayedListing(adaptedListing);
+      } catch (err) {
+        console.error("Error adapting listing data:", err);
+      }
+    }
+  }, [listing]);
   
   const navigateBack = () => {
     setLocation("/dashboard/marketplace");
@@ -207,7 +317,9 @@ export default function MarketplaceDetailPage() {
   }
   
   return (
-    <DashboardLayout title={displayedListing.title} description={`${displayedListing.category} - ${displayedListing.location}`}>
+    <DashboardLayout 
+      title={displayedListing.title} 
+      description={`${displayedListing.category} ${displayedListing.subcategory ? `- ${displayedListing.subcategory}` : ''}`}>
       <div className="container mx-auto px-4 py-6">
         <Button variant="link" onClick={navigateBack} className="p-0 mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -270,7 +382,7 @@ export default function MarketplaceDetailPage() {
                     )}
                   </div>
                   <div className="text-2xl font-bold">
-                    {displayedListing.currency} {displayedListing.price.toFixed(2)}
+                    {displayedListing.priceCurrency} {displayedListing.price.toFixed(2)}
                   </div>
                 </div>
                 
@@ -428,11 +540,13 @@ export default function MarketplaceDetailPage() {
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-center">
                           <MapPin className="h-8 w-8 mx-auto mb-2" />
-                          <p>{displayedListing.address}</p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Lat: {displayedListing.coordinates.lat.toFixed(4)}, 
-                            Lng: {displayedListing.coordinates.lng.toFixed(4)}
-                          </p>
+                          <p>{displayedListing.address || "Address not available"}</p>
+                          {displayedListing.coordinates && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Lat: {displayedListing.coordinates.lat.toFixed(4)}, 
+                              Lng: {displayedListing.coordinates.lng.toFixed(4)}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -538,7 +652,7 @@ export default function MarketplaceDetailPage() {
                       <div className="flex-1">
                         <p className="font-medium line-clamp-2">{item.title}</p>
                         <p className="text-sm font-semibold mt-1">
-                          {displayedListing.currency} {item.price.toFixed(2)}
+                          {displayedListing.priceCurrency} {item.price.toFixed(2)}
                         </p>
                       </div>
                     </div>
