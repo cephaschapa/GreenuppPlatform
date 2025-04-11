@@ -1025,10 +1025,18 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createMarketplaceListing(listingData: InsertMarketplaceListing): Promise<MarketplaceListing> {
+    // Convert boolean strings from form data to actual booleans
+    const isNegotiable = listingData.isNegotiable === 'true' || listingData.isNegotiable === true;
+    const isFeatured = listingData.isFeatured === 'true' || listingData.isFeatured === true;
+    const deliveryAvailable = listingData.deliveryAvailable === 'true' || listingData.deliveryAvailable === true;
+    
     const [listing] = await db
       .insert(marketplaceListings)
       .values({
         ...listingData,
+        isNegotiable,
+        isFeatured,
+        deliveryAvailable,
         status: listingData.status || 'active',
         priceCurrency: listingData.priceCurrency || 'USD',
         views: 0,
@@ -2334,6 +2342,11 @@ export class MemStorage implements IStorage {
     const id = this.listingId++;
     const now = new Date();
     
+    // Convert boolean strings from form data to actual booleans
+    const isNegotiable = listingData.isNegotiable === 'true' || listingData.isNegotiable === true;
+    const isFeatured = listingData.isFeatured === 'true' || listingData.isFeatured === true;
+    const deliveryAvailable = listingData.deliveryAvailable === 'true' || listingData.deliveryAvailable === true;
+    
     const listing: MarketplaceListing = {
       ...listingData,
       id,
@@ -2345,11 +2358,13 @@ export class MemStorage implements IStorage {
       locationId: listingData.locationId || null,
       favoriteCount: 0,
       contactPhone: listingData.contactPhone || null,
-      availableFrom: listingData.availableFrom || now,
-      availableUntil: listingData.availableUntil || null,
       deliveryRadius: listingData.deliveryRadius || null,
       deliveryRadiusUnit: listingData.deliveryRadiusUnit || 'km',
       status: listingData.status || 'active',
+      isNegotiable,
+      isFeatured,
+      deliveryAvailable,
+      expiresAt: listingData.expiresAt || null,
       images: listingData.images || [],
       views: 0,
       featured: listingData.featured || false,

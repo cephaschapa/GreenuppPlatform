@@ -366,11 +366,12 @@ export const marketplaceListings = pgTable("marketplace_listings", {
   condition: text("condition"), // new, used, etc.
   locationId: integer("location_id").references(() => locations.id),
   contactPhone: text("contact_phone"),
-  // Note: contactEmail was removed because it doesn't exist in the database
-  // Use contactPhone or user email instead
-  availableFrom: timestamp("available_from").defaultNow(),
-  availableUntil: timestamp("available_until"),
+  // Note: We're removing availableFrom and availableUntil because they don't exist in the database
+  // Using expires_at and delivery_available instead
   deliveryAvailable: boolean("delivery_available").default(false),
+  isNegotiable: boolean("is_negotiable").default(false),
+  isFeatured: boolean("is_featured").default(false),
+  expiresAt: timestamp("expires_at"),
   deliveryRadius: decimal("delivery_radius", { precision: 10, scale: 2 }),
   deliveryRadiusUnit: text("delivery_radius_unit").default('km'),
   status: text("status").notNull().default('active'),
