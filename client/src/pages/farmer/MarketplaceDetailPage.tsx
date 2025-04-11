@@ -84,7 +84,7 @@ function adaptListingForDisplay(listing: MarketplaceListing): ListingDisplayData
     quantity: listing.quantity?.toString() || null,
     quantityUnit: listing.quantityUnit || null,
     images: images.length > 0 ? images : ["https://placehold.co/700x500/green/white?text=No+Image"],
-    createdAt: new Date(listing.createdAt),
+    createdAt: new Date(listing.createdAt || Date.now()),
     isNegotiable: isNegotiable,
     // Seller information
     sellerId: listing.sellerId || 0,
@@ -534,7 +534,9 @@ export default function MarketplaceDetailPage() {
                               </div>
                             </div>
                             <span className="text-xs text-muted-foreground">
-                              {format(review.date, 'MMM d, yyyy')}
+                              {review.date instanceof Date && !isNaN(review.date.getTime()) 
+                                ? format(review.date, 'MMM d, yyyy')
+                                : 'Unknown date'}
                             </span>
                           </div>
                           <p className="mt-2 text-muted-foreground">{review.comment}</p>
@@ -591,7 +593,11 @@ export default function MarketplaceDetailPage() {
                 </div>
                 
                 <div className="text-sm text-muted-foreground mb-4">
-                  <p>Member since {format(displayedListing.sellerJoined, 'MMMM yyyy')}</p>
+                  <p>Member since {
+                    displayedListing.sellerJoined instanceof Date && !isNaN(displayedListing.sellerJoined.getTime())
+                    ? format(displayedListing.sellerJoined, 'MMMM yyyy')
+                    : 'Unknown date'
+                  }</p>
                 </div>
                 
                 <div className="flex flex-col gap-2">
@@ -637,12 +643,14 @@ export default function MarketplaceDetailPage() {
                       id: 2,
                       title: "Premium Maize Seeds (5kg)",
                       price: 25.99,
+                      priceCurrency: "USD",
                       image: "https://placehold.co/300x200/darkgreen/white?text=Similar+1",
                     },
                     {
                       id: 3,
                       title: "Organic Maize Seeds",
                       price: 55.00,
+                      priceCurrency: "USD",
                       image: "https://placehold.co/300x200/green/white?text=Similar+2",
                     },
                   ].map((item) => (
