@@ -63,8 +63,9 @@ function adaptListingForDisplay(listing: MarketplaceListing): ListingDisplayData
     Number(listing.isNegotiable) === 1 ||
     String(listing.isNegotiable) === '1';
     
-  // Create a placeholder location display
-  const location = listing.location || "Unknown location";
+  // Create a placeholder location display based on locationId
+  // In a real implementation, we would fetch location details from the API
+  const location = "Unknown location";
   
   // Placeholder coordinates for map display
   const coordinates = {
@@ -660,7 +661,7 @@ export default function MarketplaceDetailPage() {
                       <div className="flex-1">
                         <p className="font-medium line-clamp-2">{item.title}</p>
                         <p className="text-sm font-semibold mt-1">
-                          {displayedListing.priceCurrency} {item.price.toFixed(2)}
+                          {item.priceCurrency || displayedListing.priceCurrency} {item.price.toFixed(2)}
                         </p>
                       </div>
                     </div>
