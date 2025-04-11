@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/sheet";
 import { formatDistanceToNow } from "date-fns";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { MarketplaceListing } from "@shared/schema";
 
 // Marketplace category list
 const MARKETPLACE_CATEGORIES = [
@@ -132,7 +133,6 @@ export default function MarketplacePage() {
     error,
   } = useQuery({
     queryKey: ["/api/marketplace/listings", filters],
-    enabled: false, // Disable until we implement the API
   });
 
   // Request user's location for proximity search
@@ -187,25 +187,24 @@ export default function MarketplacePage() {
     setLocation("/dashboard/marketplace/new");
   };
 
-  // For development we'll use mock data until the API is connected
-  const displayedListings = MOCK_LISTINGS.filter((listing) => {
+  // Filter real listings from the API
+  const displayedListings = listings ? listings.filter((listing) => {
     if (filters.search && !listing.title.toLowerCase().includes(filters.search.toLowerCase())) {
       return false;
     }
     if (filters.category && filters.category !== 'all' && listing.category !== filters.category) {
       return false;
     }
-    if (listing.price < filters.minPrice || listing.price > filters.maxPrice) {
+    if (parseFloat(listing.price) < filters.minPrice || parseFloat(listing.price) > filters.maxPrice) {
       return false;
     }
-    if (listing.distance > filters.distance) {
-      return false;
-    }
+    // Distance filtering would require user location and listing coordinates
+    // Skip for now or implement with a placeholder distance
     if (filters.negotiableOnly && !listing.isNegotiable) {
       return false;
     }
     return true;
-  });
+  }) : [];
 
   return (
     <DashboardLayout title="Marketplace" description="Buy and sell agricultural products and services">
@@ -339,11 +338,17 @@ export default function MarketplacePage() {
                     onClick={() => navigateToDetail(listing.id)}
                   >
                     <div className="relative h-48 bg-muted">
-                      <img
-                        src={listing.images[0]}
-                        alt={listing.title}
-                        className="w-full h-full object-cover"
-                      />
+                      {listing.images && listing.images.length > 0 ? (
+                        <img
+                          src={listing.images[0]}
+                          alt={listing.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                          <p className="text-gray-500">No image</p>
+                        </div>
+                      )}
                       {listing.isNegotiable && (
                         <Badge className="absolute top-2 right-2 bg-yellow-500">
                           Negotiable
@@ -367,17 +372,20 @@ export default function MarketplacePage() {
                       </div>
                       <CardDescription className="flex items-center text-xs">
                         <MapPin className="h-3 w-3 mr-1 inline" />
-                        {listing.location} · {listing.distance} km away
+                        {listing.address || 'Location not specified'} 
+                        {listing.latitude && listing.longitude && (
+                          <span> · Coordinates: {listing.latitude.toFixed(2)}, {listing.longitude.toFixed(2)}</span>
+                        )}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 pt-0">
                       <div className="flex justify-between items-center mb-2">
                         <p className="font-bold text-lg">
-                          {listing.currency} {listing.price.toFixed(2)}
+                          {listing.priceCurrency || 'USD'} {parseFloat(listing.price).toFixed(2)}
+                          {listing.priceUnit && <span className="text-sm font-normal">/{listing.priceUnit}</span>}
                         </p>
                         <div className="flex items-center">
-                          <Star className="h-3 w-3 text-yellow-500 mr-1" />
-                          <span className="text-xs">{listing.rating}</span>
+                          <span className="text-xs">{listing.views || 0} views</span>
                         </div>
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2">
@@ -385,8 +393,8 @@ export default function MarketplacePage() {
                       </p>
                     </CardContent>
                     <CardFooter className="p-4 pt-0 flex justify-between text-xs text-muted-foreground">
-                      <span>{formatDistanceToNow(listing.createdAt, { addSuffix: true })}</span>
-                      <span>{listing.sellerName}</span>
+                      <span>{formatDistanceToNow(new Date(listing.createdAt), { addSuffix: true })}</span>
+                      <span>{listing.status}</span>
                     </CardFooter>
                   </Card>
                 ))
