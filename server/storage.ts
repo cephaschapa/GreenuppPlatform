@@ -484,12 +484,17 @@ export class DatabaseStorage implements IStorage {
 
   // Weather preferences methods
   async getWeatherPreferences(userId: number): Promise<WeatherPreferences | undefined> {
-    const [prefs] = await db
-      .select()
-      .from(weatherPreferences)
-      .where(eq(weatherPreferences.userId, userId));
-    
-    return prefs;
+    try {
+      const [prefs] = await db
+        .select()
+        .from(weatherPreferences)
+        .where(eq(weatherPreferences.userId, userId));
+      
+      return prefs;
+    } catch (error) {
+      console.error("Error getting weather preferences:", error);
+      return undefined;
+    }
   }
 
   async createWeatherPreferences(data: InsertWeatherPreferences & { userId: number }): Promise<WeatherPreferences> {
