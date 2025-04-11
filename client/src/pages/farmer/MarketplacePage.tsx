@@ -63,9 +63,9 @@ export default function MarketplacePage() {
   const [, setLocation] = useLocation();
   const [filters, setFilters] = useState<FilterState>({
     search: "",
-    category: "",
+    category: "all", // Set to "all" for initial display of all items
     minPrice: 0,
-    maxPrice: 1000,
+    maxPrice: 1000000, // Very high max price to show all items initially
     distance: 50,
     negotiableOnly: false,
   });
@@ -336,10 +336,10 @@ export default function MarketplacePage() {
                       <h3 className="text-sm font-medium">Price Range (USD)</h3>
                       <div className="flex justify-between text-xs text-muted-foreground mb-2">
                         <span>${filters.minPrice}</span>
-                        <span>${filters.maxPrice}</span>
+                        <span>{filters.maxPrice >= 1000000 ? "Any" : `$${filters.maxPrice}`}</span>
                       </div>
                       <Slider
-                        defaultValue={[filters.minPrice, filters.maxPrice]}
+                        defaultValue={[0, 1000]}
                         max={1000}
                         step={10}
                         onValueChange={handlePriceChange}
