@@ -372,8 +372,7 @@ export const marketplaceListings = pgTable("marketplace_listings", {
   isNegotiable: boolean("is_negotiable").default(false),
   isFeatured: boolean("is_featured").default(false),
   expiresAt: timestamp("expires_at"),
-  deliveryRadius: decimal("delivery_radius", { precision: 10, scale: 2 }),
-  deliveryRadiusUnit: text("delivery_radius_unit").default('km'),
+  // Removing deliveryRadius and deliveryRadiusUnit as they don't exist in the database
   status: text("status").notNull().default('active'),
   images: text("images").array(), // Array of image URLs or Base64
   views: integer("views").notNull().default(0),
