@@ -59,9 +59,9 @@ function adaptListingForDisplay(listing: MarketplaceListing): ListingDisplayData
     
   // Ensure isNegotiable is a boolean
   const isNegotiable = listing.isNegotiable === true || 
-    listing.isNegotiable === 'true' || 
-    listing.isNegotiable === 1 || 
-    listing.isNegotiable === '1';
+    String(listing.isNegotiable).toLowerCase() === 'true' ||
+    Number(listing.isNegotiable) === 1 ||
+    String(listing.isNegotiable) === '1';
     
   // Create a placeholder location display
   const location = listing.location || "Unknown location";
@@ -147,7 +147,7 @@ const MOCK_LISTING = {
   category: "seeds",
   subcategory: "Maize",
   price: 45.99,
-  currency: "USD",
+  priceCurrency: "USD",
   quantity: "10",
   quantityUnit: "kg",
   location: "Nairobi, Kenya",
@@ -287,7 +287,15 @@ export default function MarketplaceDetailPage() {
   
   const handleCallSeller = () => {
     // In a real implementation, this would use tel: protocol to make a call
-    window.location.href = `tel:${displayedListing.contactPhone}`;
+    if (displayedListing && displayedListing.contactPhone) {
+      window.location.href = `tel:${displayedListing.contactPhone}`;
+    } else {
+      toast({
+        title: "Contact information unavailable",
+        description: "This seller doesn't have contact information available",
+        variant: "destructive",
+      });
+    }
   };
   
   if (isLoading) {
