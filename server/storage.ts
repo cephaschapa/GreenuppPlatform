@@ -1032,7 +1032,7 @@ export class DatabaseStorage implements IStorage {
         status: listingData.status || 'active',
         priceCurrency: listingData.priceCurrency || 'USD',
         views: 0,
-        favoriteCount: 0,
+        favoriteCount: 0, // Initialize favorite count to zero
       })
       .returning();
     return listing;
@@ -2343,8 +2343,8 @@ export class MemStorage implements IStorage {
       quantityUnit: listingData.quantityUnit || null,
       condition: listingData.condition || null,
       locationId: listingData.locationId || null,
+      favoriteCount: 0,
       contactPhone: listingData.contactPhone || null,
-      contactEmail: listingData.contactEmail || null,
       availableFrom: listingData.availableFrom || now,
       availableUntil: listingData.availableUntil || null,
       deliveryRadius: listingData.deliveryRadius || null,

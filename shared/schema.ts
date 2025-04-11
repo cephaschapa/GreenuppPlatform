@@ -376,6 +376,7 @@ export const marketplaceListings = pgTable("marketplace_listings", {
   status: text("status").notNull().default('active'),
   images: text("images").array(), // Array of image URLs or Base64
   views: integer("views").notNull().default(0),
+  favoriteCount: integer("favorite_count").notNull().default(0),
   featured: boolean("featured").default(false),
   verified: boolean("verified").default(false),
   tags: text("tags").array(),
@@ -426,6 +427,7 @@ export const insertMarketplaceListingSchema = createInsertSchema(marketplaceList
   createdAt: true,
   updatedAt: true,
   views: true,
+  favoriteCount: true,
 });
 
 export const insertMarketplaceReviewSchema = createInsertSchema(marketplaceReviews).omit({
