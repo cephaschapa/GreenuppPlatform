@@ -38,6 +38,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up authentication 
   setupAuth(app);
+  
+  // Set up marketplace routes
+  setupMarketplaceRoutes(app);
 
   // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();
@@ -69,49 +72,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
   }
 
-  // DEBUG PATH PREFIX: Catch all marketplace routes to debug
-  app.use('/api/marketplace*', (req, res, next) => {
-    console.log(`DEBUG [${req.method}]: Marketplace route hit: ${req.originalUrl}`);
-    console.log('  Path:', req.path);
-    console.log('  Auth:', req.isAuthenticated() ? `User ${req.user?.id}` : 'Not authenticated');
-    
-    // Store the original path in case we need to debug later
-    req.originalMarketplacePath = req.path;
-    
-    // Continue to the actual route handler
-    next();
-  });
-  
-  // IMPORTANT: We'll move this catch-all to the end of the file after all routes
-  // are defined to prevent it from catching legitimate requests
-  
-  // TEST MARKETPLACE ENDPOINT - CRITICAL DEBUG ROUTE
-  app.post("/api/test-marketplace", isAuthenticated, async (req, res) => {
-    console.log("TEST MARKETPLACE endpoint hit");
-    res.status(200).json({ success: true, message: "Test marketplace endpoint working" });
-  });
-  
-  // DIRECT TEST for marketplace listings endpoint
-  app.post("/api/marketplace-listings-test", isAuthenticated, async (req, res) => {
-    console.log("DIRECT TEST marketplace listings endpoint hit");
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      console.log("User authenticated in test:", req.user.id);
-      console.log("Request body:", req.body);
-      
-      res.status(200).json({ 
-        success: true, 
-        message: "Test marketplace listings endpoint working",
-        user: req.user.id
-      });
-    } catch (error) {
-      console.error("Error in test endpoint:", error);
-      res.status(500).json({ message: "Test endpoint error" });
-    }
-  });
+  // Test endpoints moved to marketplace.ts
   
   // Contact form submission endpoint
   app.post("/api/contact", async (req, res) => {
@@ -2718,17 +2679,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("❌ WARNING: Marketplace listings routes not found in registered routes!");
   }
   
-  // Debug catch-all for marketplace routes that fall through - PLACED AT THE END
-  // This ensures it won't catch valid marketplace routes that are defined above
-  app.use('/api/marketplace*', (req, res) => {
-    console.log(`FALLTHROUGH: No handler found for ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ 
-      message: "API endpoint not found",
-      requestedPath: req.originalUrl,
-      method: req.method,
-      auth: req.isAuthenticated() ? 'Authenticated' : 'Not authenticated'
-    });
-  });
+  // Marketplace routes are now handled by the dedicated module
 
   // Create and return the HTTP server
   const httpServer = createServer(app);
