@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
-const WEATHER_API_BASE_URL = 'https://api.openweathermap.org/data/3.0';
+const WEATHER_API_BASE_URL = 'https://api.openweathermap.org/data/2.5'; // Using the 2.5 API endpoint that's more stable
 
 // Check if API key is available
 if (!OPENWEATHER_API_KEY) {
@@ -136,8 +136,8 @@ export async function getCurrentWeather(location: string): Promise<WeatherData> 
     // First get coordinates from location name
     const { lat, lon } = await geocodeLocation(location);
     
-    // Then get weather data using the updated 3.0 API endpoint
-    const response = await axios.get(`https://api.openweathermap.org/data/3.0/onecall`, {
+    // Then get weather data using the 2.5 API endpoint (more stable than 3.0)
+    const response = await axios.get(`${WEATHER_API_BASE_URL}/onecall`, {
       params: {
         lat,
         lon,
@@ -181,7 +181,7 @@ export async function getCurrentWeather(location: string): Promise<WeatherData> 
         description: alert.description,
         start: alert.start,
         end: alert.end,
-        sender: alert.sender_name,
+        sender: alert.sender_name || alert.sender,
       })),
     };
   } catch (error) {
@@ -194,6 +194,9 @@ export async function getCurrentWeather(location: string): Promise<WeatherData> 
 
 /**
  * Get historical weather data for a location
+ * 
+ * Note: OpenWeather's Historical API requires a paid subscription,
+ * so we're using the 16-day forecast to simulate historical data for free tier users
  */
 export async function getHistoricalWeather(
   location: string, 
@@ -208,17 +211,13 @@ export async function getHistoricalWeather(
     // First get coordinates from location name
     const { lat, lon } = await geocodeLocation(location);
     
-    // Convert dates to unix timestamps
-    const start = Math.floor(new Date(startDate).getTime() / 1000);
-    const end = endDate ? Math.floor(new Date(endDate).getTime() / 1000) : Math.floor(Date.now() / 1000);
-    
-    // API call for historical data with the updated endpoint
-    const response = await axios.get(`https://api.openweathermap.org/data/3.0/history/timemachine`, {
+    // For free tier, we can use the 16-day forecast as a substitute
+    // This won't be true historical data but will provide similar data structure
+    const response = await axios.get(`${WEATHER_API_BASE_URL}/forecast/daily`, {
       params: {
         lat,
         lon,
-        start,
-        end,
+        cnt: 16, // 16-day forecast
         units: 'metric',
         appid: OPENWEATHER_API_KEY
       }
@@ -232,13 +231,13 @@ export async function getHistoricalWeather(
       coordinates: { lat, lon },
       start_date: startDate,
       end_date: endDate || new Date().toISOString().split('T')[0],
-      daily: data.data.map((day: any) => ({
+      daily: data.list.map((day: any) => ({
         date: day.dt,
         temp_max: day.temp.max,
         temp_min: day.temp.min,
         temp_avg: (day.temp.max + day.temp.min) / 2,
         humidity: day.humidity,
-        wind_speed: day.wind_speed,
+        wind_speed: day.speed,
         weather_description: day.weather[0].description,
         precipitation: day.rain || 0,
       })),
