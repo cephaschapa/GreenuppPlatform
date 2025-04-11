@@ -4,6 +4,7 @@ import { fromZodError } from "zod-validation-error";
 import { storage } from "../../storage";
 import { insertWeatherPreferencesSchema } from "@shared/schema";
 import * as weatherService from "../../services/weather";
+import { createDefaultWeatherPreferencesIfNeeded } from "./defaultPrefs";
 
 /**
  * Register all weather-related routes
@@ -24,7 +25,20 @@ export function registerWeatherRoutes(app: Express, isAuthenticated: (req: Reque
       let locationToUse = location as string | undefined;
       
       if (!locationToUse) {
-        const preferences = await storage.getWeatherPreferences(req.user.id);
+        // Try to get existing preferences
+        let preferences = await storage.getWeatherPreferences(req.user.id);
+        
+        // If preferences don't exist, create default ones
+        if (!preferences) {
+          try {
+            preferences = await createDefaultWeatherPreferencesIfNeeded(req.user.id);
+            console.log(`Created default weather preferences for user ${req.user.id}`);
+          } catch (error) {
+            console.error("Error creating default weather preferences:", error);
+          }
+        }
+        
+        // Check if we have preferences with locations
         if (preferences && preferences.locations && preferences.locations.length > 0) {
           locationToUse = preferences.locations[0];
         } else {
@@ -47,7 +61,28 @@ export function registerWeatherRoutes(app: Express, isAuthenticated: (req: Reque
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      const { location, start, end } = req.query;
+      let { location, start, end } = req.query;
+      
+      // If location is not provided, try to get from preferences
+      if (!location) {
+        // Try to get existing preferences
+        let preferences = await storage.getWeatherPreferences(req.user.id);
+        
+        // If preferences don't exist, create default ones
+        if (!preferences) {
+          try {
+            preferences = await createDefaultWeatherPreferencesIfNeeded(req.user.id);
+            console.log(`Created default weather preferences for user ${req.user.id} on historical request`);
+          } catch (error) {
+            console.error("Error creating default weather preferences:", error);
+          }
+        }
+        
+        // Check if we have preferences with locations
+        if (preferences && preferences.locations && preferences.locations.length > 0) {
+          location = preferences.locations[0];
+        }
+      }
       
       if (!location || !start) {
         return res.status(400).json({ message: "Location and start date are required" });
@@ -73,7 +108,28 @@ export function registerWeatherRoutes(app: Express, isAuthenticated: (req: Reque
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      const { location } = req.query;
+      let { location } = req.query;
+      
+      // If location is not provided, try to get from preferences
+      if (!location) {
+        // Try to get existing preferences
+        let preferences = await storage.getWeatherPreferences(req.user.id);
+        
+        // If preferences don't exist, create default ones
+        if (!preferences) {
+          try {
+            preferences = await createDefaultWeatherPreferencesIfNeeded(req.user.id);
+            console.log(`Created default weather preferences for user ${req.user.id} on climate request`);
+          } catch (error) {
+            console.error("Error creating default weather preferences:", error);
+          }
+        }
+        
+        // Check if we have preferences with locations
+        if (preferences && preferences.locations && preferences.locations.length > 0) {
+          location = preferences.locations[0];
+        }
+      }
       
       if (!location) {
         return res.status(400).json({ message: "Location is required" });
@@ -97,10 +153,18 @@ export function registerWeatherRoutes(app: Express, isAuthenticated: (req: Reque
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      const preferences = await storage.getWeatherPreferences(req.user.id);
+      // Try to get existing preferences
+      let preferences = await storage.getWeatherPreferences(req.user.id);
       
+      // If preferences don't exist, create default ones
       if (!preferences) {
-        return res.status(404).json({ message: "Weather preferences not found" });
+        try {
+          preferences = await createDefaultWeatherPreferencesIfNeeded(req.user.id);
+          console.log(`Created default weather preferences for user ${req.user.id} on preferences request`);
+        } catch (error) {
+          console.error("Error creating default weather preferences:", error);
+          return res.status(500).json({ message: "Failed to create default weather preferences" });
+        }
       }
       
       res.json(preferences);
