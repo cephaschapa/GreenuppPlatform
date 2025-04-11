@@ -29,7 +29,7 @@ export function registerPlantAnalysisRoutes(app: Express, isAuthenticated: (req:
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      const analyses = await storage.getPlantAnalysesByUser(req.user.id);
+      const analyses = await storage.getPlantAnalyses(req.user.id);
       res.json(analyses);
     } catch (error) {
       console.error("Error fetching plant analyses:", error);

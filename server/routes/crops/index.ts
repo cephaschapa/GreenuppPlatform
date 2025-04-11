@@ -21,7 +21,7 @@ export function registerCropRoutes(app: Express, isAuthenticated: (req: Request,
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      const crops = await storage.getCropsByUser(req.user.id);
+      const crops = await storage.getCrops(req.user.id);
       res.json(crops);
     } catch (error) {
       console.error("Error fetching crops:", error);

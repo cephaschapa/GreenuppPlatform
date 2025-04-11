@@ -16,7 +16,7 @@ export function registerFieldRoutes(app: Express, isAuthenticated: (req: Request
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      const fields = await storage.getFieldsByUser(req.user.id);
+      const fields = await storage.getFields(req.user.id);
       res.json(fields);
     } catch (error) {
       console.error("Error fetching fields:", error);
