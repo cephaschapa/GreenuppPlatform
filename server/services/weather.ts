@@ -150,13 +150,7 @@ export async function getCurrentWeather(location: string): Promise<WeatherData> 
     // Process and transform the data
     const data = response.data;
     
-    // If API call was successful but we're in demo mode (no API key),
-    // return mock data
-    if (!data || !data.current) {
-      return getMockWeatherData(location, lat, lon);
-    }
-    
-    const weatherData: WeatherData = {
+    return {
       location,
       coordinates: { lat, lon },
       current: {
@@ -170,9 +164,9 @@ export async function getCurrentWeather(location: string): Promise<WeatherData> 
         uv_index: data.current.uvi,
         visibility: data.current.visibility,
         pressure: data.current.pressure,
-        timestamp: data.current.dt
+        timestamp: data.current.dt,
       },
-      forecast: data.daily.map((day: any) => ({
+      forecast: data.daily.slice(1, 8).map((day: any) => ({
         date: day.dt,
         temp_max: day.temp.max,
         temp_min: day.temp.min,
@@ -180,28 +174,21 @@ export async function getCurrentWeather(location: string): Promise<WeatherData> 
         weather_description: day.weather[0].description,
         weather_icon: day.weather[0].icon,
         precipitation_probability: day.pop,
-        wind_speed: day.wind_speed
-      }))
-    };
-    
-    // Add weather alerts if available
-    if (data.alerts) {
-      weatherData.alerts = data.alerts.map((alert: any) => ({
+        wind_speed: day.wind_speed,
+      })),
+      alerts: data.alerts?.map((alert: any) => ({
         event: alert.event,
         description: alert.description,
         start: alert.start,
         end: alert.end,
-        sender: alert.sender_name
-      }));
-    }
-    
-    return weatherData;
+        sender: alert.sender_name,
+      })),
+    };
   } catch (error) {
     console.error('Error fetching weather data:', error);
     
-    // Return mock data in case of error or missing API key
-    const { lat, lon } = await geocodeLocation(location);
-    return getMockWeatherData(location, lat, lon);
+    // Return mock data for demo/testing
+    return getMockWeatherData(location);
   }
 }
 
@@ -210,53 +197,57 @@ export async function getCurrentWeather(location: string): Promise<WeatherData> 
  */
 export async function getHistoricalWeather(
   location: string, 
-  start: string, 
-  end?: string
+  startDate: string, 
+  endDate?: string
 ): Promise<HistoricalWeatherData> {
   try {
     if (!OPENWEATHER_API_KEY) {
       throw new Error('OpenWeather API key is not set');
     }
     
-    // Get coordinates from location name
+    // First get coordinates from location name
     const { lat, lon } = await geocodeLocation(location);
     
-    // Parse start date
-    const startDate = new Date(start);
-    // Set end date to start date + 7 days if not provided, or parse provided end date
-    const endDate = end ? new Date(end) : new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    // Convert dates to unix timestamps
+    const start = Math.floor(new Date(startDate).getTime() / 1000);
+    const end = endDate ? Math.floor(new Date(endDate).getTime() / 1000) : Math.floor(Date.now() / 1000);
     
-    // Format dates for API calls
-    const startUnix = Math.floor(startDate.getTime() / 1000);
-    const endUnix = Math.floor(endDate.getTime() / 1000);
+    // API call for historical data
+    const response = await axios.get(`${WEATHER_API_BASE_URL}/history/timemachine`, {
+      params: {
+        lat,
+        lon,
+        start,
+        end,
+        units: 'metric',
+        appid: OPENWEATHER_API_KEY
+      }
+    });
     
-    // Make API call to get historical data
-    // Note: OpenWeather's free tier doesn't have proper historical API
-    // This would use a different endpoint in a production environment
+    // Process the data
+    const data = response.data;
     
-    // For now, return mock historical data
-    return getMockHistoricalWeatherData(
-      location, 
-      lat, 
-      lon, 
-      startDate.toISOString().split('T')[0], 
-      endDate.toISOString().split('T')[0]
-    );
+    return {
+      location,
+      coordinates: { lat, lon },
+      start_date: startDate,
+      end_date: endDate || new Date().toISOString().split('T')[0],
+      daily: data.data.map((day: any) => ({
+        date: day.dt,
+        temp_max: day.temp.max,
+        temp_min: day.temp.min,
+        temp_avg: (day.temp.max + day.temp.min) / 2,
+        humidity: day.humidity,
+        wind_speed: day.wind_speed,
+        weather_description: day.weather[0].description,
+        precipitation: day.rain || 0,
+      })),
+    };
   } catch (error) {
     console.error('Error fetching historical weather data:', error);
     
-    // Return mock data in case of error
-    const { lat, lon } = await geocodeLocation(location);
-    const startDate = new Date(start);
-    const endDate = end ? new Date(end) : new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-    
-    return getMockHistoricalWeatherData(
-      location, 
-      lat, 
-      lon, 
-      startDate.toISOString().split('T')[0], 
-      endDate.toISOString().split('T')[0]
-    );
+    // Return mock data for demo/testing
+    return getMockHistoricalData(location, startDate, endDate);
   }
 }
 
@@ -272,96 +263,101 @@ export async function getClimateData(location: string): Promise<ClimateData> {
     // Get coordinates from location name
     const { lat, lon } = await geocodeLocation(location);
     
-    // In a real implementation, this would call a climate data API
-    // For now, return mock climate data
+    // This is a placeholder for a climate data API call
+    // OpenWeather doesn't directly provide climate data in its API
+    // We'd need a different service for this actual data
+    
     return getMockClimateData(location, lat, lon);
   } catch (error) {
     console.error('Error fetching climate data:', error);
     
-    // Return mock data in case of error
-    const { lat, lon } = await geocodeLocation(location);
-    return getMockClimateData(location, lat, lon);
+    // Return mock data
+    return getMockClimateData(location, 0, 0);
   }
 }
 
-// Mock data generators for testing and development
+// Mock data generators for testing and demonstration
 
-function getMockWeatherData(location: string, lat: number, lon: number): WeatherData {
-  const now = new Date();
-  const currentTimestamp = Math.floor(now.getTime() / 1000);
+function getMockWeatherData(location: string): WeatherData {
+  const { lat, lon } = { lat: -15.4166, lon: 28.2833 }; // Default to Lusaka
+  
+  const forecast = [];
+  const currentDate = new Date();
+  
+  for (let i = 1; i <= 7; i++) {
+    const forecastDate = new Date();
+    forecastDate.setDate(currentDate.getDate() + i);
+    
+    forecast.push({
+      date: Math.floor(forecastDate.getTime() / 1000),
+      temp_max: 22 + Math.random() * 10,
+      temp_min: 12 + Math.random() * 8,
+      humidity: 30 + Math.random() * 60,
+      weather_description: ['Sunny', 'Partly cloudy', 'Cloudy', 'Light rain', 'Thunderstorm'][Math.floor(Math.random() * 5)],
+      weather_icon: ['01d', '02d', '03d', '10d', '11d'][Math.floor(Math.random() * 5)],
+      precipitation_probability: Math.random(),
+      wind_speed: 2 + Math.random() * 8,
+    });
+  }
   
   return {
     location,
     coordinates: { lat, lon },
     current: {
-      temp: 25.2,
-      feels_like: 26.5,
-      humidity: 65,
-      wind_speed: 3.5,
-      wind_direction: 180,
+      temp: 25 + Math.random() * 10,
+      feels_like: 26 + Math.random() * 8,
+      humidity: 40 + Math.random() * 40,
+      wind_speed: 3 + Math.random() * 10,
+      wind_direction: Math.random() * 360,
       weather_description: 'Partly cloudy',
-      weather_icon: '03d',
-      uv_index: 6.2,
-      visibility: 10000,
-      pressure: 1015,
-      timestamp: currentTimestamp
+      weather_icon: '02d',
+      uv_index: 2 + Math.random() * 9,
+      visibility: 8000 + Math.random() * 2000,
+      pressure: 1010 + Math.random() * 20,
+      timestamp: Math.floor(Date.now() / 1000),
     },
-    forecast: Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(now);
-      date.setDate(date.getDate() + i);
-      return {
-        date: Math.floor(date.getTime() / 1000),
-        temp_max: 28 + Math.random() * 5 - 2,
-        temp_min: 20 + Math.random() * 3 - 1,
-        humidity: 60 + Math.floor(Math.random() * 20),
-        weather_description: ['Sunny', 'Partly cloudy', 'Cloudy', 'Light rain'][Math.floor(Math.random() * 4)],
-        weather_icon: ['01d', '02d', '03d', '10d'][Math.floor(Math.random() * 4)],
-        precipitation_probability: Math.random() * 0.6,
-        wind_speed: 2 + Math.random() * 4
-      };
-    }),
-    alerts: [
-      {
-        event: 'Heavy Rainfall Alert',
-        description: 'Heavy rainfall expected in some parts of the region. Potential for localized flooding in low-lying areas.',
-        start: currentTimestamp + 86400, // 1 day from now
-        end: currentTimestamp + 172800, // 2 days from now
-        sender: 'National Weather Service'
-      }
-    ]
+    forecast,
+    alerts: Math.random() > 0.7 ? [{
+      event: 'Heavy Rain Warning',
+      description: 'Heavy rainfall expected in the afternoon',
+      start: Math.floor(Date.now() / 1000),
+      end: Math.floor(Date.now() / 1000) + 86400,
+      sender: 'Meteorological Department',
+    }] : undefined,
   };
 }
 
-function getMockHistoricalWeatherData(
-  location: string, 
-  lat: number, 
-  lon: number, 
-  startDate: string, 
-  endDate: string
-): HistoricalWeatherData {
+function getMockHistoricalData(location: string, startDate: string, endDate?: string): HistoricalWeatherData {
+  const { lat, lon } = { lat: -15.4166, lon: 28.2833 }; // Default to Lusaka
+  
   const start = new Date(startDate);
-  const end = new Date(endDate);
-  const dayDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24));
+  const end = endDate ? new Date(endDate) : new Date();
+  const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  
+  const daily = [];
+  
+  for (let i = 0; i < days; i++) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + i);
+    
+    daily.push({
+      date: Math.floor(date.getTime() / 1000),
+      temp_max: 20 + Math.random() * 12,
+      temp_min: 10 + Math.random() * 10,
+      temp_avg: 15 + Math.random() * 10,
+      humidity: 30 + Math.random() * 60,
+      wind_speed: 2 + Math.random() * 4,
+      weather_description: ['Sunny', 'Partly cloudy', 'Cloudy', 'Light rain'][Math.floor(Math.random() * 4)],
+      precipitation: Math.random() * 10
+    });
+  }
   
   return {
     location,
     coordinates: { lat, lon },
     start_date: startDate,
-    end_date: endDate,
-    daily: Array.from({ length: dayDiff }, (_, i) => {
-      const date = new Date(start);
-      date.setDate(date.getDate() + i);
-      return {
-        date: Math.floor(date.getTime() / 1000),
-        temp_max: 28 + Math.random() * 5 - 2,
-        temp_min: 20 + Math.random() * 3 - 1,
-        temp_avg: 24 + Math.random() * 3 - 1,
-        humidity: 60 + Math.floor(Math.random() * 20),
-        wind_speed: 2 + Math.random() * 4,
-        weather_description: ['Sunny', 'Partly cloudy', 'Cloudy', 'Light rain'][Math.floor(Math.random() * 4)],
-        precipitation: Math.random() * 10
-      };
-    })
+    end_date: endDate || new Date().toISOString().split('T')[0],
+    daily
   };
 }
 
@@ -377,33 +373,52 @@ function getMockClimateData(location: string, lat: number, lon: number): Climate
   return {
     location,
     coordinates: { lat, lon },
-    monthly_averages: months.map((month, i) => {
-      // Create seasonal pattern
-      const seasonalFactor = isNorthernHemisphere
-        ? Math.sin((i - 3) * Math.PI / 6) // Peak in July
-        : Math.sin((i - 9) * Math.PI / 6); // Peak in January
+    monthly_averages: months.map((month, index) => {
+      // Create temperature pattern based on hemisphere (warmer in summer, colder in winter)
+      let tempBase = isNorthernHemisphere ? 
+        20 - 15 * Math.cos((index / 12) * 2 * Math.PI) : // Northern pattern (summer in middle of year)
+        20 - 15 * Math.cos(((index + 6) / 12) * 2 * Math.PI); // Southern pattern (winter in middle of year)
       
-      const tempAvg = 23 + seasonalFactor * 10;
+      // Add some random variation
+      tempBase += (Math.random() * 4) - 2;
+      
+      // Create precipitation pattern (rainy season)
+      let precipBase = isNorthernHemisphere ?
+        40 + 80 * Math.sin(((index + 3) / 12) * 2 * Math.PI) : // Northern pattern
+        40 + 80 * Math.sin(((index + 9) / 12) * 2 * Math.PI);  // Southern pattern
+      
+      // Ensure precipitation is positive and add some random variation
+      precipBase = Math.max(10, precipBase + (Math.random() * 20) - 10);
+      
+      // Create daylight hours pattern
+      let daylightBase = isNorthernHemisphere ?
+        12 + 4 * Math.sin(((index) / 12) * 2 * Math.PI) : // Northern pattern
+        12 + 4 * Math.sin(((index + 6) / 12) * 2 * Math.PI); // Southern pattern
       
       return {
         month,
-        temp_avg: tempAvg,
-        temp_min_avg: tempAvg - 8 + Math.random() * 2,
-        temp_max_avg: tempAvg + 8 + Math.random() * 2,
-        precipitation_avg: 50 + seasonalFactor * 70 + Math.random() * 20,
-        humidity_avg: 60 + seasonalFactor * 20,
-        daylight_hours_avg: 12 + seasonalFactor * 3
+        temp_avg: tempBase,
+        temp_min_avg: tempBase - 8 - Math.random() * 4,
+        temp_max_avg: tempBase + 8 + Math.random() * 4,
+        precipitation_avg: precipBase,
+        humidity_avg: 40 + precipBase / 3 + Math.random() * 10,
+        daylight_hours_avg: daylightBase
       };
     }),
     annual_data: {
-      temp_avg: 23,
-      precipitation_total: 1200,
-      frost_days: 0,
-      growing_season_length: 300,
-      heat_degree_days: 3500,
-      cool_degree_days: 100
+      temp_avg: 18 + Math.random() * 6,
+      precipitation_total: 600 + Math.random() * 1000,
+      frost_days: isNorthernHemisphere ? 
+        (lat > 40 ? 60 + Math.round(Math.random() * 40) : Math.round(Math.random() * 20)) : 
+        (lat < -40 ? 60 + Math.round(Math.random() * 40) : Math.round(Math.random() * 20)),
+      growing_season_length: 180 + Math.round(Math.random() * 100),
+      heat_degree_days: 1000 + Math.round(Math.random() * 2000),
+      cool_degree_days: 800 + Math.round(Math.random() * 1500)
     },
-    climate_zone: 'Tropical savanna',
-    growing_zones: ['USDA Zone 10', 'FAO Zone 3']
+    climate_zone: ['Tropical', 'Subtropical', 'Mediterranean', 'Temperate', 'Continental', 'Polar'][Math.floor(Math.random() * 6)],
+    growing_zones: [
+      `Zone ${Math.floor(Math.random() * 13)}`,
+      `Zone ${Math.floor(Math.random() * 13)}`
+    ]
   };
 }
