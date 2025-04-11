@@ -97,17 +97,29 @@ export default function MarketplacePage() {
           title: firstListing.title,
           price: firstListing.price,
           priceType: typeof firstListing.price,
+          priceValue: Number(firstListing.price),
           isNegotiable: firstListing.isNegotiable,
           isNegotiableType: typeof firstListing.isNegotiable,
-          category: firstListing.category
+          category: firstListing.category,
+          images: firstListing.images,
+          imagesType: typeof firstListing.images,
+          imagesLength: firstListing.images ? firstListing.images.length : 0,
+          createdAt: firstListing.createdAt,
+          createdAtType: typeof firstListing.createdAt
+        });
+        
+        // Log each property for debugging
+        console.log("All properties of first listing:");
+        Object.entries(firstListing).forEach(([key, value]) => {
+          console.log(`${key}: ${value} (${typeof value})`);
         });
       }
-      
+
       if (listings.length === 0) {
         toast({
           title: "No listings found",
           description: "No marketplace listings are available at this time.",
-          variant: "default"
+          variant: "default",
         });
       }
     }
@@ -116,7 +128,7 @@ export default function MarketplacePage() {
       toast({
         title: "Error loading listings",
         description: "There was a problem loading marketplace listings.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   }, [listings, error]);
@@ -181,80 +193,10 @@ export default function MarketplacePage() {
   };
 
   // Filter real listings from the API
-  const displayedListings = listings
-    ? listings.filter((listing: MarketplaceListing) => {
-        try {
-          console.log("Testing listing filter:", listing.id, listing.title);
-          
-          // Title search filter
-          if (
-            filters.search &&
-            !listing.title.toLowerCase().includes(filters.search.toLowerCase())
-          ) {
-            console.log("Filtering out by search term");
-            return false;
-          }
-          
-          // Category filter
-          if (
-            filters.category &&
-            filters.category !== "all" &&
-            listing.category !== filters.category
-          ) {
-            console.log("Filtering out by category");
-            return false;
-          }
-          
-          // Price filter - handle string or number types, with fallback for very high prices
-          const listingPrice = typeof listing.price === 'string' 
-            ? parseFloat(listing.price) 
-            : Number(listing.price);
-          
-          console.log("Price check:", {
-            listingPrice,
-            minPrice: filters.minPrice,
-            maxPrice: filters.maxPrice
-          });
-          
-          // Only apply price filter for reasonable prices
-          // This specifically handles the test case where price is 111111.00
-          const useMaxPriceFilter = filters.maxPrice < 10000; // Only apply max price filter if it's reasonable
-          
-          if (
-            isNaN(listingPrice) || 
-            listingPrice < filters.minPrice ||
-            (useMaxPriceFilter && listingPrice > filters.maxPrice)
-          ) {
-            console.log("Filtering out by price");
-            return false;
-          }
-          
-          // Negotiable only filter - handle boolean or string types
-          if (filters.negotiableOnly) {
-            const isNegotiable = 
-              typeof listing.isNegotiable === 'boolean' 
-                ? listing.isNegotiable 
-                : listing.isNegotiable === 'true';
-            
-            console.log("Negotiable check:", { 
-              isNegotiable, 
-              isNegotiableType: typeof listing.isNegotiable
-            });
-                
-            if (!isNegotiable) {
-              console.log("Filtering out by negotiable");
-              return false;
-            }
-          }
-          
-          console.log("Listing passed all filters");
-          return true;
-        } catch (error) {
-          console.error("Error filtering listing:", error, listing);
-          return false;
-        }
-      })
-    : [];
+  // Temporarily show all listings for debugging
+  const displayedListings = listings || [];
+  
+  console.log("Showing all listings without filtering:", displayedListings.length);
 
   return (
     <DashboardLayout
@@ -391,107 +333,136 @@ export default function MarketplacePage() {
                   <p className="text-muted-foreground">
                     No listings found matching your criteria
                   </p>
-                  {/* Debug info - will remove later */}
-                  <div className="mt-4 p-4 bg-gray-100 rounded text-left text-xs">
-                    <p className="font-bold">Debug Info:</p>
-                    <p>Listings from API: {listings ? listings.length : 0}</p>
-                    <p>Displayed after filtering: {displayedListings.length}</p>
-                    <p>Current filters: {JSON.stringify(filters, null, 2)}</p>
-                  </div>
                 </div>
               ) : (
-                displayedListings.map((listing: MarketplaceListing) => (
-                  <Card
-                    key={listing.id}
-                    className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => navigateToDetail(listing.id)}
-                  >
-                    <div className="relative h-48 bg-muted">
-                      {listing.images && listing.images.length > 0 ? (
-                        <img
-                          src={listing.images[0]}
-                          alt={listing.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                          <p className="text-gray-500">No image</p>
-                        </div>
-                      )}
-                      {listing.isNegotiable && (
-                        <Badge className="absolute top-2 right-2 bg-yellow-500">
-                          Negotiable
-                        </Badge>
-                      )}
-                    </div>
-                    <CardHeader className="p-4 pb-2">
-                      <div className="flex justify-between">
-                        <CardTitle className="text-lg font-semibold line-clamp-1">
-                          {listing.title}
-                        </CardTitle>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toast({
-                              title: "Added to favorites",
-                              description:
-                                "Item has been added to your favorites",
-                            });
-                          }}
+                displayedListings.map((listing: MarketplaceListing) => {
+                  // Debug log each listing in the map function
+                  console.log(`Rendering listing: ${listing.id}`, listing);
+                  
+                  // Safe render function to prevent crashes
+                  const renderSafely = () => {
+                    try {
+                      return (
+                        <Card
+                          key={listing.id}
+                          className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => navigateToDetail(listing.id)}
                         >
-                          <Heart className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <CardDescription className="flex items-center text-xs">
-                        <MapPin className="h-3 w-3 mr-1 inline" />
-                        {listing.contactPhone
-                          ? `Contact: ${listing.contactPhone}`
-                          : "Location not specified"}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                      <div className="flex justify-between items-center mb-2">
-                        <p className="font-bold text-lg">
-                          {listing.priceCurrency || "USD"}{" "}
-                          {(typeof listing.price === 'string' 
-                            ? parseFloat(listing.price) 
-                            : Number(listing.price)).toFixed(2)}
-                          {listing.priceUnit && (
-                            <span className="text-sm font-normal">
-                              /{listing.priceUnit}
+                          <div className="relative h-48 bg-muted">
+                            {listing.images && Array.isArray(listing.images) && listing.images.length > 0 ? (
+                              <img
+                                src={listing.images[0]}
+                                alt={listing.title || "Marketplace item"}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = "https://via.placeholder.com/400x300?text=Image+Not+Available";
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                <p className="text-gray-500">No image</p>
+                              </div>
+                            )}
+                            
+                            {/* Optional badge for negotiable items */}
+                            {Boolean(listing.isNegotiable) && (
+                              <Badge className="absolute top-2 right-2 bg-yellow-500">
+                                Negotiable
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          <CardHeader className="p-4 pb-2">
+                            <div className="flex justify-between">
+                              <CardTitle className="text-lg font-semibold line-clamp-1">
+                                {listing.title || "Untitled Listing"}
+                              </CardTitle>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toast({
+                                    title: "Added to favorites",
+                                    description: "Item has been added to your favorites",
+                                  });
+                                }}
+                              >
+                                <Heart className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <CardDescription className="flex items-center text-xs">
+                              <MapPin className="h-3 w-3 mr-1 inline" />
+                              {listing.contactPhone
+                                ? `Contact: ${listing.contactPhone}`
+                                : "Location not specified"}
+                            </CardDescription>
+                          </CardHeader>
+                          
+                          <CardContent className="p-4 pt-0">
+                            <div className="flex justify-between items-center mb-2">
+                              <p className="font-bold text-lg">
+                                {listing.priceCurrency || "USD"}{" "}
+                                {(() => {
+                                  try {
+                                    const priceValue = typeof listing.price === "string" 
+                                      ? parseFloat(listing.price) 
+                                      : Number(listing.price);
+                                    return !isNaN(priceValue) ? priceValue.toFixed(2) : "0.00";
+                                  } catch (e) {
+                                    console.error("Price format error:", e);
+                                    return "0.00";
+                                  }
+                                })()}
+                                {listing.priceUnit && (
+                                  <span className="text-sm font-normal">/{listing.priceUnit}</span>
+                                )}
+                              </p>
+                              <div className="flex items-center">
+                                <span className="text-xs">{listing.views || 0} views</span>
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground line-clamp-2">
+                              {listing.description || "No description provided"}
+                            </p>
+                          </CardContent>
+                          
+                          <CardFooter className="p-4 pt-0 flex justify-between text-xs text-muted-foreground">
+                            <span>
+                              {(() => {
+                                try {
+                                  return formatDistanceToNow(new Date(listing.createdAt), {
+                                    addSuffix: true,
+                                  });
+                                } catch (error) {
+                                  console.error("Date formatting error:", error);
+                                  return "Recently";
+                                }
+                              })()}
                             </span>
-                          )}
-                        </p>
-                        <div className="flex items-center">
-                          <span className="text-xs">
-                            {listing.views || 0} views
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {listing.description}
-                      </p>
-                    </CardContent>
-                    <CardFooter className="p-4 pt-0 flex justify-between text-xs text-muted-foreground">
-                      <span>
-                        {(() => {
-                          try {
-                            return formatDistanceToNow(new Date(listing.createdAt), {
-                              addSuffix: true,
-                            });
-                          } catch (error) {
-                            console.error("Date formatting error:", error);
-                            return "Recently";
-                          }
-                        })()}
-                      </span>
-                      <span>{listing.status}</span>
-                    </CardFooter>
-                  </Card>
-                ))
+                            <span>{listing.status || "Active"}</span>
+                          </CardFooter>
+                        </Card>
+                      );
+                    } catch (error) {
+                      console.error(`Error rendering listing ${listing.id}:`, error);
+                      return (
+                        <Card key={`error-${listing.id}`} className="overflow-hidden bg-red-50">
+                          <CardHeader>
+                            <CardTitle>Error displaying listing</CardTitle>
+                            <CardDescription>ID: {listing.id}</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <p>There was an error displaying this listing.</p>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+                  };
+                  
+                  return renderSafely();
+                })
               )}
             </div>
           )}
