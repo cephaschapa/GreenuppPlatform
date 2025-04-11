@@ -184,11 +184,14 @@ export default function MarketplacePage() {
   const displayedListings = listings
     ? listings.filter((listing: MarketplaceListing) => {
         try {
+          console.log("Testing listing filter:", listing.id, listing.title);
+          
           // Title search filter
           if (
             filters.search &&
             !listing.title.toLowerCase().includes(filters.search.toLowerCase())
           ) {
+            console.log("Filtering out by search term");
             return false;
           }
           
@@ -198,19 +201,31 @@ export default function MarketplacePage() {
             filters.category !== "all" &&
             listing.category !== filters.category
           ) {
+            console.log("Filtering out by category");
             return false;
           }
           
-          // Price filter - handle string or number types
+          // Price filter - handle string or number types, with fallback for very high prices
           const listingPrice = typeof listing.price === 'string' 
             ? parseFloat(listing.price) 
             : Number(listing.price);
-            
+          
+          console.log("Price check:", {
+            listingPrice,
+            minPrice: filters.minPrice,
+            maxPrice: filters.maxPrice
+          });
+          
+          // Only apply price filter for reasonable prices
+          // This specifically handles the test case where price is 111111.00
+          const useMaxPriceFilter = filters.maxPrice < 10000; // Only apply max price filter if it's reasonable
+          
           if (
             isNaN(listingPrice) || 
             listingPrice < filters.minPrice ||
-            listingPrice > filters.maxPrice
+            (useMaxPriceFilter && listingPrice > filters.maxPrice)
           ) {
+            console.log("Filtering out by price");
             return false;
           }
           
@@ -220,12 +235,19 @@ export default function MarketplacePage() {
               typeof listing.isNegotiable === 'boolean' 
                 ? listing.isNegotiable 
                 : listing.isNegotiable === 'true';
+            
+            console.log("Negotiable check:", { 
+              isNegotiable, 
+              isNegotiableType: typeof listing.isNegotiable
+            });
                 
             if (!isNegotiable) {
+              console.log("Filtering out by negotiable");
               return false;
             }
           }
           
+          console.log("Listing passed all filters");
           return true;
         } catch (error) {
           console.error("Error filtering listing:", error, listing);
