@@ -16,7 +16,7 @@ export function registerTaskRoutes(app: Express, isAuthenticated: (req: Request,
         return res.status(401).json({ message: "Not authenticated" });
       }
       
-      const tasks = await storage.getTasksByUser(req.user.id);
+      const tasks = await storage.getTasks(req.user.id);
       res.json(tasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
