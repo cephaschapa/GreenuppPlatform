@@ -102,7 +102,7 @@ async function geocodeLocation(location: string): Promise<{ lat: number; lon: nu
       throw new Error('OpenWeather API key is not set');
     }
     
-    const response = await axios.get(`http://api.openweathermap.org/geo/1.0/direct`, {
+    const response = await axios.get(`https://api.openweathermap.org/geo/1.0/direct`, {
       params: {
         q: location,
         limit: 1,
@@ -136,8 +136,8 @@ export async function getCurrentWeather(location: string): Promise<WeatherData> 
     // First get coordinates from location name
     const { lat, lon } = await geocodeLocation(location);
     
-    // Then get weather data
-    const response = await axios.get(`${WEATHER_API_BASE_URL}/onecall`, {
+    // Then get weather data using the updated 3.0 API endpoint
+    const response = await axios.get(`https://api.openweathermap.org/data/3.0/onecall`, {
       params: {
         lat,
         lon,
@@ -212,8 +212,8 @@ export async function getHistoricalWeather(
     const start = Math.floor(new Date(startDate).getTime() / 1000);
     const end = endDate ? Math.floor(new Date(endDate).getTime() / 1000) : Math.floor(Date.now() / 1000);
     
-    // API call for historical data
-    const response = await axios.get(`${WEATHER_API_BASE_URL}/history/timemachine`, {
+    // API call for historical data with the updated endpoint
+    const response = await axios.get(`https://api.openweathermap.org/data/3.0/history/timemachine`, {
       params: {
         lat,
         lon,
