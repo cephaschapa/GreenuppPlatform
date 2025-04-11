@@ -1,6 +1,16 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+
+// Custom TypeScript declaration extensions
+declare global {
+  namespace Express {
+    interface Request {
+      originalMarketplacePath?: string;
+    }
+  }
+}
+
 import { 
   contactFormSchema, 
   insertFarmerProfileSchema, 
@@ -72,9 +82,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`DEBUG [${req.method}]: Marketplace route hit: ${req.originalUrl}`);
     console.log('  Path:', req.path);
     console.log('  Auth:', req.isAuthenticated() ? `User ${req.user?.id}` : 'Not authenticated');
+    
+    // Store the original path in case we need to debug later
+    req.originalMarketplacePath = req.path;
+    
     // Continue to the actual route handler
     next();
   });
+  
+  // IMPORTANT: We'll move this catch-all to the end of the file after all routes
+  // are defined to prevent it from catching legitimate requests
   
   // TEST MARKETPLACE ENDPOINT - CRITICAL DEBUG ROUTE
   app.post("/api/test-marketplace", isAuthenticated, async (req, res) => {
@@ -2120,11 +2137,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Process files if any
       let images: string[] = [];
-      const files = req.files as Express.Multer.File[];
+      // Handle multer.fields() format
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
       
-      if (files && files.length > 0) {
+      if (files && files.images && files.images.length > 0) {
         // Convert Buffer to base64 string for storage
-        images = files.map(file => {
+        images = files.images.map(file => {
           const base64 = file.buffer.toString('base64');
           return `data:${file.mimetype};base64,${base64}`;
         });
@@ -2707,7 +2725,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("❌ WARNING: Marketplace listings routes not found in registered routes!");
   }
   
-  const httpServer = createServer(app);
+  // Debug catch-all for marketplace routes that fall through - PLACED AT THE END
+  // This ensures it won't catch valid marketplace routes that are defined above
+  app.use('/api/marketplace*', (req, res) => {
+    console.log(`FALLTHROUGH: No handler found for ${req.method} ${req.originalUrl}`);
+    res.status(404).json({ 
+      message: "API endpoint not found",
+      requestedPath: req.originalUrl,
+      method: req.method,
+      auth: req.isAuthenticated() ? 'Authenticated' : 'Not authenticated'
+    });
+  });
 
+  // Create and return the HTTP server
+  const httpServer = createServer(app);
+  
   return httpServer;
 }
