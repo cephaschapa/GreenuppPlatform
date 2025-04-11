@@ -202,7 +202,7 @@ export default function CreateListingPage() {
   const createListingMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       console.log("Creating listing with form data");
-      console.log("API endpoint:", "/api/marketplace-listings-test");
+      console.log("API endpoint:", "/api/marketplace/listings");
       
       // Log form data entries in a safer way
       const entries: string[] = [];
@@ -216,9 +216,9 @@ export default function CreateListingPage() {
       console.log("Form data entries:", entries.join(", "));
       
       try {
-        // TEMPORARY: Use test endpoint instead to diagnose the routing issue
-        console.log("USING TEST ENDPOINT FOR DEBUGGING");
-        const response = await apiRequest("POST", "/api/marketplace-listings-test", formData, {
+        // Back to using real endpoint with debug middleware active
+        console.log("USING REAL ENDPOINT WITH DEBUG MIDDLEWARE");
+        const response = await apiRequest("POST", "/api/marketplace/listings", formData, {
           isFormData: true
         });
         return await response.json();

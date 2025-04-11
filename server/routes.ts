@@ -64,6 +64,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
   }
 
+  // DEBUG PATH PREFIX: Catch all marketplace routes to debug
+  app.use('/api/marketplace*', (req, res, next) => {
+    console.log(`DEBUG [${req.method}]: Marketplace route hit: ${req.originalUrl}`);
+    console.log('  Path:', req.path);
+    console.log('  Auth:', req.isAuthenticated() ? `User ${req.user?.id}` : 'Not authenticated');
+    // Continue to the actual route handler
+    next();
+  });
+  
   // TEST MARKETPLACE ENDPOINT - CRITICAL DEBUG ROUTE
   app.post("/api/test-marketplace", isAuthenticated, async (req, res) => {
     console.log("TEST MARKETPLACE endpoint hit");
