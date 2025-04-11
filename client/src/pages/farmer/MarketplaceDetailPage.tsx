@@ -45,6 +45,8 @@ interface ListingDisplayData {
 
 // Function to adapt the database model to the display model
 function adaptListingForDisplay(listing: MarketplaceListing): ListingDisplayData {
+  console.log("Adapting listing for display:", listing);
+  
   // Convert price from string/decimal to number for display
   const price = typeof listing.price === 'string' 
     ? parseFloat(listing.price) 
@@ -53,25 +55,55 @@ function adaptListingForDisplay(listing: MarketplaceListing): ListingDisplayData
       : 0;
       
   // Create a safe array of images
-  const images = Array.isArray(listing.images) && listing.images 
-    ? listing.images 
-    : [];
+  let images: string[] = [];
+  try {
+    if (Array.isArray(listing.images)) {
+      images = listing.images;
+    } else if (typeof listing.images === 'string') {
+      // Handle case where images might be a JSON string
+      const parsed = JSON.parse(listing.images);
+      images = Array.isArray(parsed) ? parsed : [];
+    }
+  } catch (e) {
+    console.error("Error parsing images:", e);
+    images = [];
+  }
     
   // Ensure isNegotiable is a boolean
   const isNegotiable = listing.isNegotiable === true || 
-    String(listing.isNegotiable).toLowerCase() === 'true' ||
-    Number(listing.isNegotiable) === 1 ||
-    String(listing.isNegotiable) === '1';
+    (typeof listing.isNegotiable === 'string' && listing.isNegotiable.toLowerCase() === 'true') ||
+    listing.isNegotiable === 1 ||
+    listing.isNegotiable === '1';
     
   // Create a placeholder location display based on locationId
   // In a real implementation, we would fetch location details from the API
-  const location = "Unknown location";
+  const location = listing.locationId ? `Location ID: ${listing.locationId}` : "Unknown location";
   
   // Placeholder coordinates for map display
-  const coordinates = {
-    lat: 0.0,
-    lng: 0.0
-  };
+  let coordinates = null;
+  try {
+    // If we had real coordinates, this is where we'd parse them
+    coordinates = {
+      lat: 0.0,
+      lng: 0.0
+    };
+  } catch (e) {
+    console.warn("Could not set coordinates:", e);
+    coordinates = null;
+  }
+
+  // Create a formatted date
+  let createdAt: Date;
+  try {
+    createdAt = new Date(listing.createdAt);
+    if (isNaN(createdAt.getTime())) {
+      console.warn("Invalid created date, using current time instead");
+      createdAt = new Date();
+    }
+  } catch (e) {
+    console.error("Error parsing date:", e);
+    createdAt = new Date();
+  }
     
   return {
     id: listing.id,
@@ -84,9 +116,9 @@ function adaptListingForDisplay(listing: MarketplaceListing): ListingDisplayData
     quantity: listing.quantity?.toString() || null,
     quantityUnit: listing.quantityUnit || null,
     images: images.length > 0 ? images : ["https://placehold.co/700x500/green/white?text=No+Image"],
-    createdAt: new Date(listing.createdAt || Date.now()),
+    createdAt: createdAt,
     isNegotiable: isNegotiable,
-    // Seller information
+    // Seller information 
     sellerId: listing.sellerId || 0,
     sellerName: "Seller", // Will be populated from user data
     sellerImage: null,
