@@ -20,7 +20,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,7 +45,7 @@ const MARKETPLACE_CATEGORIES = [
 ];
 
 // Category specific subcategories
-const SUBCATEGORIES: Record<string, { id: string, name: string }[]> = {
+const SUBCATEGORIES: Record<string, { id: string; name: string }[]> = {
   seeds: [
     { id: "maize", name: "Maize" },
     { id: "wheat", name: "Wheat" },
@@ -60,8 +66,13 @@ const SUBCATEGORIES: Record<string, { id: string, name: string }[]> = {
 
 // Form schema with validation
 const listingSchema = z.object({
-  title: z.string().min(5, { message: "Title must be at least 5 characters" }).max(100),
-  description: z.string().min(20, { message: "Description must be at least 20 characters" }),
+  title: z
+    .string()
+    .min(5, { message: "Title must be at least 5 characters" })
+    .max(100),
+  description: z
+    .string()
+    .min(20, { message: "Description must be at least 20 characters" }),
   category: z.string().min(1, { message: "Category is required" }),
   subcategory: z.string().optional(),
   price: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
@@ -86,15 +97,15 @@ export default function CreateListingPage() {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [location, setUserLocation] = useState<{
-    coordinates: { lat: number, lng: number } | null,
-    address: string,
-    isLoading: boolean,
+    coordinates: { lat: number; lng: number } | null;
+    address: string;
+    isLoading: boolean;
   }>({
     coordinates: null,
     address: "",
     isLoading: false,
   });
-  
+
   // Create form
   const form = useForm<ListingFormValues>({
     resolver: zodResolver(listingSchema),
@@ -115,16 +126,16 @@ export default function CreateListingPage() {
       tags: [],
     },
   });
-  
+
   // Get the selected category to show relevant subcategories
   const watchCategory = form.watch("category");
-  
+
   // Handle image uploads
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    
+
     const newFiles = Array.from(e.target.files);
-    
+
     // Limit to 5 images max
     if (images.length + newFiles.length > 5) {
       toast({
@@ -134,27 +145,27 @@ export default function CreateListingPage() {
       });
       return;
     }
-    
+
     // Create preview URLs for the images
     const newImagePreviews = newFiles.map((file) => URL.createObjectURL(file));
-    
+
     setImages((prev) => [...prev, ...newFiles]);
     setImagePreviewUrls((prev) => [...prev, ...newImagePreviews]);
   };
-  
+
   // Remove an image
   const removeImage = (index: number) => {
     // Revoke the URL to prevent memory leaks
     URL.revokeObjectURL(imagePreviewUrls[index]);
-    
+
     setImages((prev) => prev.filter((_, i) => i !== index));
     setImagePreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
-  
+
   // Get user's location
   const detectLocation = () => {
     setUserLocation((prev) => ({ ...prev, isLoading: true }));
-    
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -162,7 +173,7 @@ export default function CreateListingPage() {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           };
-          
+
           // In a real implementation, you would use a geocoding service to get the address
           // For now, just use the coordinates
           setUserLocation({
@@ -170,7 +181,7 @@ export default function CreateListingPage() {
             address: `Lat: ${coords.lat.toFixed(4)}, Lng: ${coords.lng.toFixed(4)}`,
             isLoading: false,
           });
-          
+
           toast({
             title: "Location detected",
             description: "Your current location has been added to the listing",
@@ -179,17 +190,18 @@ export default function CreateListingPage() {
         (error) => {
           console.error("Error getting location:", error);
           setUserLocation((prev) => ({ ...prev, isLoading: false }));
-          
+
           toast({
             title: "Location error",
-            description: "Could not detect your location. Please try again or enter manually.",
+            description:
+              "Could not detect your location. Please try again or enter manually.",
             variant: "destructive",
           });
-        }
+        },
       );
     } else {
       setUserLocation((prev) => ({ ...prev, isLoading: false }));
-      
+
       toast({
         title: "Location not supported",
         description: "Your browser doesn't support geolocation",
@@ -197,30 +209,37 @@ export default function CreateListingPage() {
       });
     }
   };
-  
+
   // Create listing mutation
   const createListingMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       console.log("Creating listing with form data");
       console.log("API endpoint:", "/api/marketplace/listings");
-      
+
+      console.log("Form data entries:", formData);
+
       // Log form data entries in a safer way
       const entries: string[] = [];
       formData.forEach((value, key) => {
-        if (key === 'images') {
+        if (key === "images") {
           entries.push(`${key}: [File object]`);
         } else {
           entries.push(`${key}: ${value}`);
         }
       });
       console.log("Form data entries:", entries.join(", "));
-      
+
       try {
         // Back to using real endpoint with debug middleware active
         console.log("USING REAL ENDPOINT WITH DEBUG MIDDLEWARE");
-        const response = await apiRequest("POST", "/api/marketplace/listings", formData, {
-          isFormData: true
-        });
+        const response = await apiRequest(
+          "POST",
+          "/api/marketplace/listings",
+          formData,
+          {
+            isFormData: true,
+          },
+        );
         return await response.json();
       } catch (error) {
         console.error("Error in createListingMutation:", error);
@@ -229,25 +248,28 @@ export default function CreateListingPage() {
     },
     onSuccess: () => {
       // Invalidate the listings query to refetch the updated list
-      queryClient.invalidateQueries({ queryKey: ["/api/marketplace/listings"] });
-      
+      queryClient.invalidateQueries({
+        queryKey: ["/api/marketplace/listings"],
+      });
+
       toast({
         title: "Listing created",
         description: "Your listing has been successfully created",
       });
-      
+
       // Navigate back to marketplace
       setLocation("/dashboard/marketplace");
     },
     onError: (error: Error) => {
       toast({
         title: "Error creating listing",
-        description: error.message || "There was an error creating your listing",
+        description:
+          error.message || "There was an error creating your listing",
         variant: "destructive",
       });
     },
   });
-  
+
   // Form submission handler
   const onSubmit = async (values: ListingFormValues) => {
     // Check if images are uploaded
@@ -259,10 +281,10 @@ export default function CreateListingPage() {
       });
       return;
     }
-    
+
     // Create FormData to handle file uploads
     const formData = new FormData();
-    
+
     // Add form values
     Object.entries(values).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -276,43 +298,50 @@ export default function CreateListingPage() {
         }
       }
     });
-    
+
     // Add location data if available
     if (location.coordinates) {
       formData.append("latitude", location.coordinates.lat.toString());
       formData.append("longitude", location.coordinates.lng.toString());
       formData.append("address", location.address);
     }
-    
+
     // Add images
     images.forEach((image, index) => {
       formData.append(`images`, image);
     });
-    
+
     // Submit the form
     createListingMutation.mutate(formData);
   };
-  
+
   const navigateBack = () => {
     setLocation("/dashboard/marketplace");
   };
-  
+
   return (
-    <DashboardLayout title="Create Listing" description="Create a new marketplace listing">
+    <DashboardLayout
+      title="Create Listing"
+      description="Create a new marketplace listing"
+    >
       <div className="container mx-auto px-4 py-6">
         <Button variant="link" onClick={navigateBack} className="p-0 mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Marketplace
         </Button>
-        
-        <h1 className="text-3xl font-bold text-foreground mb-6">Create New Listing</h1>
-        
+
+        <h1 className="text-3xl font-bold text-foreground mb-6">
+          Create New Listing
+        </h1>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
-                
+                <h2 className="text-xl font-semibold mb-4">
+                  Basic Information
+                </h2>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
                     <FormField
@@ -322,7 +351,10 @@ export default function CreateListingPage() {
                         <FormItem>
                           <FormLabel>Title *</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. High-yield Maize Seeds (10kg)" {...field} />
+                            <Input
+                              placeholder="e.g. High-yield Maize Seeds (10kg)"
+                              {...field}
+                            />
                           </FormControl>
                           <FormDescription>
                             A clear, descriptive title will attract more buyers
@@ -332,7 +364,7 @@ export default function CreateListingPage() {
                       )}
                     />
                   </div>
-                  
+
                   <div className="md:col-span-2">
                     <FormField
                       control={form.control}
@@ -341,10 +373,10 @@ export default function CreateListingPage() {
                         <FormItem>
                           <FormLabel>Description *</FormLabel>
                           <FormControl>
-                            <Textarea 
+                            <Textarea
                               placeholder="Describe your item in detail, including quality, specifications, and any other relevant information"
                               className="min-h-[120px]"
-                              {...field} 
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -352,15 +384,15 @@ export default function CreateListingPage() {
                       )}
                     />
                   </div>
-                  
+
                   <FormField
                     control={form.control}
                     name="category"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Category *</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
+                        <Select
+                          onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -380,7 +412,7 @@ export default function CreateListingPage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   {watchCategory && SUBCATEGORIES[watchCategory] && (
                     <FormField
                       control={form.control}
@@ -388,8 +420,8 @@ export default function CreateListingPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Subcategory</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
+                          <Select
+                            onValueChange={field.onChange}
                             defaultValue={field.value}
                           >
                             <FormControl>
@@ -398,11 +430,16 @@ export default function CreateListingPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {SUBCATEGORIES[watchCategory].map((subcategory) => (
-                                <SelectItem key={subcategory.id} value={subcategory.id}>
-                                  {subcategory.name}
-                                </SelectItem>
-                              ))}
+                              {SUBCATEGORIES[watchCategory].map(
+                                (subcategory) => (
+                                  <SelectItem
+                                    key={subcategory.id}
+                                    value={subcategory.id}
+                                  >
+                                    {subcategory.name}
+                                  </SelectItem>
+                                ),
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -410,7 +447,7 @@ export default function CreateListingPage() {
                       )}
                     />
                   )}
-                  
+
                   <FormField
                     control={form.control}
                     name="price"
@@ -418,27 +455,27 @@ export default function CreateListingPage() {
                       <FormItem>
                         <FormLabel>Price *</FormLabel>
                         <FormControl>
-                          <Input 
+                          <Input
                             type="number"
                             min="0"
                             step="0.01"
                             placeholder="0.00"
-                            {...field} 
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="priceCurrency"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Currency</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
+                        <Select
+                          onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -462,11 +499,13 @@ export default function CreateListingPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Additional Details</h2>
-                
+                <h2 className="text-xl font-semibold mb-4">
+                  Additional Details
+                </h2>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
@@ -481,15 +520,15 @@ export default function CreateListingPage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="quantityUnit"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Unit</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
+                        <Select
+                          onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -515,15 +554,15 @@ export default function CreateListingPage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="condition"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Condition</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
+                        <Select
+                          onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -538,14 +577,16 @@ export default function CreateListingPage() {
                             <SelectItem value="fair">Fair</SelectItem>
                             <SelectItem value="poor">Poor</SelectItem>
                             <SelectItem value="for_parts">For Parts</SelectItem>
-                            <SelectItem value="not_applicable">Not Applicable</SelectItem>
+                            <SelectItem value="not_applicable">
+                              Not Applicable
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="contactPhone"
@@ -556,13 +597,14 @@ export default function CreateListingPage() {
                           <Input placeholder="e.g. +1234567890" {...field} />
                         </FormControl>
                         <FormDescription>
-                          If not provided, buyers will contact you through the platform
+                          If not provided, buyers will contact you through the
+                          platform
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="md:col-span-2">
                     <div className="flex flex-col md:flex-row gap-6">
                       <FormField
@@ -587,7 +629,7 @@ export default function CreateListingPage() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="isDeliveryAvailable"
@@ -615,15 +657,15 @@ export default function CreateListingPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-xl font-semibold mb-4">Location</h2>
-                
+
                 <div className="flex items-center space-x-4 mb-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={detectLocation}
                     disabled={location.isLoading}
                   >
@@ -639,7 +681,7 @@ export default function CreateListingPage() {
                       </>
                     )}
                   </Button>
-                  
+
                   {location.coordinates && (
                     <div className="text-sm text-muted-foreground">
                       <MapPin className="h-4 w-4 inline mr-1" />
@@ -647,28 +689,37 @@ export default function CreateListingPage() {
                     </div>
                   )}
                 </div>
-                
+
                 <Separator className="my-4" />
-                
+
                 <div className="text-sm text-muted-foreground">
-                  <p>Your approximate location will be shown to potential buyers. Exact address will not be shared.</p>
+                  <p>
+                    Your approximate location will be shown to potential buyers.
+                    Exact address will not be shared.
+                  </p>
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-xl font-semibold mb-4">
-                  Upload Images <span className="text-muted-foreground text-sm font-normal">(max 5)</span>
+                  Upload Images{" "}
+                  <span className="text-muted-foreground text-sm font-normal">
+                    (max 5)
+                  </span>
                 </h2>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
                   {imagePreviewUrls.map((url, index) => (
-                    <div key={index} className="relative aspect-square bg-muted rounded-md overflow-hidden">
-                      <img 
-                        src={url} 
-                        alt={`Preview ${index + 1}`} 
-                        className="w-full h-full object-cover" 
+                    <div
+                      key={index}
+                      className="relative aspect-square bg-muted rounded-md overflow-hidden"
+                    >
+                      <img
+                        src={url}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-full object-cover"
                       />
                       <Button
                         variant="destructive"
@@ -681,37 +732,39 @@ export default function CreateListingPage() {
                       </Button>
                     </div>
                   ))}
-                  
+
                   {images.length < 5 && (
                     <label className="flex flex-col items-center justify-center aspect-square bg-muted hover:bg-muted/80 rounded-md cursor-pointer border-2 border-dashed border-muted-foreground/25">
                       <Plus className="h-6 w-6 mb-2 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">Add Image</span>
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
+                      <span className="text-xs text-muted-foreground">
+                        Add Image
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
                         onChange={handleImageUpload}
                       />
                     </label>
                   )}
                 </div>
-                
+
                 <div className="text-sm text-muted-foreground">
-                  <p>Clear, high-quality images from multiple angles will help your listing sell faster. First image will be the main image.</p>
+                  <p>
+                    Clear, high-quality images from multiple angles will help
+                    your listing sell faster. First image will be the main
+                    image.
+                  </p>
                 </div>
               </CardContent>
             </Card>
-            
+
             <div className="flex justify-end gap-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={navigateBack}
-              >
+              <Button type="button" variant="outline" onClick={navigateBack}>
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="bg-green-600 hover:bg-green-700"
                 disabled={createListingMutation.isPending}
               >
