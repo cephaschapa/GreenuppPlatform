@@ -423,13 +423,29 @@ export const insertLocationSchema = createInsertSchema(locations).omit({
   updatedAt: true,
 });
 
-export const insertMarketplaceListingSchema = createInsertSchema(marketplaceListings).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  views: true,
-  favoriteCount: true,
-});
+export const insertMarketplaceListingSchema = createInsertSchema(marketplaceListings)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+    views: true,
+    favoriteCount: true,
+  })
+  .extend({
+    // Allow 'true'/'false' strings to be parsed as booleans
+    isNegotiable: z.union([
+      z.boolean(),
+      z.string().transform(val => val === 'true')
+    ]).optional(),
+    isFeatured: z.union([
+      z.boolean(),
+      z.string().transform(val => val === 'true')
+    ]).optional(),
+    deliveryAvailable: z.union([
+      z.boolean(),
+      z.string().transform(val => val === 'true')
+    ]).optional(),
+  });
 
 export const insertMarketplaceReviewSchema = createInsertSchema(marketplaceReviews).omit({
   id: true,

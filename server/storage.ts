@@ -1025,18 +1025,11 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createMarketplaceListing(listingData: InsertMarketplaceListing): Promise<MarketplaceListing> {
-    // Convert boolean strings from form data to actual booleans
-    const isNegotiable = listingData.isNegotiable === 'true' || listingData.isNegotiable === true;
-    const isFeatured = listingData.isFeatured === 'true' || listingData.isFeatured === true;
-    const deliveryAvailable = listingData.deliveryAvailable === 'true' || listingData.deliveryAvailable === true;
-    
+    // The zod schema will handle boolean conversion now
     const [listing] = await db
       .insert(marketplaceListings)
       .values({
         ...listingData,
-        isNegotiable,
-        isFeatured,
-        deliveryAvailable,
         status: listingData.status || 'active',
         priceCurrency: listingData.priceCurrency || 'USD',
         views: 0,
