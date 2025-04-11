@@ -37,14 +37,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication 
   setupAuth(app);
 
-  // Configure multer for file uploads
+  // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();
   const upload = multer({ 
     storage: multerStorage,
     limits: {
-      fileSize: 10 * 1024 * 1024, // 10MB limit
+      fileSize: 5 * 1024 * 1024, // Reduced to 5MB limit
+      files: 5 // Maximum of 5 files at once
     }
-  });
+  }).fields([
+    { name: 'images', maxCount: 5 }
+  ]);
 
   // Middleware to check authentication
   function isAuthenticated(req: Request, res: Response, next: NextFunction) {
@@ -2082,7 +2085,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Create listing (authenticated users only)
-  app.post("/api/marketplace/listings", isAuthenticated, upload.array('images', 10), async (req, res) => {
+  app.post("/api/marketplace/listings", isAuthenticated, (req, res, next) => {
+    console.log("Starting marketplace listings POST handler");
+    
+    // Wrap multer in try/catch to prevent server crashes
+    try {
+      upload(req, res, (err) => {
+        if (err) {
+          console.error("Multer error:", err);
+          return res.status(400).json({ 
+            message: "File upload error", 
+            details: err.message 
+          });
+        }
+        next();
+      });
+    } catch (error) {
+      console.error("Critical error in file upload middleware:", error);
+      return res.status(500).json({ message: "Server error processing file upload" });
+    }
+  }, async (req, res) => {
     console.log("POST /api/marketplace/listings endpoint hit");
     try {
       if (!req.user) {
@@ -2130,7 +2152,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Update listing (authenticated users only, must be seller)
-  app.patch("/api/marketplace/listings/:id", isAuthenticated, upload.array('images', 10), async (req, res) => {
+  app.patch("/api/marketplace/listings/:id", isAuthenticated, (req, res, next) => {
+    console.log("Starting marketplace listings PATCH handler");
+    
+    // Wrap multer in try/catch to prevent server crashes
+    try {
+      upload(req, res, (err) => {
+        if (err) {
+          console.error("Multer error:", err);
+          return res.status(400).json({ 
+            message: "File upload error", 
+            details: err.message 
+          });
+        }
+        next();
+      });
+    } catch (error) {
+      console.error("Critical error in file upload middleware:", error);
+      return res.status(500).json({ message: "Server error processing file upload" });
+    }
+  }, async (req, res) => {
     try {
       if (!req.user) {
         return res.status(401).json({ message: "Not authenticated" });
