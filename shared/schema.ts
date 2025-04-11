@@ -366,7 +366,8 @@ export const marketplaceListings = pgTable("marketplace_listings", {
   condition: text("condition"), // new, used, etc.
   locationId: integer("location_id").references(() => locations.id),
   contactPhone: text("contact_phone"),
-  contactEmail: text("contact_email"),
+  // Note: contactEmail was removed because it doesn't exist in the database
+  // Use contactPhone or user email instead
   availableFrom: timestamp("available_from").defaultNow(),
   availableUntil: timestamp("available_until"),
   deliveryAvailable: boolean("delivery_available").default(false),
