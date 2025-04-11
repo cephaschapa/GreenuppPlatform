@@ -131,7 +131,7 @@ export default function MarketplacePage() {
     data: listings,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<MarketplaceListing[]>({
     queryKey: ["/api/marketplace/listings", filters],
   });
 
@@ -188,14 +188,14 @@ export default function MarketplacePage() {
   };
 
   // Filter real listings from the API
-  const displayedListings = listings ? listings.filter((listing) => {
+  const displayedListings = listings ? listings.filter((listing: MarketplaceListing) => {
     if (filters.search && !listing.title.toLowerCase().includes(filters.search.toLowerCase())) {
       return false;
     }
     if (filters.category && filters.category !== 'all' && listing.category !== filters.category) {
       return false;
     }
-    if (parseFloat(listing.price) < filters.minPrice || parseFloat(listing.price) > filters.maxPrice) {
+    if (parseFloat(String(listing.price)) < filters.minPrice || parseFloat(String(listing.price)) > filters.maxPrice) {
       return false;
     }
     // Distance filtering would require user location and listing coordinates
@@ -331,7 +331,7 @@ export default function MarketplacePage() {
                   <p className="text-muted-foreground">No listings found matching your criteria</p>
                 </div>
               ) : (
-                displayedListings.map((listing) => (
+                displayedListings.map((listing: MarketplaceListing) => (
                   <Card 
                     key={listing.id} 
                     className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
@@ -372,10 +372,7 @@ export default function MarketplacePage() {
                       </div>
                       <CardDescription className="flex items-center text-xs">
                         <MapPin className="h-3 w-3 mr-1 inline" />
-                        {listing.address || 'Location not specified'} 
-                        {listing.latitude && listing.longitude && (
-                          <span> · Coordinates: {listing.latitude.toFixed(2)}, {listing.longitude.toFixed(2)}</span>
-                        )}
+                        {listing.contactPhone ? `Contact: ${listing.contactPhone}` : 'Location not specified'}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 pt-0">
