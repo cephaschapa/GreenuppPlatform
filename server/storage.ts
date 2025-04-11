@@ -2351,8 +2351,7 @@ export class MemStorage implements IStorage {
       locationId: listingData.locationId || null,
       favoriteCount: 0,
       contactPhone: listingData.contactPhone || null,
-      deliveryRadius: listingData.deliveryRadius || null,
-      deliveryRadiusUnit: listingData.deliveryRadiusUnit || 'km',
+      // Removed deliveryRadius and deliveryRadiusUnit fields
       status: listingData.status || 'active',
       isNegotiable,
       isFeatured,
@@ -2360,8 +2359,7 @@ export class MemStorage implements IStorage {
       expiresAt: listingData.expiresAt || null,
       images: listingData.images || [],
       views: 0,
-      featured: listingData.featured || false,
-      verified: listingData.verified || false,
+      // Removed featured and verified fields
       tags: listingData.tags || [],
       createdAt: now,
       updatedAt: now,

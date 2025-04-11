@@ -377,8 +377,7 @@ export const marketplaceListings = pgTable("marketplace_listings", {
   images: text("images").array(), // Array of image URLs or Base64
   views: integer("views").notNull().default(0),
   favoriteCount: integer("favorite_count").notNull().default(0),
-  featured: boolean("featured").default(false),
-  verified: boolean("verified").default(false),
+  // Remove featured and verified flags as they don't exist in the database
   tags: text("tags").array(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
