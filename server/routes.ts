@@ -1897,10 +1897,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // ---- Marketplace Listings ----
-  
-  // Get all marketplace listings with optional filtering
-  app.get("/api/marketplace/listings", async (req, res) => {
+  // ---- MARKETPLACE ROUTES MOVED TO SERVER/ROUTES/MARKETPLACE.TS ----
+
+  /* app.get("/api/marketplace/listings", async (req, res) => {
     try {
       const {
         category,
@@ -2646,6 +2645,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get unread message count" });
     }
   });
+  */
 
   // Log all registered routes for debugging
   console.log("Registered routes:");
