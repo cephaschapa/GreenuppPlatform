@@ -12,6 +12,7 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import InstallPWA from "@/components/ui/InstallPWA";
 import OfflineIndicator from "@/components/ui/OfflineIndicator";
+import TestPage from "@/pages/test-page";
 
 // Import farmer-specific pages
 import FieldsPage from "@/pages/farmer/FieldsPage";
@@ -30,6 +31,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/test" component={TestPage} />
       
       {/* Dashboard routes */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
