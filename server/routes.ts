@@ -2212,11 +2212,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Process files if any
       let images: string[] | undefined;
-      const files = req.files as Express.Multer.File[];
+      // Handle multer.fields() format
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
       
-      if (files && files.length > 0) {
+      if (files && files.images && files.images.length > 0) {
         // Convert Buffer to base64 string for storage
-        const newImages = files.map(file => {
+        const newImages = files.images.map(file => {
           const base64 = file.buffer.toString('base64');
           return `data:${file.mimetype};base64,${base64}`;
         });
