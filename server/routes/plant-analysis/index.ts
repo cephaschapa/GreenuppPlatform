@@ -89,7 +89,7 @@ export function registerPlantAnalysisRoutes(app: Express, isAuthenticated: (req:
         return res.status(403).json({ message: "You don't have permission to access this crop's analyses" });
       }
       
-      const analyses = await storage.getPlantAnalysesByCrop(cropId);
+      const analyses = await storage.getPlantAnalysisByCrop(cropId);
       
       res.json(analyses);
     } catch (error) {

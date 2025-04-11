@@ -209,7 +209,7 @@ export function registerFieldRoutes(app: Express, isAuthenticated: (req: Request
         return res.status(403).json({ message: "You don't have permission to access this field's plant analyses" });
       }
       
-      const analyses = await storage.getPlantAnalysesByField(fieldId);
+      const analyses = await storage.getPlantAnalysisByField(fieldId);
       
       res.json(analyses);
     } catch (error) {

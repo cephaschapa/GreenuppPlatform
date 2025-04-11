@@ -12,7 +12,7 @@ export function registerLocationRoutes(app: Express, isAuthenticated: (req: Requ
   // Get all locations
   app.get("/api/locations", async (req, res) => {
     try {
-      const locations = await storage.getAllLocations();
+      const locations = await storage.getLocations();
       res.json(locations);
     } catch (error) {
       console.error("Error fetching locations:", error);
@@ -62,7 +62,7 @@ export function registerLocationRoutes(app: Express, isAuthenticated: (req: Requ
         return res.status(400).json({ message: "Invalid distance" });
       }
       
-      const locations = await storage.findLocationsByCoordinates(latitudeValue, longitudeValue, distanceValue);
+      const locations = await storage.getLocationByCoordinates(latitudeValue, longitudeValue);
       
       res.json(locations);
     } catch (error) {
