@@ -1,15 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-
-// Custom TypeScript declaration extensions
-declare global {
-  namespace Express {
-    interface Request {
-      originalMarketplacePath?: string;
-    }
-  }
-}
+import setupMarketplaceRoutes from "./routes/marketplace";
 
 import { 
   contactFormSchema, 
