@@ -484,73 +484,62 @@ export class DatabaseStorage implements IStorage {
 
   // Weather preferences methods
   async getWeatherPreferences(userId: number): Promise<WeatherPreferences | undefined> {
-    try {
-      const [prefs] = await db
-        .select()
-        .from(weatherPreferences)
-        .where(eq(weatherPreferences.userId, userId));
-      
-      return prefs;
-    } catch (error) {
-      console.error("Error getting weather preferences:", error);
-      return undefined;
-    }
+    const [prefs] = await db
+      .select()
+      .from(weatherPreferences)
+      .where(eq(weatherPreferences.userId, userId));
+    
+    return prefs;
   }
 
   async createWeatherPreferences(data: InsertWeatherPreferences & { userId: number }): Promise<WeatherPreferences> {
-    try {
-      const [prefs] = await db
-        .insert(weatherPreferences)
-        .values({
-          ...data,
-          locations: data.locations || [],
-          alertsEnabled: data.alertsEnabled ?? true,
-          temperatureUnit: data.temperatureUnit || 'celsius',
-        })
-        .returning();
-      
-      return prefs;
-    } catch (error) {
-      console.error("Error creating weather preferences:", error);
-      throw new Error("Failed to create weather preferences");
-    }
+    const [prefs] = await db
+      .insert(weatherPreferences)
+      .values({
+        ...data,
+        locations: data.locations || [],
+        alertsEnabled: data.alertsEnabled ?? true,
+        temperatureUnit: data.temperatureUnit || 'celsius',
+      })
+      .returning();
+    
+    return prefs;
   }
 
   async updateWeatherPreferences(userId: number, data: Partial<WeatherPreferences>): Promise<WeatherPreferences | undefined> {
-    try {
-      // First, find the preferences by userId
-      const existingPrefs = await this.getWeatherPreferences(userId);
-      if (!existingPrefs) return undefined;
-      
-      // Make sure locations is always an array
-      const updatedData: any = { ...data };
-      
-      // If locations is provided, ensure it's an array
-      if ('locations' in updatedData) {
-        if (!Array.isArray(updatedData.locations)) {
-          // If it's not an array, make it an empty array
-          updatedData.locations = [];
-          console.log("Converted non-array locations to empty array");
-        } else {
-          console.log("Locations is already an array:", updatedData.locations);
-        }
+    // First, find the preferences by userId
+    const existingPrefs = await this.getWeatherPreferences(userId);
+    if (!existingPrefs) return undefined;
+    
+    // Make sure locations is always an array
+    const updatedData: any = { ...data };
+    
+    // If locations is provided, ensure it's an array
+    if ('locations' in updatedData) {
+      if (!Array.isArray(updatedData.locations)) {
+        // If it's not an array, make it an empty array
+        updatedData.locations = [];
+        console.log("Converted non-array locations to empty array");
+      } else {
+        console.log("Locations is already an array:", updatedData.locations);
       }
-      
-      // Then update it by id
-      const [prefs] = await db
-        .update(weatherPreferences)
-        .set({
-          ...updatedData,
-          updatedAt: new Date()
-        })
-        .where(eq(weatherPreferences.id, existingPrefs.id))
-        .returning();
-      
-      return prefs;
-    } catch (error) {
-      console.error("Error updating weather preferences:", error);
-      return undefined;
     }
+    
+    console.log("Updating weather preferences with data:", updatedData);
+    
+    // Then update it by id
+    const [prefs] = await db
+      .update(weatherPreferences)
+      .set({
+        ...updatedData,
+        updatedAt: new Date()
+      })
+      .where(eq(weatherPreferences.id, existingPrefs.id))
+      .returning();
+    
+    console.log("Updated preferences:", prefs);
+    
+    return prefs;
   }
 
   // Farmer tasks methods
