@@ -5,8 +5,21 @@ import { useLocation } from "wouter";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
@@ -37,73 +50,6 @@ const MARKETPLACE_CATEGORIES = [
 ];
 
 // Mock data - will be replaced with API call
-const MOCK_LISTINGS = [
-  {
-    id: 1,
-    title: "High-yield Maize Seeds (10kg)",
-    description: "Premium quality maize seeds with 95% germination rate",
-    category: "seeds",
-    price: 45.99,
-    currency: "USD",
-    location: "Nairobi, Kenya",
-    distance: 3.2,
-    sellerName: "Kenya Seed Company",
-    images: ["https://placehold.co/300x200/green/white?text=Maize+Seeds"],
-    rating: 4.8,
-    reviewCount: 156,
-    createdAt: new Date(Date.now() - 86400000 * 2), // 2 days ago
-    isNegotiable: true,
-  },
-  {
-    id: 2,
-    title: "Used Tractor - John Deere 5065E",
-    description: "Used John Deere 5065E tractor in excellent condition. 450 hours",
-    category: "equipment",
-    price: 15000,
-    currency: "USD",
-    location: "Nakuru, Kenya",
-    distance: 12.7,
-    sellerName: "Farm Machinery Ltd",
-    images: ["https://placehold.co/300x200/darkgreen/white?text=Tractor"],
-    rating: 4.5,
-    reviewCount: 28,
-    createdAt: new Date(Date.now() - 86400000 * 5), // 5 days ago
-    isNegotiable: true,
-  },
-  {
-    id: 3,
-    title: "Organic Fertilizer (50kg)",
-    description: "100% organic fertilizer, perfect for vegetable gardens",
-    category: "fertilizers",
-    price: 30,
-    currency: "USD",
-    location: "Mombasa, Kenya",
-    distance: 8.4,
-    sellerName: "Organic Farms Kenya",
-    images: ["https://placehold.co/300x200/brown/white?text=Organic+Fertilizer"],
-    rating: 4.9,
-    reviewCount: 74,
-    createdAt: new Date(Date.now() - 86400000), // 1 day ago
-    isNegotiable: false,
-  },
-  {
-    id: 4,
-    title: "Drip Irrigation System Kit",
-    description: "Complete drip irrigation system for 1/4 acre",
-    category: "tools",
-    price: 120,
-    currency: "USD",
-    location: "Kisumu, Kenya",
-    distance: 22.8,
-    sellerName: "Irrigation Solutions",
-    images: ["https://placehold.co/300x200/blue/white?text=Irrigation+System"],
-    rating: 4.7,
-    reviewCount: 41,
-    createdAt: new Date(Date.now() - 86400000 * 3), // 3 days ago
-    isNegotiable: true,
-  },
-];
-
 interface FilterState {
   search: string;
   category: string;
@@ -124,7 +70,10 @@ export default function MarketplacePage() {
     negotiableOnly: false,
   });
   const [searchValue, setSearchValue] = useState("");
-  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
 
   // Fetch marketplace listings
   const {
@@ -135,6 +84,20 @@ export default function MarketplacePage() {
     queryKey: ["/api/marketplace/listings", filters],
   });
 
+  // Add debug effect to log listing data
+  useEffect(() => {
+    if (listings) {
+      console.log("Listings data from API:", listings);
+      
+      if (listings.length === 0) {
+        toast({
+          title: "No listings found",
+          description: "No marketplace listings are available at this time.",
+          variant: "default"
+        });
+      }
+    }
+  }, [listings]);
   // Request user's location for proximity search
   useEffect(() => {
     if (navigator.geolocation) {
@@ -144,7 +107,11 @@ export default function MarketplacePage() {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           });
-          console.log("User location:", position.coords.latitude, position.coords.longitude);
+          console.log(
+            "User location:",
+            position.coords.latitude,
+            position.coords.longitude,
+          );
         },
         (error) => {
           console.error("Error getting location:", error);
@@ -153,7 +120,7 @@ export default function MarketplacePage() {
             description: "Enable location services to see listings near you",
             variant: "destructive",
           });
-        }
+        },
       );
     }
   }, []);
@@ -168,7 +135,11 @@ export default function MarketplacePage() {
   };
 
   const handlePriceChange = (values: number[]) => {
-    setFilters((prev) => ({ ...prev, minPrice: values[0], maxPrice: values[1] }));
+    setFilters((prev) => ({
+      ...prev,
+      minPrice: values[0],
+      maxPrice: values[1],
+    }));
   };
 
   const handleDistanceChange = (values: number[]) => {
@@ -188,36 +159,79 @@ export default function MarketplacePage() {
   };
 
   // Filter real listings from the API
-  const displayedListings = listings ? listings.filter((listing: MarketplaceListing) => {
-    if (filters.search && !listing.title.toLowerCase().includes(filters.search.toLowerCase())) {
-      return false;
-    }
-    if (filters.category && filters.category !== 'all' && listing.category !== filters.category) {
-      return false;
-    }
-    if (parseFloat(String(listing.price)) < filters.minPrice || parseFloat(String(listing.price)) > filters.maxPrice) {
-      return false;
-    }
-    // Distance filtering would require user location and listing coordinates
-    // Skip for now or implement with a placeholder distance
-    if (filters.negotiableOnly && !listing.isNegotiable) {
-      return false;
-    }
-    return true;
-  }) : [];
+  const displayedListings = listings
+    ? listings.filter((listing: MarketplaceListing) => {
+        try {
+          // Title search filter
+          if (
+            filters.search &&
+            !listing.title.toLowerCase().includes(filters.search.toLowerCase())
+          ) {
+            return false;
+          }
+          
+          // Category filter
+          if (
+            filters.category &&
+            filters.category !== "all" &&
+            listing.category !== filters.category
+          ) {
+            return false;
+          }
+          
+          // Price filter - handle string or number types
+          const listingPrice = typeof listing.price === 'string' 
+            ? parseFloat(listing.price) 
+            : Number(listing.price);
+            
+          if (
+            isNaN(listingPrice) || 
+            listingPrice < filters.minPrice ||
+            listingPrice > filters.maxPrice
+          ) {
+            return false;
+          }
+          
+          // Negotiable only filter - handle boolean or string types
+          if (filters.negotiableOnly) {
+            const isNegotiable = 
+              typeof listing.isNegotiable === 'boolean' 
+                ? listing.isNegotiable 
+                : listing.isNegotiable === 'true';
+                
+            if (!isNegotiable) {
+              return false;
+            }
+          }
+          
+          return true;
+        } catch (error) {
+          console.error("Error filtering listing:", error, listing);
+          return false;
+        }
+      })
+    : [];
 
   return (
-    <DashboardLayout title="Marketplace" description="Buy and sell agricultural products and services">
+    <DashboardLayout
+      title="Marketplace"
+      description="Buy and sell agricultural products and services"
+    >
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-1">Marketplace</h1>
+              <h1 className="text-3xl font-bold text-foreground mb-1">
+                Marketplace
+              </h1>
               <p className="text-muted-foreground">
                 Buy and sell agricultural products and services
               </p>
             </div>
-            <Button onClick={navigateToCreate} className="bg-green-600 hover:bg-green-700">
+            <Button
+              onClick={navigateToCreate}
+              className="bg-green-600 hover:bg-green-700"
+            >
               Create Listing
             </Button>
           </div>
@@ -303,7 +317,9 @@ export default function MarketplacePage() {
                     <Separator />
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Negotiable Only</span>
+                      <span className="text-sm font-medium">
+                        Negotiable Only
+                      </span>
                       <Switch
                         checked={filters.negotiableOnly}
                         onCheckedChange={handleNegotiableChange}
@@ -328,12 +344,14 @@ export default function MarketplacePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {displayedListings.length === 0 ? (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">No listings found matching your criteria</p>
+                  <p className="text-muted-foreground">
+                    No listings found matching your criteria
+                  </p>
                 </div>
               ) : (
                 displayedListings.map((listing: MarketplaceListing) => (
-                  <Card 
-                    key={listing.id} 
+                  <Card
+                    key={listing.id}
                     className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
                     onClick={() => navigateToDetail(listing.id)}
                   >
@@ -360,29 +378,46 @@ export default function MarketplacePage() {
                         <CardTitle className="text-lg font-semibold line-clamp-1">
                           {listing.title}
                         </CardTitle>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => {
-                          e.stopPropagation();
-                          toast({
-                            title: "Added to favorites",
-                            description: "Item has been added to your favorites",
-                          });
-                        }}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toast({
+                              title: "Added to favorites",
+                              description:
+                                "Item has been added to your favorites",
+                            });
+                          }}
+                        >
                           <Heart className="h-4 w-4" />
                         </Button>
                       </div>
                       <CardDescription className="flex items-center text-xs">
                         <MapPin className="h-3 w-3 mr-1 inline" />
-                        {listing.contactPhone ? `Contact: ${listing.contactPhone}` : 'Location not specified'}
+                        {listing.contactPhone
+                          ? `Contact: ${listing.contactPhone}`
+                          : "Location not specified"}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-4 pt-0">
                       <div className="flex justify-between items-center mb-2">
                         <p className="font-bold text-lg">
-                          {listing.priceCurrency || 'USD'} {parseFloat(listing.price).toFixed(2)}
-                          {listing.priceUnit && <span className="text-sm font-normal">/{listing.priceUnit}</span>}
+                          {listing.priceCurrency || "USD"}{" "}
+                          {(typeof listing.price === 'string' 
+                            ? parseFloat(listing.price) 
+                            : Number(listing.price)).toFixed(2)}
+                          {listing.priceUnit && (
+                            <span className="text-sm font-normal">
+                              /{listing.priceUnit}
+                            </span>
+                          )}
                         </p>
                         <div className="flex items-center">
-                          <span className="text-xs">{listing.views || 0} views</span>
+                          <span className="text-xs">
+                            {listing.views || 0} views
+                          </span>
                         </div>
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2">
@@ -390,7 +425,18 @@ export default function MarketplacePage() {
                       </p>
                     </CardContent>
                     <CardFooter className="p-4 pt-0 flex justify-between text-xs text-muted-foreground">
-                      <span>{formatDistanceToNow(new Date(listing.createdAt), { addSuffix: true })}</span>
+                      <span>
+                        {(() => {
+                          try {
+                            return formatDistanceToNow(new Date(listing.createdAt), {
+                              addSuffix: true,
+                            });
+                          } catch (error) {
+                            console.error("Date formatting error:", error);
+                            return "Recently";
+                          }
+                        })()}
+                      </span>
                       <span>{listing.status}</span>
                     </CardFooter>
                   </Card>
