@@ -1,15 +1,6 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-
-// Custom TypeScript declaration extensions
-declare global {
-  namespace Express {
-    interface Request {
-      originalMarketplacePath?: string;
-    }
-  }
-}
+import { registerRoutes as registerModularRoutes } from "./routes/index";
 
 import {
   contactFormSchema,
@@ -50,20 +41,10 @@ import { eq } from "drizzle-orm";
 import multer from "multer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  console.log("Registering all API routes...");
-
-  // Set up authentication
-  setupAuth(app);
-
-  // Configure multer for file uploads with error handling
-  const multerStorage = multer.memoryStorage();
-  const upload = multer({
-    storage: multerStorage,
-    limits: {
-      fileSize: 5 * 1024 * 1024, // Reduced to 5MB limit
-      files: 5, // Maximum of 5 files at once
-    },
-  }).fields([{ name: "images", maxCount: 5 }]);
+  console.log("Redirecting to modular route structure...");
+  
+  // Use our new modular route structure
+  return registerModularRoutes(app);
 
   // Middleware to check authentication
   function isAuthenticated(req: Request, res: Response, next: NextFunction) {

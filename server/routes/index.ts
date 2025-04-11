@@ -3,7 +3,16 @@ import { createServer, type Server } from "http";
 import { storage } from "../storage";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
-import { setupAuth } from "../auth";
+
+// Import all route modules
+import { registerAuthRoutes } from "./auth";
+import { registerProfileRoutes } from "./profile";
+import { registerCropRoutes } from "./crops";
+import { registerFieldRoutes } from "./fields";
+import { registerTaskRoutes } from "./tasks";
+import { registerWeatherRoutes } from "./weather";
+import { registerPlantAnalysisRoutes } from "./plant-analysis";
+import { registerLocationRoutes } from "./locations";
 import { registerMarketplaceRoutes } from "./marketplace";
 
 // Custom TypeScript declaration extensions
@@ -17,9 +26,6 @@ declare global {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log("Registering all API routes...");
-  
-  // Set up authentication 
-  setupAuth(app);
 
   // Middleware to check authentication
   function isAuthenticated(req: Request, res: Response, next: NextFunction) {
@@ -39,22 +45,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
   }
 
-  // Register all route modules
-  registerMarketplaceRoutes(app, isAuthenticated);
+  // Register all authentication routes (must be first)
+  registerAuthRoutes(app);
   
-  // Add other route modules here as they are created
-  // Example: registerCropRoutes(app, isAuthenticated, hasRole);
-  // Example: registerWeatherRoutes(app, isAuthenticated);
+  // Register all other feature modules
+  registerProfileRoutes(app, isAuthenticated, hasRole);
+  registerCropRoutes(app, isAuthenticated);
+  registerFieldRoutes(app, isAuthenticated);
+  registerTaskRoutes(app, isAuthenticated);
+  registerWeatherRoutes(app, isAuthenticated);
+  registerPlantAnalysisRoutes(app, isAuthenticated);
+  registerLocationRoutes(app, isAuthenticated);
+  registerMarketplaceRoutes(app, isAuthenticated);
 
   // TEST endpoint for quick verification
-  app.post("/api/test-marketplace", isAuthenticated, async (req, res) => {
-    console.log("TEST MARKETPLACE endpoint hit");
-    res.status(200).json({ success: true, message: "Test marketplace endpoint working" });
+  app.post("/api/test-endpoint", isAuthenticated, async (req, res) => {
+    console.log("TEST endpoint hit");
+    res.status(200).json({ success: true, message: "API is working correctly" });
   });
 
   // Log all registered routes
   const registeredRoutes = app._router.stack
-    .filter((r) => r.route)
+    .filter((r) => r.route && r.route.path)
     .map((r) => {
       return Object.keys(r.route.methods)
         .filter((method) => r.route.methods[method])
@@ -64,10 +76,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   console.log("Registered routes:\n- " + registeredRoutes.join("\n- "));
 
-  if (registeredRoutes.some(route => route.includes("/api/marketplace/listings"))) {
-    console.log("✅ Marketplace listings routes are properly registered");
+  // Quick validation of critical routes
+  const criticalRoutePatterns = [
+    "/api/login", 
+    "/api/register", 
+    "/api/user",
+    "/api/marketplace/listings",
+    "/api/crops",
+    "/api/fields",
+    "/api/weather"
+  ];
+  
+  const missingRoutes = criticalRoutePatterns.filter(pattern => 
+    !registeredRoutes.some(route => route.includes(pattern))
+  );
+  
+  if (missingRoutes.length > 0) {
+    console.log("⚠️ WARNING: Some critical routes appear to be missing:");
+    missingRoutes.forEach(route => console.log(`  - ${route}`));
   } else {
-    console.log("❌ WARNING: Marketplace listings routes not found in registered routes!");
+    console.log("✅ All critical routes are properly registered");
   }
   
   // Create and return the HTTP server
