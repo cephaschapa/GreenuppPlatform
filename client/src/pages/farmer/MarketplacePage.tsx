@@ -89,6 +89,20 @@ export default function MarketplacePage() {
     if (listings) {
       console.log("Listings data from API:", listings);
       
+      // Check structure of first listing if available
+      if (listings.length > 0) {
+        const firstListing = listings[0];
+        console.log("First listing structure:", {
+          id: firstListing.id,
+          title: firstListing.title,
+          price: firstListing.price,
+          priceType: typeof firstListing.price,
+          isNegotiable: firstListing.isNegotiable,
+          isNegotiableType: typeof firstListing.isNegotiable,
+          category: firstListing.category
+        });
+      }
+      
       if (listings.length === 0) {
         toast({
           title: "No listings found",
@@ -97,7 +111,15 @@ export default function MarketplacePage() {
         });
       }
     }
-  }, [listings]);
+    if (error) {
+      console.error("Marketplace listings error:", error);
+      toast({
+        title: "Error loading listings",
+        description: "There was a problem loading marketplace listings.",
+        variant: "destructive"
+      });
+    }
+  }, [listings, error]);
   // Request user's location for proximity search
   useEffect(() => {
     if (navigator.geolocation) {
@@ -347,6 +369,13 @@ export default function MarketplacePage() {
                   <p className="text-muted-foreground">
                     No listings found matching your criteria
                   </p>
+                  {/* Debug info - will remove later */}
+                  <div className="mt-4 p-4 bg-gray-100 rounded text-left text-xs">
+                    <p className="font-bold">Debug Info:</p>
+                    <p>Listings from API: {listings ? listings.length : 0}</p>
+                    <p>Displayed after filtering: {displayedListings.length}</p>
+                    <p>Current filters: {JSON.stringify(filters, null, 2)}</p>
+                  </div>
                 </div>
               ) : (
                 displayedListings.map((listing: MarketplaceListing) => (
