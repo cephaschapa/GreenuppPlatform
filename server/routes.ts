@@ -1786,9 +1786,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(404).json({ message: "API endpoint not found" });
   });
   
-  // ================ MARKETPLACE API ENDPOINTS ================
-
+  // ================ SHARED API ENDPOINTS ================
+  
   // ---- Location Management ----
+  // These endpoints are used by multiple features including weather and marketplace
   
   // Get all locations
   app.get("/api/locations", async (req, res) => {
