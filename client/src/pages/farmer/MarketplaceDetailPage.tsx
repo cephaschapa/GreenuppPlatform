@@ -216,46 +216,56 @@ export default function MarketplaceDetailPage() {
     );
   }
 
-  // Log full listing data for debugging
-  console.log("Listing data:", listing);
+  // Log all listing data for debugging
+  console.log("Listing data:", JSON.stringify(listing, null, 2));
   console.log("Images data:", listing.images);
   
-  // Prepare images from the database
+  // Prepare images from the database with more robust handling
   let imageArray: string[] = [];
+  const defaultImage = "https://placehold.co/700x500/green/white?text=No+Image";
   
-  // Handle the images which could be an array, a string, or null
-  if (listing.images) {
-    if (Array.isArray(listing.images)) {
-      // It's already an array, we can use it directly
-      imageArray = listing.images;
-      console.log("Images are provided as an array");
-    } else if (typeof listing.images === 'string') {
-      try {
-        // Try to parse it as JSON (stringified array)
-        const parsed = JSON.parse(listing.images);
-        if (Array.isArray(parsed)) {
-          imageArray = parsed;
-          console.log("Images parsed from JSON string");
-        } else {
-          // If it's not an array after parsing, use single string
+  try {
+    // Check if we have any images
+    if (listing.images) {
+      console.log("Raw images value:", listing.images);
+      
+      if (Array.isArray(listing.images)) {
+        // It's already an array, we can use it directly
+        imageArray = listing.images.filter(img => img && img !== "");
+        console.log("Images are provided as an array, count:", imageArray.length);
+      } else if (typeof listing.images === 'string') {
+        // First try to parse it as JSON (stringified array)
+        try {
+          const parsed = JSON.parse(listing.images);
+          if (Array.isArray(parsed)) {
+            imageArray = parsed.filter(img => img && img !== "");
+            console.log("Images parsed from JSON string, count:", imageArray.length);
+          } else {
+            // If it's not an array after parsing, use as single string
+            imageArray = [listing.images];
+            console.log("Using single image string (not an array after parsing)");
+          }
+        } catch (e) {
+          // If parsing fails, it might be a single image URL
           imageArray = [listing.images];
-          console.log("Single image string (not JSON)");
+          console.log("Using single image string (JSON parsing failed)");
         }
-      } catch (e) {
-        // If parsing fails, it might be a single image URL
-        imageArray = [listing.images];
-        console.log("Single image string (parsing failed)");
       }
+    } else {
+      console.log("No images in listing data");
     }
+  } catch (error) {
+    console.error("Error processing images:", error);
   }
+  
+  // Additional validation to ensure all array items are valid
+  imageArray = imageArray.filter(url => url && typeof url === 'string' && url.trim() !== '');
   
   console.log("Final image array:", imageArray);
   
-  // Fallback image
-  const defaultImage = "https://placehold.co/700x500/green/white?text=No+Image";
-  
   // Make sure we have at least one image
   if (imageArray.length === 0) {
+    console.log("Using default image as no valid images were found");
     imageArray = [defaultImage];
   }
   
