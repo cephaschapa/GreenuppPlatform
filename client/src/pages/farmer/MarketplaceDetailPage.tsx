@@ -246,13 +246,19 @@ export default function MarketplaceDetailPage() {
   
   // When listing data changes, adapt it for display
   useEffect(() => {
+    console.log("Listing data changed:", listing);
+    
     if (listing) {
       try {
+        console.log("Attempting to adapt listing:", JSON.stringify(listing));
         const adaptedListing = adaptListingForDisplay(listing);
+        console.log("Listing adapted successfully:", adaptedListing);
         setDisplayedListing(adaptedListing);
       } catch (err) {
         console.error("Error adapting listing data:", err);
       }
+    } else {
+      console.log("No listing data available yet");
     }
   }, [listing]);
   
