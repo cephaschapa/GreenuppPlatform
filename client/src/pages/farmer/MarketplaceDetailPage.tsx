@@ -82,6 +82,20 @@ function parseImages(images: string | string[] | null | undefined): string[] {
   return [];
 }
 
+// Debugging wrapper for parseImages
+function debugParseImages(images: string | string[] | null | undefined): string[] {
+  console.log("Original images data:", images);
+  
+  const result = parseImages(images);
+  console.log("Parsed images result:", result);
+  
+  if (result.length === 0) {
+    console.log("No images were parsed successfully");
+  }
+  
+  return result;
+}
+
 // Function to get condition label
 function getConditionLabel(condition: string | null): string {
   if (!condition) return "Unknown";
@@ -244,8 +258,9 @@ export default function MarketplaceDetailPage() {
     );
   }
 
-  // Parse images from the listing
-  const images = parseImages(listing.images);
+  // Parse images from the listing with debugging
+  console.log("Full listing data:", listing);
+  const images = debugParseImages(listing.images);
   const defaultImage = "https://placehold.co/700x500/green/white?text=No+Image";
   
   // Ensure we have a valid price
