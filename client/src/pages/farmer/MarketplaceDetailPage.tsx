@@ -12,9 +12,6 @@ import {
   User,
   Phone,
   MessageCircle,
-  Package,
-  CheckCircle,
-  XCircle,
   Tag,
   DollarSign,
   Ruler,
@@ -56,45 +53,6 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-
-// Helper function to parse images safely
-function parseImages(images: string | string[] | null | undefined): string[] {
-  if (!images) return [];
-  
-  try {
-    if (Array.isArray(images)) {
-      return images;
-    }
-    
-    if (typeof images === 'string') {
-      try {
-        const parsed = JSON.parse(images);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        // If not valid JSON, could be a single image URL
-        return [images];
-      }
-    }
-  } catch (error) {
-    console.error("Error parsing images:", error);
-  }
-  
-  return [];
-}
-
-// Debugging wrapper for parseImages
-function debugParseImages(images: string | string[] | null | undefined): string[] {
-  console.log("Original images data:", images);
-  
-  const result = parseImages(images);
-  console.log("Parsed images result:", result);
-  
-  if (result.length === 0) {
-    console.log("No images were parsed successfully");
-  }
-  
-  return result;
-}
 
 // Function to get condition label
 function getConditionLabel(condition: string | null): string {
@@ -258,10 +216,48 @@ export default function MarketplaceDetailPage() {
     );
   }
 
-  // Parse images from the listing with debugging
-  console.log("Full listing data:", listing);
-  const images = debugParseImages(listing.images);
+  // Log full listing data for debugging
+  console.log("Listing data:", listing);
+  console.log("Images data:", listing.images);
+  
+  // Prepare images from the database
+  let imageArray: string[] = [];
+  
+  // Handle the images which could be an array, a string, or null
+  if (listing.images) {
+    if (Array.isArray(listing.images)) {
+      // It's already an array, we can use it directly
+      imageArray = listing.images;
+      console.log("Images are provided as an array");
+    } else if (typeof listing.images === 'string') {
+      try {
+        // Try to parse it as JSON (stringified array)
+        const parsed = JSON.parse(listing.images);
+        if (Array.isArray(parsed)) {
+          imageArray = parsed;
+          console.log("Images parsed from JSON string");
+        } else {
+          // If it's not an array after parsing, use single string
+          imageArray = [listing.images];
+          console.log("Single image string (not JSON)");
+        }
+      } catch (e) {
+        // If parsing fails, it might be a single image URL
+        imageArray = [listing.images];
+        console.log("Single image string (parsing failed)");
+      }
+    }
+  }
+  
+  console.log("Final image array:", imageArray);
+  
+  // Fallback image
   const defaultImage = "https://placehold.co/700x500/green/white?text=No+Image";
+  
+  // Make sure we have at least one image
+  if (imageArray.length === 0) {
+    imageArray = [defaultImage];
+  }
   
   // Ensure we have a valid price
   const price = typeof listing.price === "string"
@@ -293,31 +289,19 @@ export default function MarketplaceDetailPage() {
               <CardContent className="p-4">
                 <Carousel className="w-full">
                   <CarouselContent>
-                    {images.length > 0 ? (
-                      images.map((image, index) => (
-                        <CarouselItem key={index}>
-                          <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                            <img
-                              src={image}
-                              alt={`${listing.title} - image ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </CarouselItem>
-                      ))
-                    ) : (
-                      <CarouselItem>
+                    {imageArray.map((image, index) => (
+                      <CarouselItem key={index}>
                         <div className="aspect-video bg-muted rounded-lg overflow-hidden">
                           <img
-                            src={defaultImage}
-                            alt="No image available"
+                            src={image}
+                            alt={`${listing.title} - image ${index + 1}`}
                             className="w-full h-full object-cover"
                           />
                         </div>
                       </CarouselItem>
-                    )}
+                    ))}
                   </CarouselContent>
-                  {images.length > 1 && (
+                  {imageArray.length > 1 && (
                     <>
                       <CarouselPrevious />
                       <CarouselNext />
@@ -325,9 +309,9 @@ export default function MarketplaceDetailPage() {
                   )}
                 </Carousel>
 
-                {images.length > 1 && (
+                {imageArray.length > 1 && (
                   <div className="flex mt-4 gap-2 overflow-x-auto pb-2">
-                    {images.map((image, index) => (
+                    {imageArray.map((image, index) => (
                       <div
                         key={index}
                         onClick={() => setActiveImageIndex(index)}
