@@ -70,10 +70,15 @@ function adaptListingForDisplay(listing: MarketplaceListing): ListingDisplayData
   }
     
   // Ensure isNegotiable is a boolean
-  const isNegotiable = listing.isNegotiable === true || 
-    (typeof listing.isNegotiable === 'string' && listing.isNegotiable.toLowerCase() === 'true') ||
-    listing.isNegotiable === 1 ||
-    listing.isNegotiable === '1';
+  let isNegotiable = false;
+  
+  if (listing.isNegotiable === true) {
+    isNegotiable = true;
+  } else if (typeof listing.isNegotiable === 'string') {
+    isNegotiable = listing.isNegotiable.toLowerCase() === 'true';
+  } else if (typeof listing.isNegotiable === 'number') {
+    isNegotiable = listing.isNegotiable === 1;
+  }
     
   // Create a placeholder location display based on locationId
   // In a real implementation, we would fetch location details from the API
@@ -172,55 +177,15 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 
-// Mock data - replace with API data when ready
-const MOCK_LISTING = {
-  id: 1,
-  title: "High-yield Maize Seeds (10kg)",
-  description: "Premium quality maize seeds with 95% germination rate. These seeds have been tested and proven to perform well in various climatic conditions. Package includes planting instructions and best practices for maximum yield.",
-  category: "seeds",
-  subcategory: "Maize",
-  price: 45.99,
-  priceCurrency: "USD",
-  quantity: "10",
-  quantityUnit: "kg",
-  location: "Nairobi, Kenya",
-  address: "Moi Avenue, Nairobi Central",
-  coordinates: { lat: -1.2864, lng: 36.8172 },
-  distance: 3.2,
-  sellerName: "Kenya Seed Company",
-  sellerRating: 4.8,
-  sellerReviewCount: 156,
-  sellerJoined: new Date(2022, 5, 15),
-  sellerImage: null,
-  images: [
-    "https://placehold.co/700x500/green/white?text=Maize+Seeds+1",
-    "https://placehold.co/700x500/darkgreen/white?text=Maize+Seeds+2",
-    "https://placehold.co/700x500/green/white?text=Maize+Seeds+3",
-  ],
-  reviews: [
-    {
-      id: 1,
-      reviewerName: "John Farmer",
-      reviewerImage: null,
-      rating: 5,
-      comment: "Excellent seeds, 98% germination rate in my farm. Will buy again next season.",
-      date: new Date(2023, 3, 10),
-    },
-    {
-      id: 2,
-      reviewerName: "Mary Gardens",
-      reviewerImage: null,
-      rating: 4,
-      comment: "Good quality seeds but packaging could be improved. Got about 92% germination.",
-      date: new Date(2023, 2, 25),
-    },
-  ],
-  contactPhone: "+254712345678",
-  createdAt: new Date(Date.now() - 86400000 * 2), // 2 days ago
-  updatedAt: new Date(Date.now() - 86400000), // 1 day ago
-  isNegotiable: true,
-  isFeatured: false,
-};
+// Placeholder reviews - used when the listing doesn't have any reviews yet
+const PLACEHOLDER_REVIEWS: Array<{
+  id: number;
+  reviewerName: string;
+  reviewerImage: string | null;
+  rating: number;
+  comment: string;
+  date: Date;
+}> = [];
 
 export default function MarketplaceDetailPage() {
   const params = useParams<{ id: string }>();
@@ -675,43 +640,12 @@ export default function MarketplaceDetailPage() {
                 </div>
                 
                 <div className="space-y-4">
-                  {/* Mock similar listings - replace with real data */}
-                  {[
-                    {
-                      id: 2,
-                      title: "Premium Maize Seeds (5kg)",
-                      price: 25.99,
-                      priceCurrency: "USD",
-                      image: "https://placehold.co/300x200/darkgreen/white?text=Similar+1",
-                    },
-                    {
-                      id: 3,
-                      title: "Organic Maize Seeds",
-                      price: 55.00,
-                      priceCurrency: "USD",
-                      image: "https://placehold.co/300x200/green/white?text=Similar+2",
-                    },
-                  ].map((item) => (
-                    <div 
-                      key={item.id} 
-                      className="flex gap-3 cursor-pointer hover:bg-muted p-2 rounded-lg transition-colors"
-                      onClick={() => setLocation(`/dashboard/marketplace/${item.id}`)}
-                    >
-                      <div className="w-20 h-20 rounded-md bg-muted overflow-hidden">
-                        <img 
-                          src={item.image} 
-                          alt={item.title} 
-                          className="w-full h-full object-cover" 
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium line-clamp-2">{item.title}</p>
-                        <p className="text-sm font-semibold mt-1">
-                          {item.priceCurrency || displayedListing.priceCurrency} {item.price.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                  {/* Future enhancement: Fetch similar listings by category from the API */}
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Button variant="link" onClick={() => setLocation("/dashboard/marketplace")}>
+                      Browse more listings in the marketplace
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
