@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Logo } from "@/components/Logo";
 
 export function Sidebar() {
   const [location] = useLocation();
@@ -186,15 +187,7 @@ export function Sidebar() {
     <>
       {/* Mobile Status Bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-sidebar-background text-sidebar-foreground border-b border-primary/20 flex items-center justify-between px-4 safe-top">
-        <Link
-          href="/dashboard"
-          className="text-xl font-bold font-space tracking-wider relative"
-        >
-          Green<span className="text-primary">upp</span>
-          <span className="absolute -top-1 -right-10 bg-primary text-black text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
-            BETA
-          </span>
-        </Link>
+        <Logo size="sm" href="/dashboard" />
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -305,18 +298,7 @@ export function Sidebar() {
       {/* Desktop Sidebar */}
       <div className="hidden md:flex h-screen flex-col bg-sidebar-background text-sidebar-foreground border-r border-primary/20 w-64 fixed top-0 left-0">
         <div className="p-6 flex items-center justify-between">
-          <Link
-            href="/"
-            className="text-2xl font-bold font-space tracking-wider group flex items-center relative"
-          >
-            Green
-            <span className="text-primary group-hover:animate-pulse transition-all">
-              upp
-            </span>
-            <span className="absolute -top-1 -right-12 bg-primary text-black text-xs px-2 py-0.5 rounded-full font-semibold">
-              BETA
-            </span>
-          </Link>
+          <Logo size="md" href="/" />
           
           <ThemeToggle />
         </div>
