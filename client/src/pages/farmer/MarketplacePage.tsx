@@ -333,10 +333,10 @@ export default function MarketplacePage() {
                   </SheetHeader>
                   <div className="py-4 space-y-6">
                     <div className="space-y-2">
-                      <h3 className="text-sm font-medium">Price Range (USD)</h3>
+                      <h3 className="text-sm font-medium">Price Range (ZMW)</h3>
                       <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                        <span>${filters.minPrice}</span>
-                        <span>{filters.maxPrice >= 1000000 ? "Any" : `$${filters.maxPrice}`}</span>
+                        <span>ZMW {filters.minPrice}</span>
+                        <span>{filters.maxPrice >= 1000000 ? "Any" : `ZMW ${filters.maxPrice}`}</span>
                       </div>
                       <Slider
                         defaultValue={[0, 1000]}
@@ -411,20 +411,52 @@ export default function MarketplacePage() {
                           onClick={() => navigateToDetail(listing.id)}
                         >
                           <div className="relative h-48 bg-muted">
-                            {listing.images && Array.isArray(listing.images) && listing.images.length > 0 ? (
-                              <img
-                                src={listing.images[0]}
-                                alt={listing.title || "Marketplace item"}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.src = "https://via.placeholder.com/400x300?text=Image+Not+Available";
-                                }}
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                                <p className="text-gray-500">No image</p>
-                              </div>
-                            )}
+                            {(() => {
+                              // Enhanced image handling similar to detail page
+                              let imageUrl = null;
+                              
+                              try {
+                                if (listing.images) {
+                                  if (Array.isArray(listing.images) && listing.images.length > 0) {
+                                    // Get first valid image from array
+                                    const validImages = listing.images.filter(img => img && img !== "");
+                                    if (validImages.length > 0) {
+                                      imageUrl = validImages[0];
+                                    }
+                                  } else if (typeof listing.images === 'string') {
+                                    try {
+                                      // Try to parse as JSON string
+                                      const parsed = JSON.parse(listing.images);
+                                      if (Array.isArray(parsed) && parsed.length > 0) {
+                                        imageUrl = parsed[0];
+                                      } else {
+                                        imageUrl = listing.images; // Use as single string
+                                      }
+                                    } catch (e) {
+                                      imageUrl = listing.images; // Use as single string if parsing fails
+                                    }
+                                  }
+                                }
+                              } catch (error) {
+                                console.error(`Error processing image for listing ${listing.id}:`, error);
+                              }
+                              
+                              return imageUrl ? (
+                                <img
+                                  src={imageUrl}
+                                  alt={listing.title || "Marketplace item"}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    console.log(`Image load error for ${listing.id}:`, e);
+                                    e.currentTarget.src = "https://placehold.co/700x500/green/white?text=No+Image";
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                  <p className="text-gray-500">No image</p>
+                                </div>
+                              );
+                            })()}
                             
                             {/* Optional badge for negotiable items */}
                             {Boolean(listing.isNegotiable) && (
@@ -465,7 +497,7 @@ export default function MarketplacePage() {
                           <CardContent className="p-4 pt-0">
                             <div className="flex justify-between items-center mb-2">
                               <p className="font-bold text-lg">
-                                {listing.priceCurrency || "USD"}{" "}
+                                {listing.priceCurrency || "ZMW"}{" "}
                                 {(() => {
                                   try {
                                     const priceValue = typeof listing.price === "string" 
