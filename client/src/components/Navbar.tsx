@@ -1,6 +1,7 @@
 import { FC } from "react";
 import { Link } from "wouter";
 import { ThemeToggle } from "./ThemeToggle";
+import { Logo } from "./Logo";
 
 interface NavbarProps {
   mobileMenuOpen: boolean;
@@ -11,24 +12,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
   return (
     <nav className="fixed w-full bg-secondary/95 backdrop-blur-md z-50 border-b border-primary/20 shadow-lg shadow-black/20">
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-2 md:py-3 flex justify-between items-center">
-        <div className="flex items-center">
-          <div className="text-primary text-2xl md:text-3xl mr-1 relative">
-            <i className="fas fa-leaf"></i>
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-          </div>
-          <Link
-            href="/"
-            className="text-xl md:text-2xl font-bold font-space tracking-wider group relative"
-          >
-            Green
-            <span className="text-primary group-hover:animate-pulse transition-all">
-              upp
-            </span>
-            <span className="absolute -top-2 -right-12  text-white text-xs px-2 py-0.5 rounded-full font-semibold">
-              BETA
-            </span>
-          </Link>
-        </div>
+        <Logo size="md" href="/" />
 
         <div className="hidden md:flex space-x-6 lg:space-x-8 items-center">
           <a
