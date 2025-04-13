@@ -205,7 +205,8 @@ export function Sidebar() {
               <Button variant="ghost" className="rounded-full h-8 w-8 p-0">
                 <Avatar className="h-8 w-8 border border-primary/20">
                   <AvatarFallback className="text-sm bg-primary/20 text-primary">
-                    {user && (user.firstName?.[0] || user.username?.[0]) || "U"}
+                    {(user && (user.firstName?.[0] || user.username?.[0])) ||
+                      "U"}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -243,7 +244,7 @@ export function Sidebar() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 h-16 bg-black border-t border-primary/20 flex items-center justify-around px-1 safe-bottom">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 h-24 bg-black border-t border-primary/20 flex items-center justify-around px-1 safe-bottom">
         {mobileNavItems.map((item) => (
           <Link
             key={item.href}
@@ -264,27 +265,27 @@ export function Sidebar() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="flex flex-col items-center justify-center gap-1 w-full h-full rounded-none text-gray-400"
+              className="flex flex-col items-center mt-2 justify-center gap-1 w-full h-full rounded-none text-gray-400"
             >
               <MoreHorizontal className="h-6 w-6" />
               <span className="text-xs">More</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent 
-            className="w-60 mr-2 mb-2 rounded-xl bg-gray-900 border border-primary/20 shadow-lg shadow-primary/5"
-          >
-            <DropdownMenuLabel className="text-white">More Features</DropdownMenuLabel>
+          <DropdownMenuContent className="w-60 mr-2 mb-2 rounded-xl bg-gray-900 border border-primary/20 shadow-lg shadow-primary/5">
+            <DropdownMenuLabel className="text-white">
+              More Features
+            </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-primary/20" />
-            
+
             {navItems
               .filter((item) => !item.showInMobileNav)
               .map((item) => (
                 <DropdownMenuItem key={item.href} asChild>
-                  <Link 
-                    href={item.href} 
+                  <Link
+                    href={item.href}
                     className={cn(
                       "cursor-pointer w-full focus:bg-primary/10 focus:text-white",
-                      item.active ? "text-primary" : "text-gray-400"
+                      item.active ? "text-primary" : "text-gray-400",
                     )}
                   >
                     <div className="flex items-center gap-3 py-1">
@@ -347,7 +348,7 @@ export function Sidebar() {
           <div className="flex items-center gap-3 px-3 py-2 mb-4">
             <Avatar className="h-9 w-9 border border-primary/20">
               <AvatarFallback className="bg-primary/20 text-primary">
-                {user && (user.firstName?.[0] || user.username?.[0]) || "U"}
+                {(user && (user.firstName?.[0] || user.username?.[0])) || "U"}
               </AvatarFallback>
             </Avatar>
             <div className="truncate">
@@ -355,7 +356,9 @@ export function Sidebar() {
                 {user?.firstName || user?.username}
               </p>
               <p className="text-xs text-gray-500">
-                {user && user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User"}
+                {user && user.role
+                  ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+                  : "User"}
               </p>
             </div>
           </div>
