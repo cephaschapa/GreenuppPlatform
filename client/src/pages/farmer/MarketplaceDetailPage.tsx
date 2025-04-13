@@ -57,23 +57,23 @@ import {
 // Function to get condition label
 function getConditionLabel(condition: string | null): string {
   if (!condition) return "Unknown";
-  
+
   const conditionMap: Record<string, string> = {
     new: "New",
     like_new: "Like New",
     excellent: "Excellent",
     good: "Good",
     fair: "Fair",
-    salvage: "For Parts/Salvage"
+    salvage: "For Parts/Salvage",
   };
-  
+
   return conditionMap[condition] || condition;
 }
 
 // Get the category label
 function getCategoryLabel(category: string | null): string {
   if (!category) return "Other";
-  
+
   const categoryMap: Record<string, string> = {
     seeds: "Seeds",
     equipment: "Equipment",
@@ -85,9 +85,9 @@ function getCategoryLabel(category: string | null): string {
     feed: "Animal Feed",
     services: "Services",
     land: "Land",
-    other: "Other"
+    other: "Other",
   };
-  
+
   return categoryMap[category] || category;
 }
 
@@ -108,6 +108,22 @@ export default function MarketplaceDetailPage() {
     error,
   } = useQuery<MarketplaceListing>({
     queryKey: ["/api/marketplace/listings", params.id],
+    queryFn: async () => {
+      console.log(`Fetching listing with ID: ${params.id}`);
+      const response = await fetch(`/api/marketplace/listings/${params.id}`, {
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Error fetching listing: ${response.status}`, errorText);
+        throw new Error(`Failed to fetch listing: ${response.status} ${errorText || response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log("Listing data from API:", data);
+      return data;
+    },
   });
 
   const navigateBack = () => {
@@ -219,31 +235,39 @@ export default function MarketplaceDetailPage() {
   // Log all listing data for debugging
   console.log("Listing data:", JSON.stringify(listing, null, 2));
   console.log("Images data:", listing.images);
-  
+
   // Prepare images from the database with more robust handling
   let imageArray: string[] = [];
   const defaultImage = "https://placehold.co/700x500/green/white?text=No+Image";
-  
+
   try {
     // Check if we have any images
     if (listing.images) {
       console.log("Raw images value:", listing.images);
-      
+
       if (Array.isArray(listing.images)) {
         // It's already an array, we can use it directly
-        imageArray = listing.images.filter(img => img && img !== "");
-        console.log("Images are provided as an array, count:", imageArray.length);
-      } else if (typeof listing.images === 'string') {
+        imageArray = listing.images.filter((img) => img && img !== "");
+        console.log(
+          "Images are provided as an array, count:",
+          imageArray.length,
+        );
+      } else if (typeof listing.images === "string") {
         // First try to parse it as JSON (stringified array)
         try {
           const parsed = JSON.parse(listing.images);
           if (Array.isArray(parsed)) {
-            imageArray = parsed.filter(img => img && img !== "");
-            console.log("Images parsed from JSON string, count:", imageArray.length);
+            imageArray = parsed.filter((img) => img && img !== "");
+            console.log(
+              "Images parsed from JSON string, count:",
+              imageArray.length,
+            );
           } else {
             // If it's not an array after parsing, use as single string
             imageArray = [listing.images];
-            console.log("Using single image string (not an array after parsing)");
+            console.log(
+              "Using single image string (not an array after parsing)",
+            );
           }
         } catch (e) {
           // If parsing fails, it might be a single image URL
@@ -257,25 +281,28 @@ export default function MarketplaceDetailPage() {
   } catch (error) {
     console.error("Error processing images:", error);
   }
-  
+
   // Additional validation to ensure all array items are valid
-  imageArray = imageArray.filter(url => url && typeof url === 'string' && url.trim() !== '');
-  
+  imageArray = imageArray.filter(
+    (url) => url && typeof url === "string" && url.trim() !== "",
+  );
+
   console.log("Final image array:", imageArray);
-  
+
   // Make sure we have at least one image
   if (imageArray.length === 0) {
     console.log("Using default image as no valid images were found");
     imageArray = [defaultImage];
   }
-  
+
   // Ensure we have a valid price
-  const price = typeof listing.price === "string"
-    ? parseFloat(listing.price)
-    : typeof listing.price === "number"
-      ? listing.price
-      : 0;
-  
+  const price =
+    typeof listing.price === "string"
+      ? parseFloat(listing.price)
+      : typeof listing.price === "number"
+        ? listing.price
+        : 0;
+
   // Format the created date
   const createdAt = new Date(listing.createdAt);
   const isValidDate = !isNaN(createdAt.getTime());
@@ -350,7 +377,10 @@ export default function MarketplaceDetailPage() {
                     </h1>
                     <div className="flex flex-wrap gap-2 mt-2">
                       {listing.isNegotiable && (
-                        <Badge variant="outline" className="border-yellow-500 text-yellow-600">
+                        <Badge
+                          variant="outline"
+                          className="border-yellow-500 text-yellow-600"
+                        >
                           Price Negotiable
                         </Badge>
                       )}
@@ -360,7 +390,10 @@ export default function MarketplaceDetailPage() {
                         </Badge>
                       )}
                       {listing.deliveryAvailable && (
-                        <Badge variant="outline" className="border-green-500 text-green-600">
+                        <Badge
+                          variant="outline"
+                          className="border-green-500 text-green-600"
+                        >
                           Delivery Available
                         </Badge>
                       )}
@@ -381,7 +414,8 @@ export default function MarketplaceDetailPage() {
                   {isValidDate && (
                     <div className="flex items-center">
                       <Calendar className="h-4 w-4 mr-2" />
-                      Posted {formatDistanceToNow(createdAt, { addSuffix: true })}
+                      Posted{" "}
+                      {formatDistanceToNow(createdAt, { addSuffix: true })}
                     </div>
                   )}
                 </div>
@@ -421,8 +455,7 @@ export default function MarketplaceDetailPage() {
                           Quantity
                         </h3>
                         <p className="text-muted-foreground">
-                          {listing.quantity}{" "}
-                          {listing.quantityUnit || "units"}
+                          {listing.quantity} {listing.quantityUnit || "units"}
                         </p>
                       </div>
                     )}
@@ -449,23 +482,21 @@ export default function MarketplaceDetailPage() {
                       size="sm"
                       onClick={handleFavoriteToggle}
                     >
-                      <Heart className={`h-4 w-4 mr-2 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-                      {isFavorite ? 'Saved' : 'Save'}
+                      <Heart
+                        className={`h-4 w-4 mr-2 ${isFavorite ? "fill-red-500 text-red-500" : ""}`}
+                      />
+                      {isFavorite ? "Saved" : "Save"}
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleShare}
-                    >
+                    <Button variant="outline" size="sm" onClick={handleShare}>
                       <Share2 className="h-4 w-4 mr-2" />
                       Share
                     </Button>
-                    <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+                    <Dialog
+                      open={isReportDialogOpen}
+                      onOpenChange={setIsReportDialogOpen}
+                    >
                       <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                        >
+                        <Button variant="outline" size="sm">
                           <Flag className="h-4 w-4 mr-2" />
                           Report
                         </Button>
@@ -484,12 +515,13 @@ export default function MarketplaceDetailPage() {
                           className="min-h-[100px]"
                         />
                         <DialogFooter>
-                          <Button variant="outline" onClick={() => setIsReportDialogOpen(false)}>
+                          <Button
+                            variant="outline"
+                            onClick={() => setIsReportDialogOpen(false)}
+                          >
                             Cancel
                           </Button>
-                          <Button onClick={handleReport}>
-                            Submit Report
-                          </Button>
+                          <Button onClick={handleReport}>Submit Report</Button>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
@@ -504,7 +536,9 @@ export default function MarketplaceDetailPage() {
             {/* Seller info */}
             <Card>
               <CardContent className="p-6">
-                <h2 className="text-lg font-semibold mb-4">Seller Information</h2>
+                <h2 className="text-lg font-semibold mb-4">
+                  Seller Information
+                </h2>
                 <div className="flex items-center gap-3 mb-4">
                   <Avatar className="h-12 w-12">
                     <AvatarFallback>
@@ -520,13 +554,20 @@ export default function MarketplaceDetailPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <Button className="w-full" onClick={() => setIsContactDrawerOpen(true)}>
+                  <Button
+                    className="w-full"
+                    onClick={() => setIsContactDrawerOpen(true)}
+                  >
                     <MessageCircle className="h-4 w-4 mr-2" />
                     Contact Seller
                   </Button>
-                  
+
                   {listing.contactPhone && (
-                    <Button variant="outline" className="w-full" onClick={handleCallSeller}>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleCallSeller}
+                    >
                       <Phone className="h-4 w-4 mr-2" />
                       Call: {listing.contactPhone}
                     </Button>
@@ -538,13 +579,18 @@ export default function MarketplaceDetailPage() {
             {/* Safety tips */}
             <Card className="bg-amber-50 border-amber-200">
               <CardContent className="p-6">
-                <h2 className="text-lg font-semibold mb-2 text-amber-900">Safety Tips</h2>
+                <h2 className="text-lg font-semibold mb-2 text-amber-900">
+                  Safety Tips
+                </h2>
                 <ul className="list-disc list-inside text-sm text-amber-800 space-y-2">
                   <li>Meet in a public, well-lit place</li>
                   <li>Inspect items before paying</li>
                   <li>Don't share personal financial information</li>
                   <li>Consider using secure payment methods</li>
-                  <li>Trust your instincts - if something seems suspicious, it probably is</li>
+                  <li>
+                    Trust your instincts - if something seems suspicious, it
+                    probably is
+                  </li>
                 </ul>
               </CardContent>
             </Card>
@@ -552,7 +598,10 @@ export default function MarketplaceDetailPage() {
         </div>
 
         {/* Contact drawer for mobile */}
-        <Drawer open={isContactDrawerOpen} onOpenChange={setIsContactDrawerOpen}>
+        <Drawer
+          open={isContactDrawerOpen}
+          onOpenChange={setIsContactDrawerOpen}
+        >
           <DrawerContent>
             <DrawerHeader>
               <DrawerTitle>Contact Seller</DrawerTitle>
