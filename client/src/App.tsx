@@ -54,7 +54,7 @@ function Router() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="dark">
+    <ThemeProvider defaultTheme="system">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <Router />

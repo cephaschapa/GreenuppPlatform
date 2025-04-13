@@ -185,18 +185,20 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile Status Bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-black border-b border-primary/20 flex items-center justify-between px-4 safe-top">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-sidebar-background text-sidebar-foreground border-b border-primary/20 flex items-center justify-between px-4 safe-top">
         <Link
           href="/dashboard"
           className="text-xl font-bold font-space tracking-wider relative"
         >
           Green<span className="text-primary">upp</span>
-          <span className="absolute -top-1 -right-10 text-white text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
+          <span className="absolute -top-1 -right-10 bg-primary text-black text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
             BETA
           </span>
         </Link>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
+          
           <Button variant="ghost" size="icon" className="rounded-full">
             <Bell className="h-5 w-5" />
           </Button>
@@ -245,14 +247,14 @@ export function Sidebar() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 h-24 bg-black border-t border-primary/20 flex items-center justify-around px-1 safe-bottom">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 h-24 bg-sidebar-background text-sidebar-foreground border-t border-primary/20 flex items-center justify-around px-1 safe-bottom">
         {mobileNavItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
               "flex flex-col items-center justify-center gap-1 w-full h-full px-1",
-              item.active ? "text-primary" : "text-gray-400",
+              item.active ? "text-primary" : "text-muted-foreground",
             )}
           >
             {item.mobileIcon}
@@ -266,14 +268,14 @@ export function Sidebar() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="flex flex-col items-center mt-2 justify-center gap-1 w-full h-full rounded-none text-gray-400"
+              className="flex flex-col items-center mt-2 justify-center gap-1 w-full h-full rounded-none text-muted-foreground"
             >
               <MoreHorizontal className="h-6 w-6" />
               <span className="text-xs">More</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-60 mr-2 mb-2 rounded-xl bg-gray-900 border border-primary/20 shadow-lg shadow-primary/5">
-            <DropdownMenuLabel className="text-white">
+          <DropdownMenuContent className="w-60 mr-2 mb-2 rounded-xl bg-sidebar-background border border-primary/20 shadow-lg shadow-primary/5">
+            <DropdownMenuLabel className="text-sidebar-foreground">
               More Features
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-primary/20" />
@@ -285,8 +287,8 @@ export function Sidebar() {
                   <Link
                     href={item.href}
                     className={cn(
-                      "cursor-pointer w-full focus:bg-primary/10 focus:text-white",
-                      item.active ? "text-primary" : "text-gray-400",
+                      "cursor-pointer w-full focus:bg-primary/10 focus:text-sidebar-foreground",
+                      item.active ? "text-primary" : "text-muted-foreground",
                     )}
                   >
                     <div className="flex items-center gap-3 py-1">
@@ -301,8 +303,8 @@ export function Sidebar() {
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex h-screen flex-col bg-black border-r border-primary/20 w-64 fixed top-0 left-0">
-        <div className="p-6">
+      <div className="hidden md:flex h-screen flex-col bg-sidebar-background text-sidebar-foreground border-r border-primary/20 w-64 fixed top-0 left-0">
+        <div className="p-6 flex items-center justify-between">
           <Link
             href="/"
             className="text-2xl font-bold font-space tracking-wider group flex items-center relative"
@@ -315,6 +317,8 @@ export function Sidebar() {
               BETA
             </span>
           </Link>
+          
+          <ThemeToggle />
         </div>
 
         <ScrollArea className="flex-1 py-4">
@@ -327,7 +331,7 @@ export function Sidebar() {
                   "flex items-center justify-between px-3 py-2 rounded-md transition-colors",
                   item.active
                     ? "bg-primary/20 text-primary"
-                    : "text-gray-400 hover:text-white hover:bg-primary/10",
+                    : "text-muted-foreground hover:text-sidebar-foreground hover:bg-primary/10",
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -353,10 +357,10 @@ export function Sidebar() {
               </AvatarFallback>
             </Avatar>
             <div className="truncate">
-              <p className="text-sm font-medium text-white truncate">
+              <p className="text-sm font-medium text-sidebar-foreground truncate">
                 {user?.firstName || user?.username}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {user && user.role
                   ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
                   : "User"}
@@ -367,7 +371,7 @@ export function Sidebar() {
           <Button
             variant="outline"
             size="sm"
-            className="w-full flex items-center gap-2 text-gray-400 hover:text-white"
+            className="w-full flex items-center gap-2 text-muted-foreground hover:text-sidebar-foreground"
             onClick={() => logoutMutation.mutate()}
             disabled={logoutMutation.isPending}
           >
