@@ -400,7 +400,7 @@ export default function MarketplaceDetailPage() {
                     </div>
                   </div>
                   <div className="text-2xl font-bold">
-                    {listing.priceCurrency || "USD"} {price.toFixed(2)}
+                    {listing.priceCurrency || "ZMW"} {price.toFixed(2)}
                   </div>
                 </div>
 
@@ -462,8 +462,8 @@ export default function MarketplaceDetailPage() {
                     {listing.priceUnit && (
                       <div>
                         <h3 className="text-sm font-medium flex items-center">
-                          <DollarSign className="h-4 w-4 mr-1" />
-                          Pricing Unit
+                          <span className="inline-flex items-center justify-center h-4 w-4 mr-1 text-xs font-semibold">ZMW</span>
+                          Price Per Unit
                         </h3>
                         <p className="text-muted-foreground">
                           {listing.priceUnit}
