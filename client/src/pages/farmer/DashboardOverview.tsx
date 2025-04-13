@@ -278,7 +278,7 @@ export default function DashboardOverview() {
                               ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
                               : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
                         }`}>
-                          {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                          {task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : 'Normal'}
                         </div>
                       </div>
                     ))}
@@ -315,7 +315,7 @@ export default function DashboardOverview() {
                         </div>
                         <div className="mt-1 text-sm text-muted-foreground grid grid-cols-2 gap-2">
                           <p>Planted: {formatDate(crop.plantingDate)}</p>
-                          <p>Harvest: {formatDate(crop.harvestDate)}</p>
+                          <p>Harvest: {formatDate(crop.expectedHarvestDate)}</p>
                         </div>
                       </div>
                     ))}
