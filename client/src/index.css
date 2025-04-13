@@ -118,4 +118,13 @@
   .mobile-subheading {
     @apply text-lg sm:text-xl;
   }
+  
+  /* Safe area insets for modern mobile devices */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
 }

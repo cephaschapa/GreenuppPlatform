@@ -78,7 +78,7 @@ export function Sidebar() {
       icon: <Sprout className="h-5 w-5" />,
       mobileIcon: <Sprout className="h-6 w-6" />,
       active: location === "/dashboard/plant-diagnosis",
-      showInMobileNav: true,
+      showInMobileNav: false,
     },
     {
       title: "Marketplace",
@@ -184,7 +184,7 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile Status Bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-black border-b border-primary/20 flex items-center justify-between px-4">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-black border-b border-primary/20 flex items-center justify-between px-4 safe-top">
         <Link
           href="/dashboard"
           className="text-xl font-bold font-space tracking-wider relative"
@@ -243,18 +243,18 @@ export function Sidebar() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 h-16 bg-black border-t border-primary/20 flex items-center justify-around">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 h-16 bg-black border-t border-primary/20 flex items-center justify-around px-1 safe-bottom">
         {mobileNavItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 w-full h-full",
+              "flex flex-col items-center justify-center gap-1 w-full h-full px-1",
               item.active ? "text-primary" : "text-gray-400",
             )}
           >
             {item.mobileIcon}
-            <span className="text-xs line-clamp-1 text-center">
+            <span className="text-xs line-clamp-1 text-center max-w-[70px]">
               {item.title}
             </span>
           </Link>
@@ -270,13 +270,24 @@ export function Sidebar() {
               <span className="text-xs">More</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent 
+            className="w-60 mr-2 mb-2 rounded-xl bg-gray-900 border border-primary/20 shadow-lg shadow-primary/5"
+          >
+            <DropdownMenuLabel className="text-white">More Features</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-primary/20" />
+            
             {navItems
               .filter((item) => !item.showInMobileNav)
               .map((item) => (
                 <DropdownMenuItem key={item.href} asChild>
-                  <Link href={item.href} className="cursor-pointer w-full">
-                    <div className="flex items-center gap-3">
+                  <Link 
+                    href={item.href} 
+                    className={cn(
+                      "cursor-pointer w-full focus:bg-primary/10 focus:text-white",
+                      item.active ? "text-primary" : "text-gray-400"
+                    )}
+                  >
+                    <div className="flex items-center gap-3 py-1">
                       {item.icon}
                       <span>{item.title}</span>
                     </div>
