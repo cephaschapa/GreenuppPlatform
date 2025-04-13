@@ -337,7 +337,7 @@ export default function DashboardOverview() {
           {/* AI Insights and Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* AI Insights */}
-            <Card className="border-primary/30 bg-gradient-to-br from-black to-primary/20">
+            <Card className="border-primary/30 bg-gradient-to-br from-background to-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
