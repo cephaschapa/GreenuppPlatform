@@ -149,7 +149,7 @@ export default function DashboardOverview() {
         <div className="space-y-8">
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-primary/5 border-primary/20">
+            <Card className="bg-card border-primary/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <TractorIcon className="h-5 w-5 text-primary" />
@@ -172,7 +172,7 @@ export default function DashboardOverview() {
               </CardFooter>
             </Card>
             
-            <Card className="bg-green-950/10 border-green-600/20">
+            <Card className="bg-card border-green-600/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <Leaf className="h-5 w-5 text-green-600" />
@@ -195,7 +195,7 @@ export default function DashboardOverview() {
               </CardFooter>
             </Card>
             
-            <Card className="bg-blue-950/10 border-blue-600/20">
+            <Card className="bg-card border-blue-600/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <ClipboardList className="h-5 w-5 text-blue-600" />
@@ -218,7 +218,7 @@ export default function DashboardOverview() {
               </CardFooter>
             </Card>
             
-            <Card className="bg-sky-950/10 border-sky-600/20">
+            <Card className="bg-card border-sky-600/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <Cloud className="h-5 w-5 text-sky-600" />
