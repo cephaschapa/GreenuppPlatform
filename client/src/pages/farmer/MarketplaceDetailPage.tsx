@@ -201,6 +201,30 @@ export default function MarketplaceDetailPage() {
       });
     }
   };
+  
+  // Handle adding product to cart
+  const handleAddToCart = async () => {
+    if (!listing) return;
+    
+    setIsAddingToCart(true);
+    try {
+      await addToCart(listing.id, 1);
+      
+      toast({
+        title: "Added to cart",
+        description: "Item has been added to your shopping cart",
+      });
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast({
+        title: "Failed to add to cart",
+        description: "There was an error adding this item to your cart",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -561,6 +585,21 @@ export default function MarketplaceDetailPage() {
                 <div className="space-y-4">
                   <Button
                     className="w-full"
+                    variant="default"
+                    onClick={handleAddToCart}
+                    disabled={isAddingToCart}
+                  >
+                    {isAddingToCart ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                    )}
+                    {isAddingToCart ? "Adding..." : "Add to Cart"}
+                  </Button>
+                  
+                  <Button
+                    className="w-full"
+                    variant="outline"
                     onClick={() => setIsContactDrawerOpen(true)}
                   >
                     <MessageCircle className="h-4 w-4 mr-2" />
