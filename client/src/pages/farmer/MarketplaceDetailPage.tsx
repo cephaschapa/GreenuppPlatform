@@ -15,7 +15,10 @@ import {
   Tag,
   DollarSign,
   Ruler,
+  ShoppingCart,
+  Plus,
 } from "lucide-react";
+import { useCart } from "@/hooks/use-cart";
 import { formatDistanceToNow } from "date-fns";
 import { MarketplaceListing } from "@shared/schema";
 
@@ -100,6 +103,8 @@ export default function MarketplaceDetailPage() {
   const [reportReason, setReportReason] = useState("");
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isContactDrawerOpen, setIsContactDrawerOpen] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const { addToCart } = useCart();
 
   // Fetch the listing data from the API
   const {
