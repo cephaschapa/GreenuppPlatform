@@ -191,14 +191,14 @@ export function Sidebar() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Bell className="h-5 w-5" />
+
+          <Button variant="outline" size="icon" className="rounded-full border-primary/20 bg-primary/5 hover:bg-primary/10">
+            <Bell className="h-5 w-5 text-sidebar-foreground" />
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="rounded-full h-8 w-8 p-0">
+              <Button variant="outline" className="rounded-full h-8 w-8 p-0 border-primary/20 bg-primary/5 hover:bg-primary/10">
                 <Avatar className="h-8 w-8 border border-primary/20">
                   <AvatarFallback className="text-sm bg-primary/20 text-primary">
                     {(user && (user.firstName?.[0] || user.username?.[0])) ||
@@ -207,13 +207,13 @@ export function Sidebar() {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56 bg-sidebar-background border border-primary/20 text-sidebar-foreground">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="bg-primary/20" />
               <DropdownMenuItem asChild>
                 <Link
                   href="/dashboard/profile"
-                  className="cursor-pointer w-full"
+                  className="cursor-pointer w-full focus:bg-primary/10 focus:text-sidebar-foreground"
                 >
                   Profile
                 </Link>
@@ -221,14 +221,14 @@ export function Sidebar() {
               <DropdownMenuItem asChild>
                 <Link
                   href="/dashboard/settings"
-                  className="cursor-pointer w-full"
+                  className="cursor-pointer w-full focus:bg-primary/10 focus:text-sidebar-foreground"
                 >
                   Settings
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="bg-primary/20" />
               <DropdownMenuItem
-                className="text-red-500 focus:text-red-500"
+                className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
                 onClick={() => logoutMutation.mutate()}
                 disabled={logoutMutation.isPending}
               >
@@ -261,7 +261,7 @@ export function Sidebar() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="flex flex-col items-center mt-2 justify-center gap-1 w-full h-full rounded-none text-muted-foreground"
+              className="flex flex-col items-center mt-2 justify-center gap-1 w-full h-full rounded-none text-muted-foreground hover:bg-primary/10 hover:text-sidebar-foreground"
             >
               <MoreHorizontal className="h-6 w-6" />
               <span className="text-xs">More</span>
@@ -299,7 +299,7 @@ export function Sidebar() {
       <div className="hidden md:flex h-screen flex-col bg-sidebar-background text-sidebar-foreground border-r border-primary/20 w-64 fixed top-0 left-0">
         <div className="p-6 flex items-center justify-between">
           <Logo size="md" href="/" />
-          
+
           <ThemeToggle />
         </div>
 
