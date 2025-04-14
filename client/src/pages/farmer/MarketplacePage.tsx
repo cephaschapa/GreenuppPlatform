@@ -75,6 +75,7 @@ export default function MarketplacePage() {
   // Add sorting options
   const [sortBy, setSortBy] = useState<string>("newest");
   const [showFeatured, setShowFeatured] = useState<boolean>(true);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState("");
   const [userLocation, setUserLocation] = useState<{
     lat: number;
@@ -198,11 +199,22 @@ export default function MarketplacePage() {
     setLocation("/dashboard/marketplace/new");
   };
 
+  // Get user's favorites
+  const { favorites, isLoading: isFavoritesLoading } = useMarketplaceFavorites();
+  
   // Filter real listings from the API
-  // Filter listings by search term, category, price and negotiable
+  // Filter listings by search term, category, price and favorites
   const filteredListings = listings
     ? listings.filter((listing: MarketplaceListing) => {
         try {
+          // Favorites filter
+          if (showFavoritesOnly) {
+            const isFavorited = favorites?.some(fav => fav.listingId === listing.id);
+            if (!isFavorited) {
+              return false;
+            }
+          }
+          
           // Search filter
           if (filters.search && listing.title) {
             if (
@@ -585,12 +597,26 @@ console.log("Listings after filtering:", {
               <span className="text-sm text-muted-foreground">
                 {displayedListings.length} {displayedListings.length === 1 ? 'listing' : 'listings'} found
               </span>
-              <Switch
-                checked={showFeatured}
-                onCheckedChange={setShowFeatured}
-                className="data-[state=checked]:bg-primary"
-              />
-              <label className="text-sm font-medium">Show Featured</label>
+              <div className="flex items-center gap-2 border-r pr-4 mr-2">
+                <Switch
+                  checked={showFeatured}
+                  onCheckedChange={setShowFeatured}
+                  className="data-[state=checked]:bg-primary"
+                />
+                <label className="text-sm font-medium">Show Featured</label>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={showFavoritesOnly}
+                  onCheckedChange={setShowFavoritesOnly}
+                  className="data-[state=checked]:bg-primary"
+                />
+                <div className="flex items-center gap-1">
+                  <Heart className={`h-3 w-3 ${showFavoritesOnly ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
+                  <label className="text-sm font-medium">Favorites Only</label>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -688,9 +714,31 @@ console.log("Listings after filtering:", {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {displayedListings.length === 0 ? (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">
-                    No listings found matching your criteria
-                  </p>
+                  {showFavoritesOnly ? (
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="relative">
+                        <Heart className="h-16 w-16 text-muted-foreground/20" />
+                        <Plus className="h-8 w-8 text-muted-foreground/40 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                      </div>
+                      <div>
+                        <p className="text-lg font-medium mb-1">No favorites yet</p>
+                        <p className="text-muted-foreground">
+                          Click the heart icon on listings to add them to your favorites
+                        </p>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        className="mt-2"
+                        onClick={() => setShowFavoritesOnly(false)}
+                      >
+                        Show all listings
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">
+                      No listings found matching your criteria
+                    </p>
+                  )}
                 </div>
               ) : (
                 displayedListings.map((listing: MarketplaceListing) => {
