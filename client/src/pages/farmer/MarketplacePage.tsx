@@ -332,14 +332,84 @@ export default function MarketplacePage() {
       .slice(0, 4)
     : [];
     
-  // Final listings to display
-  const displayedListings = sortedListings;
+  // FavoriteButton component for toggling favorites
+const FavoriteButton = ({ listingId }: { listingId: number }) => {
+  const { isFavorite, toggleFavorite } = useMarketplaceFavorites();
+  const isFav = isFavorite(listingId);
+  
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 opacity-70 hover:opacity-100 hover:bg-primary/10 transition-all"
+      onClick={(e) => {
+        e.stopPropagation();
+        toggleFavorite(listingId);
+      }}
+    >
+      <Heart 
+        className={`h-4 w-4 text-primary transition-all ${isFav ? 'fill-primary' : 'hover:fill-primary'}`} 
+      />
+    </Button>
+  );
+};
 
-  console.log("Listings after filtering:", {
-    before: listings ? listings.length : 0,
-    after: displayedListings.length,
-    filters,
-  });
+// ReviewStars component for displaying seller ratings
+const ReviewStars = ({ sellerId }: { sellerId: number }) => {
+  const { reviews, reviewCount, averageRating, isLoading } = useMarketplaceReviews(undefined, sellerId);
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center">
+        <Star className="h-3 w-3 mr-1 text-muted" />
+        <span className="text-muted">Loading...</span>
+      </div>
+    );
+  }
+  
+  // If no reviews, show placeholder
+  if (!reviews || reviews.length === 0) {
+    return (
+      <div className="flex items-center">
+        <Star className="h-3 w-3 mr-1 text-muted" />
+        <span className="text-muted">No reviews yet</span>
+      </div>
+    );
+  }
+  
+  // Round to nearest 0.5 for display
+  const displayRating = Math.round(averageRating * 2) / 2;
+  
+  return (
+    <div className="flex items-center">
+      <div className="flex mr-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`h-3 w-3 ${
+              star <= displayRating
+                ? 'text-yellow-500 fill-yellow-500'
+                : star - 0.5 === displayRating
+                ? 'text-yellow-500 fill-yellow-500/50'
+                : 'text-muted-foreground'
+            }`}
+          />
+        ))}
+      </div>
+      <span className="font-medium">{displayRating.toFixed(1)}</span>
+      <span className="ml-1">({reviewCount})</span>
+    </div>
+  );
+};
+
+// Final listings to display
+const displayedListings = sortedListings;
+
+console.log("Listings after filtering:", {
+  before: listings ? listings.length : 0,
+  after: displayedListings.length,
+  filters,
+});
 
   return (
     <DashboardLayout
@@ -585,12 +655,18 @@ export default function MarketplacePage() {
                       </div>
                     </div>
                     <CardContent className="p-3">
-                      <h3 className="font-semibold line-clamp-1 group-hover:text-primary transition-colors">
-                        {listing.title || "Untitled Listing"}
-                      </h3>
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-semibold line-clamp-1 group-hover:text-primary transition-colors">
+                          {listing.title || "Untitled Listing"}
+                        </h3>
+                        <FavoriteButton listingId={listing.id} />
+                      </div>
                       <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
                         {listing.description || "No description"}
                       </p>
+                      <div className="mt-2 text-xs">
+                        <ReviewStars sellerId={listing.sellerId} />
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -771,9 +847,7 @@ export default function MarketplacePage() {
 
                           <CardFooter className="p-4 pt-2 flex justify-between items-center text-xs text-muted-foreground border-t border-border/30">
                             <div className="flex items-center">
-                              <Star className="h-3 w-3 mr-1 text-yellow-500" />
-                              <span className="font-medium">{Math.floor(Math.random() * 5) + 1}/5</span>
-                              <span className="ml-2">({Math.floor(Math.random() * 20) + 1} reviews)</span>
+                              <ReviewStars sellerId={listing.sellerId} />
                             </div>
                             <span className="bg-primary/10 px-2 py-0.5 rounded text-primary">
                               {(() => {
