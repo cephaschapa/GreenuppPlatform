@@ -36,6 +36,8 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { MarketplaceListing } from "@shared/schema";
+import { useMarketplaceFavorites } from "@/hooks/use-marketplace-favorites";
+import { useMarketplaceReviews } from "@/hooks/use-marketplace-reviews";
 
 // Marketplace category list
 const MARKETPLACE_CATEGORIES = [
@@ -750,21 +752,8 @@ export default function MarketplacePage() {
                               <CardTitle className="text-lg font-semibold line-clamp-1 group-hover:text-primary transition-colors">
                                 {listing.title || "Untitled Listing"}
                               </CardTitle>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 opacity-70 hover:opacity-100 hover:bg-primary/10 transition-all"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toast({
-                                    title: "Added to favorites",
-                                    description:
-                                      "Item has been added to your favorites",
-                                  });
-                                }}
-                              >
-                                <Heart className="h-4 w-4 text-primary hover:fill-primary transition-all" />
-                              </Button>
+                              <FavoriteButton listingId={listing.id} />
+                              
                             </div>
                             <CardDescription className="flex items-center text-xs">
                               <MapPin className="h-3 w-3 mr-1 inline text-primary" />
