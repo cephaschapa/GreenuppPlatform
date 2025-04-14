@@ -6,10 +6,10 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Rajdhani', 'sans-serif'],
-        orbitron: ['Orbitron', 'sans-serif'],
-        grotesk: ['Space Grotesk', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        sans: ["Rajdhani", "sans-serif"],
+        orbitron: ["Orbitron", "sans-serif"],
+        grotesk: ["Space Grotesk", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -85,7 +85,7 @@ export default {
             height: "0",
           },
         },
-        "float": {
+        float: {
           "0%, 100%": {
             transform: "translateY(0)",
           },
@@ -113,7 +113,7 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "float": "float 4s ease-in-out infinite",
+        float: "float 4s ease-in-out infinite",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "rotate-slow": "rotate-slow 10s linear infinite",
       },

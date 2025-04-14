@@ -192,13 +192,20 @@ export function Sidebar() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
 
-          <Button variant="outline" size="icon" className="rounded-full border-primary/20 bg-primary/5 hover:bg-primary/10">
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full border-primary/20 bg-primary/5 hover:bg-primary/10"
+          >
             <Bell className="h-5 w-5 text-sidebar-foreground" />
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="rounded-full h-8 w-8 p-0 border-primary/20 bg-primary/5 hover:bg-primary/10">
+              <Button
+                variant="outline"
+                className="rounded-full h-8 w-8 p-0 border-primary/20 bg-primary/5 hover:bg-primary/10"
+              >
                 <Avatar className="h-8 w-8 border border-primary/20">
                   <AvatarFallback className="text-sm bg-primary/20 text-primary">
                     {(user && (user.firstName?.[0] || user.username?.[0])) ||
@@ -207,7 +214,10 @@ export function Sidebar() {
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-sidebar-background border border-primary/20 text-sidebar-foreground">
+            <DropdownMenuContent
+              align="end"
+              className="w-56 bg-sidebar-background border border-primary/20 text-sidebar-foreground"
+            >
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-primary/20" />
               <DropdownMenuItem asChild>
@@ -240,16 +250,16 @@ export function Sidebar() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 h-24 bg-sidebar-background text-sidebar-foreground border-t border-primary/20 flex items-center justify-around px-1 safe-bottom">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30  bg-sidebar-background text-sidebar-foreground border-t bg-black/30 backdrop-blur-md border-primary/20 flex items-center justify-around px-1 safe-bottom">
         {mobileNavItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
               "flex flex-col items-center justify-center gap-1 w-full h-full px-2 py-1 mx-1 rounded-md transition-colors",
-              item.active 
-                ? "text-primary bg-primary/10" 
-                : "text-muted-foreground hover:text-sidebar-foreground hover:bg-primary/5"
+              item.active
+                ? "text-primary bg-primary/10"
+                : "text-muted-foreground hover:text-sidebar-foreground hover:bg-primary/5",
             )}
           >
             {item.mobileIcon}
