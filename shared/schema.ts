@@ -473,3 +473,53 @@ export type InsertMarketplaceFavorite = z.infer<typeof insertMarketplaceFavorite
 export type MarketplaceFavorite = typeof marketplaceFavorites.$inferSelect;
 export type InsertMarketplaceMessage = z.infer<typeof insertMarketplaceMessageSchema>;
 export type MarketplaceMessage = typeof marketplaceMessages.$inferSelect;
+
+// Cart schemas
+export const carts = pgTable("carts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  status: text("status").notNull().default("active"), // active, checkout, completed, abandoned
+  // Store totals for quick reference and to preserve prices if listing prices change later
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull().default("0"),
+  shipping: decimal("shipping", { precision: 10, scale: 2 }).default("0"),
+  tax: decimal("tax", { precision: 10, scale: 2 }).default("0"),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull().default("0"),
+});
+
+// Cart items schema
+export const cartItems = pgTable("cart_items", {
+  id: serial("id").primaryKey(),
+  cartId: integer("cart_id").notNull().references(() => carts.id),
+  listingId: integer("listing_id").notNull().references(() => marketplaceListings.id),
+  quantity: integer("quantity").notNull().default(1),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(), // Price at time of adding to cart
+  priceUnit: text("price_unit"), // The unit (per kg, per bag, etc.)
+  notes: text("notes"), // Any special requests/notes for this item
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Create schemas for cart
+export const insertCartSchema = createInsertSchema(carts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  subtotal: true,
+  shipping: true,
+  tax: true,
+  total: true,
+});
+
+export const insertCartItemSchema = createInsertSchema(cartItems).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Export cart types
+export type InsertCart = z.infer<typeof insertCartSchema>;
+export type Cart = typeof carts.$inferSelect;
+export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
+export type CartItem = typeof cartItems.$inferSelect;
