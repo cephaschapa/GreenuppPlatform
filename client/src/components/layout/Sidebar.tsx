@@ -246,8 +246,10 @@ export function Sidebar() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 w-full h-full px-1",
-              item.active ? "text-primary" : "text-muted-foreground",
+              "flex flex-col items-center justify-center gap-1 w-full h-full px-2 py-1 mx-1 rounded-md transition-colors",
+              item.active 
+                ? "text-primary bg-primary/10" 
+                : "text-muted-foreground hover:text-sidebar-foreground hover:bg-primary/5"
             )}
           >
             {item.mobileIcon}
@@ -261,7 +263,7 @@ export function Sidebar() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="flex flex-col items-center mt-2 justify-center gap-1 w-full h-full rounded-none text-muted-foreground hover:bg-primary/10 hover:text-sidebar-foreground"
+              className="flex flex-col items-center justify-center gap-1 w-full h-full px-2 py-1 mx-1 rounded-md text-muted-foreground hover:bg-primary/5 hover:text-sidebar-foreground"
             >
               <MoreHorizontal className="h-6 w-6" />
               <span className="text-xs">More</span>
