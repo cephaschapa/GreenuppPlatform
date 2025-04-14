@@ -592,9 +592,12 @@ export default function MarketplaceDetailPage() {
                     {isAddingToCart ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     ) : (
-                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      <div className="flex items-center">
+                        <ShoppingCart className="h-4 w-4 mr-1" />
+                        <Plus className="h-3 w-3" />
+                      </div>
                     )}
-                    {isAddingToCart ? "Adding..." : "Add to Cart"}
+                    <span className="ml-1">{isAddingToCart ? "Adding..." : "Add to Cart"}</span>
                   </Button>
                   
                   <Button
