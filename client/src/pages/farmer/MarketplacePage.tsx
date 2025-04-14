@@ -88,7 +88,7 @@ export default function MarketplacePage() {
   useEffect(() => {
     if (listings) {
       console.log("Listings data from API:", listings);
-      
+
       // Check structure of first listing if available
       if (listings.length > 0) {
         const firstListing = listings[0];
@@ -105,9 +105,9 @@ export default function MarketplacePage() {
           imagesType: typeof firstListing.images,
           imagesLength: firstListing.images ? firstListing.images.length : 0,
           createdAt: firstListing.createdAt,
-          createdAtType: typeof firstListing.createdAt
+          createdAtType: typeof firstListing.createdAt,
         });
-        
+
         // Log each property for debugging
         console.log("All properties of first listing:");
         Object.entries(firstListing).forEach(([key, value]) => {
@@ -194,57 +194,78 @@ export default function MarketplacePage() {
 
   // Filter real listings from the API
   // Filter listings by search term, category, price and negotiable
-  const displayedListings = listings 
+  const displayedListings = listings
     ? listings.filter((listing: MarketplaceListing) => {
         try {
           // Search filter
           if (filters.search && listing.title) {
-            if (!listing.title.toLowerCase().includes(filters.search.toLowerCase())) {
-              console.log(`Filtering out by search: ${listing.id} - ${listing.title}`);
+            if (
+              !listing.title
+                .toLowerCase()
+                .includes(filters.search.toLowerCase())
+            ) {
+              console.log(
+                `Filtering out by search: ${listing.id} - ${listing.title}`,
+              );
               return false;
             }
           }
-          
+
           // Category filter
-          if (filters.category && filters.category !== "all" && listing.category) {
+          if (
+            filters.category &&
+            filters.category !== "all" &&
+            listing.category
+          ) {
             if (listing.category !== filters.category) {
-              console.log(`Filtering out by category: ${listing.id} - category: ${listing.category}`);
+              console.log(
+                `Filtering out by category: ${listing.id} - category: ${listing.category}`,
+              );
               return false;
             }
           }
-          
+
           // Price filter - only if price is in a reasonable range (< 10000)
           try {
             // Special case for the 111111.00 listing, skip price filtering for it
             if (listing.price === "111111.00") {
               console.log("Skipping price filter for special test listing");
             } else {
-              const priceValue = typeof listing.price === "string"
-                ? parseFloat(listing.price)
-                : Number(listing.price);
-                
-              if (!isNaN(priceValue) && 
-                  (priceValue < filters.minPrice || priceValue > filters.maxPrice)) {
-                console.log(`Filtering out by price: ${listing.id} - price: ${priceValue}`);
+              const priceValue =
+                typeof listing.price === "string"
+                  ? parseFloat(listing.price)
+                  : Number(listing.price);
+
+              if (
+                !isNaN(priceValue) &&
+                (priceValue < filters.minPrice || priceValue > filters.maxPrice)
+              ) {
+                console.log(
+                  `Filtering out by price: ${listing.id} - price: ${priceValue}`,
+                );
                 return false;
               }
             }
           } catch (priceError) {
-            console.error(`Price filter error for listing ${listing.id}:`, priceError);
+            console.error(
+              `Price filter error for listing ${listing.id}:`,
+              priceError,
+            );
           }
-          
+
           // Negotiable filter
           if (filters.negotiableOnly) {
-            const isNegotiable = typeof listing.isNegotiable === "boolean"
-              ? listing.isNegotiable
-              : String(listing.isNegotiable).toLowerCase() === "true";
-              
+            const isNegotiable =
+              typeof listing.isNegotiable === "boolean"
+                ? listing.isNegotiable
+                : String(listing.isNegotiable).toLowerCase() === "true";
+
             if (!isNegotiable) {
               console.log(`Filtering out by negotiable: ${listing.id}`);
               return false;
             }
           }
-          
+
           // Include this listing
           return true;
         } catch (error) {
@@ -253,11 +274,11 @@ export default function MarketplacePage() {
         }
       })
     : [];
-  
+
   console.log("Listings after filtering:", {
-    before: listings ? listings.length : 0, 
+    before: listings ? listings.length : 0,
     after: displayedListings.length,
-    filters
+    filters,
   });
 
   return (
@@ -336,7 +357,11 @@ export default function MarketplacePage() {
                       <h3 className="text-sm font-medium">Price Range (ZMW)</h3>
                       <div className="flex justify-between text-xs text-muted-foreground mb-2">
                         <span>ZMW {filters.minPrice}</span>
-                        <span>{filters.maxPrice >= 1000000 ? "Any" : `ZMW ${filters.maxPrice}`}</span>
+                        <span>
+                          {filters.maxPrice >= 1000000
+                            ? "Any"
+                            : `ZMW ${filters.maxPrice}`}
+                        </span>
                       </div>
                       <Slider
                         defaultValue={[0, 1000]}
@@ -400,7 +425,7 @@ export default function MarketplacePage() {
                 displayedListings.map((listing: MarketplaceListing) => {
                   // Debug log each listing in the map function
                   console.log(`Rendering listing: ${listing.id}`, listing);
-                  
+
                   // Safe render function to prevent crashes
                   const renderSafely = () => {
                     try {
@@ -414,20 +439,30 @@ export default function MarketplacePage() {
                             {(() => {
                               // Enhanced image handling similar to detail page
                               let imageUrl = null;
-                              
+
                               try {
                                 if (listing.images) {
-                                  if (Array.isArray(listing.images) && listing.images.length > 0) {
+                                  if (
+                                    Array.isArray(listing.images) &&
+                                    listing.images.length > 0
+                                  ) {
                                     // Get first valid image from array
-                                    const validImages = listing.images.filter(img => img && img !== "");
+                                    const validImages = listing.images.filter(
+                                      (img) => img && img !== "",
+                                    );
                                     if (validImages.length > 0) {
                                       imageUrl = validImages[0];
                                     }
-                                  } else if (typeof listing.images === 'string') {
+                                  } else if (
+                                    typeof listing.images === "string"
+                                  ) {
                                     try {
                                       // Try to parse as JSON string
                                       const parsed = JSON.parse(listing.images);
-                                      if (Array.isArray(parsed) && parsed.length > 0) {
+                                      if (
+                                        Array.isArray(parsed) &&
+                                        parsed.length > 0
+                                      ) {
                                         imageUrl = parsed[0];
                                       } else {
                                         imageUrl = listing.images; // Use as single string
@@ -438,17 +473,24 @@ export default function MarketplacePage() {
                                   }
                                 }
                               } catch (error) {
-                                console.error(`Error processing image for listing ${listing.id}:`, error);
+                                console.error(
+                                  `Error processing image for listing ${listing.id}:`,
+                                  error,
+                                );
                               }
-                              
+
                               return imageUrl ? (
                                 <img
                                   src={imageUrl}
                                   alt={listing.title || "Marketplace item"}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
-                                    console.log(`Image load error for ${listing.id}:`, e);
-                                    e.currentTarget.src = "https://placehold.co/700x500/green/white?text=No+Image";
+                                    console.log(
+                                      `Image load error for ${listing.id}:`,
+                                      e,
+                                    );
+                                    e.currentTarget.src =
+                                      "https://placehold.co/700x500/green/white?text=No+Image";
                                   }}
                                 />
                               ) : (
@@ -457,7 +499,7 @@ export default function MarketplacePage() {
                                 </div>
                               );
                             })()}
-                            
+
                             {/* Optional badge for negotiable items */}
                             {Boolean(listing.isNegotiable) && (
                               <Badge className="absolute top-2 right-2 bg-yellow-500">
@@ -465,7 +507,7 @@ export default function MarketplacePage() {
                               </Badge>
                             )}
                           </div>
-                          
+
                           <CardHeader className="p-4 pb-2">
                             <div className="flex justify-between">
                               <CardTitle className="text-lg font-semibold line-clamp-1">
@@ -479,7 +521,8 @@ export default function MarketplacePage() {
                                   e.stopPropagation();
                                   toast({
                                     title: "Added to favorites",
-                                    description: "Item has been added to your favorites",
+                                    description:
+                                      "Item has been added to your favorites",
                                   });
                                 }}
                               >
@@ -493,44 +536,57 @@ export default function MarketplacePage() {
                                 : "Location not specified"}
                             </CardDescription>
                           </CardHeader>
-                          
+
                           <CardContent className="p-4 pt-0">
                             <div className="flex justify-between items-center mb-2">
                               <p className="font-bold text-lg">
-                                {listing.priceCurrency || "ZMW"}{" "}
+                                {"ZMW"}{" "}
                                 {(() => {
                                   try {
-                                    const priceValue = typeof listing.price === "string" 
-                                      ? parseFloat(listing.price) 
-                                      : Number(listing.price);
-                                    return !isNaN(priceValue) ? priceValue.toFixed(2) : "0.00";
+                                    const priceValue =
+                                      typeof listing.price === "string"
+                                        ? parseFloat(listing.price)
+                                        : Number(listing.price);
+                                    return !isNaN(priceValue)
+                                      ? priceValue.toFixed(2)
+                                      : "0.00";
                                   } catch (e) {
                                     console.error("Price format error:", e);
                                     return "0.00";
                                   }
                                 })()}
                                 {listing.priceUnit && (
-                                  <span className="text-sm font-normal">/{listing.priceUnit}</span>
+                                  <span className="text-sm font-normal">
+                                    /{listing.priceUnit}
+                                  </span>
                                 )}
                               </p>
                               <div className="flex items-center">
-                                <span className="text-xs">{listing.views || 0} views</span>
+                                <span className="text-xs">
+                                  {listing.views || 0} views
+                                </span>
                               </div>
                             </div>
                             <p className="text-sm text-muted-foreground line-clamp-2">
                               {listing.description || "No description provided"}
                             </p>
                           </CardContent>
-                          
+
                           <CardFooter className="p-4 pt-0 flex justify-between text-xs text-muted-foreground">
                             <span>
                               {(() => {
                                 try {
-                                  return formatDistanceToNow(new Date(listing.createdAt), {
-                                    addSuffix: true,
-                                  });
+                                  return formatDistanceToNow(
+                                    new Date(listing.createdAt),
+                                    {
+                                      addSuffix: true,
+                                    },
+                                  );
                                 } catch (error) {
-                                  console.error("Date formatting error:", error);
+                                  console.error(
+                                    "Date formatting error:",
+                                    error,
+                                  );
                                   return "Recently";
                                 }
                               })()}
@@ -540,9 +596,15 @@ export default function MarketplacePage() {
                         </Card>
                       );
                     } catch (error) {
-                      console.error(`Error rendering listing ${listing.id}:`, error);
+                      console.error(
+                        `Error rendering listing ${listing.id}:`,
+                        error,
+                      );
                       return (
-                        <Card key={`error-${listing.id}`} className="overflow-hidden bg-red-50">
+                        <Card
+                          key={`error-${listing.id}`}
+                          className="overflow-hidden bg-red-50"
+                        >
                           <CardHeader>
                             <CardTitle>Error displaying listing</CardTitle>
                             <CardDescription>ID: {listing.id}</CardDescription>
@@ -554,7 +616,7 @@ export default function MarketplacePage() {
                       );
                     }
                   };
-                  
+
                   return renderSafely();
                 })
               )}
