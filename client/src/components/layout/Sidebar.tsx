@@ -310,7 +310,7 @@ export function Sidebar() {
             <span className="text-primary group-hover:animate-pulse transition-all">
               upp
             </span>
-            <span className="absolute -top-1 -right-12 bg-primary text-black text-xs px-2 py-0.5 rounded-full font-semibold">
+            <span className="absolute -top-1 -right-0 bg-primary text-black text-xs px-2 py-0.5 rounded-full font-semibold">
               BETA
             </span>
           </Link>

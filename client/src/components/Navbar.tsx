@@ -77,7 +77,6 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
         </div>
 
         <div className="md:hidden flex items-center gap-3">
-          <ThemeToggle />
           <button
             className="flex items-center justify-center w-9 h-9 rounded-md border border-primary/30 hover:border-primary/80 hover:bg-primary/10 transition-all duration-300"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
