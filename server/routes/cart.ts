@@ -142,7 +142,7 @@ router.post("/items", isAuthenticated, async (req, res) => {
       const [updatedItem] = await db
         .update(cartItems)
         .set({
-          quantity: existingItem.quantity + quantity,
+          quantity: existingItem.quantity + (quantity || 1),
           notes,
           updatedAt: new Date()
         })
@@ -161,7 +161,7 @@ router.post("/items", isAuthenticated, async (req, res) => {
       .values({
         cartId: cart.id,
         listingId,
-        quantity,
+        quantity: quantity || 1,
         price: listing.price.toString(),
         priceUnit: listing.priceUnit,
         notes

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Search, Filter, MapPin, Star, Heart } from "lucide-react";
+import { Loader2, Search, Filter, MapPin, Star, Heart, Plus, ShoppingCart } from "lucide-react";
 import { useLocation } from "wouter";
 
 import { Button } from "@/components/ui/button";
