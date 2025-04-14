@@ -9,7 +9,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, title, description }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-black text-white">
       {/* Sidebar component contains both desktop sidebar and mobile nav */}
       <Sidebar />
       
@@ -27,7 +27,7 @@ export function DashboardLayout({ children, title, description }: DashboardLayou
                 )}
               </h1>
               {description && (
-                <p className="text-muted-foreground">{description}</p>
+                <p className="text-gray-400">{description}</p>
               )}
             </div>
             

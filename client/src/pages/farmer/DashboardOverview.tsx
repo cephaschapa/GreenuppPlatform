@@ -149,7 +149,7 @@ export default function DashboardOverview() {
         <div className="space-y-8">
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-card border-primary/20">
+            <Card className="bg-primary/5 border-primary/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <TractorIcon className="h-5 w-5 text-primary" />
@@ -172,7 +172,7 @@ export default function DashboardOverview() {
               </CardFooter>
             </Card>
             
-            <Card className="bg-card border-green-600/20">
+            <Card className="bg-green-950/10 border-green-600/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <Leaf className="h-5 w-5 text-green-600" />
@@ -195,7 +195,7 @@ export default function DashboardOverview() {
               </CardFooter>
             </Card>
             
-            <Card className="bg-card border-blue-600/20">
+            <Card className="bg-blue-950/10 border-blue-600/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <ClipboardList className="h-5 w-5 text-blue-600" />
@@ -218,7 +218,7 @@ export default function DashboardOverview() {
               </CardFooter>
             </Card>
             
-            <Card className="bg-card border-sky-600/20">
+            <Card className="bg-sky-950/10 border-sky-600/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <Cloud className="h-5 w-5 text-sky-600" />
@@ -278,7 +278,7 @@ export default function DashboardOverview() {
                               ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
                               : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
                         }`}>
-                          {task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : 'Normal'}
+                          {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
                         </div>
                       </div>
                     ))}
@@ -315,7 +315,7 @@ export default function DashboardOverview() {
                         </div>
                         <div className="mt-1 text-sm text-muted-foreground grid grid-cols-2 gap-2">
                           <p>Planted: {formatDate(crop.plantingDate)}</p>
-                          <p>Harvest: {formatDate(crop.expectedHarvestDate)}</p>
+                          <p>Harvest: {formatDate(crop.harvestDate)}</p>
                         </div>
                       </div>
                     ))}
@@ -337,7 +337,7 @@ export default function DashboardOverview() {
           {/* AI Insights and Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* AI Insights */}
-            <Card className="border-primary/30 bg-gradient-to-br from-background to-primary/20">
+            <Card className="border-primary/30 bg-gradient-to-br from-black to-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
