@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
@@ -20,7 +21,9 @@ import {
   MoreHorizontal,
   Sprout,
   ShoppingBag,
+  ShoppingCart,
 } from "lucide-react";
+import { CartIcon } from "@/components/cart/CartIcon";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserRole } from "@shared/schema";
@@ -37,6 +40,7 @@ import {
 export function Sidebar() {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
+  const { itemCount } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const farmerNavItems = [
@@ -196,6 +200,8 @@ export function Sidebar() {
         </Link>
 
         <div className="flex items-center gap-2">
+          <CartIcon variant="mobile" />
+          
           <Button variant="ghost" size="icon" className="rounded-full">
             <Bell className="h-5 w-5" />
           </Button>
@@ -361,6 +367,10 @@ export function Sidebar() {
                   : "User"}
               </p>
             </div>
+          </div>
+
+          <div className="flex gap-2 mb-4">
+            <CartIcon variant="sidebar" showLabel={true} />
           </div>
 
           <Button
