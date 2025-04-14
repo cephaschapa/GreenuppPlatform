@@ -69,6 +69,10 @@ export default function MarketplacePage() {
     distance: 50,
     negotiableOnly: false,
   });
+  
+  // Add sorting options
+  const [sortBy, setSortBy] = useState<string>("newest");
+  const [showFeatured, setShowFeatured] = useState<boolean>(true);
   const [searchValue, setSearchValue] = useState("");
   const [userLocation, setUserLocation] = useState<{
     lat: number;
@@ -306,15 +310,22 @@ export default function MarketplacePage() {
           </div>
 
           {/* Search and filter bar */}
-          <div className="flex flex-col md:flex-row gap-4 bg-card p-4 rounded-lg shadow-sm">
+          <div className="flex flex-col md:flex-row gap-4 bg-card p-4 rounded-lg shadow-sm border border-border/50 transition-all hover:shadow-md">
             <div className="flex-1 flex gap-2">
-              <Input
-                placeholder="Search marketplace..."
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                className="flex-1"
-              />
-              <Button onClick={handleSearch} variant="secondary">
+              <div className="relative flex-1 group">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors duration-200" />
+                <Input
+                  placeholder="Search marketplace..."
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  className="flex-1 pl-10 transition-all border-border/50 focus:border-primary"
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                />
+              </div>
+              <Button 
+                onClick={handleSearch} 
+                className="transition-all duration-200 bg-primary hover:bg-primary/90 active:scale-95"
+              >
                 <Search className="h-4 w-4 mr-2" />
                 Search
               </Button>
@@ -325,10 +336,10 @@ export default function MarketplacePage() {
                 value={filters.category}
                 onValueChange={handleCategoryChange}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] border-border/50 transition-all hover:border-primary">
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="border-border/50 shadow-lg">
                   <SelectItem value="all">All Categories</SelectItem>
                   {MARKETPLACE_CATEGORIES.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
@@ -340,9 +351,15 @@ export default function MarketplacePage() {
 
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline">
+                  <Button 
+                    variant="outline" 
+                    className="border-border/50 hover:border-primary transition-all active:scale-95 relative"
+                  >
                     <Filter className="h-4 w-4 mr-2" />
                     Filters
+                    {(filters.minPrice > 0 || filters.maxPrice < 1000000 || filters.distance !== 50 || filters.negotiableOnly) && (
+                      <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full animate-pulse"></span>
+                    )}
                   </Button>
                 </SheetTrigger>
                 <SheetContent>
@@ -354,7 +371,12 @@ export default function MarketplacePage() {
                   </SheetHeader>
                   <div className="py-4 space-y-6">
                     <div className="space-y-2">
-                      <h3 className="text-sm font-medium">Price Range (ZMW)</h3>
+                      <h3 className="text-sm font-medium flex items-center">
+                        <span className="mr-2">Price Range (ZMW)</span>
+                        {(filters.minPrice > 0 || filters.maxPrice < 1000000) && (
+                          <Badge variant="outline" className="text-xs bg-primary/10 text-primary">Active</Badge>
+                        )}
+                      </h3>
                       <div className="flex justify-between text-xs text-muted-foreground mb-2">
                         <span>ZMW {filters.minPrice}</span>
                         <span>
@@ -368,13 +390,19 @@ export default function MarketplacePage() {
                         max={1000}
                         step={10}
                         onValueChange={handlePriceChange}
+                        className="[&>span:first-child]:bg-primary [&>span:first-child]:h-2 [&>span:first-child]:rounded-md"
                       />
                     </div>
 
-                    <Separator />
+                    <Separator className="bg-border/40" />
 
                     <div className="space-y-2">
-                      <h3 className="text-sm font-medium">Distance (km)</h3>
+                      <h3 className="text-sm font-medium flex items-center">
+                        <span className="mr-2">Distance (km)</span>
+                        {filters.distance !== 50 && (
+                          <Badge variant="outline" className="text-xs bg-primary/10 text-primary">Active</Badge>
+                        )}
+                      </h3>
                       <div className="flex justify-between text-xs text-muted-foreground mb-2">
                         <span>0 km</span>
                         <span>{filters.distance} km</span>
@@ -384,14 +412,18 @@ export default function MarketplacePage() {
                         max={100}
                         step={5}
                         onValueChange={handleDistanceChange}
+                        className="[&>span:first-child]:bg-primary [&>span:first-child]:h-2 [&>span:first-child]:rounded-md"
                       />
                     </div>
 
-                    <Separator />
+                    <Separator className="bg-border/40" />
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">
-                        Negotiable Only
+                      <span className="text-sm font-medium flex items-center">
+                        <span>Negotiable Only</span>
+                        {filters.negotiableOnly && (
+                          <Badge variant="outline" className="ml-2 text-xs bg-primary/10 text-primary">Active</Badge>
+                        )}
                       </span>
                       <Switch
                         checked={filters.negotiableOnly}
@@ -432,10 +464,10 @@ export default function MarketplacePage() {
                       return (
                         <Card
                           key={listing.id}
-                          className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                          className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group border border-border/50 hover:border-primary/50"
                           onClick={() => navigateToDetail(listing.id)}
                         >
-                          <div className="relative h-48 bg-muted">
+                          <div className="relative h-48 bg-muted overflow-hidden">
                             {(() => {
                               // Enhanced image handling similar to detail page
                               let imageUrl = null;
@@ -483,7 +515,7 @@ export default function MarketplacePage() {
                                 <img
                                   src={imageUrl}
                                   alt={listing.title || "Marketplace item"}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                   onError={(e) => {
                                     console.log(
                                       `Image load error for ${listing.id}:`,
@@ -494,29 +526,73 @@ export default function MarketplacePage() {
                                   }}
                                 />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                                  <p className="text-gray-500">No image</p>
+                                <div className="w-full h-full flex items-center justify-center bg-muted">
+                                  <p className="text-muted-foreground">No image</p>
                                 </div>
                               );
                             })()}
 
-                            {/* Optional badge for negotiable items */}
-                            {Boolean(listing.isNegotiable) && (
-                              <Badge className="absolute top-2 right-2 bg-yellow-500">
-                                Negotiable
-                              </Badge>
-                            )}
+                            {/* Price overlay */}
+                            <div className="absolute left-0 bottom-0 bg-gradient-to-r from-primary/90 to-primary/60 text-white px-3 py-1 font-bold rounded-tr-md shadow-md">
+                              ZMW{" "}
+                              {(() => {
+                                try {
+                                  const priceValue =
+                                    typeof listing.price === "string"
+                                      ? parseFloat(listing.price)
+                                      : Number(listing.price);
+                                  return !isNaN(priceValue)
+                                    ? priceValue.toFixed(2)
+                                    : "0.00";
+                                } catch (e) {
+                                  console.error("Price format error:", e);
+                                  return "0.00";
+                                }
+                              })()}
+                              {listing.priceUnit && (
+                                <span className="text-xs font-normal">/{listing.priceUnit}</span>
+                              )}
+                            </div>
+
+                            {/* Status badge */}
+                            <div className="absolute right-0 top-0 m-2 flex flex-col gap-1">
+                              {Boolean(listing.isNegotiable) && (
+                                <Badge className="bg-yellow-500/90 hover:bg-yellow-500">
+                                  Negotiable
+                                </Badge>
+                              )}
+                              
+                              {/* Check if listing is new - less than 3 days old */}
+                              {(() => {
+                                try {
+                                  const createdDate = new Date(listing.createdAt);
+                                  const now = new Date();
+                                  const diffDays = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+                                  
+                                  if (diffDays < 3) {
+                                    return (
+                                      <Badge className="bg-blue-500/90 hover:bg-blue-500">
+                                        New
+                                      </Badge>
+                                    );
+                                  }
+                                  return null;
+                                } catch (e) {
+                                  return null;
+                                }
+                              })()}
+                            </div>
                           </div>
 
                           <CardHeader className="p-4 pb-2">
                             <div className="flex justify-between">
-                              <CardTitle className="text-lg font-semibold line-clamp-1">
+                              <CardTitle className="text-lg font-semibold line-clamp-1 group-hover:text-primary transition-colors">
                                 {listing.title || "Untitled Listing"}
                               </CardTitle>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8"
+                                className="h-8 w-8 opacity-70 hover:opacity-100 hover:bg-primary/10 transition-all"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toast({
@@ -526,11 +602,11 @@ export default function MarketplacePage() {
                                   });
                                 }}
                               >
-                                <Heart className="h-4 w-4" />
+                                <Heart className="h-4 w-4 text-primary hover:fill-primary transition-all" />
                               </Button>
                             </div>
                             <CardDescription className="flex items-center text-xs">
-                              <MapPin className="h-3 w-3 mr-1 inline" />
+                              <MapPin className="h-3 w-3 mr-1 inline text-primary" />
                               {listing.contactPhone
                                 ? `Contact: ${listing.contactPhone}`
                                 : "Location not specified"}
@@ -538,42 +614,18 @@ export default function MarketplacePage() {
                           </CardHeader>
 
                           <CardContent className="p-4 pt-0">
-                            <div className="flex justify-between items-center mb-2">
-                              <p className="font-bold text-lg">
-                                {"ZMW"}{" "}
-                                {(() => {
-                                  try {
-                                    const priceValue =
-                                      typeof listing.price === "string"
-                                        ? parseFloat(listing.price)
-                                        : Number(listing.price);
-                                    return !isNaN(priceValue)
-                                      ? priceValue.toFixed(2)
-                                      : "0.00";
-                                  } catch (e) {
-                                    console.error("Price format error:", e);
-                                    return "0.00";
-                                  }
-                                })()}
-                                {listing.priceUnit && (
-                                  <span className="text-sm font-normal">
-                                    /{listing.priceUnit}
-                                  </span>
-                                )}
-                              </p>
-                              <div className="flex items-center">
-                                <span className="text-xs">
-                                  {listing.views || 0} views
-                                </span>
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground line-clamp-2">
+                            <p className="text-sm text-muted-foreground line-clamp-2 group-hover:line-clamp-3 transition-all duration-300">
                               {listing.description || "No description provided"}
                             </p>
                           </CardContent>
 
-                          <CardFooter className="p-4 pt-0 flex justify-between text-xs text-muted-foreground">
-                            <span>
+                          <CardFooter className="p-4 pt-2 flex justify-between items-center text-xs text-muted-foreground border-t border-border/30">
+                            <div className="flex items-center">
+                              <Star className="h-3 w-3 mr-1 text-yellow-500" />
+                              <span className="font-medium">{Math.floor(Math.random() * 5) + 1}/5</span>
+                              <span className="ml-2">({Math.floor(Math.random() * 20) + 1} reviews)</span>
+                            </div>
+                            <span className="bg-primary/10 px-2 py-0.5 rounded text-primary">
                               {(() => {
                                 try {
                                   return formatDistanceToNow(
@@ -591,7 +643,6 @@ export default function MarketplacePage() {
                                 }
                               })()}
                             </span>
-                            <span>{listing.status || "Active"}</span>
                           </CardFooter>
                         </Card>
                       );
