@@ -12,6 +12,7 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import InstallPWA from "@/components/ui/InstallPWA";
 import OfflineIndicator from "@/components/ui/OfflineIndicator";
+import { CartProvider } from "@/hooks/use-cart";
 
 // Import farmer-specific pages
 import FieldsPage from "@/pages/farmer/FieldsPage";
@@ -24,6 +25,7 @@ import PlantDiagnosisPage from "@/pages/farmer/PlantDiagnosisPage";
 import MarketplacePage from "@/pages/farmer/MarketplacePage";
 import MarketplaceDetailPage from "@/pages/farmer/MarketplaceDetailPage";
 import CreateListingPage from "@/pages/farmer/CreateListingPage";
+import CartPage from "@/pages/farmer/CartPage";
 
 function Router() {
   return (
@@ -45,6 +47,7 @@ function Router() {
       {/* Marketplace routes */}
       <ProtectedRoute path="/dashboard/marketplace" component={MarketplacePage} />
       <ProtectedRoute path="/dashboard/marketplace/new" component={CreateListingPage} />
+      <ProtectedRoute path="/dashboard/marketplace/cart" component={CartPage} />
       <ProtectedRoute path="/dashboard/marketplace/:id" component={MarketplaceDetailPage} />
       
       <Route component={NotFound} />
