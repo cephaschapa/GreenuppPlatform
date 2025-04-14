@@ -198,7 +198,7 @@ export default function MarketplacePage() {
 
   // Filter real listings from the API
   // Filter listings by search term, category, price and negotiable
-  const displayedListings = listings
+  const filteredListings = listings
     ? listings.filter((listing: MarketplaceListing) => {
         try {
           // Search filter
@@ -278,6 +278,60 @@ export default function MarketplacePage() {
         }
       })
     : [];
+    
+  // Sort listings based on user preference
+  const sortedListings = [...filteredListings].sort((a, b) => {
+    try {
+      switch (sortBy) {
+        case "newest":
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case "oldest":
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case "price-low":
+          const aPrice = typeof a.price === "string" ? parseFloat(a.price) : Number(a.price);
+          const bPrice = typeof b.price === "string" ? parseFloat(b.price) : Number(b.price);
+          return aPrice - bPrice;
+        case "price-high":
+          const aPrice2 = typeof a.price === "string" ? parseFloat(a.price) : Number(a.price);
+          const bPrice2 = typeof b.price === "string" ? parseFloat(b.price) : Number(b.price);
+          return bPrice2 - aPrice2;
+        default:
+          return 0;
+      }
+    } catch (error) {
+      console.error("Error sorting listings:", error);
+      return 0;
+    }
+  });
+  
+  // Select featured listings - newest + high price
+  const featuredListings = showFeatured && sortedListings.length > 0
+    ? [...sortedListings]
+      .sort((a, b) => {
+        // Complex sorting algorithm for "featured": combination of newness, price, and completeness
+        const aDate = new Date(a.createdAt).getTime();
+        const bDate = new Date(b.createdAt).getTime();
+        const aPrice = typeof a.price === "string" ? parseFloat(a.price) : Number(a.price);
+        const bPrice = typeof b.price === "string" ? parseFloat(b.price) : Number(b.price);
+        
+        // Prefer listings with images
+        const aHasImage = a.images && Array.isArray(a.images) && a.images.length > 0;
+        const bHasImage = b.images && Array.isArray(b.images) && b.images.length > 0;
+        
+        if (aHasImage && !bHasImage) return -1;
+        if (!aHasImage && bHasImage) return 1;
+        
+        // Weighted score combining recency and price
+        const aScore = (aDate * 0.7) + (aPrice * 0.3);
+        const bScore = (bDate * 0.7) + (bPrice * 0.3);
+        
+        return bScore - aScore;
+      })
+      .slice(0, 4)
+    : [];
+    
+  // Final listings to display
+  const displayedListings = sortedListings;
 
   console.log("Listings after filtering:", {
     before: listings ? listings.length : 0,
@@ -435,6 +489,113 @@ export default function MarketplacePage() {
               </Sheet>
             </div>
           </div>
+
+          {/* Sort options */}
+          <div className="flex flex-wrap gap-4 justify-between items-center">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-muted-foreground">Sort by:</label>
+              <Select
+                value={sortBy}
+                onValueChange={setSortBy}
+              >
+                <SelectTrigger className="w-[140px] border-border/50 bg-card">
+                  <SelectValue placeholder="Newest First" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="price-low">Price: Low to High</SelectItem>
+                  <SelectItem value="price-high">Price: High to Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {displayedListings.length} {displayedListings.length === 1 ? 'listing' : 'listings'} found
+              </span>
+              <Switch
+                checked={showFeatured}
+                onCheckedChange={setShowFeatured}
+                className="data-[state=checked]:bg-primary"
+              />
+              <label className="text-sm font-medium">Show Featured</label>
+            </div>
+          </div>
+
+          {/* Featured listings section */}
+          {showFeatured && featuredListings.length > 0 && (
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold">Featured Listings</h2>
+                <Badge className="bg-primary/90 text-white">Recommended</Badge>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {featuredListings.map((listing: MarketplaceListing) => (
+                  <Card
+                    key={`featured-${listing.id}`}
+                    className="overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer group border-2 border-primary/30 hover:border-primary/70"
+                    onClick={() => navigateToDetail(listing.id)}
+                  >
+                    <div className="relative h-36 bg-muted overflow-hidden">
+                      {(() => {
+                        // Image handling
+                        let imageUrl = null;
+                        try {
+                          if (listing.images) {
+                            if (Array.isArray(listing.images) && listing.images.length > 0) {
+                              const validImages = listing.images.filter(img => img && img !== "");
+                              if (validImages.length > 0) imageUrl = validImages[0];
+                            } else if (typeof listing.images === "string") {
+                              try {
+                                const parsed = JSON.parse(listing.images);
+                                if (Array.isArray(parsed) && parsed.length > 0) {
+                                  imageUrl = parsed[0];
+                                } else {
+                                  imageUrl = listing.images;
+                                }
+                              } catch (e) {
+                                imageUrl = listing.images;
+                              }
+                            }
+                          }
+                        } catch (error) {
+                          console.error(`Error processing image for featured listing ${listing.id}:`, error);
+                        }
+
+                        return imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={listing.title || "Featured item"}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            onError={(e) => {
+                              e.currentTarget.src = "https://placehold.co/700x500/green/white?text=No+Image";
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-muted">
+                            <p className="text-muted-foreground">No image</p>
+                          </div>
+                        );
+                      })()}
+                      <Badge className="absolute top-2 right-2 bg-orange-500/90">Featured</Badge>
+                      <div className="absolute left-0 bottom-0 bg-gradient-to-r from-primary/90 to-primary/60 text-white px-2 py-1 font-bold rounded-tr-md">
+                        ZMW {typeof listing.price === "string" ? parseFloat(listing.price).toFixed(2) : Number(listing.price).toFixed(2)}
+                      </div>
+                    </div>
+                    <CardContent className="p-3">
+                      <h3 className="font-semibold line-clamp-1 group-hover:text-primary transition-colors">
+                        {listing.title || "Untitled Listing"}
+                      </h3>
+                      <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                        {listing.description || "No description"}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              <Separator className="my-4" />
+            </div>
+          )}
 
           {/* Results */}
           {isLoading ? (
