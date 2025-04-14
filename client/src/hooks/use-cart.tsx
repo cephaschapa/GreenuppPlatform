@@ -1,19 +1,19 @@
-import { createContext, useContext, ReactNode, useState } from "react";
+import { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import {
   useQuery,
   useMutation,
-  UseQueryResult,
-  UseMutationResult,
 } from "@tanstack/react-query";
 import { Cart, CartItem, MarketplaceListing } from "@shared/schema";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 
+// Type for cart with items and listing details
 interface CartWithItems extends Cart {
   items: (CartItem & { listing: MarketplaceListing })[];
 }
 
+// Context type
 interface CartContextType {
   cart: CartWithItems | null;
   isLoading: boolean;
@@ -41,27 +41,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
     error,
     isLoading,
     refetch: refetchCart
-  } = useQuery<CartWithItems, Error>({
+  } = useQuery({
     queryKey: ["/api/cart"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/cart");
-      return await res.json();
+      const data = await res.json();
+      return data as CartWithItems;
     },
     enabled: !!user, // Only fetch if user is logged in
-    onSuccess: (data) => {
-      // Calculate item count and subtotal
+  });
+
+  // Update derived state when cart data changes
+  useEffect(() => {
+    if (cartData?.items) {
       let count = 0;
       let total = 0;
-      if (data?.items) {
-        data.items.forEach(item => {
-          count += item.quantity;
-          total += Number(item.price) * item.quantity;
-        });
-      }
+      cartData.items.forEach((item) => {
+        count += item.quantity;
+        total += Number(item.price) * item.quantity;
+      });
       setItemCount(count);
       setSubtotal(total);
     }
-  });
+  }, [cartData]);
 
   // Add item to cart
   const addToCartMutation = useMutation({
@@ -86,10 +88,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Item added to cart",
         description: "Your item has been added to the cart.",
-        variant: "default",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       toast({
         title: "Failed to add item",
         description: error.message || "Something went wrong. Please try again.",
@@ -111,10 +112,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Cart updated",
         description: "Your cart has been updated.",
-        variant: "default",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       toast({
         title: "Failed to update cart",
         description: error.message || "Something went wrong. Please try again.",
@@ -134,10 +134,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Item removed",
         description: "Item has been removed from your cart.",
-        variant: "default",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       toast({
         title: "Failed to remove item",
         description: error.message || "Something went wrong. Please try again.",
@@ -157,10 +156,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Cart cleared",
         description: "All items have been removed from your cart.",
-        variant: "default",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       toast({
         title: "Failed to clear cart",
         description: error.message || "Something went wrong. Please try again.",
@@ -180,11 +178,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Checkout started",
         description: "Proceeding to checkout...",
-        variant: "default",
       });
       // In a real app, we would redirect to checkout page here
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       toast({
         title: "Failed to checkout",
         description: error.message || "Something went wrong. Please try again.",
@@ -240,7 +237,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       value={{
         cart: cartData || null,
         isLoading,
-        error,
+        error: error as Error | null,
         itemCount,
         subtotal,
         addToCart,

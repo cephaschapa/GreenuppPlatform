@@ -60,11 +60,13 @@ function App() {
     <ThemeProvider defaultTheme="dark">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <Router />
-          <Toaster />
-          {/* PWA Components */}
-          <InstallPWA />
-          <OfflineIndicator />
+          <CartProvider>
+            <Router />
+            <Toaster />
+            {/* PWA Components */}
+            <InstallPWA />
+            <OfflineIndicator />
+          </CartProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>

@@ -31,8 +31,8 @@ export function CartIcon({
           )} />
           {hasItems && (
             <Badge 
-              variant="primary" 
-              className="absolute -top-2 -right-2 h-5 min-w-5 flex items-center justify-center rounded-full p-0 text-[10px]"
+              variant="default" 
+              className="absolute -top-2 -right-2 h-5 min-w-5 flex items-center justify-center rounded-full p-0 text-[10px] bg-primary text-primary-foreground"
             >
               {itemCount > 99 ? '99+' : itemCount}
             </Badge>

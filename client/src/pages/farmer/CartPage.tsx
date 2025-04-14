@@ -202,7 +202,7 @@ export default function CartPage() {
 
             <CardFooter className="flex justify-between pt-2">
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 className="text-muted-foreground"
                 onClick={() => clearCart()}
@@ -210,7 +210,7 @@ export default function CartPage() {
                 Clear Cart
               </Button>
               <Link href="/farmer/marketplace">
-                <Button variant="outline" size="sm">
+                <Button variant="secondary" size="sm">
                   Continue Shopping
                 </Button>
               </Link>
@@ -242,7 +242,7 @@ export default function CartPage() {
                 <span className="font-semibold">{formatCurrency(subtotal)}</span>
               </div>
 
-              <Alert variant="outline" className="mt-4 bg-primary/5 border-primary/20">
+              <Alert className="mt-4 bg-primary/5 border border-primary/20">
                 <AlertTitle className="text-sm font-medium">Important</AlertTitle>
                 <AlertDescription className="text-xs">
                   Shipping costs and taxes will be calculated during checkout based on your location.
