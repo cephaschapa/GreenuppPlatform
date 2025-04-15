@@ -49,16 +49,16 @@ export default function CartPage() {
 
     setProcessing(true);
     try {
+      // Start checkout process and redirect to checkout page
       await startCheckout();
-      // In a real app, we would redirect to checkout page here
-      // For now, just show a success message
-      toast({
-        title: "Checkout complete",
-        description: "Your order has been placed successfully.",
-        variant: "default",
-      });
+      window.location.href = "/dashboard/marketplace/checkout";
     } catch (error) {
       console.error("Checkout error:", error);
+      toast({
+        title: "Checkout Error",
+        description: "There was a problem starting the checkout process. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setProcessing(false);
     }
