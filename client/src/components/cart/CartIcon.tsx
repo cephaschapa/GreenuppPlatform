@@ -17,7 +17,7 @@ export function CartIcon({
   const hasItems = itemCount > 0;
 
   return (
-    <Link href="/farmer/marketplace/cart">
+    <Link href="/dashboard/marketplace/cart">
       <a className={cn(
         "flex items-center gap-2 relative",
         variant === "mobile" && "flex-col text-xs",
