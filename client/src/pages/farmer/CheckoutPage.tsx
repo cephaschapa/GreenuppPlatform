@@ -100,8 +100,6 @@ export default function CheckoutPage() {
     setLocation('/dashboard/marketplace/cart');
   };
 
-  // These variables are defined earlier, don't need to redefine here
-
   // Loading state
   if (isLoadingCart || checkoutMutation.isPending) {
     return (
@@ -115,7 +113,7 @@ export default function CheckoutPage() {
   }
 
   // Empty cart state
-  if (!cart?.id || items.length === 0 && !paymentComplete) {
+  if (!cart?.id || cartItems.length === 0 && !paymentComplete) {
     return (
       <div className="container max-w-4xl mx-auto py-10 px-4">
         <div className="text-center py-10">
@@ -182,7 +180,7 @@ export default function CheckoutPage() {
             <CardContent className="space-y-4">
               {/* Cart items summary */}
               <div className="space-y-3">
-                {items.map((item: any) => (
+                {cartItems.map((item: any) => (
                   <div key={item.id} className="flex justify-between items-start">
                     <div>
                       <p className="font-medium">{item.listing?.title || 'Product'}</p>
