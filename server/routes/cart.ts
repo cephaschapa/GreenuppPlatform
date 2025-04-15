@@ -82,22 +82,21 @@ router.get("/", isAuthenticated, async (req, res) => {
     // Get or create the user's active cart
     const cart = await getOrCreateCart(userId);
     
-    // Get cart items
+    // Get cart items with their listings
     const rawItems = await db
-      .select()
+      .select({
+        item: cartItems,
+        listing: marketplaceListings
+      })
       .from(cartItems)
       .leftJoin(marketplaceListings, eq(cartItems.listingId, marketplaceListings.id))
       .where(eq(cartItems.cartId, cart.id));
     
     // Transform data to match frontend expectations
-    const items = rawItems.map(item => {
-      // Extract the marketplace listing data
-      const { marketplaceListings, ...cartItem } = item;
-      
-      // Return in the format the frontend expects
+    const items = rawItems.map(row => {
       return {
-        ...cartItem,
-        listing: marketplaceListings // Add the listing property
+        ...row.item,
+        listing: row.listing // Add the listing property in the expected format
       };
     });
       
