@@ -53,6 +53,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/cart");
       const data = await res.json();
+      
+      // Log cart data for debugging
+      console.log("Cart data fetched:", {
+        cartId: data.cart?.id,
+        status: data.cart?.status,
+        itemCount: data.items?.length || 0
+      });
+      
       return data as CartWithItems;
     },
     enabled: !!user, // Only fetch if user is logged in

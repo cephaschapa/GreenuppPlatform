@@ -29,17 +29,7 @@ function isAuthenticated(req: Request, res: Response, next: Function) {
  * If no cart is found, create one
  */
 async function getOrCreateCart(userId: number, includeCheckout: boolean = false): Promise<Cart> {
-  // Try to find active cart first
-  const [activeCart] = await db
-    .select()
-    .from(carts)
-    .where(and(eq(carts.userId, userId), eq(carts.status, "active")));
-
-  if (activeCart) {
-    return activeCart;
-  }
-  
-  // If includeCheckout is true, also look for a cart in checkout status
+  // If includeCheckout is true, first check for checkout carts to prioritize them
   if (includeCheckout) {
     const [checkoutCart] = await db
       .select()
@@ -47,14 +37,34 @@ async function getOrCreateCart(userId: number, includeCheckout: boolean = false)
       .where(and(eq(carts.userId, userId), eq(carts.status, "checkout")));
       
     if (checkoutCart) {
+      console.log(`Found checkout cart for user ${userId}, id: ${checkoutCart.id}`);
       return checkoutCart;
     }
   }
+  
+  // Look for active carts
+  const [activeCart] = await db
+    .select()
+    .from(carts)
+    .where(and(eq(carts.userId, userId), eq(carts.status, "active")));
+
+  if (activeCart) {
+    console.log(`Found active cart for user ${userId}, id: ${activeCart.id}`);
+    return activeCart;
+  }
 
   // Create a new cart if none exists
+  console.log(`Creating new cart for user ${userId}`);
   const [newCart] = await db
     .insert(carts)
-    .values({ userId, status: "active" })
+    .values({ 
+      userId, 
+      status: "active",
+      subtotal: "0",
+      shipping: "0",
+      tax: "0",
+      total: "0"
+    })
     .returning();
 
   return newCart;
@@ -115,12 +125,15 @@ router.get("/", isAuthenticated, async (req, res) => {
     });
     
     console.log(`GET /api/cart - Found cart with status: ${cart.status}, id: ${cart.id}, items: ${items.length}`);
-      
-    // Return cart and items
-    res.status(200).json({
-      cart,
+    
+    // Create a modified response format to work with the frontend
+    const cartWithItems = {
+      ...cart,
       items
-    });
+    };
+      
+    // Return cart with items directly embedded
+    res.status(200).json(cartWithItems);
   } catch (error) {
     console.error("Error fetching cart:", error);
     res.status(500).json({ message: "Failed to fetch cart" });
@@ -543,8 +556,7 @@ router.post("/payment/confirm", isAuthenticated, async (req, res) => {
     if (!paymentVerification.success) {
       return res.status(400).json({ 
         message: "Payment verification failed", 
-        status: paymentVerification.status,
-        details: paymentVerification.message
+        details: paymentVerification.message || "Unknown error occurred"
       });
     }
     

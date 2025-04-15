@@ -32,11 +32,18 @@ export default function CheckoutPage() {
   const isConfirmationPage = location.includes('/payment/confirmation');
   
   // Calculate total items and amount
-  const cartItems = cart?.items || [];
+  const cartItems = cart && 'items' in cart ? cart.items : [];
   const totalItems = cartItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
   const totalAmount = cart?.total ? parseFloat(cart.total.toString()) : 0;
   
-  console.log('Current cart state:', { cartStatus: cart?.status, cartId: cart?.id, itemCount: cartItems.length, isConfirmationPage, location });
+  console.log('Current cart state:', { 
+    cartStatus: cart?.status, 
+    cartId: cart?.id, 
+    items: cartItems, 
+    itemCount: cartItems.length, 
+    isConfirmationPage, 
+    location 
+  });
 
   // Query parameters for payment confirmation
   const searchParams = new URLSearchParams(window.location.search);
@@ -113,7 +120,7 @@ export default function CheckoutPage() {
   }
 
   // Empty cart state
-  if (!cart?.id || (cartItems.length === 0 && !paymentComplete)) {
+  if ((!cart?.id || cartItems.length === 0) && !paymentComplete) {
     return (
       <div className="container max-w-4xl mx-auto py-10 px-4">
         <div className="text-center py-10">
