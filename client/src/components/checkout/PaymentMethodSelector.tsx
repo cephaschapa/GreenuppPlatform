@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { CreditCard, Factory } from "lucide-react";
+import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { CreditCard, PiggyBank } from 'lucide-react';
 
 interface PaymentMethodSelectorProps {
   onSelect: (method: 'stripe' | 'metatron') => void;
@@ -11,64 +11,85 @@ interface PaymentMethodSelectorProps {
 
 export function PaymentMethodSelector({ 
   onSelect, 
-  defaultMethod = 'stripe'
+  defaultMethod = 'stripe' 
 }: PaymentMethodSelectorProps) {
-  const [selectedMethod, setSelectedMethod] = useState<'stripe' | 'metatron'>(defaultMethod);
+  const [selected, setSelected] = useState<'stripe' | 'metatron'>(defaultMethod);
 
-  const handleMethodChange = (value: 'stripe' | 'metatron') => {
-    setSelectedMethod(value);
+  const handleChange = (value: 'stripe' | 'metatron') => {
+    setSelected(value);
     onSelect(value);
   };
 
   return (
-    <RadioGroup 
-      value={selectedMethod} 
-      onValueChange={(value: 'stripe' | 'metatron') => handleMethodChange(value)}
-      className="space-y-4"
-    >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className={`cursor-pointer border-2 hover:border-primary/50 transition-colors ${selectedMethod === 'stripe' ? 'border-primary' : 'border-border'}`}>
-          <CardContent className="p-6">
-            <RadioGroupItem value="stripe" id="stripe" className="hidden" />
-            <Label 
-              htmlFor="stripe" 
-              className="flex items-center gap-3 cursor-pointer"
-            >
-              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <CreditCard className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium">Credit Card</p>
-                <p className="text-sm text-muted-foreground">Pay with Stripe</p>
-              </div>
-              <div className="flex-shrink-0 w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center">
-                {selectedMethod === 'stripe' && <div className="w-3 h-3 rounded-full bg-primary" />}
-              </div>
-            </Label>
-          </CardContent>
-        </Card>
-
-        <Card className={`cursor-pointer border-2 hover:border-primary/50 transition-colors ${selectedMethod === 'metatron' ? 'border-primary' : 'border-border'}`}>
-          <CardContent className="p-6">
-            <RadioGroupItem value="metatron" id="metatron" className="hidden" />
-            <Label 
-              htmlFor="metatron" 
-              className="flex items-center gap-3 cursor-pointer"
-            >
-              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                <Factory className="h-5 w-5 text-green-500" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium">Metatron Pay</p>
-                <p className="text-sm text-muted-foreground">Pay with Metatron</p>
-              </div>
-              <div className="flex-shrink-0 w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center">
-                {selectedMethod === 'metatron' && <div className="w-3 h-3 rounded-full bg-primary" />}
-              </div>
-            </Label>
-          </CardContent>
-        </Card>
+    <div className="space-y-4">
+      <h3 className="text-base font-medium">Select a payment method</h3>
+      
+      <RadioGroup 
+        defaultValue={selected} 
+        value={selected}
+        onValueChange={(value) => handleChange(value as 'stripe' | 'metatron')}
+        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+      >
+        <div>
+          <RadioGroupItem 
+            value="stripe" 
+            id="stripe" 
+            className="peer sr-only" 
+          />
+          <Label 
+            htmlFor="stripe" 
+            className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+          >
+            <div className="mb-3 rounded-full bg-primary/10 p-2">
+              <CreditCard className="h-6 w-6 text-primary" />
+            </div>
+            <div className="text-center">
+              <p className="font-medium">Credit Card</p>
+              <p className="text-sm text-muted-foreground">Pay with Stripe</p>
+            </div>
+          </Label>
+        </div>
+        
+        <div>
+          <RadioGroupItem 
+            value="metatron" 
+            id="metatron" 
+            className="peer sr-only" 
+          />
+          <Label 
+            htmlFor="metatron" 
+            className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+          >
+            <div className="mb-3 rounded-full bg-primary/10 p-2">
+              <PiggyBank className="h-6 w-6 text-primary" />
+            </div>
+            <div className="text-center">
+              <p className="font-medium">Metatron Pay</p>
+              <p className="text-sm text-muted-foreground">Fast, direct payments</p>
+            </div>
+          </Label>
+        </div>
+      </RadioGroup>
+      
+      <div className="p-4 border rounded-md bg-muted/40">
+        {selected === 'stripe' ? (
+          <div className="flex items-center space-x-3">
+            <CreditCard className="h-5 w-5 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Credit Card (Stripe)</p>
+              <p className="text-xs text-muted-foreground">Secure payment processing with credit or debit cards.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-3">
+            <PiggyBank className="h-5 w-5 text-primary" />
+            <div>
+              <p className="text-sm font-medium">Metatron Pay</p>
+              <p className="text-xs text-muted-foreground">Fast direct payment method by Metatron Technologies Ltd.</p>
+            </div>
+          </div>
+        )}
       </div>
-    </RadioGroup>
+    </div>
   );
 }
