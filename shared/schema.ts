@@ -486,6 +486,11 @@ export const carts = pgTable("carts", {
   shipping: decimal("shipping", { precision: 10, scale: 2 }).default("0"),
   tax: decimal("tax", { precision: 10, scale: 2 }).default("0"),
   total: decimal("total", { precision: 10, scale: 2 }).notNull().default("0"),
+  // Payment related fields
+  paymentProvider: text("payment_provider"), // stripe, metatron, etc.
+  paymentIntentId: text("payment_intent_id"), // ID from payment provider
+  paymentStatus: text("payment_status"), // pending, succeeded, failed
+  paymentDate: timestamp("payment_date"),
 });
 
 // Cart items schema

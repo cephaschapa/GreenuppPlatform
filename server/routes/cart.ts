@@ -10,6 +10,8 @@ import {
   type Cart, 
   type CartItem 
 } from "../../shared/schema";
+import { createStripePaymentIntent, confirmStripePayment } from "../payment/stripe";
+import { createMetatronPayIntent, verifyMetatronPayment } from "../payment/metatronPay";
 
 // Create a new router
 const router = Router();
@@ -384,6 +386,171 @@ router.post("/checkout", isAuthenticated, async (req, res) => {
   } catch (error) {
     console.error("Error starting checkout:", error);
     res.status(500).json({ message: "Failed to start checkout process" });
+  }
+});
+
+// POST /api/cart/payment/stripe - Create a Stripe payment intent
+router.post("/payment/stripe", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    
+    // Get user's cart in checkout status
+    const [userCart] = await db
+      .select()
+      .from(carts)
+      .where(and(
+        eq(carts.userId, userId),
+        eq(carts.status, "checkout")
+      ));
+      
+    if (!userCart) {
+      return res.status(404).json({ message: "No cart in checkout status found" });
+    }
+    
+    // Get cart items
+    const items = await db
+      .select()
+      .from(cartItems)
+      .where(eq(cartItems.cartId, userCart.id));
+    
+    if (items.length === 0) {
+      return res.status(400).json({ message: "Cannot create payment intent with empty cart" });
+    }
+    
+    // Create Stripe payment intent
+    const paymentIntent = await createStripePaymentIntent(userCart, items);
+    
+    // Update cart with payment information
+    await db
+      .update(carts)
+      .set({
+        paymentProvider: "stripe",
+        paymentIntentId: paymentIntent.paymentIntentId,
+        updatedAt: new Date()
+      })
+      .where(eq(carts.id, userCart.id));
+    
+    res.status(200).json({
+      clientSecret: paymentIntent.clientSecret,
+      amount: paymentIntent.amount
+    });
+  } catch (error) {
+    console.error("Error creating Stripe payment intent:", error);
+    res.status(500).json({ message: "Failed to create payment intent" });
+  }
+});
+
+// POST /api/cart/payment/metatron - Create a Metatron Pay intent
+router.post("/payment/metatron", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    
+    // Get user's cart in checkout status
+    const [userCart] = await db
+      .select()
+      .from(carts)
+      .where(and(
+        eq(carts.userId, userId),
+        eq(carts.status, "checkout")
+      ));
+      
+    if (!userCart) {
+      return res.status(404).json({ message: "No cart in checkout status found" });
+    }
+    
+    // Get cart items
+    const items = await db
+      .select()
+      .from(cartItems)
+      .where(eq(cartItems.cartId, userCart.id));
+    
+    if (items.length === 0) {
+      return res.status(400).json({ message: "Cannot create payment with empty cart" });
+    }
+    
+    // Create Metatron Pay intent
+    const paymentIntent = await createMetatronPayIntent(userCart, items);
+    
+    // Update cart with payment information
+    await db
+      .update(carts)
+      .set({
+        paymentProvider: "metatron",
+        paymentIntentId: paymentIntent.paymentId,
+        updatedAt: new Date()
+      })
+      .where(eq(carts.id, userCart.id));
+    
+    res.status(200).json({
+      paymentId: paymentIntent.paymentId,
+      amount: paymentIntent.amount,
+      redirectUrl: paymentIntent.redirectUrl
+    });
+  } catch (error) {
+    console.error("Error creating Metatron Pay intent:", error);
+    res.status(500).json({ message: "Failed to create payment" });
+  }
+});
+
+// POST /api/cart/payment/confirm - Confirm payment completion
+router.post("/payment/confirm", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    const { paymentIntentId, provider } = req.body;
+    
+    if (!paymentIntentId || !provider) {
+      return res.status(400).json({ message: "Payment intent ID and provider are required" });
+    }
+    
+    // Get user's cart with matching payment intent
+    const [userCart] = await db
+      .select()
+      .from(carts)
+      .where(and(
+        eq(carts.userId, userId),
+        eq(carts.paymentIntentId, paymentIntentId)
+      ));
+      
+    if (!userCart) {
+      return res.status(404).json({ message: "No cart found with that payment intent" });
+    }
+    
+    let paymentVerification;
+    
+    // Verify payment based on provider
+    if (provider === "stripe") {
+      paymentVerification = await confirmStripePayment(paymentIntentId);
+    } else if (provider === "metatron") {
+      paymentVerification = await verifyMetatronPayment(paymentIntentId);
+    } else {
+      return res.status(400).json({ message: "Invalid payment provider" });
+    }
+    
+    if (!paymentVerification.success) {
+      return res.status(400).json({ 
+        message: "Payment verification failed", 
+        status: paymentVerification.status,
+        details: paymentVerification.message
+      });
+    }
+    
+    // Update cart status to completed
+    const [completedCart] = await db
+      .update(carts)
+      .set({
+        status: "completed",
+        updatedAt: new Date()
+      })
+      .where(eq(carts.id, userCart.id))
+      .returning();
+    
+    res.status(200).json({
+      message: "Payment confirmed and order completed",
+      cart: completedCart
+    });
+  } catch (error) {
+    console.error("Error confirming payment:", error);
+    res.status(500).json({ message: "Failed to confirm payment" });
   }
 });
 
