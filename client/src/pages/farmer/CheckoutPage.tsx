@@ -113,7 +113,7 @@ export default function CheckoutPage() {
   }
 
   // Empty cart state
-  if (!cart?.id || cartItems.length === 0 && !paymentComplete) {
+  if (!cart?.id || (cartItems.length === 0 && !paymentComplete)) {
     return (
       <div className="container max-w-4xl mx-auto py-10 px-4">
         <div className="text-center py-10">
