@@ -29,7 +29,18 @@ function isAuthenticated(req: Request, res: Response, next: Function) {
  * If no cart is found, create one
  */
 async function getOrCreateCart(userId: number, includeCheckout: boolean = false): Promise<Cart> {
-  // If includeCheckout is true, first check for checkout carts to prioritize them
+  // Always prioritize active carts first
+  const [activeCart] = await db
+    .select()
+    .from(carts)
+    .where(and(eq(carts.userId, userId), eq(carts.status, "active")));
+
+  if (activeCart) {
+    console.log(`Found active cart for user ${userId}, id: ${activeCart.id}`);
+    return activeCart;
+  }
+  
+  // Only check for checkout carts if explicitly requested
   if (includeCheckout) {
     const [checkoutCart] = await db
       .select()
@@ -40,17 +51,6 @@ async function getOrCreateCart(userId: number, includeCheckout: boolean = false)
       console.log(`Found checkout cart for user ${userId}, id: ${checkoutCart.id}`);
       return checkoutCart;
     }
-  }
-  
-  // Look for active carts
-  const [activeCart] = await db
-    .select()
-    .from(carts)
-    .where(and(eq(carts.userId, userId), eq(carts.status, "active")));
-
-  if (activeCart) {
-    console.log(`Found active cart for user ${userId}, id: ${activeCart.id}`);
-    return activeCart;
   }
 
   // Create a new cart if none exists
