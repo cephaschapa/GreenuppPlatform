@@ -24,7 +24,7 @@ export default function CheckoutPage() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const { cart, isLoading: isLoadingCart, createStripePayment, refetchCart } = useCart();
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('stripe');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('metatron');
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentComplete, setPaymentComplete] = useState(false);
 

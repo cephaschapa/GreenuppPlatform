@@ -11,7 +11,7 @@ interface PaymentMethodSelectorProps {
 
 export function PaymentMethodSelector({ 
   onSelect, 
-  defaultMethod = 'stripe' 
+  defaultMethod = 'metatron' 
 }: PaymentMethodSelectorProps) {
   const [selected, setSelected] = useState<'stripe' | 'metatron'>(defaultMethod);
 
@@ -30,26 +30,7 @@ export function PaymentMethodSelector({
         onValueChange={(value) => handleChange(value as 'stripe' | 'metatron')}
         className="grid grid-cols-1 md:grid-cols-2 gap-4"
       >
-        <div>
-          <RadioGroupItem 
-            value="stripe" 
-            id="stripe" 
-            className="peer sr-only" 
-          />
-          <Label 
-            htmlFor="stripe" 
-            className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-          >
-            <div className="mb-3 rounded-full bg-primary/10 p-2">
-              <CreditCard className="h-6 w-6 text-primary" />
-            </div>
-            <div className="text-center">
-              <p className="font-medium">Credit Card</p>
-              <p className="text-sm text-muted-foreground">Pay with Stripe</p>
-            </div>
-          </Label>
-        </div>
-        
+        {/* Metatron Pay - Listed first as the preferred payment method */}
         <div>
           <RadioGroupItem 
             value="metatron" 
@@ -66,6 +47,28 @@ export function PaymentMethodSelector({
             <div className="text-center">
               <p className="font-medium">Metatron Pay</p>
               <p className="text-sm text-muted-foreground">Fast, direct payments</p>
+              <p className="text-xs mt-1 text-primary font-medium">Preferred in Zambia</p>
+            </div>
+          </Label>
+        </div>
+        
+        {/* Stripe Credit Card - Listed as secondary option */}
+        <div>
+          <RadioGroupItem 
+            value="stripe" 
+            id="stripe" 
+            className="peer sr-only" 
+          />
+          <Label 
+            htmlFor="stripe" 
+            className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+          >
+            <div className="mb-3 rounded-full bg-primary/10 p-2">
+              <CreditCard className="h-6 w-6 text-primary" />
+            </div>
+            <div className="text-center">
+              <p className="font-medium">Credit Card</p>
+              <p className="text-sm text-muted-foreground">Pay with Stripe</p>
             </div>
           </Label>
         </div>
