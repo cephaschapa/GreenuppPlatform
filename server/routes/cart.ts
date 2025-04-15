@@ -25,18 +25,30 @@ function isAuthenticated(req: Request, res: Response, next: Function) {
 }
 
 /**
- * Get active cart for current user
- * If no active cart is found, create one
+ * Get active or checkout cart for current user
+ * If no cart is found, create one
  */
-async function getOrCreateCart(userId: number): Promise<Cart> {
-  // Try to find active cart
-  const [existingCart] = await db
+async function getOrCreateCart(userId: number, includeCheckout: boolean = false): Promise<Cart> {
+  // Try to find active cart first
+  const [activeCart] = await db
     .select()
     .from(carts)
     .where(and(eq(carts.userId, userId), eq(carts.status, "active")));
 
-  if (existingCart) {
-    return existingCart;
+  if (activeCart) {
+    return activeCart;
+  }
+  
+  // If includeCheckout is true, also look for a cart in checkout status
+  if (includeCheckout) {
+    const [checkoutCart] = await db
+      .select()
+      .from(carts)
+      .where(and(eq(carts.userId, userId), eq(carts.status, "checkout")));
+      
+    if (checkoutCart) {
+      return checkoutCart;
+    }
   }
 
   // Create a new cart if none exists
@@ -81,8 +93,8 @@ router.get("/", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
     
-    // Get or create the user's active cart
-    const cart = await getOrCreateCart(userId);
+    // Get or create the user's cart - include checkout status carts
+    const cart = await getOrCreateCart(userId, true);
     
     // Get cart items with their listings
     const rawItems = await db
@@ -101,6 +113,8 @@ router.get("/", isAuthenticated, async (req, res) => {
         listing: row.listing // Add the listing property in the expected format
       };
     });
+    
+    console.log(`GET /api/cart - Found cart with status: ${cart.status}, id: ${cart.id}, items: ${items.length}`);
       
     // Return cart and items
     res.status(200).json({

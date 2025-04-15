@@ -31,7 +31,12 @@ export default function CheckoutPage() {
   // Check if we're on the confirmation page
   const isConfirmationPage = location.includes('/payment/confirmation');
   
-  console.log('Current cart state:', { cart, items, isConfirmationPage, location });
+  // Calculate total items and amount
+  const cartItems = cart?.items || [];
+  const totalItems = cartItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
+  const totalAmount = cart?.total ? parseFloat(cart.total.toString()) : 0;
+  
+  console.log('Current cart state:', { cartStatus: cart?.status, cartId: cart?.id, itemCount: cartItems.length, isConfirmationPage, location });
 
   // Query parameters for payment confirmation
   const searchParams = new URLSearchParams(window.location.search);
@@ -95,10 +100,7 @@ export default function CheckoutPage() {
     setLocation('/dashboard/marketplace/cart');
   };
 
-  // Calculate total items and amount
-  const items = cart?.items || [];
-  const totalItems = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
-  const totalAmount = cart?.total ? parseFloat(cart.total.toString()) : 0;
+  // These variables are defined earlier, don't need to redefine here
 
   // Loading state
   if (isLoadingCart || checkoutMutation.isPending) {
