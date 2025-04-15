@@ -26,6 +26,7 @@ import MarketplacePage from "@/pages/farmer/MarketplacePage";
 import MarketplaceDetailPage from "@/pages/farmer/MarketplaceDetailPage";
 import CreateListingPage from "@/pages/farmer/CreateListingPage";
 import CartPage from "@/pages/farmer/CartPage";
+import CheckoutPage from "@/pages/farmer/CheckoutPage";
 
 function Router() {
   return (
@@ -48,6 +49,8 @@ function Router() {
       <ProtectedRoute path="/dashboard/marketplace" component={MarketplacePage} />
       <ProtectedRoute path="/dashboard/marketplace/new" component={CreateListingPage} />
       <ProtectedRoute path="/dashboard/marketplace/cart" component={CartPage} />
+      <ProtectedRoute path="/dashboard/marketplace/checkout" component={CheckoutPage} />
+      <ProtectedRoute path="/dashboard/marketplace/payment/confirmation" component={CheckoutPage} />
       <ProtectedRoute path="/dashboard/marketplace/:id" component={MarketplaceDetailPage} />
       
       <Route component={NotFound} />

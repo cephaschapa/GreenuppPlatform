@@ -28,6 +28,10 @@ interface CartContextType {
   removeFromCart: (itemId: number) => Promise<void>;
   clearCart: () => Promise<void>;
   startCheckout: () => Promise<void>;
+  createStripePayment: () => Promise<{ clientSecret: string }>;
+  createMetatronPayment: () => Promise<{ paymentId: string, redirectUrl: string }>;
+  confirmPayment: (paymentIntentId: string, provider: string) => Promise<{ success: boolean }>;
+  refetchCart: () => Promise<any>;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -235,6 +239,113 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Create Stripe payment intent
+  const stripePaymentMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/cart/payment/stripe");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to create Stripe payment intent");
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Payment initialized",
+        description: "Stripe payment is ready to process.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Payment error",
+        description: error.message || "Failed to initialize Stripe payment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Create Metatron payment intent
+  const metatronPaymentMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/cart/payment/metatron");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to create Metatron payment");
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Payment initialized",
+        description: "Metatron Pay is ready to process payment.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Payment error",
+        description: error.message || "Failed to initialize Metatron payment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Confirm payment
+  const confirmPaymentMutation = useMutation({
+    mutationFn: async ({ paymentIntentId, provider }: { paymentIntentId: string, provider: string }) => {
+      const res = await apiRequest("POST", "/api/cart/payment/confirm", {
+        paymentIntentId,
+        provider,
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to confirm payment");
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      refetchCart();
+      toast({
+        title: "Payment confirmed",
+        description: "Your payment has been processed successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Payment confirmation failed",
+        description: error.message || "Failed to confirm payment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Wrapper functions for payment methods
+  const createStripePayment = async () => {
+    try {
+      return await stripePaymentMutation.mutateAsync();
+    } catch (error) {
+      console.error("Error creating Stripe payment:", error);
+      throw error;
+    }
+  };
+
+  const createMetatronPayment = async () => {
+    try {
+      return await metatronPaymentMutation.mutateAsync();
+    } catch (error) {
+      console.error("Error creating Metatron payment:", error);
+      throw error;
+    }
+  };
+
+  const confirmPayment = async (paymentIntentId: string, provider: string) => {
+    try {
+      return await confirmPaymentMutation.mutateAsync({ paymentIntentId, provider });
+    } catch (error) {
+      console.error("Error confirming payment:", error);
+      throw error;
+    }
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -248,6 +359,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         removeFromCart,
         clearCart,
         startCheckout,
+        createStripePayment,
+        createMetatronPayment,
+        confirmPayment,
+        refetchCart,
       }}
     >
       {children}

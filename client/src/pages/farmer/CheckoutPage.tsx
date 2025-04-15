@@ -130,7 +130,7 @@ export default function CheckoutPage() {
 
   // Calculate total items and amount
   const cartItems = cartData?.items || [];
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = cartItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
   const totalAmount = cartData?.cart?.total ? parseFloat(cartData.cart.total) : 0;
 
   // Loading state
