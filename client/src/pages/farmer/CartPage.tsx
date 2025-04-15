@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Trash2, ShoppingBag, ChevronLeft, Plus, Minus } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -37,6 +37,8 @@ export default function CartPage() {
     updateQuantity(itemId, newQuantity);
   };
 
+  const [, setLocation] = useLocation();
+  
   const handleCheckout = async () => {
     if (itemCount === 0) {
       toast({
@@ -51,7 +53,8 @@ export default function CartPage() {
     try {
       // Start checkout process and redirect to checkout page
       await startCheckout();
-      window.location.href = "/dashboard/marketplace/checkout";
+      // Use Link navigation instead of window.location to avoid full page reload
+      setLocation("/dashboard/marketplace/checkout");
     } catch (error) {
       console.error("Checkout error:", error);
       toast({

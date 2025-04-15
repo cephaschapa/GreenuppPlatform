@@ -30,6 +30,8 @@ export default function CheckoutPage() {
 
   // Check if we're on the confirmation page
   const isConfirmationPage = location.includes('/payment/confirmation');
+  
+  console.log('Current cart state:', { cart, items, isConfirmationPage, location });
 
   // Query parameters for payment confirmation
   const searchParams = new URLSearchParams(window.location.search);
