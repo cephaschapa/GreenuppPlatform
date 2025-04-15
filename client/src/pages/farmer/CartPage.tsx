@@ -144,9 +144,9 @@ export default function CartPage() {
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">
                         <div className="flex flex-col">
-                          <span className="font-medium">{item.listing.title}</span>
+                          <span className="font-medium">{item.listing?.title || "Unknown Product"}</span>
                           <span className="text-muted-foreground text-sm">
-                            {item.listing.category}
+                            {item.listing?.category || "Unknown Category"}
                           </span>
                           {item.notes && (
                             <span className="text-sm italic mt-1">Note: {item.notes}</span>

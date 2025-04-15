@@ -200,8 +200,10 @@ export function Sidebar() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <CartIcon variant="mobile" />
-          
+          <Link href="dashboard/marketplace/cart">
+            <CartIcon variant="mobile" />
+          </Link>
+
           <Button variant="ghost" size="icon" className="rounded-full">
             <Bell className="h-5 w-5" />
           </Button>
@@ -370,7 +372,9 @@ export function Sidebar() {
           </div>
 
           <div className="flex gap-2 mb-4">
-            <CartIcon variant="sidebar" showLabel={true} />
+            <Link href="/dashboard/marketplace/cart">
+              <CartIcon variant="sidebar" showLabel={true} />
+            </Link>
           </div>
 
           <Button

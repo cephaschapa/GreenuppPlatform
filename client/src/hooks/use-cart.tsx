@@ -10,7 +10,10 @@ import { useAuth } from "@/hooks/use-auth";
 
 // Type for cart with items and listing details
 interface CartWithItems extends Cart {
-  items: (CartItem & { listing: MarketplaceListing })[];
+  items: (CartItem & { 
+    listing?: MarketplaceListing,
+    marketplaceListings?: MarketplaceListing 
+  })[];
 }
 
 // Context type
