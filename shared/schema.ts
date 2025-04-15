@@ -512,11 +512,19 @@ export const insertCartSchema = createInsertSchema(carts).omit({
   total: true,
 });
 
-export const insertCartItemSchema = createInsertSchema(cartItems).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertCartItemSchema = createInsertSchema(cartItems)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+    cartId: true, // Server will handle this
+    price: true,  // Server will get this from the listing
+    priceUnit: true, // Server will get this from the listing
+  })
+  .required({
+    listingId: true,
+  })
+  .partial();
 
 // Export cart types
 export type InsertCart = z.infer<typeof insertCartSchema>;
