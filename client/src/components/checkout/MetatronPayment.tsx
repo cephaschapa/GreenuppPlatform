@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Loader2, Factory } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/hooks/use-cart';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Loader2, CheckCircle } from 'lucide-react';
+import { useLocation } from 'wouter';
 
 interface MetatronPaymentProps {
   onSuccess?: () => void;
@@ -17,10 +18,12 @@ export function MetatronPayment({
   amount,
   cartId
 }: MetatronPaymentProps) {
-  const { createMetatronPayment } = useCart();
+  const { createMetatronPayment, confirmPayment } = useCart();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
   const handlePayment = async () => {
     if (!cartId) {
@@ -36,89 +39,128 @@ export function MetatronPayment({
     setError(null);
 
     try {
-      const response = await createMetatronPayment();
+      // Call our API to create a Metatron payment intent
+      const paymentData = await createMetatronPayment();
       
-      // In a production app, we would redirect to Metatron's payment page
-      // using the redirectUrl from the response
-      // window.location.href = response.redirectUrl;
+      // For this custom payment system, we'd need to either:
+      // 1. Redirect to an external payment page, or
+      // 2. Simulate the payment flow for demo/placeholder purposes
       
-      // For demo purposes, we'll simulate a successful payment
+      // Here we'll simulate option 2 for the placeholder/demo
+      // In a real implementation, you might redirect to paymentData.redirectUrl
+      
+      setRedirectUrl(paymentData.redirectUrl);
+      
+      // Simulate processing
       setTimeout(() => {
-        if (onSuccess) {
-          onSuccess();
-        }
-        toast({
-          title: "Payment successful",
-          description: "Your payment has been processed successfully via Metatron Pay!",
-        });
-        setIsProcessing(false);
-      }, 2000);
+        // Confirm the payment
+        confirmPayment(paymentData.paymentId, 'metatron')
+          .then(result => {
+            if (result.success) {
+              toast({
+                title: "Payment Successful",
+                description: "Your payment has been processed successfully with Metatron Pay.",
+              });
+              onSuccess?.();
+            } else {
+              setError("Payment verification failed. Please try again.");
+              toast({
+                title: "Payment Failed",
+                description: "Payment verification failed. Please try again.",
+                variant: "destructive",
+              });
+            }
+            setIsProcessing(false);
+          })
+          .catch(err => {
+            setError(err.message || "Payment processing failed");
+            toast({
+              title: "Payment Error",
+              description: err.message || "Payment processing failed",
+              variant: "destructive",
+            });
+            setIsProcessing(false);
+          });
+      }, 2000); // Simulate a 2-second payment process
       
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
+      setError(err.message || "Failed to initialize payment");
       toast({
-        title: "Payment error",
-        description: err.message || "There was a problem processing your payment.",
+        title: "Payment Error",
+        description: err.message || "Failed to initialize payment",
         variant: "destructive",
       });
       setIsProcessing(false);
     }
   };
 
+  // If we have a redirect URL and want to simulate a redirect
+  if (redirectUrl && !error && isProcessing) {
+    return (
+      <div className="flex flex-col items-center justify-center p-6 text-center space-y-4">
+        <div className="rounded-full bg-primary/10 p-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+        <h3 className="text-lg font-semibold">Processing your payment</h3>
+        <p className="text-muted-foreground">Please wait while we process your payment with Metatron Pay...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="bg-green-50 dark:bg-green-950/30 p-6 rounded-lg border border-green-200 dark:border-green-900">
-        <div className="flex items-center gap-3 mb-3">
-          <Factory className="h-5 w-5 text-green-600 dark:text-green-500" />
-          <h3 className="font-medium text-green-800 dark:text-green-500">Metatron Pay</h3>
-        </div>
-        <p className="text-green-700 dark:text-green-400 text-sm mb-4">
-          Fast, secure payments through the Metatron Technologies network.
+      <div className="bg-muted p-4 rounded-md">
+        <p className="text-sm text-muted-foreground">
+          You'll be charged <span className="font-semibold">ZMW {amount.toFixed(2)}</span> for this purchase. 
+          Your payment will be securely processed by Metatron Pay.
         </p>
-        <div className="bg-white dark:bg-green-950/50 p-4 rounded border border-green-200 dark:border-green-800 mb-4">
-          <div className="flex justify-between text-sm mb-2">
-            <span className="text-muted-foreground">Amount:</span>
-            <span className="font-medium">ZMW {amount.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-sm mb-2">
-            <span className="text-muted-foreground">Payment method:</span>
-            <span className="font-medium">Metatron Pay</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Processing fee:</span>
-            <span className="font-medium">ZMW 0.00</span>
-          </div>
-        </div>
       </div>
       
       {error && (
-        <div className="text-destructive text-sm mt-2">
+        <div className="bg-destructive/10 text-destructive p-4 rounded-md text-sm">
           {error}
         </div>
       )}
       
-      <div className="flex justify-between gap-4 pt-4">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={onCancel}
-          disabled={isProcessing}
-        >
-          Cancel
-        </Button>
-        <Button 
+      <div className="bg-primary-foreground border rounded-md p-6 space-y-4">
+        <div className="flex items-center justify-center">
+          <div className="h-12 w-12 bg-primary text-primary-foreground rounded-md flex items-center justify-center font-bold text-xl">
+            MP
+          </div>
+        </div>
+        
+        <h3 className="text-center font-semibold">Metatron Pay</h3>
+        
+        <div className="space-y-2">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Amount:</span>
+            <span className="font-medium">ZMW {amount.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Payment method:</span>
+            <span className="font-medium">Metatron Pay</span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex justify-between">
+        <Button
           type="button"
-          onClick={handlePayment}
+          variant="outline"
+          onClick={() => onCancel?.()}
           disabled={isProcessing}
-          className="min-w-[150px] bg-green-600 hover:bg-green-700"
         >
+          Back
+        </Button>
+        
+        <Button onClick={handlePayment} disabled={isProcessing}>
           {isProcessing ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Processing...
             </>
           ) : (
-            `Pay ZMW ${amount.toFixed(2)}`
+            `Pay with Metatron Pay`
           )}
         </Button>
       </div>

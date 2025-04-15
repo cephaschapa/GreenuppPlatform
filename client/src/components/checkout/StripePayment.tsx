@@ -1,12 +1,9 @@
 import { useState } from 'react';
-import {
-  PaymentElement,
-  useStripe,
-  useElements
-} from '@stripe/react-stripe-js';
+import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
+import { useCart } from '@/hooks/use-cart';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 interface StripePaymentProps {
   onSuccess?: () => void;
@@ -14,111 +11,113 @@ interface StripePaymentProps {
   amount: number;
 }
 
-export function StripePayment({ 
-  onSuccess, 
-  onCancel,
-  amount 
-}: StripePaymentProps) {
+export function StripePayment({ onSuccess, onCancel, amount }: StripePaymentProps) {
   const stripe = useStripe();
   const elements = useElements();
+  const { confirmPayment } = useCart();
   const { toast } = useToast();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!stripe || !elements) {
-      toast({
-        title: "Payment error",
-        description: "Stripe has not been loaded properly.",
-        variant: "destructive",
-      });
       return;
     }
 
     setIsProcessing(true);
-    setPaymentError(null);
+    setError(null);
 
-    try {
-      const { error } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: window.location.origin + '/dashboard/marketplace/payment/confirmation',
-        },
-        redirect: 'if_required'
+    // Confirm the payment with Stripe.js
+    const result = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/dashboard/marketplace/payment/confirmation`,
+      },
+      redirect: 'if_required',
+    });
+
+    if (result.error) {
+      // Show error to your customer
+      setError(result.error.message || 'An error occurred with your payment');
+      toast({
+        title: 'Payment Failed',
+        description: result.error.message || 'An error occurred with your payment',
+        variant: 'destructive',
       });
-
-      if (error) {
-        setPaymentError(error.message || 'An unexpected error occurred.');
-        toast({
-          title: "Payment failed",
-          description: error.message || "Your payment could not be processed.",
-          variant: "destructive",
-        });
-      } else {
-        // Payment succeeded
-        if (onSuccess) {
-          onSuccess();
+      setIsProcessing(false);
+    } else if (result.paymentIntent) {
+      // The payment has been processed!
+      try {
+        const confirmResult = await confirmPayment(result.paymentIntent.id, 'stripe');
+        
+        if (confirmResult.success) {
+          toast({
+            title: 'Payment Successful',
+            description: 'Your payment has been completed successfully',
+          });
+          onSuccess?.();
+        } else {
+          setError('Payment was processed, but verification failed. Please contact support.');
+          toast({
+            title: 'Verification Failed',
+            description: 'Payment was processed, but verification failed. Please contact support.',
+            variant: 'destructive',
+          });
         }
+      } catch (err: any) {
+        setError(err.message || 'Failed to verify payment');
         toast({
-          title: "Payment successful",
-          description: "Your payment has been processed successfully!",
+          title: 'Verification Error',
+          description: err.message || 'Failed to verify payment',
+          variant: 'destructive',
         });
       }
-    } catch (err: any) {
-      setPaymentError(err.message || 'An unexpected error occurred.');
-      toast({
-        title: "Payment error",
-        description: err.message || "There was a problem processing your payment.",
-        variant: "destructive",
-      });
-    } finally {
       setIsProcessing(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement 
-        options={{
-          layout: {
-            type: 'tabs',
-            defaultCollapsed: false,
-          }
-        }}
-      />
+    <div className="space-y-6">
+      <div className="bg-muted p-4 rounded-md">
+        <p className="text-sm text-muted-foreground">
+          You'll be charged <span className="font-semibold">ZMW {amount.toFixed(2)}</span> for this purchase. 
+          Your payment information is securely processed by Stripe.
+        </p>
+      </div>
       
-      {paymentError && (
-        <div className="text-destructive text-sm mt-2">
-          {paymentError}
+      {error && (
+        <div className="bg-destructive/10 text-destructive p-4 rounded-md text-sm">
+          {error}
         </div>
       )}
       
-      <div className="flex justify-between gap-4 pt-4">
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={onCancel}
-          disabled={isProcessing}
-        >
-          Cancel
-        </Button>
-        <Button 
-          type="submit" 
-          disabled={!stripe || isProcessing}
-          className="min-w-[150px]"
-        >
-          {isProcessing ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            `Pay ZMW ${amount.toFixed(2)}`
-          )}
-        </Button>
-      </div>
-    </form>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <PaymentElement />
+        
+        <div className="flex justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onCancel?.()}
+            disabled={isProcessing}
+          >
+            Back
+          </Button>
+          
+          <Button type="submit" disabled={!stripe || isProcessing}>
+            {isProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              `Pay ZMW ${amount.toFixed(2)}`
+            )}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }

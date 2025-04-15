@@ -1,127 +1,92 @@
 import { useState, useEffect } from 'react';
-import { Elements } from '@stripe/react-stripe-js';
+import { Link, useLocation } from 'wouter';
 import { loadStripe } from '@stripe/stripe-js';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { PaymentMethodSelector } from '@/components/checkout/PaymentMethodSelector';
+import { Elements } from '@stripe/react-stripe-js';
+import { useCart } from '@/hooks/use-cart';
+import { useToast } from '@/hooks/use-toast';
+import { useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { StripePayment } from '@/components/checkout/StripePayment';
 import { MetatronPayment } from '@/components/checkout/MetatronPayment';
-import { useLocation, useRoute, Link, useSearch } from 'wouter';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { PaymentMethodSelector } from '@/components/checkout/PaymentMethodSelector';
+import { formatCurrency } from '@/lib/utils';
 
-// Load Stripe outside of component to avoid recreating it on each render
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
+// Load Stripe outside of component to avoid recreating on re-renders
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 type PaymentMethod = 'stripe' | 'metatron';
 
 export default function CheckoutPage() {
-  const [_, setLocation] = useLocation();
-  const [match, params] = useRoute('/dashboard/marketplace/payment/confirmation');
+  const [location, setLocation] = useLocation();
+  const { toast } = useToast();
+  const { cart, isLoading: isLoadingCart, createStripePayment, refetchCart } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('stripe');
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentComplete, setPaymentComplete] = useState(false);
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const search = useSearch();
-  const successParam = new URLSearchParams(search).get('success');
 
-  // If the URL includes success=true, mark payment as complete
-  useEffect(() => {
-    if (successParam === 'true' || match) {
-      setPaymentComplete(true);
-    }
-  }, [successParam, match]);
+  // Check if we're on the confirmation page
+  const isConfirmationPage = location.includes('/payment/confirmation');
 
-  // Fetch the cart details
-  const { data: cartData, isLoading: isLoadingCart } = useQuery({
-    queryKey: ['/api/cart'],
-    enabled: !paymentComplete,
-  });
+  // Query parameters for payment confirmation
+  const searchParams = new URLSearchParams(window.location.search);
+  const paymentIntentId = searchParams.get('payment_intent');
+  const paymentStatus = searchParams.get('redirect_status');
 
-  // Mutation to start checkout process
-  const checkoutMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/cart/checkout');
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || 'Failed to start checkout');
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      // After checkout is started, invalidate cart query to get latest status
-      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Checkout Error",
-        description: error instanceof Error ? error.message : "Failed to start checkout process"
-      });
-    }
-  });
-
-  // Mutation to create Stripe payment intent
+  // Handle Stripe payment checkout
   const stripePaymentMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/cart/payment/stripe');
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || 'Failed to create payment intent');
-      }
-      return res.json();
+      return await createStripePayment();
     },
-    onSuccess: (data) => {
-      setClientSecret(data.clientSecret);
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Payment Error",
-        description: error instanceof Error ? error.message : "Failed to create payment intent"
-      });
-    }
   });
 
-  // Start checkout process when page loads
-  useEffect(() => {
-    if (cartData && !paymentComplete && cartData.cart.status === 'active') {
-      checkoutMutation.mutate();
-    }
-  }, [cartData]);
+  // Handle checkout confirmation
+  const checkoutMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/cart/checkout");
+      return await res.json();
+    },
+  });
 
-  // When payment method changes or checkout completes, handle creating the payment intent
-  useEffect(() => {
-    if (cartData && cartData.cart.status === 'checkout' && paymentMethod === 'stripe' && !clientSecret) {
-      stripePaymentMutation.mutate();
-    }
-  }, [paymentMethod, cartData]);
-
+  // Handle payment method change
   const handlePaymentMethodChange = (method: PaymentMethod) => {
     setPaymentMethod(method);
-    // Reset client secret when changing payment methods
-    setClientSecret(null);
+    setClientSecret(null); // Reset client secret when changing payment method
   };
 
+  // Initialize Stripe payment when Stripe is selected
+  useEffect(() => {
+    if (paymentMethod === 'stripe' && !clientSecret && !paymentComplete) {
+      stripePaymentMutation.mutate(undefined, {
+        onSuccess: (data) => {
+          setClientSecret(data.clientSecret);
+        },
+        onError: (error: any) => {
+          toast({
+            title: "Payment Error",
+            description: error.message || "Unable to initialize payment",
+            variant: "destructive",
+          });
+        },
+      });
+    }
+  }, [paymentMethod, clientSecret, paymentComplete]);
+
+  // Handle confirmation page logic
+  useEffect(() => {
+    if (isConfirmationPage && paymentIntentId && paymentStatus === 'succeeded') {
+      setPaymentComplete(true);
+      refetchCart();
+    }
+  }, [isConfirmationPage, paymentIntentId, paymentStatus]);
+
+  // Handlers
   const handlePaymentSuccess = () => {
     setPaymentComplete(true);
-    queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-    toast({
-      title: "Payment Successful",
-      description: "Your order has been placed successfully"
-    });
+    refetchCart();
   };
 
   const handleCancel = () => {
@@ -129,9 +94,9 @@ export default function CheckoutPage() {
   };
 
   // Calculate total items and amount
-  const cartItems = cartData?.items || [];
-  const totalItems = cartItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
-  const totalAmount = cartData?.cart?.total ? parseFloat(cartData.cart.total) : 0;
+  const items = cart?.items || [];
+  const totalItems = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+  const totalAmount = cart?.total ? parseFloat(cart.total.toString()) : 0;
 
   // Loading state
   if (isLoadingCart || checkoutMutation.isPending) {
@@ -146,14 +111,14 @@ export default function CheckoutPage() {
   }
 
   // Empty cart state
-  if (cartItems.length === 0 && !paymentComplete) {
+  if (items.length === 0 && !paymentComplete) {
     return (
       <div className="container max-w-4xl mx-auto py-10 px-4">
         <div className="text-center py-10">
           <h2 className="text-2xl font-bold mb-4">Your Cart is Empty</h2>
           <p className="text-muted-foreground mb-6">Add some items to your cart to checkout</p>
           <Button asChild>
-            <Link to="/dashboard/marketplace">Browse Marketplace</Link>
+            <Link href="/dashboard/marketplace">Browse Marketplace</Link>
           </Button>
         </div>
       </div>
@@ -178,7 +143,7 @@ export default function CheckoutPage() {
           </CardContent>
           <CardFooter className="flex justify-center gap-4">
             <Button asChild>
-              <Link to="/dashboard/marketplace">Continue Shopping</Link>
+              <Link href="/dashboard/marketplace">Continue Shopping</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -213,7 +178,7 @@ export default function CheckoutPage() {
             <CardContent className="space-y-4">
               {/* Cart items summary */}
               <div className="space-y-3">
-                {cartItems.map((item: any) => (
+                {items.map((item: any) => (
                   <div key={item.id} className="flex justify-between items-start">
                     <div>
                       <p className="font-medium">{item.listing?.title || 'Product'}</p>
@@ -230,20 +195,20 @@ export default function CheckoutPage() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>ZMW {(cartData?.cart?.subtotal || 0).toString()}</span>
+                  <span>ZMW {(cart?.subtotal || 0).toString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
-                  <span>ZMW {(cartData?.cart?.shipping || 0).toString()}</span>
+                  <span>ZMW {(cart?.shipping || 0).toString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax</span>
-                  <span>ZMW {(cartData?.cart?.tax || 0).toString()}</span>
+                  <span>ZMW {(cart?.tax || 0).toString()}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between font-bold">
                   <span>Total</span>
-                  <span>ZMW {(cartData?.cart?.total || 0).toString()}</span>
+                  <span>ZMW {(cart?.total || 0).toString()}</span>
                 </div>
               </div>
             </CardContent>
@@ -287,7 +252,7 @@ export default function CheckoutPage() {
                   onSuccess={handlePaymentSuccess}
                   onCancel={handleCancel}
                   amount={totalAmount}
-                  cartId={cartData?.cart?.id}
+                  cartId={cart?.id as number}
                 />
               ) : null}
             </CardContent>
