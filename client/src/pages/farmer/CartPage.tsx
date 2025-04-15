@@ -77,7 +77,7 @@ export default function CartPage() {
     return (
       <div className="container py-10 space-y-6">
         <div className="flex items-center gap-2">
-          <Link href="/farmer/marketplace">
+          <Link href="/dashboard/marketplace">
             <a className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
               <ChevronLeft className="h-4 w-4" />
               Back to Marketplace
@@ -92,7 +92,7 @@ export default function CartPage() {
             <p className="text-muted-foreground mb-6 text-center max-w-md">
               Looks like you haven't added any items to your cart yet. Explore our marketplace to find agricultural products and services.
             </p>
-            <Link href="/farmer/marketplace">
+            <Link href="/dashboard/marketplace">
               <Button>
                 Browse Marketplace
               </Button>
@@ -106,7 +106,7 @@ export default function CartPage() {
   return (
     <div className="container py-10 space-y-6">
       <div className="flex items-center gap-2">
-        <Link href="/farmer/marketplace">
+        <Link href="/dashboard/marketplace">
           <a className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ChevronLeft className="h-4 w-4" />
             Back to Marketplace
@@ -209,7 +209,7 @@ export default function CartPage() {
               >
                 Clear Cart
               </Button>
-              <Link href="/farmer/marketplace">
+              <Link href="/dashboard/marketplace">
                 <Button variant="secondary" size="sm">
                   Continue Shopping
                 </Button>
