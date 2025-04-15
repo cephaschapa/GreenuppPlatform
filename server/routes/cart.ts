@@ -234,26 +234,31 @@ router.put("/items/:id", isAuthenticated, async (req, res) => {
       return res.status(400).json({ message: "Quantity must be a positive number" });
     }
     
-    // Get user's active cart
-    const [userCart] = await db
-      .select()
-      .from(carts)
-      .where(and(
-        eq(carts.userId, userId),
-        eq(carts.status, "active")
-      ));
-      
-    if (!userCart) {
-      return res.status(404).json({ message: "No active cart found" });
-    }
-    
-    // Get the item and verify it belongs to user's cart
+    // Get the item first to check which cart it belongs to
     const [item] = await db
       .select()
       .from(cartItems)
       .where(eq(cartItems.id, itemId));
-      
-    if (!item || item.cartId !== userCart.id) {
+    
+    if (!item) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+    
+    // Now get the correct cart (could be active or checkout)
+    const [userCart] = await db
+      .select()
+      .from(carts)
+      .where(and(
+        eq(carts.id, item.cartId),
+        eq(carts.userId, userId)
+      ));
+    
+    if (!userCart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+    
+    // Check if the item belongs to user's cart
+    if (item.cartId !== userCart.id) {
       return res.status(404).json({ message: "Item not found in your cart" });
     }
     
@@ -287,26 +292,31 @@ router.delete("/items/:id", isAuthenticated, async (req, res) => {
       return res.status(400).json({ message: "Invalid item ID" });
     }
     
-    // Get user's active cart
-    const [userCart] = await db
-      .select()
-      .from(carts)
-      .where(and(
-        eq(carts.userId, userId),
-        eq(carts.status, "active")
-      ));
-      
-    if (!userCart) {
-      return res.status(404).json({ message: "No active cart found" });
-    }
-    
-    // Verify the item belongs to user's cart
+    // Get the item first to check which cart it belongs to
     const [item] = await db
       .select()
       .from(cartItems)
       .where(eq(cartItems.id, itemId));
-      
-    if (!item || item.cartId !== userCart.id) {
+    
+    if (!item) {
+      return res.status(404).json({ message: "Item not found" });
+    }
+    
+    // Now get the correct cart (could be active or checkout)
+    const [userCart] = await db
+      .select()
+      .from(carts)
+      .where(and(
+        eq(carts.id, item.cartId),
+        eq(carts.userId, userId)
+      ));
+    
+    if (!userCart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+    
+    // Check if the item belongs to user's cart
+    if (item.cartId !== userCart.id) {
       return res.status(404).json({ message: "Item not found in your cart" });
     }
     
@@ -340,10 +350,46 @@ router.delete("/clear", isAuthenticated, async (req, res) => {
       ));
       
     if (!userCart) {
+      // If no active cart, check if there's a checkout cart
+      const [checkoutCart] = await db
+        .select()
+        .from(carts)
+        .where(and(
+          eq(carts.userId, userId),
+          eq(carts.status, "checkout")
+        ));
+        
+      if (checkoutCart) {
+        // Reset the checkout cart to active and empty it
+        console.log(`Reset checkout cart ${checkoutCart.id} to active and empty it`);
+        
+        // Delete all items
+        await db
+          .delete(cartItems)
+          .where(eq(cartItems.cartId, checkoutCart.id));
+          
+        // Reset cart status and totals
+        await db
+          .update(carts)
+          .set({
+            status: "active",
+            subtotal: "0",
+            shipping: "0",
+            tax: "0",
+            total: "0",
+            paymentProvider: null,
+            paymentIntentId: null,
+            updatedAt: new Date()
+          })
+          .where(eq(carts.id, checkoutCart.id));
+          
+        return res.status(200).json({ message: "Checkout cart cleared and reset to active" });
+      }
+      
       return res.status(404).json({ message: "No active cart found" });
     }
     
-    // Delete all items
+    // Delete all items from active cart
     await db
       .delete(cartItems)
       .where(eq(cartItems.cartId, userCart.id));
