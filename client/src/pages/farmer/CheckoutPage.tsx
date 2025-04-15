@@ -31,16 +31,18 @@ export default function CheckoutPage() {
   // Check if we're on the confirmation page
   const isConfirmationPage = location.includes('/payment/confirmation');
   
-  // Calculate total items and amount
-  const cartItems = cart && 'items' in cart ? cart.items : [];
+  // Ensure items are properly extracted from the cart
+  const cartItems = cart?.items || [];
   const totalItems = cartItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
   const totalAmount = cart?.total ? parseFloat(cart.total.toString()) : 0;
   
+  // Detailed logging to help debug cart issues
   console.log('Current cart state:', { 
+    cart: cart,
     cartStatus: cart?.status, 
     cartId: cart?.id, 
-    items: cartItems, 
-    itemCount: cartItems.length, 
+    itemCount: cartItems.length,
+    items: cartItems,
     isConfirmationPage, 
     location 
   });

@@ -55,12 +55,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       
       // Log cart data for debugging
-      console.log("Cart data fetched:", {
-        cartId: data.cart?.id,
-        status: data.cart?.status,
-        itemCount: data.items?.length || 0
-      });
+      console.log("Cart data fetched:", data);
       
+      // Direct cart format - the server now returns the cart with items directly embedded
       return data as CartWithItems;
     },
     enabled: !!user, // Only fetch if user is logged in
