@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Upload, Plus, X, MapPin, Loader2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
+import LocationSelector, { LocationData } from "@/components/marketplace/LocationSelector";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -96,15 +97,8 @@ export default function CreateListingPage() {
   const [, setLocation] = useLocation();
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
-  const [location, setUserLocation] = useState<{
-    coordinates: { lat: number; lng: number } | null;
-    address: string;
-    isLoading: boolean;
-  }>({
-    coordinates: null,
-    address: "",
-    isLoading: false,
-  });
+  const [locationData, setLocationData] = useState<LocationData | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
 
   // Create form
   const form = useForm<ListingFormValues>({
@@ -164,32 +158,60 @@ export default function CreateListingPage() {
 
   // Get user's location
   const detectLocation = () => {
-    setUserLocation((prev) => ({ ...prev, isLoading: true }));
+    setLocationLoading(true);
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const coords = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
 
-          // In a real implementation, you would use a geocoding service to get the address
-          // For now, just use the coordinates
-          setUserLocation({
-            coordinates: coords,
-            address: `Lat: ${coords.lat.toFixed(4)}, Lng: ${coords.lng.toFixed(4)}`,
-            isLoading: false,
-          });
+          try {
+            // Use reverse geocoding to get address details
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+              {
+                headers: {
+                  'Accept-Language': 'en'
+                }
+              }
+            );
+            const data = await response.json();
 
-          toast({
-            title: "Location detected",
-            description: "Your current location has been added to the listing",
-          });
+            if (data && data.address) {
+              const newLocationData: LocationData = {
+                latitude: lat,
+                longitude: lng,
+                country: data.address.country || '',
+                region: data.address.state || data.address.county || '',
+                city: data.address.city || data.address.town || data.address.village || '',
+                neighborhood: data.address.suburb || data.address.neighbourhood || null,
+                postalCode: data.address.postcode || null,
+                formattedAddress: data.display_name || null,
+                placeId: data.place_id?.toString() || null
+              };
+
+              setLocationData(newLocationData);
+              
+              toast({
+                title: "Location detected",
+                description: "Your current location has been added to the listing",
+              });
+            }
+          } catch (error) {
+            console.error("Error fetching location data:", error);
+            toast({
+              title: "Location error",
+              description: "Could not get location details. Please try setting it manually.",
+              variant: "destructive",
+            });
+          } finally {
+            setLocationLoading(false);
+          }
         },
         (error) => {
           console.error("Error getting location:", error);
-          setUserLocation((prev) => ({ ...prev, isLoading: false }));
+          setLocationLoading(false);
 
           toast({
             title: "Location error",
@@ -197,10 +219,10 @@ export default function CreateListingPage() {
               "Could not detect your location. Please try again or enter manually.",
             variant: "destructive",
           });
-        },
+        }
       );
     } else {
-      setUserLocation((prev) => ({ ...prev, isLoading: false }));
+      setLocationLoading(false);
 
       toast({
         title: "Location not supported",
@@ -298,10 +320,24 @@ export default function CreateListingPage() {
     });
 
     // Add location data if available
-    if (location.coordinates) {
-      formData.append("latitude", location.coordinates.lat.toString());
-      formData.append("longitude", location.coordinates.lng.toString());
-      formData.append("address", location.address);
+    if (locationData) {
+      formData.append("latitude", locationData.latitude.toString());
+      formData.append("longitude", locationData.longitude.toString());
+      formData.append("country", locationData.country);
+      formData.append("region", locationData.region);
+      formData.append("city", locationData.city);
+      
+      if (locationData.neighborhood) {
+        formData.append("neighborhood", locationData.neighborhood);
+      }
+      
+      if (locationData.postalCode) {
+        formData.append("postalCode", locationData.postalCode);
+      }
+      
+      if (locationData.formattedAddress) {
+        formData.append("formattedAddress", locationData.formattedAddress);
+      }
     }
 
     // Add images
@@ -660,9 +696,9 @@ export default function CreateListingPage() {
                     type="button"
                     variant="outline"
                     onClick={detectLocation}
-                    disabled={location.isLoading}
+                    disabled={locationLoading}
                   >
-                    {location.isLoading ? (
+                    {locationLoading ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         Detecting...
@@ -675,17 +711,26 @@ export default function CreateListingPage() {
                     )}
                   </Button>
 
-                  {location.coordinates && (
+                  {locationData && (
                     <div className="text-sm text-muted-foreground">
                       <MapPin className="h-4 w-4 inline mr-1" />
-                      {location.address}
+                      {locationData.formattedAddress || 
+                        `${locationData.city}${locationData.region ? `, ${locationData.region}` : ''}, ${locationData.country}`}
                     </div>
                   )}
                 </div>
 
                 <Separator className="my-4" />
 
-                <div className="text-sm text-muted-foreground">
+                {/* Map-based location selector */}
+                <div className="mt-4 mb-6">
+                  <LocationSelector 
+                    initialLocation={locationData}
+                    onLocationSelect={(location) => setLocationData(location)}
+                  />
+                </div>
+
+                <div className="text-sm text-muted-foreground mt-4">
                   <p>
                     Your approximate location will be shown to potential buyers.
                     Exact address will not be shared.
