@@ -14,7 +14,8 @@ import {
   Filter,
   ArrowLeft,
   MessageCircle,
-  Share2
+  Share2,
+  Search
 } from "lucide-react";
 import { formatDistance, formatDistanceToNow } from "date-fns";
 import { MarketplaceListing } from "@shared/schema";

@@ -7,7 +7,8 @@ import {
   ShoppingBag, 
   Info, 
   Phone,
-  User
+  User,
+  Users
 } from 'lucide-react';
 
 import { Button } from "@/components/ui/button";

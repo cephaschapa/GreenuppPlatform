@@ -9,6 +9,8 @@ import DashboardPage from "@/pages/dashboard-page";
 import ProfileCreationPage from "@/pages/profile-creation-page";
 import PublicMarketplacePage from "@/pages/PublicMarketplacePage";
 import PublicListingDetailPage from "@/pages/PublicListingDetailPage";
+import PublicSellersPage from "@/pages/PublicSellersPage";
+import PublicSellerProfilePage from "@/pages/PublicSellerProfilePage";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -36,6 +38,8 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/marketplace" component={PublicMarketplacePage} />
+      <Route path="/marketplace/sellers" component={PublicSellersPage} />
+      <Route path="/marketplace/sellers/:id" component={PublicSellerProfilePage} />
       <Route path="/marketplace/:id" component={PublicListingDetailPage} />
       
       {/* Dashboard routes */}

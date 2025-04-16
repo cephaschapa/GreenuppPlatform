@@ -1,11 +1,9 @@
 import { Router } from "express";
-import { storage } from "../storage";
 import { db } from "../db";
 import { 
   eq, 
   sql,
-  desc,
-  count
+  desc
 } from "drizzle-orm";
 import { 
   users, 
@@ -17,63 +15,43 @@ import {
 
 const router = Router();
 
-// Get all sellers with their stats
+// Get all sellers with their stats (users with role supplier or farmer)
 router.get("/api/marketplace/sellers", async (req, res) => {
   try {
-    // Get sellers (users with role supplier or farmer) with aggregated data
-    const sellersWithStats = await db
-      .select({
-        id: users.id,
-        username: users.username,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        email: users.email,
-        role: users.role,
-        profileImageUrl: users.profileImage,
-        bio: sql<string>`
-          COALESCE((SELECT ${farmerProfiles.bio} FROM ${farmerProfiles} 
-          WHERE ${farmerProfiles.userId} = ${users.id}), 'No bio available')
-        `.as('bio'),
-        location: sql<any>`json_build_object(
-          'city', ${locations.city},
-          'country', ${locations.country},
-          'latitude', ${locations.latitude},
-          'longitude', ${locations.longitude},
-          'h3Index', ${locations.h3Index8}
-        )`.as('location'),
-        createdAt: users.createdAt,
-        updatedAt: users.updatedAt,
-        // Count active listings for each seller
-        listingCount: sql<number>`
-          COUNT(DISTINCT CASE WHEN ${marketplaceListings.status} = 'active' THEN ${marketplaceListings.id} END)
-        `.as('listingCount'),
-        // Calculate average rating
-        averageRating: sql<number>`
-          AVG(CASE WHEN ${marketplaceReviews.id} IS NOT NULL THEN ${marketplaceReviews.rating} END)
-        `.as('averageRating'),
-        // Count number of reviews
-        reviewCount: sql<number>`
-          COUNT(DISTINCT ${marketplaceReviews.id})
-        `.as('reviewCount')
-      })
-      .from(users)
-      .leftJoin(
-        marketplaceListings,
-        eq(users.id, marketplaceListings.sellerId)
-      )
-      .leftJoin(
-        marketplaceReviews,
-        eq(users.id, marketplaceReviews.sellerId)
-      )
-      .leftJoin(
-        locations,
-        eq(users.id, locations.userId)
-      )
-      .where(sql`${users.role} IN ('farmer', 'supplier')`)
-      .groupBy(users.id, locations.id)
-      .orderBy(desc(sql`AVG(CASE WHEN ${marketplaceReviews.id} IS NOT NULL THEN ${marketplaceReviews.rating} END)`));
+    // Get sellers with aggregated data
+    const sellersWithStats = await db.execute(sql`
+      SELECT 
+        u.id,
+        u.username,
+        u.first_name AS "firstName",
+        u.last_name AS "lastName",
+        u.email,
+        u.role,
+        u.profile_image AS "profileImageUrl",
+        fp.bio,
+        json_build_object(
+          'city', l.city,
+          'country', l.country,
+          'latitude', l.latitude,
+          'longitude', l.longitude,
+          'h3Index', l.h3_index_8
+        ) AS location,
+        u.created_at AS "createdAt",
+        u.updated_at AS "updatedAt",
+        COUNT(DISTINCT CASE WHEN ml.status = 'active' THEN ml.id END) AS "listingCount",
+        AVG(mr.rating) AS "averageRating",
+        COUNT(DISTINCT mr.id) AS "reviewCount"
+      FROM users u
+      LEFT JOIN marketplace_listings ml ON u.id = ml.seller_id
+      LEFT JOIN marketplace_reviews mr ON u.id = mr.seller_id
+      LEFT JOIN locations l ON TRUE  -- Placeholder join for location data
+      LEFT JOIN farmer_profiles fp ON u.id = fp.user_id
+      WHERE u.role IN ('farmer', 'supplier')
+      GROUP BY u.id, fp.bio, l.city, l.country, l.latitude, l.longitude, l.h3_index_8
+      ORDER BY AVG(mr.rating) DESC NULLS LAST
+    `);
 
-    res.json(sellersWithStats);
+    res.json(sellersWithStats.rows);
   } catch (error) {
     console.error("Error fetching sellers:", error);
     res.status(500).json({ message: "Failed to fetch sellers" });
@@ -90,76 +68,51 @@ router.get("/api/marketplace/sellers/:id", async (req, res) => {
     }
 
     // Get seller with aggregated data
-    const sellerWithStats = await db
-      .select({
-        id: users.id,
-        username: users.username,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        email: users.email,
-        role: users.role,
-        profileImageUrl: users.profileImage,
-        bio: sql<string>`
-          COALESCE((SELECT ${farmerProfiles.bio} FROM ${farmerProfiles} 
-          WHERE ${farmerProfiles.userId} = ${users.id}), 'No bio available')
-        `.as('bio'),
-        phoneNumber: sql<string>`
-          COALESCE((SELECT ${farmerProfiles.contactPhone} FROM ${farmerProfiles} 
-          WHERE ${farmerProfiles.userId} = ${users.id}), NULL)
-        `.as('phoneNumber'),
-        website: sql<string>`NULL`.as('website'),
-        specialties: sql<string[]>`
-          COALESCE((SELECT ${farmerProfiles.mainCrops} FROM ${farmerProfiles} 
-          WHERE ${farmerProfiles.userId} = ${users.id}), NULL)
-        `.as('specialties'),
-        certificates: sql<string[]>`NULL`.as('certificates'),
-        location: sql<any>`json_build_object(
-          'id', ${locations.id},
-          'address', ${locations.formattedAddress},
-          'city', ${locations.city},
-          'state', ${locations.region},
-          'country', ${locations.country},
-          'postalCode', ${locations.postalCode},
-          'latitude', ${locations.latitude},
-          'longitude', ${locations.longitude},
-          'h3Index', ${locations.h3Index8}
-        )`.as('location'),
-        createdAt: users.createdAt,
-        updatedAt: users.updatedAt,
-        // Count active listings for the seller
-        listingCount: sql<number>`
-          COUNT(DISTINCT CASE WHEN ${marketplaceListings.status} = 'active' THEN ${marketplaceListings.id} END)
-        `.as('listingCount'),
-        // Calculate average rating
-        averageRating: sql<number>`
-          AVG(CASE WHEN ${marketplaceReviews.id} IS NOT NULL THEN ${marketplaceReviews.rating} END)
-        `.as('averageRating'),
-        // Count number of reviews
-        reviewCount: sql<number>`
-          COUNT(DISTINCT ${marketplaceReviews.id})
-        `.as('reviewCount')
-      })
-      .from(users)
-      .leftJoin(
-        marketplaceListings,
-        eq(users.id, marketplaceListings.sellerId)
-      )
-      .leftJoin(
-        marketplaceReviews,
-        eq(users.id, marketplaceReviews.sellerId)
-      )
-      .leftJoin(
-        locations,
-        eq(users.id, locations.userId)
-      )
-      .where(eq(users.id, sellerId))
-      .groupBy(users.id, locations.id);
+    const sellerWithStats = await db.execute(sql`
+      SELECT 
+        u.id,
+        u.username,
+        u.first_name AS "firstName",
+        u.last_name AS "lastName",
+        u.email,
+        u.role,
+        u.profile_image AS "profileImageUrl",
+        fp.bio,
+        fp.contact_phone AS "phoneNumber",
+        NULL AS website,
+        fp.main_crops AS "specialties",
+        NULL AS certificates,
+        json_build_object(
+          'id', l.id,
+          'address', l.formatted_address,
+          'city', l.city,
+          'state', l.region,
+          'country', l.country,
+          'postalCode', l.postal_code,
+          'latitude', l.latitude,
+          'longitude', l.longitude,
+          'h3Index', l.h3_index_8
+        ) AS location,
+        u.created_at AS "createdAt",
+        u.updated_at AS "updatedAt",
+        COUNT(DISTINCT CASE WHEN ml.status = 'active' THEN ml.id END) AS "listingCount",
+        AVG(mr.rating) AS "averageRating",
+        COUNT(DISTINCT mr.id) AS "reviewCount"
+      FROM users u
+      LEFT JOIN marketplace_listings ml ON u.id = ml.seller_id
+      LEFT JOIN marketplace_reviews mr ON u.id = mr.seller_id
+      LEFT JOIN locations l ON TRUE  -- Placeholder join for location data
+      LEFT JOIN farmer_profiles fp ON u.id = fp.user_id
+      WHERE u.id = ${sellerId}
+      GROUP BY u.id, fp.bio, fp.contact_phone, fp.main_crops, l.id, l.formatted_address, l.city, l.region, l.country, l.postal_code, l.latitude, l.longitude, l.h3_index_8
+    `);
 
-    if (sellerWithStats.length === 0) {
+    const rows = sellerWithStats.rows;
+    if (!rows || rows.length === 0) {
       return res.status(404).json({ message: "Seller not found" });
     }
 
-    res.json(sellerWithStats[0]);
+    res.json(rows[0]);
   } catch (error) {
     console.error("Error fetching seller:", error);
     res.status(500).json({ message: "Failed to fetch seller details" });
