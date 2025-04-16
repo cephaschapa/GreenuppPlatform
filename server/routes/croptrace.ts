@@ -16,7 +16,7 @@ function isAuthenticated(req: Request, res: Response, next: NextFunction) {
 }
 
 // Initialize traceability for a crop
-router.post('/crops/:cropId/trace/initialize', isAuthenticated, async (req, res) => {
+router.post('/crops/:cropId/trace/initialize', isAuthenticated, async (req: Request & { user?: any }, res: Response) => {
   try {
     const cropId = parseInt(req.params.cropId);
     if (isNaN(cropId)) {
@@ -47,7 +47,7 @@ router.post('/crops/:cropId/trace/initialize', isAuthenticated, async (req, res)
 });
 
 // Record a crop event
-router.post('/crops/:cropId/trace/events', isAuthenticated, async (req, res) => {
+router.post('/crops/:cropId/trace/events', isAuthenticated, async (req: Request & { user?: any }, res: Response) => {
   try {
     const cropId = parseInt(req.params.cropId);
     if (isNaN(cropId)) {
@@ -89,7 +89,7 @@ router.post('/crops/:cropId/trace/events', isAuthenticated, async (req, res) => 
 });
 
 // Link a marketplace listing to a crop
-router.post('/marketplace/listings/:listingId/trace', isAuthenticated, async (req, res) => {
+router.post('/marketplace/listings/:listingId/trace', isAuthenticated, async (req: Request & { user?: any }, res: Response) => {
   try {
     const listingId = parseInt(req.params.listingId);
     const { cropId } = req.body;
@@ -135,7 +135,7 @@ router.post('/marketplace/listings/:listingId/trace', isAuthenticated, async (re
 });
 
 // Get crop traceability history
-router.get('/crops/:cropId/trace/history', isAuthenticated, async (req, res) => {
+router.get('/crops/:cropId/trace/history', isAuthenticated, async (req: Request & { user?: any }, res: Response) => {
   try {
     const cropId = parseInt(req.params.cropId);
     if (isNaN(cropId)) {
@@ -166,7 +166,7 @@ router.get('/crops/:cropId/trace/history', isAuthenticated, async (req, res) => 
 });
 
 // Get crop events
-router.get('/crops/:cropId/trace/events', isAuthenticated, async (req, res) => {
+router.get('/crops/:cropId/trace/events', isAuthenticated, async (req: Request & { user?: any }, res: Response) => {
   try {
     const cropId = parseInt(req.params.cropId);
     if (isNaN(cropId)) {
