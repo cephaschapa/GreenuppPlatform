@@ -346,6 +346,10 @@ export const locations = pgTable("locations", {
   longitude: decimal("longitude", { precision: 10, scale: 7 }),
   formattedAddress: text("formatted_address"),
   placeId: text("place_id"), // For Google Maps integration
+  // H3 geospatial indexes at different resolutions for efficient geo queries
+  h3Index8: text("h3_index_8"), // Resolution 8 (~ 5km² hexagons)
+  h3Index9: text("h3_index_9"), // Resolution 9 (~ 0.6km² hexagons)
+  h3Index10: text("h3_index_10"), // Resolution 10 (~ 0.075km² hexagons)
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
