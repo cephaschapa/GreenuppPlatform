@@ -136,7 +136,7 @@ export const fields = pgTable("fields", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-// Crop management table
+// Crop management table with traceability fields
 export const crops = pgTable("crops", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
@@ -151,6 +151,13 @@ export const crops = pgTable("crops", {
   actualYield: decimal("actual_yield", { precision: 10, scale: 2 }),
   yieldUnit: text("yield_unit").default('kg'),
   notes: text("notes"),
+  // CropTrace fields
+  batchId: text("batch_id"), // Unique identifier for this crop batch
+  seedSource: text("seed_source"), // Origin of the seeds
+  organicCertified: boolean("organic_certified").default(false),
+  certificationId: text("certification_id"), // Reference to certification if any
+  blockchainTxId: text("blockchain_tx_id"), // Blockchain transaction ID
+  traceabilityQrCode: text("traceability_qr_code"), // QR code for public tracking
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -261,6 +268,42 @@ export type InsertFarmerTask = z.infer<typeof insertFarmerTaskSchema>;
 export type FarmerTask = typeof farmerTasks.$inferSelect;
 export type InsertCropYieldPrediction = z.infer<typeof insertCropYieldPredictionSchema>;
 export type CropYieldPrediction = typeof cropYieldPredictions.$inferSelect;
+
+// CropTrace System - For tracking crop events on blockchain
+export const cropTraceEvents = pgTable("crop_trace_events", {
+  id: serial("id").primaryKey(),
+  cropId: integer("crop_id").notNull().references(() => crops.id),
+  eventType: text("event_type").notNull(), // planting, fertilizing, harvesting, processing, packaging, shipping, etc.
+  eventDate: timestamp("event_date").notNull().defaultNow(),
+  description: text("description").notNull(),
+  location: text("location"), // Could be field, processing facility, warehouse, etc.
+  performedBy: integer("performed_by").notNull().references(() => users.id), // User who recorded the event
+  inputMaterials: jsonb("input_materials").$type<Record<string, any>>(), // Any materials used in this event
+  outputQuantity: decimal("output_quantity", { precision: 10, scale: 2 }),
+  outputUnit: text("output_unit"),
+  blockchainTxId: text("blockchain_tx_id"), // Transaction ID on Hyperledger
+  blockchainTxHash: text("blockchain_tx_hash"), // Transaction hash
+  verificationStatus: text("verification_status").notNull().default('pending'), // pending, verified, rejected
+  verifiedBy: integer("verified_by").references(() => users.id), // User who verified the event
+  verificationDate: timestamp("verification_date"),
+  attachments: text("attachments").array(), // URLs to photos, documents, etc.
+  metadata: jsonb("metadata").$type<Record<string, any>>(), // Any additional data
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Create schema for CropTrace events
+export const insertCropTraceEventSchema = createInsertSchema(cropTraceEvents).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  verificationStatus: true,
+  verifiedBy: true,
+  verificationDate: true,
+});
+
+export type InsertCropTraceEvent = z.infer<typeof insertCropTraceEventSchema>;
+export type CropTraceEvent = typeof cropTraceEvents.$inferSelect;
 
 // Plant Disease Analysis
 export const plantAnalyses = pgTable("plant_analyses", {
@@ -383,6 +426,12 @@ export const marketplaceListings = pgTable("marketplace_listings", {
   favoriteCount: integer("favorite_count").notNull().default(0),
   // Remove featured and verified flags as they don't exist in the database
   tags: text("tags").array(),
+  // CropTrace fields to link marketplace listings to crops for traceability
+  sourceCropId: integer("source_crop_id").references(() => crops.id), // Link to the source crop
+  traceabilityQrCode: text("traceability_qr_code"), // QR code for public tracing
+  certifications: text("certifications").array(), // Any certifications (organic, fair trade, etc.)
+  blockchainVerified: boolean("blockchain_verified").default(false), // Whether this listing has been verified on blockchain
+  traceabilityBatchId: text("traceability_batch_id"), // For linking multiple products from same batch
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
