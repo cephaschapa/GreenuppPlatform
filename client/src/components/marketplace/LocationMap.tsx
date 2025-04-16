@@ -200,7 +200,7 @@ export default function LocationMap({
       <CardContent className="p-0">
         <div className="h-[300px] relative">
           <MapContainer
-            center={sellerPosition}
+            center={sellerPosition || [0, 0]}
             zoom={13}
             scrollWheelZoom={true}
             style={{ height: '100%', width: '100%' }}

@@ -131,6 +131,32 @@ export default function MarketplaceDetailPage() {
       return data;
     },
   });
+  
+  // Fetch location data if the listing has a locationId
+  const {
+    data: locationData,
+    isLoading: isLoadingLocation,
+  } = useQuery({
+    queryKey: ["/api/locations", listing?.locationId],
+    queryFn: async () => {
+      if (!listing?.locationId) return null;
+      
+      const response = await fetch(`/api/locations/${listing.locationId}`, {
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Error fetching location: ${response.status}`, errorText);
+        return null;
+      }
+      
+      const data = await response.json();
+      console.log("Location data from API:", data);
+      return data;
+    },
+    enabled: !!listing?.locationId,
+  });
 
   const navigateBack = () => {
     setLocation("/dashboard/marketplace");
@@ -435,12 +461,6 @@ export default function MarketplaceDetailPage() {
                 </div>
 
                 <div className="flex flex-col gap-2 text-sm text-muted-foreground mb-4">
-                  {listing.locationId && (
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      Location ID: {listing.locationId}
-                    </div>
-                  )}
                   {isValidDate && (
                     <div className="flex items-center">
                       <Calendar className="h-4 w-4 mr-2" />
@@ -459,6 +479,16 @@ export default function MarketplaceDetailPage() {
                       {listing.description || "No description provided"}
                     </p>
                   </div>
+                  
+                  {/* Location map */}
+                  {listing.locationId && locationData && (
+                    <LocationMap
+                      sellerLatitude={locationData.latitude ? parseFloat(locationData.latitude) : null}
+                      sellerLongitude={locationData.longitude ? parseFloat(locationData.longitude) : null}
+                      locationAddress={locationData.formattedAddress}
+                      locationName={`${listing.title || 'Listing'} Location`}
+                    />
+                  )}
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 my-4">
                     <div>
