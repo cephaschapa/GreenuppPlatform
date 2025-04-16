@@ -128,6 +128,7 @@ export default function PublicSellerProfilePage() {
     queryFn: async () => {
       const response = await fetch(`/api/marketplace/sellers/${sellerId}`);
       if (!response.ok) {
+        console.error("Error fetching seller details:", response.status, response.statusText);
         throw new Error("Failed to fetch seller details");
       }
       return response.json();
@@ -144,6 +145,7 @@ export default function PublicSellerProfilePage() {
     queryFn: async () => {
       const response = await fetch(`/api/marketplace/sellers/${sellerId}/listings`);
       if (!response.ok) {
+        console.error("Error fetching seller listings:", response.status, response.statusText);
         throw new Error("Failed to fetch seller listings");
       }
       return response.json();

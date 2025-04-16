@@ -72,6 +72,7 @@ export default function PublicSellersPage() {
     queryFn: async () => {
       const response = await fetch("/api/marketplace/sellers");
       if (!response.ok) {
+        console.error("Error fetching sellers:", response.status, response.statusText);
         throw new Error("Failed to fetch sellers");
       }
       return response.json();
