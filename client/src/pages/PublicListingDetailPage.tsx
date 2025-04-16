@@ -44,7 +44,8 @@ function getCategoryLabel(category: string | null): string {
 }
 
 export default function PublicListingDetailPage() {
-  const id = window.location.pathname.split('/').pop();
+  const pathname = window.location.pathname;
+  const id = pathname.split('/').pop();
   const listingId = id ? parseInt(id) : null;
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   
