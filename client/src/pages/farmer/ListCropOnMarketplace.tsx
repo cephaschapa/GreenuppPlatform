@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, ShieldCheck, ArrowLeft, ExternalLink, Check } from 'lucide-react';
+import { Loader2, ShieldCheck, ArrowLeft, ExternalLink, Check, AlertTriangle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -87,7 +87,7 @@ export default function ListCropOnMarketplace() {
       quantity: "",
       quantityUnit: "kg",
       condition: "new",
-      contactPhone: user?.phoneNumber || "",
+      contactPhone: "",
       deliveryAvailable: false,
       isNegotiable: true,
       status: "active",
@@ -176,7 +176,7 @@ export default function ListCropOnMarketplace() {
   return (
     <div className="container max-w-4xl py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+        <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/marketplace")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
@@ -233,7 +233,7 @@ export default function ListCropOnMarketplace() {
                                 <SelectItem key={crop.id} value={crop.id.toString()}>
                                   <div className="flex items-center">
                                     <span>{crop.name} {crop.variety ? `(${crop.variety})` : ''}</span>
-                                    <Badge variant="outline" size="sm" className="ml-2 bg-green-50 text-green-600 border-green-200">
+                                    <Badge variant="outline" className="ml-2 bg-green-50 text-green-600 border-green-200 text-xs py-0 px-1">
                                       <Check className="h-3 w-3 mr-1" />
                                       Traceable
                                     </Badge>
@@ -287,8 +287,8 @@ export default function ListCropOnMarketplace() {
                 />
                 
                 {form.watch('useBlockchain') && (
-                  <Alert>
-                    <ShieldCheck className="h-4 w-4" />
+                  <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+                    <ShieldCheck className="h-4 w-4 text-green-500" />
                     <AlertTitle>Blockchain Verification Enabled</AlertTitle>
                     <AlertDescription>
                       Buyers will be able to scan a QR code to verify this product's complete history from planting to harvest.
@@ -297,7 +297,8 @@ export default function ListCropOnMarketplace() {
                 )}
               </div>
             ) : (
-              <Alert variant="warning">
+              <Alert className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+                <AlertTriangle className="h-4 w-4 text-yellow-500" />
                 <AlertTitle>No Crops Found</AlertTitle>
                 <AlertDescription>
                   You need to add crops before you can list them on the marketplace.

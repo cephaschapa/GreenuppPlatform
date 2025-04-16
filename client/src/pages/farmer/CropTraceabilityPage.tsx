@@ -100,7 +100,7 @@ export default function CropTraceabilityPage() {
                 Manage blockchain traceability and verification for this crop
               </CardDescription>
             </div>
-            <Badge variant={crop.batchId ? "success" : "outline"}>
+            <Badge variant={crop.batchId ? "secondary" : "outline"} className={crop.batchId ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100" : ""}>
               {crop.status}
             </Badge>
           </div>
