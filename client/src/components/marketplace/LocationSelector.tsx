@@ -52,11 +52,12 @@ function MapClickHandler({ onLocationSelect }: MapClickHandlerProps) {
 }
 
 export default function LocationSelector({ initialLocation, onLocationSelect }: LocationSelectorProps) {
-  const [position, setPosition] = useState<[number, number] | null>(
-    initialLocation 
-      ? [initialLocation.latitude, initialLocation.longitude] 
-      : null
-  );
+  const [position, setPosition] = useState<[number, number] | null>(() => {
+    if (initialLocation && typeof initialLocation.latitude === 'number' && typeof initialLocation.longitude === 'number') {
+      return [initialLocation.latitude, initialLocation.longitude];
+    }
+    return null;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -147,9 +148,7 @@ export default function LocationSelector({ initialLocation, onLocationSelect }: 
             zoom={13}
             scrollWheelZoom={true}
             style={{ height: '100%', width: '100%' }}
-            whenCreated={(map) => {
-              mapRef.current = map;
-            }}
+            ref={mapRef}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
