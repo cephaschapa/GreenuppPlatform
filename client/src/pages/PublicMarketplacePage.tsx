@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { MarketplaceListing } from "@shared/schema";
+import PublicNavbar from "@/components/PublicNavbar";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,6 +108,9 @@ export default function PublicMarketplacePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Navbar */}
+      <PublicNavbar />
+      
       {/* Hero Section */}
       <section className="py-12 md:py-16 bg-secondary/30">
         <div className="container mx-auto max-w-6xl px-4">
