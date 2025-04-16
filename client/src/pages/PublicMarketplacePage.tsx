@@ -55,7 +55,7 @@ function getCategoryLabel(category: string | null): string {
 
 export default function PublicMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortOrder, setSortOrder] = useState<string>("newest");
 
@@ -84,7 +84,7 @@ export default function PublicMarketplacePage() {
             listing.description.toLowerCase().includes(searchQuery.toLowerCase()))
         : true;
 
-      const matchesCategory = selectedCategory
+      const matchesCategory = selectedCategory && selectedCategory !== "all"
         ? listing.category === selectedCategory
         : true;
 
@@ -139,7 +139,7 @@ export default function PublicMarketplacePage() {
                   </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   <SelectItem value="seeds">Seeds & Plants</SelectItem>
                   <SelectItem value="fertilizers">Fertilizers</SelectItem>
                   <SelectItem value="pesticides">Pesticides</SelectItem>
@@ -254,7 +254,7 @@ export default function PublicMarketplacePage() {
                 variant="outline"
                 onClick={() => {
                   setSearchQuery("");
-                  setSelectedCategory("");
+                  setSelectedCategory("all");
                 }}
               >
                 Clear Filters
