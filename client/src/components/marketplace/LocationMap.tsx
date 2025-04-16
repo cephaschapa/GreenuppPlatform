@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import L, { LatLngExpression } from 'leaflet';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MapPin, Navigation, AlertTriangle, Loader2 } from 'lucide-react';
@@ -200,7 +200,7 @@ export default function LocationMap({
       <CardContent className="p-0">
         <div className="h-[300px] relative">
           <MapContainer
-            center={sellerPosition || [0, 0]}
+            center={sellerPosition as LatLngExpression || [0, 0]}
             zoom={13}
             scrollWheelZoom={true}
             style={{ height: '100%', width: '100%' }}
