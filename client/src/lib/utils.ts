@@ -6,15 +6,16 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Format a number as a currency string (ZMW)
+ * Format a number as a currency string
  * 
  * @param amount - The amount to format
+ * @param currencyCode - The currency code (default: ZMW for Zambian Kwacha)
  * @returns A formatted currency string
  */
-export function formatCurrency(amount: number): string {
+export function formatCurrency(amount: number, currencyCode: string = 'ZMW'): string {
   return new Intl.NumberFormat('en-ZM', {
     style: 'currency',
-    currency: 'ZMW',
+    currency: currencyCode,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
