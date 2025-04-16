@@ -41,16 +41,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication 
   setupAuth(app);
   
+  // Set up seller routes FIRST
+  // IMPORTANT: We need to register this BEFORE the marketplace routes 
+  // to prevent route conflicts with the marketplace catchall middleware
+  app.use("/api/marketplace/sellers", sellerRoutes);
+  
   // Set up marketplace routes
   setupMarketplaceRoutes(app);
   
   // Set up cart routes
   app.use("/api/cart", cartRoutes);
-  
-  // Set up seller routes
-  // IMPORTANT: We need to register this BEFORE the marketplace routes 
-  // to prevent route conflicts with the marketplace catchall middleware
-  app.use("/api/marketplace/sellers", sellerRoutes);
 
   // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();
