@@ -145,7 +145,7 @@ export default function ListCropOnMarketplace() {
           toast({
             title: "Listing Created",
             description: "Listing created but blockchain verification failed. You can try again later.",
-            variant: "warning",
+            variant: "destructive",
           });
           return;
         }
@@ -579,7 +579,7 @@ export default function ListCropOnMarketplace() {
               </div>
               
               <CardFooter className="flex justify-end gap-2 px-0">
-                <Button variant="outline" type="button" onClick={() => navigate(-1)}>
+                <Button variant="outline" type="button" onClick={() => navigate("/dashboard/marketplace")}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={createListingMutation.isPending}>
