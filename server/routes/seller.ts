@@ -11,7 +11,8 @@ import {
   users, 
   marketplaceListings, 
   marketplaceReviews,
-  locations
+  locations,
+  farmerProfiles
 } from "@shared/schema";
 
 const router = Router();
@@ -28,14 +29,17 @@ router.get("/api/marketplace/sellers", async (req, res) => {
         lastName: users.lastName,
         email: users.email,
         role: users.role,
-        profileImageUrl: users.profileImageUrl,
-        bio: users.bio,
+        profileImageUrl: users.profileImage,
+        bio: sql<string>`
+          COALESCE((SELECT ${farmerProfiles.bio} FROM ${farmerProfiles} 
+          WHERE ${farmerProfiles.userId} = ${users.id}), 'No bio available')
+        `.as('bio'),
         location: sql<any>`json_build_object(
           'city', ${locations.city},
           'country', ${locations.country},
           'latitude', ${locations.latitude},
           'longitude', ${locations.longitude},
-          'h3Index', ${locations.h3Index}
+          'h3Index', ${locations.h3Index8}
         )`.as('location'),
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
@@ -94,22 +98,31 @@ router.get("/api/marketplace/sellers/:id", async (req, res) => {
         lastName: users.lastName,
         email: users.email,
         role: users.role,
-        profileImageUrl: users.profileImageUrl,
-        bio: users.bio,
-        phoneNumber: users.phoneNumber,
-        website: users.website,
-        specialties: users.specialties,
-        certificates: users.certificates,
+        profileImageUrl: users.profileImage,
+        bio: sql<string>`
+          COALESCE((SELECT ${farmerProfiles.bio} FROM ${farmerProfiles} 
+          WHERE ${farmerProfiles.userId} = ${users.id}), 'No bio available')
+        `.as('bio'),
+        phoneNumber: sql<string>`
+          COALESCE((SELECT ${farmerProfiles.contactPhone} FROM ${farmerProfiles} 
+          WHERE ${farmerProfiles.userId} = ${users.id}), NULL)
+        `.as('phoneNumber'),
+        website: sql<string>`NULL`.as('website'),
+        specialties: sql<string[]>`
+          COALESCE((SELECT ${farmerProfiles.mainCrops} FROM ${farmerProfiles} 
+          WHERE ${farmerProfiles.userId} = ${users.id}), NULL)
+        `.as('specialties'),
+        certificates: sql<string[]>`NULL`.as('certificates'),
         location: sql<any>`json_build_object(
           'id', ${locations.id},
-          'address', ${locations.address},
+          'address', ${locations.formattedAddress},
           'city', ${locations.city},
-          'state', ${locations.state},
+          'state', ${locations.region},
           'country', ${locations.country},
           'postalCode', ${locations.postalCode},
           'latitude', ${locations.latitude},
           'longitude', ${locations.longitude},
-          'h3Index', ${locations.h3Index}
+          'h3Index', ${locations.h3Index8}
         )`.as('location'),
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
