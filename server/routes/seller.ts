@@ -16,7 +16,7 @@ import {
 const router = Router();
 
 // Get all sellers with their stats (users with role supplier or farmer)
-router.get("/api/marketplace/sellers", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     // Get sellers with aggregated data
     const sellersWithStats = await db.execute(sql`
@@ -59,7 +59,7 @@ router.get("/api/marketplace/sellers", async (req, res) => {
 });
 
 // Get a specific seller by ID with their stats
-router.get("/api/marketplace/sellers/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const sellerId = parseInt(req.params.id);
     
@@ -120,7 +120,7 @@ router.get("/api/marketplace/sellers/:id", async (req, res) => {
 });
 
 // Get all listings for a specific seller
-router.get("/api/marketplace/sellers/:id/listings", async (req, res) => {
+router.get("/:id/listings", async (req, res) => {
   try {
     const sellerId = parseInt(req.params.id);
     
