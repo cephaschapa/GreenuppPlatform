@@ -773,18 +773,45 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createLocation(locationData: InsertLocation): Promise<Location> {
+    // Generate H3 indexes if latitude and longitude are provided
+    let h3Indexes = {};
+    if (locationData.latitude && locationData.longitude) {
+      const lat = Number(locationData.latitude);
+      const lng = Number(locationData.longitude);
+      
+      // Import directly here to avoid circular dependencies
+      const { generateH3Indexes } = await import('./services/h3-service');
+      h3Indexes = generateH3Indexes(lat, lng);
+    }
+    
     const [location] = await db
       .insert(locations)
-      .values(locationData)
+      .values({
+        ...locationData,
+        ...h3Indexes
+      })
       .returning();
+    
     return location;
   }
   
   async updateLocation(id: number, locationData: Partial<Location>): Promise<Location | undefined> {
+    // Generate H3 indexes if latitude and longitude are updated
+    let h3Indexes = {};
+    if (locationData.latitude && locationData.longitude) {
+      const lat = Number(locationData.latitude);
+      const lng = Number(locationData.longitude);
+      
+      // Import directly here to avoid circular dependencies
+      const { generateH3Indexes } = await import('./services/h3-service');
+      h3Indexes = generateH3Indexes(lat, lng);
+    }
+    
     const [updatedLocation] = await db
       .update(locations)
       .set({
         ...locationData,
+        ...h3Indexes,
         updatedAt: new Date(),
       })
       .where(eq(locations.id, id))
