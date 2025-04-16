@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import setupMarketplaceRoutes from "./routes/marketplace";
 import cartRoutes from "./routes/cart";
 import sellerRoutes from "./routes/seller";
+import cropTraceRoutes from "./routes/croptrace";
 
 import { 
   contactFormSchema, 
@@ -51,6 +52,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up cart routes
   app.use("/api/cart", cartRoutes);
+  
+  // Set up crop traceability routes
+  app.use("/api/croptrace", cropTraceRoutes);
 
   // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();

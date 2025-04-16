@@ -1,11 +1,19 @@
 import express from 'express';
 import { cropTraceService } from '../services/croptrace';
-import { isAuthenticated } from '../auth';
+import type { Request, Response, NextFunction } from "express";
 import { db } from '../db';
 import { crops, cropTraceEvents, marketplaceListings } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
 const router = express.Router();
+
+// Middleware to check authentication
+function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ message: "Not authenticated" });
+}
 
 // Initialize traceability for a crop
 router.post('/crops/:cropId/trace/initialize', isAuthenticated, async (req, res) => {
