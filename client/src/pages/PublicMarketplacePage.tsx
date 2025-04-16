@@ -108,51 +108,35 @@ export default function PublicMarketplacePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary/80 to-primary px-4 py-16 text-white">
-        <div className="container mx-auto max-w-6xl">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Greenupp Marketplace</h1>
-          <p className="text-xl md:text-2xl max-w-2xl mb-8">
-            Discover agricultural products and services from trusted sellers
-          </p>
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
-            <Button
-              variant="secondary"
-              className="w-full sm:w-auto"
-              onClick={() => window.location.href = "/auth"}
-            >
-              Sign Up to Sell
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto bg-white/10 text-white hover:bg-white/20 hover:text-white"
-              onClick={() => window.location.href = "/auth"}
-            >
-              Log In
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Search and Filters */}
-      <section className="sticky top-0 z-10 bg-background border-b py-4 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-grow">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search listings..."
-                className="pl-9"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="flex flex-wrap gap-2">
+      <section className="py-12 md:py-16 bg-secondary/30">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="flex flex-col items-center text-center">
+            <h1 className="text-3xl md:text-4xl font-bold mb-4">
+              Greenupp Marketplace
+            </h1>
+            <p className="text-muted-foreground max-w-2xl mb-8">
+              Browse agricultural products from local farmers and suppliers. Connect directly with producers for the freshest goods and farming supplies.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-2xl">
+              <div className="relative flex-grow">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search products, seeds, equipment..."
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
               <Select
                 value={selectedCategory}
                 onValueChange={setSelectedCategory}
               >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Categories" />
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <div className="flex items-center">
+                    <Tag className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Category" />
+                  </div>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">All Categories</SelectItem>
@@ -163,160 +147,142 @@ export default function PublicMarketplacePage() {
                   <SelectItem value="equipment">Machinery</SelectItem>
                   <SelectItem value="livestock">Livestock</SelectItem>
                   <SelectItem value="harvest">Harvest & Produce</SelectItem>
+                  <SelectItem value="feed">Animal Feed</SelectItem>
+                  <SelectItem value="irrigation">Irrigation Supplies</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Filter className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setSortOrder("newest")}>
-                    Newest First
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortOrder("oldest")}>
-                    Oldest First
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortOrder("price_asc")}>
-                    Price: Low to High
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortOrder("price_desc")}>
-                    Price: High to Low
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <div className="flex border rounded-md">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="icon"
-                  className="rounded-r-none"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-                <Separator orientation="vertical" />
-                <Button
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  size="icon"
-                  className="rounded-l-none"
-                  onClick={() => setViewMode("list")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Listings */}
-      <section className="container mx-auto max-w-6xl py-8 px-4">
-        {isLoading ? (
-          <div className="flex items-center justify-center min-h-[40vh]">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : isError ? (
-          <div className="text-center py-12">
-            <h2 className="text-xl font-semibold mb-2">
-              Unable to load marketplace listings
-            </h2>
-            <p className="text-muted-foreground">
-              Please try again later or contact support.
-            </p>
-          </div>
-        ) : filteredListings.length === 0 ? (
-          <div className="text-center py-12">
-            <h2 className="text-xl font-semibold mb-2">No listings found</h2>
-            <p className="text-muted-foreground">
-              Try adjusting your search or filter criteria.
-            </p>
-          </div>
-        ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredListings.map((listing) => (
-              <Card
-                key={listing.id}
-                className="overflow-hidden h-full transition-all duration-200 hover:shadow-md flex flex-col"
-              >
-                <a 
-                  href={`/auth?returnTo=/dashboard/marketplace/${listing.id}`}
-                  className="block h-48 overflow-hidden bg-muted relative"
+      {/* Filter and Sort Controls */}
+      <section className="border-b">
+        <div className="container mx-auto max-w-6xl px-4 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+            <div className="flex items-center space-x-4">
+              <div className="hidden md:block text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{filteredListings.length}</span> items
+              </div>
+              <div className="flex border rounded-md overflow-hidden">
+                <button
+                  className={`flex items-center justify-center w-9 h-9 ${
+                    viewMode === "grid" ? "bg-secondary" : "hover:bg-muted"
+                  }`}
+                  onClick={() => setViewMode("grid")}
+                  aria-label="Grid view"
                 >
-                  {listing.images && listing.images.length > 0 ? (
-                    <img
-                      src={listing.images[0]}
-                      alt={listing.title}
-                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-muted">
-                      <span className="text-muted-foreground">No image</span>
-                    </div>
-                  )}
-                  <div className="absolute bottom-2 right-2">
-                    <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
-                      {formatCurrency(parseFloat(listing.price), listing.priceCurrency || "ZMW")}
-                    </Badge>
-                  </div>
-                </a>
-                <CardContent className="flex-grow p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="outline" className="text-xs">
-                      {getCategoryLabel(listing.category)}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(listing.createdAt))}
-                    </span>
-                  </div>
-                  <h3 className="font-semibold text-lg line-clamp-1 mb-1">
-                    {listing.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                    {listing.description}
-                  </p>
-                </CardContent>
-                <CardFooter className="pt-0 pb-4 px-4">
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    asChild
-                  >
-                    <a href={`/auth?returnTo=/dashboard/marketplace/${listing.id}`}>
-                      View Details
-                    </a>
+                  <Grid3X3 className="h-4 w-4" />
+                </button>
+                <button
+                  className={`flex items-center justify-center w-9 h-9 ${
+                    viewMode === "list" ? "bg-secondary" : "hover:bg-muted"
+                  }`}
+                  onClick={() => setViewMode("list")}
+                  aria-label="List view"
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <span className="text-sm hidden sm:inline">Sort by:</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center">
+                    {sortOrder === "newest"
+                      ? "Newest"
+                      : sortOrder === "oldest"
+                      ? "Oldest"
+                      : sortOrder === "price_asc"
+                      ? "Price: Low to High"
+                      : "Price: High to Low"}
+                    <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
-                </CardFooter>
-              </Card>
-            ))}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setSortOrder("newest")}>
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Newest
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortOrder("oldest")}>
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Oldest
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortOrder("price_asc")}>
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    Price: Low to High
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortOrder("price_desc")}>
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    Price: High to Low
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredListings.map((listing) => (
-              <Card
-                key={listing.id}
-                className="overflow-hidden transition-all duration-200 hover:shadow-md"
+        </div>
+      </section>
+
+      {/* Results */}
+      <section className="py-8">
+        <div className="container mx-auto max-w-6xl px-4">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="mt-4 text-muted-foreground">Loading marketplace listings...</p>
+            </div>
+          ) : isError ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-destructive">
+                Failed to load marketplace listings. Please try again later.
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => window.location.reload()}
               >
-                <div className="flex flex-col sm:flex-row">
-                  <a 
-                    href={`/auth?returnTo=/dashboard/marketplace/${listing.id}`}
-                    className="block w-full sm:w-48 h-48 overflow-hidden bg-muted relative"
-                  >
-                    {listing.images && listing.images.length > 0 ? (
-                      <img
-                        src={listing.images[0]}
-                        alt={listing.title}
-                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-muted">
-                        <span className="text-muted-foreground">No image</span>
-                      </div>
-                    )}
-                  </a>
-                  <div className="flex-grow p-4">
+                Retry
+              </Button>
+            </div>
+          ) : filteredListings.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-lg mb-4">No listings found matching your criteria.</p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedCategory("");
+                }}
+              >
+                Clear Filters
+              </Button>
+            </div>
+          ) : viewMode === "grid" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredListings.map((listing) => (
+                <Card
+                  key={listing.id}
+                  className="overflow-hidden transition-all duration-200 hover:shadow-md flex flex-col h-full"
+                >
+                  <div className="relative h-48 bg-muted">
+                    <Link href={`/marketplace/${listing.id}`} className="block h-full">
+                      {listing.images && listing.images.length > 0 ? (
+                        <img
+                          src={listing.images[0]}
+                          alt={listing.title}
+                          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-muted">
+                          <span className="text-muted-foreground">No image</span>
+                        </div>
+                      )}
+                    </Link>
+                  </div>
+                  <CardContent className="flex-grow p-4">
                     <div className="flex items-center justify-between mb-2">
                       <Badge variant="outline" className="text-xs">
                         {getCategoryLabel(listing.category)}
@@ -325,36 +291,91 @@ export default function PublicMarketplacePage() {
                         {formatDistanceToNow(new Date(listing.createdAt))}
                       </span>
                     </div>
-                    <h3 className="font-semibold text-lg mb-1">
+                    <h3 className="font-semibold text-lg line-clamp-1 mb-1">
                       {listing.title}
                     </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
                       {listing.description}
                     </p>
-                    <div className="flex items-center justify-between">
-                      <div className="font-semibold text-lg">
-                        {formatCurrency(parseFloat(listing.price), listing.priceCurrency || "ZMW")}
-                        {listing.priceUnit && (
-                          <span className="text-xs text-muted-foreground ml-1">
-                            per {listing.priceUnit}
-                          </span>
-                        )}
+                  </CardContent>
+                  <CardFooter className="pt-0 pb-4 px-4">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      asChild
+                    >
+                      <Link href={`/marketplace/${listing.id}`}>
+                        View Details
+                      </Link>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredListings.map((listing) => (
+                <Card
+                  key={listing.id}
+                  className="overflow-hidden transition-all duration-200 hover:shadow-md"
+                >
+                  <div className="flex flex-col sm:flex-row">
+                    <Link 
+                      href={`/marketplace/${listing.id}`}
+                      className="block w-full sm:w-48 h-48 overflow-hidden bg-muted relative"
+                    >
+                      {listing.images && listing.images.length > 0 ? (
+                        <img
+                          src={listing.images[0]}
+                          alt={listing.title}
+                          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-muted">
+                          <span className="text-muted-foreground">No image</span>
+                        </div>
+                      )}
+                    </Link>
+                    <div className="flex-grow p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="outline" className="text-xs">
+                          {getCategoryLabel(listing.category)}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(listing.createdAt))}
+                        </span>
                       </div>
-                      <Button
-                        variant="outline"
-                        asChild
-                      >
-                        <a href={`/auth?returnTo=/dashboard/marketplace/${listing.id}`}>
-                          View Details
-                        </a>
-                      </Button>
+                      <h3 className="font-semibold text-lg mb-1">
+                        {listing.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+                        {listing.description}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div className="font-semibold text-lg">
+                          {formatCurrency(parseFloat(listing.price), listing.priceCurrency || "ZMW")}
+                          {listing.priceUnit && (
+                            <span className="text-xs text-muted-foreground ml-1">
+                              per {listing.priceUnit}
+                            </span>
+                          )}
+                        </div>
+                        <Button
+                          variant="outline"
+                          asChild
+                        >
+                          <Link href={`/marketplace/${listing.id}`}>
+                            View Details
+                          </Link>
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Footer with Call to Action */}

@@ -8,6 +8,7 @@ import AuthPage from "@/pages/auth-page";
 import DashboardPage from "@/pages/dashboard-page";
 import ProfileCreationPage from "@/pages/profile-creation-page";
 import PublicMarketplacePage from "@/pages/PublicMarketplacePage";
+import PublicListingDetailPage from "@/pages/PublicListingDetailPage";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/marketplace" component={PublicMarketplacePage} />
+      <Route path="/marketplace/:id" component={PublicListingDetailPage} />
       
       {/* Dashboard routes */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
