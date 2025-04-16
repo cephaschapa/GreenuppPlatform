@@ -39,6 +39,9 @@ export default function PublicNavbar() {
             <Link href="/marketplace" className="text-foreground/80 hover:text-primary transition-colors">
               Marketplace
             </Link>
+            <Link href="/marketplace/sellers" className="text-foreground/80 hover:text-primary transition-colors">
+              Sellers
+            </Link>
             <Link href="/#features" className="text-foreground/80 hover:text-primary transition-colors">
               Features
             </Link>
@@ -88,6 +91,14 @@ export default function PublicNavbar() {
             >
               <ShoppingBag className="h-4 w-4" />
               <span>Marketplace</span>
+            </Link>
+            <Link 
+              href="/marketplace/sellers" 
+              className="flex items-center gap-2 px-2 py-2 text-foreground/80 hover:text-primary transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Users className="h-4 w-4" />
+              <span>Sellers</span>
             </Link>
             <Link 
               href="/#features" 

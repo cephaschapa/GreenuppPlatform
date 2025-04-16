@@ -12,6 +12,8 @@ import {
   List,
   Tag,
   DollarSign,
+  Users,
+  ShoppingBag,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { MarketplaceListing } from "@shared/schema";
@@ -118,9 +120,23 @@ export default function PublicMarketplacePage() {
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
               Greenupp Marketplace
             </h1>
-            <p className="text-muted-foreground max-w-2xl mb-8">
+            <p className="text-muted-foreground max-w-2xl mb-4">
               Browse agricultural products from local farmers and suppliers. Connect directly with producers for the freshest goods and farming supplies.
             </p>
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <Button variant="outline" asChild>
+                <Link href="/marketplace/sellers" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <span>Browse Sellers</span>
+                </Link>
+              </Button>
+              <Button variant="default" asChild>
+                <Link href="/auth?mode=register" className="flex items-center gap-2">
+                  <ShoppingBag className="h-4 w-4" />
+                  <span>Start Selling</span>
+                </Link>
+              </Button>
+            </div>
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-2xl">
               <div className="relative flex-grow">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
