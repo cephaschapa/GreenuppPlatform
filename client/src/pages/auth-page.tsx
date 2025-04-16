@@ -17,9 +17,15 @@ import { Loader2 } from "lucide-react";
 export default function AuthPage() {
   const { user, isLoading } = useAuth();
 
-  // If the user is already logged in, redirect to the dashboard
+  // If the user is already logged in, redirect based on their role
   if (user && !isLoading) {
-    return <Redirect to="/dashboard" />;
+    if (user.role === 'buyer') {
+      return <Redirect to="/dashboard/marketplace" />;
+    } else if (user.role === 'supplier') {
+      return <Redirect to="/dashboard/marketplace" />;
+    } else {
+      return <Redirect to="/dashboard" />;
+    }
   }
 
   return (

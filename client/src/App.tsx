@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,7 +9,7 @@ import DashboardPage from "@/pages/dashboard-page";
 import ProfileCreationPage from "@/pages/profile-creation-page";
 import PublicMarketplacePage from "@/pages/PublicMarketplacePage";
 import PublicListingDetailPage from "@/pages/PublicListingDetailPage";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import InstallPWA from "@/components/ui/InstallPWA";
@@ -56,6 +56,10 @@ function Router() {
       <ProtectedRoute path="/dashboard/marketplace/checkout" component={CheckoutPage} />
       <ProtectedRoute path="/dashboard/marketplace/payment/confirmation" component={CheckoutPage} />
       <ProtectedRoute path="/dashboard/marketplace/:id" component={MarketplaceDetailPage} />
+      
+      {/* Role-specific dashboard redirects */}
+      <ProtectedRoute path="/buyer" component={() => <Redirect to="/dashboard/marketplace" />} />
+      <ProtectedRoute path="/supplier" component={() => <Redirect to="/dashboard/marketplace" />} />
       
       <Route component={NotFound} />
     </Switch>
