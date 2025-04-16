@@ -273,10 +273,39 @@ function setupMarketplaceRoutes(app: Express) {
         });
       }
       
-      // Combine form data with processed images
+      // Check if location data is included in the request
+      let locationId: number | undefined = undefined;
+      
+      if (req.body.latitude && req.body.longitude) {
+        console.log("Location data detected, creating location record");
+        try {
+          // Create location record
+          const locationData = {
+            country: req.body.country || "Zambia",
+            region: req.body.region || "",
+            city: req.body.city || "",
+            neighborhood: req.body.neighborhood || "",
+            postalCode: req.body.postalCode || "",
+            latitude: req.body.latitude,
+            longitude: req.body.longitude,
+            formattedAddress: req.body.formattedAddress || "",
+            placeId: req.body.placeId || "",
+          };
+          
+          const location = await storage.createLocation(locationData);
+          locationId = location.id;
+          console.log("Created location record with ID:", locationId);
+        } catch (error) {
+          console.error("Error creating location:", error);
+          // Continue without location if there's an error
+        }
+      }
+      
+      // Combine form data with processed images and location ID
       const listingData = insertMarketplaceListingSchema.parse({
         ...req.body,
         sellerId: req.user.id,
+        locationId: locationId,
         images: images.length > 0 ? images : undefined
       });
       
