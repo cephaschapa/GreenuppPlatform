@@ -11,6 +11,7 @@ import PublicMarketplacePage from "@/pages/PublicMarketplacePage";
 import PublicListingDetailPage from "@/pages/PublicListingDetailPage";
 import PublicSellersPage from "@/pages/PublicSellersPage";
 import PublicSellerProfilePage from "@/pages/PublicSellerProfilePage";
+import PublicTraceVerificationPage from "@/pages/PublicTraceVerificationPage";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -31,6 +32,8 @@ import MarketplaceDetailPage from "@/pages/farmer/MarketplaceDetailPage";
 import CreateListingPage from "@/pages/farmer/CreateListingPage";
 import CartPage from "@/pages/farmer/CartPage";
 import CheckoutPage from "@/pages/farmer/CheckoutPage";
+import CropTraceabilityPage from "@/pages/farmer/CropTraceabilityPage";
+import ListCropOnMarketplace from "@/pages/farmer/ListCropOnMarketplace";
 
 function Router() {
   return (
@@ -41,6 +44,7 @@ function Router() {
       <Route path="/marketplace/sellers" component={PublicSellersPage} />
       <Route path="/marketplace/sellers/:id" component={PublicSellerProfilePage} />
       <Route path="/marketplace/:id" component={PublicListingDetailPage} />
+      <Route path="/trace" component={PublicTraceVerificationPage} />
       
       {/* Dashboard routes */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
@@ -60,6 +64,10 @@ function Router() {
       <ProtectedRoute path="/dashboard/marketplace/checkout" component={CheckoutPage} />
       <ProtectedRoute path="/dashboard/marketplace/payment/confirmation" component={CheckoutPage} />
       <ProtectedRoute path="/dashboard/marketplace/:id" component={MarketplaceDetailPage} />
+      
+      {/* CropTrace routes */}
+      <ProtectedRoute path="/dashboard/crops/:cropId/trace" component={CropTraceabilityPage} />
+      <ProtectedRoute path="/dashboard/marketplace/list-crop" component={ListCropOnMarketplace} />
       
       {/* Role-specific dashboard redirects */}
       <ProtectedRoute path="/buyer" component={() => <Redirect to="/dashboard/marketplace" />} />
