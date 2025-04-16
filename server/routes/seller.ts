@@ -34,7 +34,7 @@ router.get("/", async (req, res) => {
           'country', l.country,
           'latitude', l.latitude,
           'longitude', l.longitude,
-          'h3Index', l.h3_index_8
+          'h3Index', l.h3Index8
         ) AS location,
         u.created_at AS "createdAt",
         u.updated_at AS "updatedAt",
@@ -47,7 +47,7 @@ router.get("/", async (req, res) => {
       LEFT JOIN locations l ON TRUE  -- Placeholder join for location data
       LEFT JOIN farmer_profiles fp ON u.id = fp.user_id
       WHERE u.role IN ('farmer', 'supplier')
-      GROUP BY u.id, fp.bio, l.city, l.country, l.latitude, l.longitude, l.h3_index_8
+      GROUP BY u.id, fp.bio, l.city, l.country, l.latitude, l.longitude, l.h3Index8
       ORDER BY AVG(mr.rating) DESC NULLS LAST
     `);
 
@@ -84,14 +84,14 @@ router.get("/:id", async (req, res) => {
         NULL AS certificates,
         json_build_object(
           'id', l.id,
-          'address', l.formatted_address,
+          'address', l.formattedAddress,
           'city', l.city,
           'state', l.region,
           'country', l.country,
-          'postalCode', l.postal_code,
+          'postalCode', l.postalCode,
           'latitude', l.latitude,
           'longitude', l.longitude,
-          'h3Index', l.h3_index_8
+          'h3Index', l.h3Index8
         ) AS location,
         u.created_at AS "createdAt",
         u.updated_at AS "updatedAt",
@@ -104,7 +104,7 @@ router.get("/:id", async (req, res) => {
       LEFT JOIN locations l ON TRUE  -- Placeholder join for location data
       LEFT JOIN farmer_profiles fp ON u.id = fp.user_id
       WHERE u.id = ${sellerId}
-      GROUP BY u.id, fp.bio, fp.contact_phone, fp.main_crops, l.id, l.formatted_address, l.city, l.region, l.country, l.postal_code, l.latitude, l.longitude, l.h3_index_8
+      GROUP BY u.id, fp.bio, fp.contact_phone, fp.main_crops, l.id, l.formattedAddress, l.city, l.region, l.country, l.postalCode, l.latitude, l.longitude, l.h3Index8
     `);
 
     const rows = sellerWithStats.rows;
