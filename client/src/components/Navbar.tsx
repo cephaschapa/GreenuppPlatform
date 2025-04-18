@@ -24,7 +24,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             <span className="text-primary group-hover:animate-pulse transition-all">
               upp
             </span>
-            <span className="absolute -top-2 -right-12  text-white text-xs px-2 py-0.5 rounded-full font-semibold">
+            <span className="absolute -top-2 -right-12 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full font-semibold">
               BETA
             </span>
           </Link>
@@ -76,7 +76,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
           <ThemeToggle />
           <Link
             href="/auth"
-            className="group bg-primary hover:bg-primary/90 text-secondary px-4 py-2 rounded-md transition-all duration-300 font-medium inline-flex items-center"
+            className="group bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md transition-all duration-300 font-medium inline-flex items-center"
           >
             <span>Get Started</span>
             <i className="fas fa-arrow-right ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all"></i>
@@ -142,7 +142,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
           </a>
           <Link
             href="/marketplace"
-            className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
@@ -153,7 +153,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
           </Link>
           <a
             href="#benefits"
-            className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
@@ -164,7 +164,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
           </a>
           <a
             href="#community"
-            className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
@@ -175,7 +175,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
           </a>
           <Link
             href="/auth"
-            className="group bg-secondary hover:bg-primary text-primary hover:text-secondary py-3 rounded-md transition-all duration-300 font-medium text-center mt-2 border border-primary flex items-center justify-center"
+            className="group bg-background hover:bg-primary text-primary hover:text-primary-foreground py-3 rounded-md transition-all duration-300 font-medium text-center mt-2 border border-primary flex items-center justify-center"
             onClick={() => setMobileMenuOpen(false)}
           >
             <span>Get Started</span>
