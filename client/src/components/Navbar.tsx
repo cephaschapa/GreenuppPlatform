@@ -9,7 +9,7 @@ interface NavbarProps {
 
 const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
   return (
-    <nav className="fixed w-full bg-secondary/95 backdrop-blur-md z-50 border-b border-primary/20 shadow-lg shadow-black/20">
+    <nav className="fixed w-full bg-background/95 backdrop-blur-md z-50 border-b border-primary/20 shadow-md shadow-black/10 dark:shadow-black/20">
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-2 md:py-3 flex justify-between items-center">
         <div className="flex items-center">
           <div className="text-primary text-2xl md:text-3xl mr-1 relative">
@@ -102,14 +102,14 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
       <div
         className={`
           ${mobileMenuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0 pointer-events-none"} 
-          md:hidden fixed left-0 right-0 top-[51px] bg-secondary/95 backdrop-blur-md border-t border-primary/20
+          md:hidden fixed left-0 right-0 top-[51px] bg-background/95 backdrop-blur-md border-t border-primary/20
           transition-all duration-300 ease-in-out transform-gpu overflow-hidden
         `}
       >
         <div className="container mx-auto px-4 py-2 md:px-6 lg:px-8 max-w-7xl flex flex-col space-y-2">
           <a
             href="#features"
-            className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
@@ -120,7 +120,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
           </a>
           <a
             href="#solutions"
-            className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
@@ -131,7 +131,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
           </a>
           <a
             href="#advanced-features"
-            className="py-3 border-b border-gray-800 hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
