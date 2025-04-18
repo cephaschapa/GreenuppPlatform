@@ -40,10 +40,10 @@ const CommunitySection = () => {
             <p className="text-muted-foreground mb-4">Share experiences, ask questions, and learn from other farmers facing similar challenges.</p>
             <div className="bg-card rounded-lg p-4 mb-4 border border-border/40">
               <div className="flex items-start">
-                <div className="w-8 h-8 rounded-full mr-3 bg-gray-600"></div>
+                <div className="w-8 h-8 rounded-full mr-3 bg-muted"></div>
                 <div>
                   <p className="font-medium mb-1">Robert H.</p>
-                  <p className="text-sm text-gray-400">Anyone using drip irrigation with the moisture sensors? My setup keeps giving false readings...</p>
+                  <p className="text-sm text-muted-foreground">Anyone using drip irrigation with the moisture sensors? My setup keeps giving false readings...</p>
                   <div className="flex text-xs mt-2 text-gray-500">
                     <span className="mr-3">2h ago</span>
                     <span className="mr-3">12 replies</span>
@@ -76,7 +76,7 @@ const CommunitySection = () => {
                 <span className="bg-primary/20 text-primary text-xs rounded-full px-2 py-1">Upcoming</span>
               </div>
               <h4 className="font-medium mb-1">Advanced Sensor Calibration</h4>
-              <p className="text-sm text-gray-400 mb-2">Learn how to properly calibrate soil sensors for maximum accuracy.</p>
+              <p className="text-sm text-muted-foreground mb-2">Learn how to properly calibrate soil sensors for maximum accuracy.</p>
               <div className="flex text-xs text-gray-500">
                 <span className="mr-3"><i className="far fa-calendar mr-1"></i> June 28</span>
                 <span><i className="far fa-clock mr-1"></i> 60 min</span>
@@ -102,7 +102,7 @@ const CommunitySection = () => {
               <h3 className="text-xl font-bold font-space">Developer API</h3>
             </div>
             <p className="text-muted-foreground mb-4">Integrate Greenupp with your existing farm management software or create custom applications.</p>
-            <div className="bg-[#2D2D2D] rounded-lg p-4 mb-4 font-mono text-xs overflow-x-auto">
+            <div className="bg-card rounded-lg p-4 mb-4 font-mono text-xs overflow-x-auto border border-border/40">
               <pre className="text-gray-300">GET /api/v1/sensors/<span className="text-primary">sensor_id</span>/readings</pre>
               <pre className="text-gray-300">{"{\n  \"moisture\": 42.3,\n  \"temperature\": 24.1,\n  \"pH\": 6.8,\n  \"timestamp\": \"2023-06-18T14:23:16Z\"\n}"}</pre>
             </div>
@@ -114,7 +114,7 @@ const CommunitySection = () => {
         </motion.div>
         
         <motion.div 
-          className="rounded-2xl bg-gradient-to-r from-[#2D2D2D] to-secondary relative overflow-hidden border border-primary/20"
+          className="rounded-2xl bg-gradient-to-r from-card to-secondary relative overflow-hidden border border-primary/20"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -134,19 +134,19 @@ const CommunitySection = () => {
               <div className="grid grid-cols-2 gap-6 mb-8">
                 <div>
                   <div className="text-3xl font-bold text-primary mb-1">25K+</div>
-                  <div className="text-gray-400">Active Members</div>
+                  <div className="text-muted-foreground">Active Members</div>
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-primary mb-1">40+</div>
-                  <div className="text-gray-400">Countries</div>
+                  <div className="text-muted-foreground">Countries</div>
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-primary mb-1">250+</div>
-                  <div className="text-gray-400">Daily Posts</div>
+                  <div className="text-muted-foreground">Daily Posts</div>
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-primary mb-1">12</div>
-                  <div className="text-gray-400">Languages</div>
+                  <div className="text-muted-foreground">Languages</div>
                 </div>
               </div>
               <a href="#" className="bg-primary hover:bg-primary/80 text-primary-foreground px-6 py-3 rounded-md transition duration-300 font-medium inline-block">
@@ -155,7 +155,7 @@ const CommunitySection = () => {
             </div>
             <div className="flex flex-wrap gap-3 items-center justify-center">
               {Array(8).fill(0).map((_, i) => (
-                <div key={i} className="w-14 h-14 rounded-full border-2 border-primary bg-gray-600"></div>
+                <div key={i} className="w-14 h-14 rounded-full border-2 border-primary bg-muted"></div>
               ))}
               <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
                 +1K
