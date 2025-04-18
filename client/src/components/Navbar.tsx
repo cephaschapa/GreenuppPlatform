@@ -73,6 +73,20 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             Community
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
           </a>
+          <Link
+            href="/trace"
+            className="hover:text-primary transition duration-300 relative group"
+          >
+            Verify Products
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+          </Link>
+          <Link
+            href="/ai-knowledge-base"
+            className="hover:text-primary transition duration-300 relative group"
+          >
+            AI Knowledge
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+          </Link>
           <ThemeToggle />
           <Link
             href="/auth"
@@ -173,6 +187,28 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             <span>Community</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
           </a>
+          <Link
+            href="/trace"
+            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+              <span className="font-mono text-primary text-xs">07</span>
+            </div>
+            <span>Verify Products</span>
+            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+          </Link>
+          <Link
+            href="/ai-knowledge-base"
+            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+              <span className="font-mono text-primary text-xs">08</span>
+            </div>
+            <span>AI Knowledge</span>
+            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+          </Link>
           <Link
             href="/auth"
             className="group bg-background hover:bg-primary text-primary hover:text-primary-foreground py-3 rounded-md transition-all duration-300 font-medium text-center mt-2 border border-primary flex items-center justify-center"

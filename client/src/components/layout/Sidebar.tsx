@@ -22,6 +22,7 @@ import {
   Sprout,
   ShoppingBag,
   ShoppingCart,
+  ShieldCheck,
 } from "lucide-react";
 import { CartIcon } from "@/components/cart/CartIcon";
 import { cn } from "@/lib/utils";
@@ -124,6 +125,22 @@ export function Sidebar() {
       active: location === "/dashboard/settings",
       showInMobileNav: false,
     },
+    {
+      title: "Verify Products",
+      href: "/trace",
+      icon: <ShieldCheck className="h-5 w-5" />,
+      mobileIcon: <ShieldCheck className="h-6 w-6" />,
+      active: location === "/trace",
+      showInMobileNav: false,
+    },
+    {
+      title: "AI Knowledge Base",
+      href: "/ai-knowledge-base",
+      icon: <Sparkles className="h-5 w-5" />,
+      mobileIcon: <Sparkles className="h-6 w-6" />,
+      active: location === "/ai-knowledge-base",
+      showInMobileNav: false,
+    },
   ];
 
   const supplierNavItems = [
@@ -142,6 +159,22 @@ export function Sidebar() {
       mobileIcon: <ShoppingBag className="h-6 w-6" />,
       active: location.startsWith("/dashboard/marketplace"),
       showInMobileNav: true,
+    },
+    {
+      title: "Verify Products",
+      href: "/trace",
+      icon: <ShieldCheck className="h-5 w-5" />,
+      mobileIcon: <ShieldCheck className="h-6 w-6" />,
+      active: location === "/trace",
+      showInMobileNav: false,
+    },
+    {
+      title: "AI Knowledge Base",
+      href: "/ai-knowledge-base",
+      icon: <Sparkles className="h-5 w-5" />,
+      mobileIcon: <Sparkles className="h-6 w-6" />,
+      active: location === "/ai-knowledge-base",
+      showInMobileNav: false,
     },
     // Add more supplier-specific navigation items here
   ];
