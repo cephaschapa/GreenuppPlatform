@@ -44,7 +44,7 @@ const CommunitySection = () => {
                 <div>
                   <p className="font-medium mb-1">Robert H.</p>
                   <p className="text-sm text-muted-foreground">Anyone using drip irrigation with the moisture sensors? My setup keeps giving false readings...</p>
-                  <div className="flex text-xs mt-2 text-gray-500">
+                  <div className="flex text-xs mt-2 text-muted-foreground/80">
                     <span className="mr-3">2h ago</span>
                     <span className="mr-3">12 replies</span>
                   </div>
@@ -77,7 +77,7 @@ const CommunitySection = () => {
               </div>
               <h4 className="font-medium mb-1">Advanced Sensor Calibration</h4>
               <p className="text-sm text-muted-foreground mb-2">Learn how to properly calibrate soil sensors for maximum accuracy.</p>
-              <div className="flex text-xs text-gray-500">
+              <div className="flex text-xs text-muted-foreground/80">
                 <span className="mr-3"><i className="far fa-calendar mr-1"></i> June 28</span>
                 <span><i className="far fa-clock mr-1"></i> 60 min</span>
               </div>
@@ -103,8 +103,8 @@ const CommunitySection = () => {
             </div>
             <p className="text-muted-foreground mb-4">Integrate Greenupp with your existing farm management software or create custom applications.</p>
             <div className="bg-card rounded-lg p-4 mb-4 font-mono text-xs overflow-x-auto border border-border/40">
-              <pre className="text-gray-300">GET /api/v1/sensors/<span className="text-primary">sensor_id</span>/readings</pre>
-              <pre className="text-gray-300">{"{\n  \"moisture\": 42.3,\n  \"temperature\": 24.1,\n  \"pH\": 6.8,\n  \"timestamp\": \"2023-06-18T14:23:16Z\"\n}"}</pre>
+              <pre className="text-foreground/80">GET /api/v1/sensors/<span className="text-primary">sensor_id</span>/readings</pre>
+              <pre className="text-foreground/80">{"{\n  \"moisture\": 42.3,\n  \"temperature\": 24.1,\n  \"pH\": 6.8,\n  \"timestamp\": \"2023-06-18T14:23:16Z\"\n}"}</pre>
             </div>
             <a href="#" className="text-primary text-sm flex items-center group">
               <span className="mr-2 group-hover:mr-3 transition-all">API documentation</span>

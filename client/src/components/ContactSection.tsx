@@ -61,7 +61,7 @@ const ContactSection = () => {
   };
 
   return (
-    <section id="contact" className="py-20 bg-[#2D2D2D] relative overflow-hidden">
+    <section id="contact" className="py-20 bg-card/95 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-primary/5 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
       
@@ -75,7 +75,7 @@ const ContactSection = () => {
           >
             <h5 className="text-primary uppercase tracking-widest font-semibold mb-2 font-mono">Contact Us</h5>
             <h2 className="text-3xl md:text-4xl font-bold font-space mb-6">Ready to <span className="text-primary">Transform</span> Your Farm?</h2>
-            <p className="text-gray-400 mb-8">Get in touch with our agricultural technology experts to discover how Greenupp can be tailored to your specific farming operation.</p>
+            <p className="text-muted-foreground mb-8">Get in touch with our agricultural technology experts to discover how Greenupp can be tailored to your specific farming operation.</p>
             
             <div className="space-y-6 mb-8">
               <div className="flex items-start">
@@ -84,7 +84,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <h4 className="font-bold mb-1">Email Us</h4>
-                  <p className="text-gray-400 mb-1">Our team typically responds within 24 hours</p>
+                  <p className="text-muted-foreground mb-1">Our team typically responds within 24 hours</p>
                   <a href="mailto:info@greenupp.tech" className="text-primary">info@greenupp.tech</a>
                 </div>
               </div>
@@ -95,7 +95,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <h4 className="font-bold mb-1">Call Us</h4>
-                  <p className="text-gray-400 mb-1">Available Monday-Friday, 8am-6pm</p>
+                  <p className="text-muted-foreground mb-1">Available Monday-Friday, 8am-6pm</p>
                   <a href="tel:+18005551234" className="text-primary">+1 (800) 555-1234</a>
                 </div>
               </div>
@@ -106,7 +106,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <h4 className="font-bold mb-1">Visit Us</h4>
-                  <p className="text-gray-400 mb-1">Come see our technology demonstration farm</p>
+                  <p className="text-muted-foreground mb-1">Come see our technology demonstration farm</p>
                   <address className="text-primary not-italic">123 Innovation Way, Agritech Valley, CA 94016</address>
                 </div>
               </div>
