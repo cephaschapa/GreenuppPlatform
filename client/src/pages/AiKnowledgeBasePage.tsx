@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'wouter';
 import { Helmet } from 'react-helmet-async';
 import { ArrowLeft } from 'lucide-react';
-import PublicNavbar from '@/components/navigation/PublicNavbar';
+import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import Footer from '@/components/Footer';
 
 const AiKnowledgeBasePage = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Helmet>
@@ -16,7 +17,7 @@ const AiKnowledgeBasePage = () => {
         <meta name="description" content="Learn about the AI technology powering Greenupp's agricultural platform" />
       </Helmet>
 
-      <PublicNavbar />
+      <Navbar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
 
       <main className="flex-1 container max-w-6xl py-8 mx-auto px-4 sm:px-6">
         <div className="flex items-center gap-2 mb-6">

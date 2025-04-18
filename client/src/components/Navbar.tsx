@@ -38,13 +38,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             Features
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
           </a>
-          <a
-            href="#solutions"
-            className="hover:text-primary transition duration-300 relative group"
-          >
-            Solutions
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-          </a>
+          
           <a
             href="#advanced-features"
             className="hover:text-primary transition duration-300 relative group"
@@ -84,7 +78,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             href="/ai-knowledge-base"
             className="hover:text-primary transition duration-300 relative group"
           >
-            AI Knowledge
+           QA
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
           </Link>
           <ThemeToggle />
