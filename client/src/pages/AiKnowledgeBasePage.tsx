@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { ArrowLeft, Brain, Cloud, Leaf, LineChart, Microscope, Sprout } from 'lucide-react';
 import PublicNavbar from '@/components/navigation/PublicNavbar';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ const AiKnowledgeBasePage = () => {
 
       <main className="flex-1 container max-w-6xl py-8 mx-auto px-4 sm:px-6">
         <div className="flex items-center gap-2 mb-6">
-          <Link href="/">
+          <Link href="/" className="inline-block">
             <Button variant="ghost" size="sm" className="gap-1">
               <ArrowLeft className="h-4 w-4" />
               Back to Home
@@ -862,7 +862,7 @@ const AiKnowledgeBasePage = () => {
             </Card>
           </div>
           <div className="flex justify-center mt-8">
-            <Link href="/auth">
+            <Link href="/auth" className="inline-block">
               <Button size="lg" className="gap-2">
                 Get Started with AI-Powered Farming
                 <ArrowLeft className="h-4 w-4 rotate-180" />

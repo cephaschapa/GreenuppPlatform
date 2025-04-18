@@ -19,6 +19,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import InstallPWA from "@/components/ui/InstallPWA";
 import OfflineIndicator from "@/components/ui/OfflineIndicator";
 import { CartProvider } from "@/hooks/use-cart";
+import { HelmetProvider } from 'react-helmet-async';
 
 // Import farmer-specific pages
 import FieldsPage from "@/pages/farmer/FieldsPage";
@@ -86,11 +87,13 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <CartProvider>
-            <Router />
-            <Toaster />
-            {/* PWA Components */}
-            <InstallPWA />
-            <OfflineIndicator />
+            <HelmetProvider>
+              <Router />
+              <Toaster />
+              {/* PWA Components */}
+              <InstallPWA />
+              <OfflineIndicator />
+            </HelmetProvider>
           </CartProvider>
         </AuthProvider>
       </QueryClientProvider>
