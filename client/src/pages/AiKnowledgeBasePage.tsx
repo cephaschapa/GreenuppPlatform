@@ -12,6 +12,7 @@ import Footer from '@/components/Footer';
 const AiKnowledgeBasePage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* SEO */}
       <Helmet>
         <title>AI Technology Knowledge Base | Greenupp</title>
         <meta name="description" content="Learn about the AI technology powering Greenupp's agricultural platform" />
