@@ -140,16 +140,16 @@ const BenefitsSection = () => {
               <p className="text-muted-foreground mb-6">See how farmers around the world are transforming their operations with Greenupp.</p>
               <div className="mb-8">
                 <div className="flex items-start mb-4">
-                  <div className="w-12 h-12 rounded-full mr-4 border-2 border-primary bg-gray-600"></div>
+                  <div className="w-12 h-12 rounded-full mr-4 border-2 border-primary bg-muted"></div>
                   <div>
                     <p className="italic text-muted-foreground mb-2">"Greenupp's AI diagnostics caught a pest infestation before it became visible, saving our entire season. The ROI was almost immediate."</p>
                     <p className="font-semibold">Michael J., Corn Farmer, Iowa</p>
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <div className="w-12 h-12 rounded-full mr-4 border-2 border-primary bg-gray-600"></div>
+                  <div className="w-12 h-12 rounded-full mr-4 border-2 border-primary bg-muted"></div>
                   <div>
-                    <p className="italic text-gray-400 mb-2">"The blockchain traceability has allowed us to charge 22% more for our organic products. Customers love scanning the QR code to see the journey."</p>
+                    <p className="italic text-muted-foreground mb-2">"The blockchain traceability has allowed us to charge 22% more for our organic products. Customers love scanning the QR code to see the journey."</p>
                     <p className="font-semibold">Sarah T., Organic Vineyard, California</p>
                   </div>
                 </div>
@@ -160,14 +160,14 @@ const BenefitsSection = () => {
               </a>
             </div>
             <div className="relative">
-              <div className="rounded-xl overflow-hidden border border-primary/20 bg-[#111]">
+              <div className="rounded-xl overflow-hidden border border-primary/20 bg-background/95">
                 <img 
                   src={farmerTechSvg} 
                   alt="Farmer using digital technology in field" 
                   className="w-full"
                 />
               </div>
-              <div className="absolute -bottom-5 right-5 bg-primary text-secondary py-2 px-4 rounded-lg font-medium">
+              <div className="absolute -bottom-5 right-5 bg-primary text-primary-foreground py-2 px-4 rounded-lg font-medium">
                 +189% ROI
               </div>
             </div>
