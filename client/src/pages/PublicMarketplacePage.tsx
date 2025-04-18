@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { MarketplaceListing } from "@shared/schema";
-import PublicNavbar from "@/components/navigation/PublicNavbar";
+import Navbar from "@/components/Navbar";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +61,7 @@ export default function PublicMarketplacePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortOrder, setSortOrder] = useState<string>("newest");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Fetch marketplace listings
   const {
@@ -111,7 +112,7 @@ export default function PublicMarketplacePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Navbar */}
-      <PublicNavbar />
+      <Navbar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       
       {/* Hero Section */}
       <section className="py-12 md:py-16 bg-secondary/30">
