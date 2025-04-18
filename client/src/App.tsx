@@ -12,6 +12,7 @@ import PublicListingDetailPage from "@/pages/PublicListingDetailPage";
 import PublicSellersPage from "@/pages/PublicSellersPage";
 import PublicSellerProfilePage from "@/pages/PublicSellerProfilePage";
 import PublicTraceVerificationPage from "@/pages/PublicTraceVerificationPage";
+import AiKnowledgeBasePage from "@/pages/AiKnowledgeBasePage";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/marketplace/sellers/:id" component={PublicSellerProfilePage} />
       <Route path="/marketplace/:id" component={PublicListingDetailPage} />
       <Route path="/trace" component={PublicTraceVerificationPage} />
+      <Route path="/ai-knowledge-base" component={AiKnowledgeBasePage} />
       
       {/* Dashboard routes */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />

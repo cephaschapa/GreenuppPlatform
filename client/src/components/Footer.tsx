@@ -1,92 +1,124 @@
-const Footer = () => {
+import React from 'react';
+import { Link } from 'wouter';
+import { Leaf } from 'lucide-react';
+
+const Footer: React.FC = () => {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="bg-secondary py-16 border-t border-primary/20">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
-          <div className="lg:col-span-2">
-            <div className="flex items-center mb-6">
-              <div className="text-primary text-3xl mr-2">
-                <i className="fas fa-leaf"></i>
-              </div>
-              <a href="#" className="text-2xl font-bold font-space tracking-wider">
-                Green<span className="text-primary">upp</span>
-              </a>
-            </div>
-            <p className="text-gray-400 mb-6 max-w-md">Empowering farmers with cutting-edge technology to transform agriculture for a sustainable and profitable future.</p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-primary transition duration-300">
-                <i className="fab fa-twitter"></i>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-primary transition duration-300">
-                <i className="fab fa-linkedin-in"></i>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-primary transition duration-300">
-                <i className="fab fa-facebook-f"></i>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-primary transition duration-300">
-                <i className="fab fa-instagram"></i>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-primary transition duration-300">
-                <i className="fab fa-youtube"></i>
-              </a>
-            </div>
+    <footer className="border-t bg-background">
+      <div className="container py-8 md:py-12">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:grid-cols-4">
+          {/* Logo & About */}
+          <div className="flex flex-col">
+            <Link href="/" className="flex items-center gap-2 mb-4">
+              <Leaf className="h-6 w-6 text-primary" />
+              <span className="font-space font-bold text-xl">Greenupp</span>
+            </Link>
+            <p className="text-muted-foreground text-sm max-w-xs">
+              Transforming agriculture through intelligent, mobile-first technologies with enhanced 
+              marketplace capabilities and blockchain-enabled traceability.
+            </p>
           </div>
-          
-          <div>
-            <h4 className="font-bold mb-4 text-lg">Solutions</h4>
-            <ul className="space-y-3">
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">AI Crop Analysis</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">IoT Sensor Network</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">Blockchain Traceability</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">Weather Forecasting</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">Digital Marketplace</a></li>
+
+          {/* Quick Links */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm text-foreground mb-4">Platform</h4>
+            <ul className="space-y-3 text-sm">
+              <li>
+                <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors">
+                  Marketplace
+                </Link>
+              </li>
+              <li>
+                <Link href="/marketplace/sellers" className="text-muted-foreground hover:text-primary transition-colors">
+                  Find Sellers
+                </Link>
+              </li>
+              <li>
+                <Link href="/trace" className="text-muted-foreground hover:text-primary transition-colors">
+                  Verify Products
+                </Link>
+              </li>
+              <li>
+                <Link href="/ai-knowledge-base" className="text-muted-foreground hover:text-primary transition-colors">
+                  AI Knowledge Base
+                </Link>
+              </li>
             </ul>
           </div>
-          
-          <div>
-            <h4 className="font-bold mb-4 text-lg">Company</h4>
-            <ul className="space-y-3">
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">About Us</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">Careers</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">Press</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">Sustainability</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">Partners</a></li>
+
+          {/* Farmers */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm text-foreground mb-4">For Farmers</h4>
+            <ul className="space-y-3 text-sm">
+              <li>
+                <Link href="/auth" className="text-muted-foreground hover:text-primary transition-colors">
+                  Sign Up
+                </Link>
+              </li>
+              <li>
+                <Link href="/auth" className="text-muted-foreground hover:text-primary transition-colors">
+                  Farm Management
+                </Link>
+              </li>
+              <li>
+                <Link href="/auth" className="text-muted-foreground hover:text-primary transition-colors">
+                  Sell Your Products
+                </Link>
+              </li>
+              <li>
+                <Link href="/auth" className="text-muted-foreground hover:text-primary transition-colors">
+                  Weather Forecasts
+                </Link>
+              </li>
             </ul>
           </div>
-          
-          <div>
-            <h4 className="font-bold mb-4 text-lg">Resources</h4>
-            <ul className="space-y-3">
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">Blog</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">Knowledge Base</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">Community Forum</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">Developer API</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-primary transition duration-300">Contact Support</a></li>
+
+          {/* Contact */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm text-foreground mb-4">Contact</h4>
+            <ul className="space-y-3 text-sm">
+              <li className="text-muted-foreground">
+                22nd Floor, Findeco House
+              </li>
+              <li className="text-muted-foreground">
+                Cairo Road, Lusaka, Zambia
+              </li>
+              <li className="text-muted-foreground">
+                info@greenupp.com
+              </li>
+              <li className="text-muted-foreground">
+                <a 
+                  href="https://www.metatronltd.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="hover:text-primary transition-colors"
+                >
+                  Powered by Metatron Technologies Ltd
+                </a>
+              </li>
             </ul>
           </div>
         </div>
-        
-        <div className="mt-12 pt-8 border-t border-primary/10 flex flex-col md:flex-row justify-between items-center">
-          <div>
-            <p className="text-gray-500 text-sm mb-2 md:mb-0">&copy; {new Date().getFullYear()} Greenupp Technologies. All rights reserved.</p>
-            <p className="text-gray-600 text-xs font-mono mb-4 md:mb-0">
-              <span className="mr-1">Engineered by</span>
-              <a 
-                href="https://www.metatronltd.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-primary hover:text-primary/80 transition-colors inline-flex items-center"
-              >
-                Metatron Technologies Ltd
-                <span className="ml-1 text-xs opacity-60">↗</span>
-              </a>
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-4 text-sm">
-            <a href="#" className="text-gray-500 hover:text-primary transition duration-300">Privacy Policy</a>
-            <a href="#" className="text-gray-500 hover:text-primary transition duration-300">Terms of Service</a>
-            <a href="#" className="text-gray-500 hover:text-primary transition duration-300">Cookie Policy</a>
-            <a href="#" className="text-gray-500 hover:text-primary transition duration-300">GDPR</a>
+
+        <div className="mt-8 pt-6 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-center sm:text-left text-sm text-muted-foreground">
+            © {currentYear} Greenupp. All rights reserved.
+          </p>
+          <div className="flex gap-6">
+            <a 
+              href="#" 
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              Privacy Policy
+            </a>
+            <a 
+              href="#" 
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              Terms of Service
+            </a>
           </div>
         </div>
       </div>
