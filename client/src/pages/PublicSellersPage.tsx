@@ -13,7 +13,7 @@ import {
   Award
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import PublicNavbar from "@/components/PublicNavbar";
+import PublicNavbar from "@/components/navigation/PublicNavbar";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

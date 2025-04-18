@@ -17,6 +17,7 @@ import {
   ChevronRight,
   MapPin
 } from "lucide-react";
+import PublicNavbar from "@/components/navigation/PublicNavbar";
 import { MarketplaceListing } from "@shared/schema";
 
 import { formatCurrency } from "@/lib/utils";
@@ -82,28 +83,14 @@ export default function PublicListingDetailPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Simple Public Header */}
-      <header className="bg-secondary/95 backdrop-blur-md shadow-lg border-b border-primary/20 sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-3 max-w-7xl flex items-center justify-between">
-          <div className="flex items-center">
-            <Link href="/marketplace" className="flex items-center text-muted-foreground hover:text-primary transition-colors">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              <span>Back to Marketplace</span>
-            </Link>
-          </div>
-          <Link href="/">
-            <div className="flex items-center">
-              <div className="text-primary text-xl mr-1 relative">
-                <i className="fas fa-leaf"></i>
-                <span className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
-              </div>
-              <span className="text-lg font-bold font-space tracking-wider">
-                Green<span className="text-primary">upp</span>
-              </span>
-            </div>
-          </Link>
-        </div>
-      </header>
+      {/* Navbar */}
+      <PublicNavbar />
+      <div className="container mx-auto px-4 py-3 max-w-7xl">
+        <Link href="/marketplace" className="flex items-center text-muted-foreground hover:text-primary transition-colors">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          <span>Back to Marketplace</span>
+        </Link>
+      </div>
 
       <main className="container mx-auto px-4 py-6 max-w-7xl">
         {isLoading ? (

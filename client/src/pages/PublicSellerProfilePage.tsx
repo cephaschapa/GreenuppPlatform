@@ -20,7 +20,7 @@ import {
 import { formatDistance, formatDistanceToNow } from "date-fns";
 import { MarketplaceListing } from "@shared/schema";
 import { formatCurrency } from "@/lib/utils";
-import PublicNavbar from "@/components/PublicNavbar";
+import PublicNavbar from "@/components/navigation/PublicNavbar";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
