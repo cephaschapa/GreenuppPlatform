@@ -14,7 +14,7 @@ const CommunitySection = () => {
         >
           <h5 className="text-primary uppercase tracking-widest font-semibold mb-2 font-mono">Community</h5>
           <h2 className="text-3xl md:text-4xl font-bold font-space mb-4">Join the <span className="text-primary">Agricultural</span> Revolution</h2>
-          <p className="max-w-2xl mx-auto text-gray-400">Connect with innovative farmers and experts from around the world.</p>
+          <p className="max-w-2xl mx-auto text-muted-foreground">Connect with innovative farmers and experts from around the world.</p>
         </motion.div>
         
         <motion.div 
@@ -37,8 +37,8 @@ const CommunitySection = () => {
               </div>
               <h3 className="text-xl font-bold font-space">Knowledge Exchange</h3>
             </div>
-            <p className="text-gray-400 mb-4">Share experiences, ask questions, and learn from other farmers facing similar challenges.</p>
-            <div className="bg-[#2D2D2D] rounded-lg p-4 mb-4">
+            <p className="text-muted-foreground mb-4">Share experiences, ask questions, and learn from other farmers facing similar challenges.</p>
+            <div className="bg-card rounded-lg p-4 mb-4 border border-border/40">
               <div className="flex items-start">
                 <div className="w-8 h-8 rounded-full mr-3 bg-gray-600"></div>
                 <div>
@@ -70,8 +70,8 @@ const CommunitySection = () => {
               </div>
               <h3 className="text-xl font-bold font-space">Learning Hub</h3>
             </div>
-            <p className="text-gray-400 mb-4">Access webinars, tutorials, and courses to master modern agricultural techniques.</p>
-            <div className="bg-[#2D2D2D] rounded-lg p-4 mb-4">
+            <p className="text-muted-foreground mb-4">Access webinars, tutorials, and courses to master modern agricultural techniques.</p>
+            <div className="bg-card rounded-lg p-4 mb-4 border border-border/40">
               <div className="mb-3">
                 <span className="bg-primary/20 text-primary text-xs rounded-full px-2 py-1">Upcoming</span>
               </div>
@@ -101,7 +101,7 @@ const CommunitySection = () => {
               </div>
               <h3 className="text-xl font-bold font-space">Developer API</h3>
             </div>
-            <p className="text-gray-400 mb-4">Integrate Greenupp with your existing farm management software or create custom applications.</p>
+            <p className="text-muted-foreground mb-4">Integrate Greenupp with your existing farm management software or create custom applications.</p>
             <div className="bg-[#2D2D2D] rounded-lg p-4 mb-4 font-mono text-xs overflow-x-auto">
               <pre className="text-gray-300">GET /api/v1/sensors/<span className="text-primary">sensor_id</span>/readings</pre>
               <pre className="text-gray-300">{"{\n  \"moisture\": 42.3,\n  \"temperature\": 24.1,\n  \"pH\": 6.8,\n  \"timestamp\": \"2023-06-18T14:23:16Z\"\n}"}</pre>
@@ -130,7 +130,7 @@ const CommunitySection = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 md:p-12 relative z-10">
             <div>
               <h3 className="text-2xl font-bold font-space mb-4">Global Community</h3>
-              <p className="text-gray-400 mb-6">Join 25,000+ innovative farmers from over 40 countries who are reshaping the future of agriculture together.</p>
+              <p className="text-muted-foreground mb-6">Join 25,000+ innovative farmers from over 40 countries who are reshaping the future of agriculture together.</p>
               <div className="grid grid-cols-2 gap-6 mb-8">
                 <div>
                   <div className="text-3xl font-bold text-primary mb-1">25K+</div>
@@ -149,7 +149,7 @@ const CommunitySection = () => {
                   <div className="text-gray-400">Languages</div>
                 </div>
               </div>
-              <a href="#" className="bg-primary hover:bg-[#06E775] text-secondary px-6 py-3 rounded-md transition duration-300 font-medium inline-block">
+              <a href="#" className="bg-primary hover:bg-primary/80 text-primary-foreground px-6 py-3 rounded-md transition duration-300 font-medium inline-block">
                 Join Community
               </a>
             </div>
