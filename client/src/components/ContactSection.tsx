@@ -154,7 +154,7 @@ const ContactSection = () => {
                         <FormLabel>First Name</FormLabel>
                         <FormControl>
                           <Input 
-                            className="w-full bg-[#2D2D2D] border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50"
+                            className="w-full bg-card border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50"
                             placeholder="John" 
                             {...field} 
                           />
@@ -171,7 +171,7 @@ const ContactSection = () => {
                         <FormLabel>Last Name</FormLabel>
                         <FormControl>
                           <Input 
-                            className="w-full bg-[#2D2D2D] border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50"
+                            className="w-full bg-card border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50"
                             placeholder="Doe" 
                             {...field} 
                           />
@@ -190,7 +190,7 @@ const ContactSection = () => {
                       <FormLabel>Email Address</FormLabel>
                       <FormControl>
                         <Input 
-                          className="w-full bg-[#2D2D2D] border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50"
+                          className="w-full bg-card border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50"
                           type="email" 
                           placeholder="your@email.com" 
                           {...field} 
@@ -209,7 +209,7 @@ const ContactSection = () => {
                       <FormLabel>Farm Type</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger className="w-full bg-[#2D2D2D] border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50">
+                          <SelectTrigger className="w-full bg-card border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50">
                             <SelectValue placeholder="Select your farm type" />
                           </SelectTrigger>
                         </FormControl>
@@ -235,7 +235,7 @@ const ContactSection = () => {
                       <FormLabel>Message</FormLabel>
                       <FormControl>
                         <Textarea 
-                          className="w-full bg-[#2D2D2D] border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50"
+                          className="w-full bg-card border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50"
                           placeholder="Tell us about your farming operation and needs..." 
                           rows={4} 
                           {...field} 
@@ -259,7 +259,7 @@ const ContactSection = () => {
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel className="text-sm text-gray-400">
+                        <FormLabel className="text-sm text-muted-foreground">
                           Subscribe to our newsletter for tips, news, and updates
                         </FormLabel>
                       </div>
@@ -269,7 +269,7 @@ const ContactSection = () => {
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-primary hover:bg-[#06E775] text-secondary py-3 rounded-md transition duration-300 font-medium"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-md transition duration-300 font-medium"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Sending..." : "Request a Demo"}
