@@ -123,7 +123,7 @@ const AdvancedFeatures = () => {
                   <i className={`${feature.icon} text-primary text-xl sm:text-2xl`}></i>
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold font-space mb-2 sm:mb-3 group-hover:text-primary transition-colors">{feature.title}</h3>
-                <p className="text-sm sm:text-base text-gray-400 mb-4 flex-grow">{feature.description}</p>
+                <p className="text-sm sm:text-base text-muted-foreground mb-4 flex-grow">{feature.description}</p>
               </div>
             </motion.div>
           ))}
@@ -137,7 +137,7 @@ const AdvancedFeatures = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <div className="bg-secondary p-5 sm:p-6 rounded-xl border border-primary/20 relative overflow-hidden group hover:shadow-lg hover:shadow-primary/10 transition-all">
+          <div className="bg-card p-5 sm:p-6 rounded-xl border border-primary/20 relative overflow-hidden group hover:shadow-lg hover:shadow-primary/10 transition-all">
             <div className="relative z-10">
               <div className="flex items-center mb-3">
                 <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
@@ -145,17 +145,17 @@ const AdvancedFeatures = () => {
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold font-space group-hover:text-primary transition-colors">Chat Service</h3>
               </div>
-              <p className="text-sm sm:text-base text-gray-400 mb-5">Integrated chat service for instant communication with experts, support teams, and other farmers, facilitating quick problem resolution and information exchange.</p>
+              <p className="text-sm sm:text-base text-muted-foreground mb-5">Integrated chat service for instant communication with experts, support teams, and other farmers, facilitating quick problem resolution and information exchange.</p>
               <div className="flex flex-wrap gap-2">
-                <div className="bg-[#2D2D2D] rounded-lg px-3 py-1 text-xs sm:text-sm flex items-center">
+                <div className="bg-muted rounded-lg px-3 py-1 text-xs sm:text-sm flex items-center">
                   <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
                   Expert Support
                 </div>
-                <div className="bg-[#2D2D2D] rounded-lg px-3 py-1 text-xs sm:text-sm flex items-center">
+                <div className="bg-muted rounded-lg px-3 py-1 text-xs sm:text-sm flex items-center">
                   <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
                   Community Chat
                 </div>
-                <div className="bg-[#2D2D2D] rounded-lg px-3 py-1 text-xs sm:text-sm flex items-center">
+                <div className="bg-muted rounded-lg px-3 py-1 text-xs sm:text-sm flex items-center">
                   <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
                   Voice Calls
                 </div>
@@ -164,7 +164,7 @@ const AdvancedFeatures = () => {
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-xl opacity-70 group-hover:opacity-100 transition-opacity"></div>
           </div>
           
-          <div className="bg-secondary p-5 sm:p-6 rounded-xl border border-primary/20 relative overflow-hidden group hover:shadow-lg hover:shadow-primary/10 transition-all">
+          <div className="bg-card p-5 sm:p-6 rounded-xl border border-primary/20 relative overflow-hidden group hover:shadow-lg hover:shadow-primary/10 transition-all">
             <div className="relative z-10">
               <div className="flex items-center mb-3">
                 <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
@@ -172,22 +172,22 @@ const AdvancedFeatures = () => {
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold font-space group-hover:text-primary transition-colors">Smart Notifications</h3>
               </div>
-              <p className="text-sm sm:text-base text-gray-400 mb-5">Automated alerts and notifications for important events such as weather changes, market price shifts, pest outbreaks, and more, keeping farmers informed in real-time.</p>
+              <p className="text-sm sm:text-base text-muted-foreground mb-5">Automated alerts and notifications for important events such as weather changes, market price shifts, pest outbreaks, and more, keeping farmers informed in real-time.</p>
               
               <div className="space-y-2 mb-4">
-                <div className="bg-[#2D2D2D] rounded-lg p-2 flex items-start">
+                <div className="bg-muted rounded-lg p-2 flex items-start">
                   <i className="fas fa-exclamation-triangle text-yellow-500 mt-1 mr-2"></i>
                   <div>
                     <p className="text-xs font-medium">Weather Alert</p>
-                    <p className="text-xs text-gray-400">Heavy rain expected in your area in 6 hours</p>
+                    <p className="text-xs text-muted-foreground">Heavy rain expected in your area in 6 hours</p>
                   </div>
                 </div>
                 
-                <div className="bg-[#2D2D2D] rounded-lg p-2 flex items-start">
+                <div className="bg-muted rounded-lg p-2 flex items-start">
                   <i className="fas fa-chart-line text-green-500 mt-1 mr-2"></i>
                   <div>
                     <p className="text-xs font-medium">Market Update</p>
-                    <p className="text-xs text-gray-400">Corn prices increased by 5% today</p>
+                    <p className="text-xs text-muted-foreground">Corn prices increased by 5% today</p>
                   </div>
                 </div>
               </div>
@@ -206,7 +206,7 @@ const AdvancedFeatures = () => {
         >
           <div className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono tracking-wider mb-3">COMING SOON</div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold font-space mb-4">Greenupp <span className="text-primary">2.0</span></h2>
-          <p className="max-w-2xl mx-auto text-gray-400 text-sm md:text-base">A tailored interface designed specifically for farmers, focusing on ease of use and access to critical farming tools and data.</p>
+          <p className="max-w-2xl mx-auto text-muted-foreground text-sm md:text-base">A tailored interface designed specifically for farmers, focusing on ease of use and access to critical farming tools and data.</p>
         </motion.div>
         
         <motion.div 
@@ -219,7 +219,7 @@ const AdvancedFeatures = () => {
           {specializedFeatures.map((feature, index) => (
             <motion.div 
               key={index}
-              className="bg-secondary/80 rounded-xl p-5 sm:p-6 border border-primary/20 transition-all duration-300 h-full flex flex-col hover:shadow-lg hover:shadow-primary/10 group relative overflow-hidden backdrop-blur-sm"
+              className="bg-card/90 rounded-xl p-5 sm:p-6 border border-primary/20 transition-all duration-300 h-full flex flex-col hover:shadow-lg hover:shadow-primary/10 group relative overflow-hidden backdrop-blur-sm"
               variants={itemVariants}
             >
               <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-primary/5 rounded-full blur-xl opacity-70 group-hover:opacity-100 transition-opacity"></div>
@@ -228,10 +228,10 @@ const AdvancedFeatures = () => {
                   <i className={`${feature.icon} text-primary text-xl sm:text-2xl`}></i>
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold font-space mb-2 sm:mb-3 group-hover:text-primary transition-colors">{feature.title}</h3>
-                <p className="text-sm sm:text-base text-gray-400 mb-4 flex-grow">{feature.description}</p>
+                <p className="text-sm sm:text-base text-muted-foreground mb-4 flex-grow">{feature.description}</p>
               </div>
               
-              <div className="mt-auto pt-3 border-t border-gray-800/50">
+              <div className="mt-auto pt-3 border-t border-border/50">
                 <span className="text-xs font-mono text-primary/70">Coming in Phase 2</span>
               </div>
             </motion.div>
