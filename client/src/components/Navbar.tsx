@@ -31,21 +31,21 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
         </div>
 
         <div className="hidden md:flex space-x-6 lg:space-x-8 items-center">
-          <a
-            href="#features"
+          <Link
+            href="/#features"
             className="hover:text-primary transition duration-300 relative group"
           >
             Features
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-          </a>
+          </Link>
           
-          <a
-            href="#advanced-features"
+          <Link
+            href="/#advanced-features"
             className="hover:text-primary transition duration-300 relative group"
           >
             Platform
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-          </a>
+          </Link>
           <Link
             href="/marketplace"
             className="hover:text-primary transition duration-300 relative group"
@@ -53,20 +53,20 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             Marketplace
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
           </Link>
-          <a
-            href="#benefits"
+          <Link
+            href="/#benefits"
             className="hover:text-primary transition duration-300 relative group"
           >
             Benefits
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-          </a>
-          <a
-            href="#community"
+          </Link>
+          <Link
+            href="/#community"
             className="hover:text-primary transition duration-300 relative group"
           >
             Community
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-          </a>
+          </Link>
           <Link
             href="/trace"
             className="hover:text-primary transition duration-300 relative group"
@@ -115,8 +115,8 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
         `}
       >
         <div className="container mx-auto px-4 py-2 md:px-6 lg:px-8 max-w-7xl flex flex-col space-y-2">
-          <a
-            href="#features"
+          <Link
+            href="/#features"
             className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
@@ -125,9 +125,9 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             </div>
             <span>Features</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-          </a>
-          <a
-            href="#solutions"
+          </Link>
+          <Link
+            href="/#solutions"
             className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
@@ -136,9 +136,9 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             </div>
             <span>Solutions</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-          </a>
-          <a
-            href="#advanced-features"
+          </Link>
+          <Link
+            href="/#advanced-features"
             className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
@@ -147,7 +147,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             </div>
             <span>Platform</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-          </a>
+          </Link>
           <Link
             href="/marketplace"
             className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
@@ -159,8 +159,8 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             <span>Marketplace</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
           </Link>
-          <a
-            href="#benefits"
+          <Link
+            href="/#benefits"
             className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
@@ -169,9 +169,9 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             </div>
             <span>Benefits</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-          </a>
-          <a
-            href="#community"
+          </Link>
+          <Link
+            href="/#community"
             className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
@@ -180,7 +180,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             </div>
             <span>Community</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-          </a>
+          </Link>
           <Link
             href="/trace"
             className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
