@@ -73,7 +73,7 @@ const BenefitsSection = () => {
   };
 
   return (
-    <section id="benefits" className="py-20 bg-[#2D2D2D] relative overflow-hidden">
+    <section id="benefits" className="py-20 bg-muted relative overflow-hidden">
       <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
       <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
       
@@ -87,7 +87,7 @@ const BenefitsSection = () => {
         >
           <h5 className="text-primary uppercase tracking-widest font-semibold mb-2 font-mono">Benefits</h5>
           <h2 className="text-3xl md:text-4xl font-bold font-space mb-4">Transform Your <span className="text-primary">Agricultural</span> Business</h2>
-          <p className="max-w-2xl mx-auto text-gray-400">Discover how Greenupp delivers measurable improvements to your farming operations.</p>
+          <p className="max-w-2xl mx-auto text-muted-foreground">Discover how Greenupp delivers measurable improvements to your farming operations.</p>
         </motion.div>
         
         <motion.div 
@@ -100,20 +100,20 @@ const BenefitsSection = () => {
           {benefits.map((benefit, index) => (
             <motion.div 
               key={index}
-              className="bg-secondary rounded-xl p-6 border border-primary/20 hover:border-primary/50 transition duration-300"
+              className="bg-card rounded-xl p-6 border border-primary/20 hover:border-primary/50 transition duration-300"
               variants={itemVariants}
             >
               <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-5">
                 <i className={`${benefit.icon} text-primary text-2xl`}></i>
               </div>
               <h3 className="text-xl font-bold font-space mb-3">{benefit.title}</h3>
-              <p className="text-gray-400">{benefit.description}</p>
+              <p className="text-muted-foreground">{benefit.description}</p>
               <div className="mt-4">
                 <div className="flex justify-between text-sm mb-1">
                   <span>{benefit.metricLabel}</span>
                   <span className="text-primary font-semibold">{benefit.metric}</span>
                 </div>
-                <div className="h-2 w-full bg-[#2D2D2D] rounded-full overflow-hidden">
+                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                   <motion.div 
                     className="h-full bg-primary rounded-full"
                     initial={{ width: 0 }}
@@ -128,7 +128,7 @@ const BenefitsSection = () => {
         </motion.div>
         
         <motion.div 
-          className="mt-16 bg-secondary rounded-xl p-8 border border-primary/20"
+          className="mt-16 bg-card rounded-xl p-8 border border-primary/20"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -137,12 +137,12 @@ const BenefitsSection = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div>
               <h3 className="text-2xl font-bold font-space mb-4">Success Stories</h3>
-              <p className="text-gray-400 mb-6">See how farmers around the world are transforming their operations with Greenupp.</p>
+              <p className="text-muted-foreground mb-6">See how farmers around the world are transforming their operations with Greenupp.</p>
               <div className="mb-8">
                 <div className="flex items-start mb-4">
                   <div className="w-12 h-12 rounded-full mr-4 border-2 border-primary bg-gray-600"></div>
                   <div>
-                    <p className="italic text-gray-400 mb-2">"Greenupp's AI diagnostics caught a pest infestation before it became visible, saving our entire season. The ROI was almost immediate."</p>
+                    <p className="italic text-muted-foreground mb-2">"Greenupp's AI diagnostics caught a pest infestation before it became visible, saving our entire season. The ROI was almost immediate."</p>
                     <p className="font-semibold">Michael J., Corn Farmer, Iowa</p>
                   </div>
                 </div>
