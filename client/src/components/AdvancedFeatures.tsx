@@ -89,7 +89,7 @@ const AdvancedFeatures = () => {
   };
 
   return (
-    <section id="advanced-features" className="py-16 md:py-20 bg-[#1A1A1A] relative">
+    <section id="advanced-features" className="py-16 md:py-20 bg-muted relative">
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl">
         {/* Phase 1 Features */}
         <motion.div 
@@ -101,7 +101,7 @@ const AdvancedFeatures = () => {
         >
           <div className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono tracking-wider mb-3">GREENUPP PLATFORM</div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold font-space mb-4">General Purpose <span className="text-primary">Client</span></h2>
-          <p className="max-w-2xl mx-auto text-gray-400 text-sm md:text-base">A versatile platform where farmers can manage all aspects of their operations, from monitoring crop health to accessing market prices.</p>
+          <p className="max-w-2xl mx-auto text-muted-foreground text-sm md:text-base">A versatile platform where farmers can manage all aspects of their operations, from monitoring crop health to accessing market prices.</p>
         </motion.div>
         
         <motion.div 
@@ -114,7 +114,7 @@ const AdvancedFeatures = () => {
           {generalFeatures.map((feature, index) => (
             <motion.div 
               key={index}
-              className="bg-secondary rounded-xl p-5 sm:p-6 border border-primary/20 transition-all duration-300 h-full flex flex-col hover:shadow-lg hover:shadow-primary/10 group relative overflow-hidden"
+              className="bg-card rounded-xl p-5 sm:p-6 border border-primary/20 transition-all duration-300 h-full flex flex-col hover:shadow-lg hover:shadow-primary/10 group relative overflow-hidden"
               variants={itemVariants}
             >
               <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-primary/5 rounded-full blur-xl opacity-70 group-hover:opacity-100 transition-opacity"></div>
