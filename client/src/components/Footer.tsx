@@ -7,7 +7,7 @@ const Footer: React.FC = () => {
 
   return (
     <footer className="border-t bg-background">
-      <div className="container py-8 md:py-12">
+      <div className="container mx-auto py-8 md:py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:grid-cols-4">
           {/* Logo & About */}
           <div className="flex flex-col">

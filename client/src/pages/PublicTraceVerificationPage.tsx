@@ -10,7 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, ShieldCheck, AlertTriangle, Leaf, CheckCircle2, Calendar, Tractor, Search } from 'lucide-react';
-import PublicNavbar from '@/components/PublicNavbar';
+import PublicNavbar from '@/components/navigation/PublicNavbar';
 
 export default function PublicTraceVerificationPage() {
   const [location, setLocation] = useLocation();
