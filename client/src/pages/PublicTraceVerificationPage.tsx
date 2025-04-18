@@ -16,6 +16,7 @@ export default function PublicTraceVerificationPage() {
   const [location, setLocation] = useLocation();
   const [batchId, setBatchId] = useState<string>('');
   const [searchInput, setSearchInput] = useState<string>('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Extract batch ID from URL if present
   useEffect(() => {
@@ -54,7 +55,7 @@ export default function PublicTraceVerificationPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <PublicNavbar />
+      <Navbar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       
       <main className="flex-1 container max-w-4xl py-8">
         <div className="space-y-6">
