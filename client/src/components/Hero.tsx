@@ -4,10 +4,10 @@ import { Link } from "wouter";
 
 const Hero = () => {
   return (
-    <header className="pt-24 md:pt-28 pb-16 md:pb-24 relative overflow-hidden">
+    <header className="pt-24 md:pt-28 pb-16 md:pb-24 relative overflow-hidden bg-background">
       <div className="absolute inset-0 z-0 opacity-20" 
         style={{
-          backgroundImage: "radial-gradient(#00CC66 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(var(--primary) 1px, transparent 1px)",
           backgroundSize: "20px 20px"
         }}
       />
@@ -24,7 +24,7 @@ const Hero = () => {
               The Future of <span className="bg-gradient-to-r from-[#00CC66] to-[#06E775] bg-clip-text text-transparent">Agriculture</span> Is Here
             </motion.h1>
             <motion.p 
-              className="text-base md:text-lg mb-6 md:mb-8 text-gray-300 leading-relaxed max-w-xl mx-auto md:mx-0"
+              className="text-base md:text-lg mb-6 md:mb-8 text-muted-foreground leading-relaxed max-w-xl mx-auto md:mx-0"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
@@ -41,7 +41,7 @@ const Hero = () => {
                 <span>Get Started</span>
                 <i className="fas fa-arrow-right ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all"></i>
               </Link>
-              <a href="#features" className="border border-primary/50 hover:border-primary bg-secondary/50 hover:bg-secondary/80 px-6 sm:px-8 py-3 rounded-md transition-all duration-300 font-medium inline-flex items-center justify-center">
+              <a href="#features" className="border border-primary/50 hover:border-primary bg-muted/50 hover:bg-muted px-6 sm:px-8 py-3 rounded-md transition-all duration-300 font-medium inline-flex items-center justify-center">
                 <span>Explore Features</span>
                 <i className="fas fa-chevron-down ml-2 text-xs text-primary"></i>
               </a>
@@ -54,12 +54,12 @@ const Hero = () => {
               transition={{ duration: 0.6, delay: 0.6 }}
             >
               <div className="flex -space-x-2">
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-secondary bg-gray-500"></div>
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-secondary bg-gray-500"></div>
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-secondary bg-gray-500"></div>
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-background bg-muted"></div>
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-background bg-muted"></div>
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-background bg-muted"></div>
               </div>
               <div>
-                <p className="text-xs md:text-sm text-gray-400">Trusted by <span className="text-primary font-semibold">2,500+</span> farmers worldwide</p>
+                <p className="text-xs md:text-sm text-muted-foreground">Trusted by <span className="text-primary font-semibold">2,500+</span> farmers worldwide</p>
               </div>
             </motion.div>
           </div>
@@ -78,10 +78,10 @@ const Hero = () => {
                 alt="Futuristic farming with drone monitoring a green field" 
                 className="w-full h-auto rounded-2xl"
               />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-secondary to-transparent p-4 md:p-6">
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-card/90 to-transparent p-4 md:p-6">
                 <div className="flex items-center gap-2 text-xs md:text-sm">
                   <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                  <span className="font-mono text-[#06E775]">AI monitoring active</span>
+                  <span className="font-mono text-primary">AI monitoring active</span>
                 </div>
               </div>
             </div>
@@ -89,10 +89,10 @@ const Hero = () => {
             <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-primary/10 rounded-full blur-xl"></div>
             
             {/* Tech elements decoration */}
-            <div className="absolute -top-2 -left-2 w-8 h-8 md:w-12 md:h-12 border border-primary/40 rounded-lg z-0 backdrop-blur-sm bg-black/30 hidden md:flex items-center justify-center">
+            <div className="absolute -top-2 -left-2 w-8 h-8 md:w-12 md:h-12 border border-primary/40 rounded-lg z-0 backdrop-blur-sm bg-card/80 hidden md:flex items-center justify-center">
               <span className="text-xs md:text-sm font-mono text-primary">AI</span>
             </div>
-            <div className="absolute top-1/4 -right-3 w-8 h-8 md:w-12 md:h-12 border border-primary/40 rounded-lg z-0 backdrop-blur-sm bg-black/30 hidden md:flex items-center justify-center rotate-12">
+            <div className="absolute top-1/4 -right-3 w-8 h-8 md:w-12 md:h-12 border border-primary/40 rounded-lg z-0 backdrop-blur-sm bg-card/80 hidden md:flex items-center justify-center rotate-12">
               <span className="text-xs md:text-sm font-mono text-primary">IoT</span>
             </div>
           </motion.div>
