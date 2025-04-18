@@ -3,7 +3,7 @@ import aiCropAnalysisSvg from "../assets/ai-crop-analysis.svg";
 
 const SolutionShowcase = () => {
   return (
-    <section id="solutions" className="py-20 relative">
+    <section id="solutions" className="py-20 relative bg-background">
       <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1621271857589-84189aee5667?ixlib=rb-4.0.3&auto=format&fit=crop&q=80')] bg-cover bg-center opacity-10"></div>
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl relative z-10">
         <motion.div 
@@ -15,7 +15,7 @@ const SolutionShowcase = () => {
         >
           <h5 className="text-primary uppercase tracking-widest font-semibold mb-2 font-mono">Solutions</h5>
           <h2 className="text-3xl md:text-4xl font-bold font-space mb-4">Comprehensive <span className="text-primary">Agricultural</span> Suite</h2>
-          <p className="max-w-2xl mx-auto text-gray-400">Our platform offers integrated solutions for every aspect of modern farming.</p>
+          <p className="max-w-2xl mx-auto text-muted-foreground">Our platform offers integrated solutions for every aspect of modern farming.</p>
         </motion.div>
         
         <motion.div 
@@ -27,7 +27,7 @@ const SolutionShowcase = () => {
         >
           <div>
             <h3 className="text-2xl font-bold font-space mb-4">AI Crop Analysis & Diagnosis</h3>
-            <p className="text-gray-400 mb-6">Upload images from your smartphone to instantly identify diseases, pests, nutrient deficiencies, and growth stages with our advanced computer vision system.</p>
+            <p className="text-muted-foreground mb-6">Upload images from your smartphone to instantly identify diseases, pests, nutrient deficiencies, and growth stages with our advanced computer vision system.</p>
             <ul className="space-y-3 mb-8">
               <li className="flex items-start">
                 <i className="fas fa-check-circle text-primary mt-1 mr-3"></i>
@@ -48,7 +48,7 @@ const SolutionShowcase = () => {
             </a>
           </div>
           <div className="relative">
-            <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg shadow-primary/10 bg-[#111]">
+            <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg shadow-primary/10 bg-muted">
               <img 
                 src={aiCropAnalysisSvg} 
                 alt="AI analyzing crop health with digital overlay" 
@@ -97,7 +97,7 @@ const SolutionShowcase = () => {
           </div>
           <div className="order-1 md:order-2">
             <h3 className="text-2xl font-bold font-space mb-4">IoT Environmental Monitoring</h3>
-            <p className="text-gray-400 mb-6">Deploy our network of smart sensors to continuously monitor soil conditions, weather patterns, and environmental factors affecting your crops.</p>
+            <p className="text-muted-foreground mb-6">Deploy our network of smart sensors to continuously monitor soil conditions, weather patterns, and environmental factors affecting your crops.</p>
             <ul className="space-y-3 mb-8">
               <li className="flex items-start">
                 <i className="fas fa-check-circle text-primary mt-1 mr-3"></i>
@@ -128,7 +128,7 @@ const SolutionShowcase = () => {
         >
           <div>
             <h3 className="text-2xl font-bold font-space mb-4">Blockchain Supply Chain</h3>
-            <p className="text-gray-400 mb-6">Track your products from farm to consumer with our tamper-proof blockchain technology, building trust and commanding premium prices.</p>
+            <p className="text-muted-foreground mb-6">Track your products from farm to consumer with our tamper-proof blockchain technology, building trust and commanding premium prices.</p>
             <ul className="space-y-3 mb-8">
               <li className="flex items-start">
                 <i className="fas fa-check-circle text-primary mt-1 mr-3"></i>
