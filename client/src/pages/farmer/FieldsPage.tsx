@@ -209,9 +209,19 @@ export default function FieldsPage() {
         }
       }
 
+      // Generate a batch ID based on location, date, and serial number if not provided
+      let batchId = data.batchId;
+      if (!batchId) {
+        const locationCode = selectedField?.location ? 
+          selectedField.location.substring(0, 3).toUpperCase() : 'UNK';
+        const dateCode = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+        const serialNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        batchId = `${locationCode}-${dateCode}-${serialNum}`;
+      }
+      
       // Generate blockchain metadata (normally this would be handled by the blockchain service)
       const mockBlockchainId = `bc_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
-      const mockQrCode = `qr_${data.batchId || Date.now().toString(36)}`;
+      const mockQrCode = `qr_${batchId}`;
       
       // Prepare data to submit to server
       const cropSubmitData = {
@@ -219,10 +229,12 @@ export default function FieldsPage() {
         variety: varietyToUse,
         fieldId: selectedField?.id,
         userId: 2, // Hard-coded for now - should use current user ID from authentication context
+        batchId: batchId, // Use the generated or provided batch ID
         blockchainTxId: mockBlockchainId,
         traceabilityQrCode: mockQrCode,
+        // Keep seedVariety if not using custom, otherwise use undefined
+        seedVariety: data.seedVariety !== 'custom' ? data.seedVariety : undefined,
         // Remove custom fields that aren't in the schema
-        seedVariety: undefined,
         customVariety: undefined
       };
 
