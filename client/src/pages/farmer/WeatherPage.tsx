@@ -646,25 +646,36 @@ export default function WeatherPage() {
                                   </div>
                                 </div>
                                 
-                                <div>
-                                  <div className="flex justify-between text-sm mb-1">
-                                    <span>Soil pH</span>
-                                    <span className="font-medium">{climateData.soilConditions.ph.toFixed(1)}</span>
+                                <div className="flex items-center gap-2">
+                                  <div className="bg-primary/10 rounded-md p-2 flex-shrink-0">
+                                    <div className="flex items-center justify-center h-8 w-8">
+                                      <span className="font-medium">{climateData.soilConditions.ph.toFixed(1)}</span>
+                                    </div>
+                                    <div className="text-[10px] text-center text-muted-foreground mt-1">pH</div>
                                   </div>
-                                  <Progress value={((climateData.soilConditions.ph - 4) / 6) * 100} className="h-2" />
-                                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                                    <span>Acidic (4.0)</span>
-                                    <span>Neutral (7.0)</span>
-                                    <span>Alkaline (10.0)</span>
+                                  <div>
+                                    <div className="text-sm font-medium">Soil pH</div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {climateData.soilConditions.ph < 5.5 ? "Acidic" : 
+                                       climateData.soilConditions.ph > 7.5 ? "Alkaline" : "Neutral"}
+                                    </div>
                                   </div>
                                 </div>
                                 
-                                <div>
-                                  <div className="flex justify-between text-sm mb-1">
-                                    <span>Soil Moisture</span>
-                                    <span className="font-medium">{climateData.soilConditions.moisture.toFixed(0)}%</span>
+                                <div className="flex items-center gap-2">
+                                  <div className="bg-primary/10 rounded-md p-2 flex-shrink-0">
+                                    <div className="flex items-center justify-center h-8 w-8">
+                                      <span className="font-medium">{climateData.soilConditions.moisture.toFixed(0)}%</span>
+                                    </div>
+                                    <div className="text-[10px] text-center text-muted-foreground mt-1">Moisture</div>
                                   </div>
-                                  <Progress value={climateData.soilConditions.moisture} className="h-2" />
+                                  <div>
+                                    <div className="text-sm font-medium">Soil Moisture</div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {climateData.soilConditions.moisture < 20 ? "Dry" : 
+                                       climateData.soilConditions.moisture > 60 ? "Wet" : "Moderate"}
+                                    </div>
+                                  </div>
                                 </div>
                                 
                                 {/* Regional Soil Data */}
