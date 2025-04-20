@@ -200,7 +200,7 @@ router.get('/crops/:cropId/trace/events', isAuthenticated, async (req: Request &
 });
 
 // Public route to verify a crop batch
-router.get('/trace/:batchId', async (req, res) => {
+router.get('/:batchId', async (req, res) => {
   try {
     const { batchId } = req.params;
     if (!batchId) {
