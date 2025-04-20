@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
+import { useNotifications } from "@/hooks/use-notifications";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/NotificationBell";
 import {
   LayoutDashboard,
   TractorIcon,
@@ -253,9 +255,7 @@ export function Sidebar() {
             <CartIcon variant="mobile" />
           </Link>
 
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Bell className="h-5 w-5" />
-          </Button>
+          <NotificationBell />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -423,6 +423,9 @@ export function Sidebar() {
           <div className="flex gap-2 mb-4">
             <Link href="/dashboard/marketplace/cart">
               <CartIcon variant="sidebar" showLabel={true} />
+            </Link>
+            <Link href="/dashboard/notifications">
+              <NotificationBell />
             </Link>
           </div>
 
