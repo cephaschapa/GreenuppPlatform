@@ -144,6 +144,8 @@ export const crops = pgTable("crops", {
   variety: text("variety"),
   status: text("status").notNull().default('planning'),
   fieldId: integer("field_id").references(() => fields.id),
+  fieldSize: text("field_size"), // Area under this specific crop
+  sizeUnit: text("size_unit").default('hectares'), // Unit for the field size
   plantingDate: date("planting_date"),
   expectedHarvestDate: date("expected_harvest_date"),
   actualHarvestDate: date("actual_harvest_date"),
@@ -154,6 +156,7 @@ export const crops = pgTable("crops", {
   // CropTrace fields
   batchId: text("batch_id"), // Unique identifier for this crop batch
   seedSource: text("seed_source"), // Origin of the seeds
+  seedVariety: text("seed_variety"), // Specific variety from the seed provider
   organicCertified: boolean("organic_certified").default(false),
   certificationId: text("certification_id"), // Reference to certification if any
   blockchainTxId: text("blockchain_tx_id"), // Blockchain transaction ID

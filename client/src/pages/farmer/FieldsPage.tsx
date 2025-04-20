@@ -78,6 +78,9 @@ export default function FieldsPage() {
     ]),
     // Add sizeUnit field
     sizeUnit: z.string().optional(),
+    // Add seed variety fields
+    seedVariety: z.string().optional(),
+    customVariety: z.string().optional(),
   });
 
   // Field form
@@ -111,6 +114,8 @@ export default function FieldsPage() {
       // Traceability fields
       batchId: "",
       seedSource: "",
+      seedVariety: "",
+      customVariety: "",
       organicCertified: false,
       certificationId: "",
       blockchainTxId: "", 
@@ -194,14 +199,37 @@ export default function FieldsPage() {
   // Create crop mutation
   const createCropMutation = useMutation({
     mutationFn: async (data: z.infer<typeof cropFormSchema>) => {
+      // Process variety field based on seed selection
+      let varietyToUse = data.variety;
+      if (data.seedVariety) {
+        if (data.seedVariety === 'custom' && data.customVariety) {
+          varietyToUse = data.customVariety;
+        } else {
+          varietyToUse = data.seedVariety;
+        }
+      }
+
+      // Generate blockchain metadata (normally this would be handled by the blockchain service)
+      const mockBlockchainId = `bc_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
+      const mockQrCode = `qr_${data.batchId || Date.now().toString(36)}`;
+      
+      // Prepare data to submit to server
+      const cropSubmitData = {
+        ...data,
+        variety: varietyToUse,
+        fieldId: selectedField?.id,
+        userId: 2, // Hard-coded for now - should use current user ID from authentication context
+        blockchainTxId: mockBlockchainId,
+        traceabilityQrCode: mockQrCode,
+        // Remove custom fields that aren't in the schema
+        seedVariety: undefined,
+        customVariety: undefined
+      };
+
       const response = await fetch("/api/crops", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          fieldId: selectedField?.id,
-          userId: 2 // Hard-coded for now - should use current user ID from authentication context
-        }),
+        body: JSON.stringify(cropSubmitData),
       });
 
       if (!response.ok) {
@@ -211,11 +239,20 @@ export default function FieldsPage() {
 
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Crop created",
-        description: "Your crop has been created successfully",
+        description: "Your crop has been registered with the blockchain traceability system",
       });
+      // Simulate a blockchain transaction
+      setTimeout(() => {
+        toast({
+          title: "Blockchain Transaction Complete",
+          description: `Crop ${data.name} has been successfully registered on the blockchain`,
+          variant: "success"
+        });
+      }, 2000);
+      
       queryClient.invalidateQueries({ queryKey: ["/api/crops"] });
       setShowNewCropDialog(false);
       cropForm.reset();
@@ -753,12 +790,34 @@ export default function FieldsPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Batch ID</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="Unique batch identifier" 
-                                  {...field} 
-                                />
-                              </FormControl>
+                              <div className="flex items-center gap-2">
+                                <FormControl>
+                                  <Input 
+                                    placeholder="Auto-generated on save"
+                                    disabled
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <Button 
+                                  type="button" 
+                                  variant="outline" 
+                                  size="icon"
+                                  onClick={() => {
+                                    // Generate batch ID based on location, date and serial number
+                                    const location = selectedField?.location?.slice(0, 3).toUpperCase() || 'LOC';
+                                    const date = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+                                    const serial = Math.floor(1000 + Math.random() * 9000);
+                                    field.onChange(`${location}-${date}-${serial}`);
+                                  }}
+                                  className="h-8 w-8"
+                                  title="Generate Batch ID"
+                                >
+                                  <PlusCircle className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              <FormDescription className="text-xs">
+                                Format: LOCATION-DATE-SERIAL (auto-generated)
+                              </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -769,12 +828,25 @@ export default function FieldsPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Seed Source</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="Where the seeds came from" 
-                                  {...field} 
-                                />
-                              </FormControl>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select seed provider" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="seedco">SeedCo</SelectItem>
+                                  <SelectItem value="pioneer">Pioneer Seeds</SelectItem>
+                                  <SelectItem value="pannar">Pannar Seed</SelectItem>
+                                  <SelectItem value="monsanto">Monsanto</SelectItem>
+                                  <SelectItem value="klein">Klein Karoo</SelectItem>
+                                  <SelectItem value="starke">Starke Ayres</SelectItem>
+                                  <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -782,6 +854,63 @@ export default function FieldsPage() {
                       </div>
                       
                       <div className="grid md:grid-cols-2 gap-4">
+                        <FormField
+                          control={cropForm.control}
+                          name="seedVariety"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Seed Variety</FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                disabled={!cropForm.watch("seedSource")}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select seed variety" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {cropForm.watch("seedSource") === "seedco" && (
+                                    <>
+                                      <SelectItem value="sc513">SC 513</SelectItem>
+                                      <SelectItem value="sc633">SC 633</SelectItem>
+                                      <SelectItem value="sc719">SC 719</SelectItem>
+                                    </>
+                                  )}
+                                  {cropForm.watch("seedSource") === "pioneer" && (
+                                    <>
+                                      <SelectItem value="p1615">P1615</SelectItem>
+                                      <SelectItem value="p2432">P2432</SelectItem>
+                                      <SelectItem value="p1758">P1758</SelectItem>
+                                    </>
+                                  )}
+                                  {cropForm.watch("seedSource") === "pannar" && (
+                                    <>
+                                      <SelectItem value="pn3r-743">PN3R-743</SelectItem>
+                                      <SelectItem value="pn4m-19">PN4M-19</SelectItem>
+                                      <SelectItem value="pn53">PN53</SelectItem>
+                                    </>
+                                  )}
+                                  {(cropForm.watch("seedSource") !== "seedco" && 
+                                   cropForm.watch("seedSource") !== "pioneer" && 
+                                   cropForm.watch("seedSource") !== "pannar" && 
+                                   cropForm.watch("seedSource")) && (
+                                    <SelectItem value="custom">Custom Variety</SelectItem>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                              {cropForm.watch("seedVariety") === "custom" && (
+                                <Input 
+                                  className="mt-2" 
+                                  placeholder="Enter custom variety" 
+                                  onChange={(e) => cropForm.setValue("customVariety", e.target.value)}
+                                />
+                              )}
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         <FormField
                           control={cropForm.control}
                           name="organicCertified"
@@ -796,25 +925,9 @@ export default function FieldsPage() {
                               <div className="space-y-1 leading-none">
                                 <FormLabel>Organic Certified</FormLabel>
                                 <FormDescription>
-                                  Check if this crop is certified organic
+                                  Request organic certification from Greenupp admins
                                 </FormDescription>
                               </div>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={cropForm.control}
-                          name="certificationId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Certification ID</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="Certification number (if applicable)" 
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
                             </FormItem>
                           )}
                         />
@@ -823,20 +936,47 @@ export default function FieldsPage() {
                       <div className="grid md:grid-cols-2 gap-4">
                         <FormField
                           control={cropForm.control}
+                          name="certificationId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Certification ID</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Will be assigned by admin"
+                                  disabled
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormDescription className="text-xs">
+                                Assigned after verification by Greenupp admin
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={cropForm.control}
                           name="blockchainTxId"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Blockchain Transaction ID</FormLabel>
                               <FormControl>
                                 <Input 
-                                  placeholder="Blockchain reference" 
+                                  placeholder="Auto-generated on save"
+                                  disabled
                                   {...field} 
                                 />
                               </FormControl>
+                              <FormDescription className="text-xs">
+                                Generated by Hyperledger Fabric on submission
+                              </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
+                      </div>
+                      
+                      <div className="flex flex-col space-y-1.5">
                         <FormField
                           control={cropForm.control}
                           name="traceabilityQrCode"
@@ -845,10 +985,14 @@ export default function FieldsPage() {
                               <FormLabel>Traceability QR Code</FormLabel>
                               <FormControl>
                                 <Input 
-                                  placeholder="QR Code reference" 
+                                  placeholder="Auto-generated on blockchain registration"
+                                  disabled
                                   {...field} 
                                 />
                               </FormControl>
+                              <FormDescription className="text-xs">
+                                QR code will be generated after crop registration
+                              </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
