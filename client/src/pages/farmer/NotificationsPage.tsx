@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNotifications } from "@/hooks/use-notifications";
+import PageHeader from "../../components/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,10 +52,10 @@ export default function NotificationsPage() {
   return (
     <div className="container py-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col space-y-2 mb-6">
-          <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
-          <p className="text-muted-foreground">View and manage your notifications</p>
-        </div>
+        <PageHeader 
+          title="Notifications" 
+          description="View and manage your notifications"
+        />
         <div className="mt-4 sm:mt-0">
           <Button variant="outline" asChild className="mr-2">
             <Link href="/farmer/notification-settings">Notification Settings</Link>
