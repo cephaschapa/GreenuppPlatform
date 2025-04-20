@@ -393,7 +393,7 @@ const RegionalSeedRecommendations: React.FC<RegionalSeedRecommendationsProps> = 
             <Leaf className="h-5 w-5 mr-2 text-green-500" />
             Regional Seed Recommendations
           </div>
-          {onLocationChange && weatherPreferences?.locations?.length > 0 && (
+          {onLocationChange && weatherPreferences && weatherPreferences.locations && weatherPreferences.locations.length > 0 && (
             <div className="flex items-center">
               <Select 
                 value={location || ''} 

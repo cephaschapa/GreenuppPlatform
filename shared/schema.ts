@@ -309,6 +309,23 @@ export type PlantAnalysis = typeof plantAnalyses.$inferSelect;
 // Marketplace Schema
 
 // Product categories enum
+// Notification types enum
+export const notificationTypeEnum = pgEnum('notification_type', [
+  'weather_alert',
+  'task_reminder',
+  'market_price_alert',
+  'system_notification',
+  'message',
+  'crop_update'
+]);
+
+// Notification status enum
+export const notificationStatusEnum = pgEnum('notification_status', [
+  'unread',
+  'read',
+  'archived'
+]);
+
 export const productCategoryEnum = pgEnum('product_category', [
   'seeds', 
   'fertilizers', 
@@ -590,3 +607,60 @@ export type InsertCart = z.infer<typeof insertCartSchema>;
 export type Cart = typeof carts.$inferSelect;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type CartItem = typeof cartItems.$inferSelect;
+
+// Notifications system
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  data: jsonb("data").$type<Record<string, any>>(), // Additional data specific to notification type
+  status: text("status").notNull().default('unread'),
+  actionUrl: text("action_url"), // Optional URL user can navigate to 
+  expiresAt: timestamp("expires_at"), // When this notification should expire/auto-archive
+  sentViaEmail: boolean("sent_via_email").default(false), // Tracking if email was sent
+  emailSentAt: timestamp("email_sent_at"), // When the email was sent
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Notification settings 
+export const notificationSettings = pgTable("notification_settings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  emailEnabled: boolean("email_enabled").default(true),
+  pushEnabled: boolean("push_enabled").default(true),
+  weatherAlerts: boolean("weather_alerts").default(true),
+  taskReminders: boolean("task_reminders").default(true),
+  marketPriceAlerts: boolean("market_price_alerts").default(false),
+  systemNotifications: boolean("system_notifications").default(true),
+  messageNotifications: boolean("message_notifications").default(true),
+  emailFrequency: text("email_frequency").default('instant'), // instant, daily, weekly
+  emailDigestDay: integer("email_digest_day"), // day of week for weekly digests (0-6)
+  emailDigestTime: integer("email_digest_time"), // hour of day for digests (0-23)
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Create notification schemas
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  status: true,
+  sentViaEmail: true,
+  emailSentAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNotificationSettingsSchema = createInsertSchema(notificationSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Notification types
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotificationSettings = z.infer<typeof insertNotificationSettingsSchema>;
+export type NotificationSettings = typeof notificationSettings.$inferSelect;
