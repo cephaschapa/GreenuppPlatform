@@ -249,7 +249,7 @@ export default function FieldsPage() {
         toast({
           title: "Blockchain Transaction Complete",
           description: `Crop ${data.name} has been successfully registered on the blockchain`,
-          variant: "success"
+          variant: "default"
         });
       }, 2000);
       
