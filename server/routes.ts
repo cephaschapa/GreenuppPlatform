@@ -55,6 +55,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up crop traceability routes
   app.use("/api/croptrace", cropTraceRoutes);
+  
+  // Public crop trace verification route
+  app.use("/api/trace", cropTraceRoutes);
 
   // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();

@@ -46,10 +46,10 @@ export default function PublicTraceVerificationPage() {
 
   // Fetch trace verification data
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["/trace", batchId],
+    queryKey: ["/api/trace", batchId],
     queryFn: async () => {
       if (!batchId) return null;
-      const response = await apiRequest("GET", `/trace/${batchId}`);
+      const response = await apiRequest("GET", `/api/trace/${batchId}`);
       return await response.json();
     },
     enabled: !!batchId,
