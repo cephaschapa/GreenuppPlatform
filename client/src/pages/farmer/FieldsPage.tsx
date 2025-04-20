@@ -35,7 +35,9 @@ export default function FieldsPage() {
   // Crop form schema with validation
   const cropFormSchema = insertCropSchema.extend({
     // Ensure fieldSize is handled as a number
-    fieldSize: z.number().optional().or(z.string().transform(val => val ? parseFloat(val) : undefined))
+    fieldSize: z.number().optional().or(z.string().transform(val => val ? parseFloat(val) : undefined)),
+    // Add sizeUnit field
+    sizeUnit: z.string().optional()
   });
   
   // Field form
@@ -47,7 +49,7 @@ export default function FieldsPage() {
       size: 0,
       sizeUnit: "hectares", 
       soilType: "",
-      description: ""
+      notes: ""
     }
   });
   
@@ -59,7 +61,7 @@ export default function FieldsPage() {
       variety: "",
       fieldId: selectedField?.id || 0,
       plantingDate: "",
-      harvestDate: "",
+      expectedHarvestDate: "",
       fieldSize: 0,
       sizeUnit: "hectares",
       status: "planning",
@@ -391,10 +393,10 @@ export default function FieldsPage() {
                     />
                     <FormField
                       control={fieldForm.control}
-                      name="description"
+                      name="notes"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Description</FormLabel>
+                          <FormLabel>Notes</FormLabel>
                           <FormControl>
                             <Textarea 
                               placeholder="Additional details about this field" 
@@ -548,7 +550,7 @@ export default function FieldsPage() {
                         />
                         <FormField
                           control={cropForm.control}
-                          name="harvestDate"
+                          name="expectedHarvestDate"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Expected Harvest</FormLabel>
@@ -720,7 +722,7 @@ export default function FieldsPage() {
                         </div>
                         <div>
                           <p><span className="font-medium">Planted:</span> {formatDate(crop.plantingDate)}</p>
-                          <p><span className="font-medium">Harvest:</span> {formatDate(crop.harvestDate)}</p>
+                          <p><span className="font-medium">Harvest:</span> {formatDate(crop.expectedHarvestDate)}</p>
                         </div>
                       </div>
                     </div>
