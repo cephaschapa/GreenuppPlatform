@@ -6,6 +6,7 @@ import cartRoutes from "./routes/cart";
 import sellerRoutes from "./routes/seller";
 import cropTraceRoutes from "./routes/croptrace";
 import notificationRoutes from "./routes/notifications";
+import testNotificationRouter from "./routes/test-notification";
 
 import { 
   contactFormSchema, 
@@ -62,6 +63,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up notification routes
   app.use("/api/notifications", notificationRoutes);
+  
+  // Set up test notification route
+  app.use(testNotificationRouter);
 
   // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();
