@@ -28,14 +28,20 @@ export default function FieldsPage() {
   
   // Field form schema with validation
   const fieldFormSchema = insertFieldSchema.extend({
-    // Ensure size is handled as a number
-    size: z.number().optional().or(z.string().transform(val => val ? parseFloat(val) : undefined))
+    // Handle size - convert to string before submission since server expects string
+    size: z.union([
+      z.string(), 
+      z.number().transform(val => val.toString())
+    ])
   });
   
   // Crop form schema with validation
   const cropFormSchema = insertCropSchema.extend({
-    // Ensure fieldSize is handled as a number
-    fieldSize: z.number().optional().or(z.string().transform(val => val ? parseFloat(val) : undefined)),
+    // Handle fieldSize - convert to string before submission since server expects string
+    fieldSize: z.union([
+      z.string(), 
+      z.number().transform(val => val.toString())
+    ]),
     // Add sizeUnit field
     sizeUnit: z.string().optional()
   });
@@ -44,9 +50,10 @@ export default function FieldsPage() {
   const fieldForm = useForm<z.infer<typeof fieldFormSchema>>({
     resolver: zodResolver(fieldFormSchema),
     defaultValues: {
+      userId: 0,
       name: "",
       location: "",
-      size: 0,
+      size: "0",
       sizeUnit: "hectares", 
       soilType: "",
       notes: ""
@@ -62,7 +69,7 @@ export default function FieldsPage() {
       fieldId: selectedField?.id || 0,
       plantingDate: "",
       expectedHarvestDate: "",
-      fieldSize: 0,
+      fieldSize: "0",
       sizeUnit: "hectares",
       status: "planning",
       notes: ""
@@ -345,7 +352,7 @@ export default function FieldsPage() {
                                 type="number" 
                                 placeholder="Size" 
                                 {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                onChange={(e) => field.onChange(e.target.value)}
                               />
                             </FormControl>
                             <FormMessage />
@@ -574,7 +581,7 @@ export default function FieldsPage() {
                                   type="number" 
                                   placeholder="Area used" 
                                   {...field}
-                                  onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                                  onChange={(e) => field.onChange(e.target.value)}
                                 />
                               </FormControl>
                               <FormMessage />
