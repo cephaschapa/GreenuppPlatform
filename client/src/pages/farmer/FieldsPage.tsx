@@ -27,6 +27,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 import {
   Form,
   FormControl,
@@ -106,7 +108,13 @@ export default function FieldsPage() {
       sizeUnit: "hectares",
       status: "planning",
       notes: "",
-      
+      // Traceability fields
+      batchId: "",
+      seedSource: "",
+      organicCertified: false,
+      certificationId: "",
+      blockchainTxId: "", 
+      traceabilityQrCode: "",
     },
   });
 
@@ -732,6 +740,119 @@ export default function FieldsPage() {
                           </FormItem>
                         )}
                       />
+                      
+                      {/* Traceability Section */}
+                      <Separator className="my-4" />
+                      <h3 className="text-md font-medium mb-2">Crop Traceability</h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <FormField
+                          control={cropForm.control}
+                          name="batchId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Batch ID</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Unique batch identifier" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={cropForm.control}
+                          name="seedSource"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Seed Source</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Where the seeds came from" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <FormField
+                          control={cropForm.control}
+                          name="organicCertified"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>Organic Certified</FormLabel>
+                                <FormDescription>
+                                  Check if this crop is certified organic
+                                </FormDescription>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={cropForm.control}
+                          name="certificationId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Certification ID</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Certification number (if applicable)" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <FormField
+                          control={cropForm.control}
+                          name="blockchainTxId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Blockchain Transaction ID</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Blockchain reference" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={cropForm.control}
+                          name="traceabilityQrCode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Traceability QR Code</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="QR Code reference" 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
                       <DialogFooter>
                         <Button
                           type="submit"
