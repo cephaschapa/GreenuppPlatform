@@ -550,9 +550,7 @@ export default function FieldsPage() {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
               <CardTitle className="text-xl">
-                {selectedField
-                  ? `${selectedField.name} Crops`
-                  : "Crops"}
+                {selectedField ? `Crops in ${selectedField.name}` : "Crops"}
               </CardTitle>
               <CardDescription>
                 {selectedField
@@ -571,13 +569,12 @@ export default function FieldsPage() {
                     Add Crop
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>
-                      Add New Crop to {selectedField.name}
-                    </DialogTitle>
+                    <DialogTitle>Add New Crop</DialogTitle>
                     <DialogDescription>
-                      Enter the details for your new crop.
+                      Enter the details for your new crop in{" "}
+                      {selectedField.name}.
                     </DialogDescription>
                   </DialogHeader>
                   <Form {...cropForm}>
@@ -636,7 +633,7 @@ export default function FieldsPage() {
                           name="expectedHarvestDate"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Expected Harvest Date</FormLabel>
+                              <FormLabel>Expected Harvest</FormLabel>
                               <FormControl>
                                 <Input type="date" {...field} />
                               </FormControl>
@@ -651,13 +648,15 @@ export default function FieldsPage() {
                           name="fieldSize"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Area Under Crop</FormLabel>
+                              <FormLabel>Area</FormLabel>
                               <FormControl>
                                 <Input
                                   type="number"
-                                  placeholder="Area size"
+                                  placeholder="Area used"
                                   {...field}
-                                  onChange={(e) => field.onChange(e.target.value)}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
                                 />
                               </FormControl>
                               <FormMessage />
@@ -710,14 +709,13 @@ export default function FieldsPage() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="planning">Planning</SelectItem>
+                                <SelectItem value="planning">
+                                  Planning
+                                </SelectItem>
                                 <SelectItem value="planted">Planted</SelectItem>
                                 <SelectItem value="growing">Growing</SelectItem>
-                                <SelectItem value="harvesting">
-                                  Harvesting
-                                </SelectItem>
-                                <SelectItem value="completed">
-                                  Completed
+                                <SelectItem value="harvested">
+                                  Harvested
                                 </SelectItem>
                                 <SelectItem value="failed">Failed</SelectItem>
                               </SelectContent>
