@@ -34,7 +34,8 @@ export default function FieldsPage() {
   
   // Crop form schema with validation
   const cropFormSchema = insertCropSchema.extend({
-    // Add any extra validation here
+    // Ensure fieldSize is handled as a number
+    fieldSize: z.number().optional().or(z.string().transform(val => val ? parseFloat(val) : undefined))
   });
   
   // Field form
