@@ -666,6 +666,113 @@ export default function WeatherPage() {
                                   </div>
                                   <Progress value={climateData.soilConditions.moisture} className="h-2" />
                                 </div>
+                                
+                                {/* Regional Soil Data */}
+                                {(() => {
+                                  // Determine agricultural region from location
+                                  let region = '';
+                                  if (activeLocation) {
+                                    const loc = activeLocation.toLowerCase();
+                                    if (loc.includes('lusaka') || 
+                                        loc.includes('central') || 
+                                        loc.includes('eastern')) {
+                                      region = 'Region II';
+                                    } else if (loc.includes('ndola') || 
+                                              loc.includes('kitwe') || 
+                                              loc.includes('northwestern') || 
+                                              loc.includes('luapula') || 
+                                              loc.includes('northern') || 
+                                              loc.includes('copperbelt')) {
+                                      region = 'Region III';
+                                    } else if (loc.includes('livingstone') || 
+                                              loc.includes('southern') || 
+                                              loc.includes('western') || 
+                                              loc.includes('chipata')) {
+                                      region = 'Region I';
+                                    } else {
+                                      // Default to Region II for Zambia if cannot determine
+                                      region = 'Region II';
+                                    }
+                                  }
+                                  
+                                  // Show region-specific soil data based on determined region
+                                  if (region) {
+                                    return (
+                                      <div className="mt-2 pt-3 border-t">
+                                        <div className="flex justify-between text-sm mb-2">
+                                          <span className="font-medium">Regional Soil Profile</span>
+                                          <span className="text-xs bg-primary/10 px-2 py-0.5 rounded text-primary">{region}</span>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-1 gap-2 text-sm">
+                                          {region === 'Region I' && (
+                                            <>
+                                              <div className="flex justify-between text-xs">
+                                                <span className="text-muted-foreground">Typical pH Range:</span>
+                                                <span>4.77–5.11</span>
+                                              </div>
+                                              <div className="flex justify-between text-xs">
+                                                <span className="text-muted-foreground">Soil Composition:</span>
+                                                <span className="text-right">Slightly acidic loamy and clayey soils</span>
+                                              </div>
+                                              <div className="flex gap-1 flex-wrap mt-1">
+                                                <span className="text-xs bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 rounded-full px-2 py-0.5">
+                                                  Erosion prone
+                                                </span>
+                                                <span className="text-xs bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 rounded-full px-2 py-0.5">
+                                                  Low water-holding capacity
+                                                </span>
+                                              </div>
+                                            </>
+                                          )}
+                                          
+                                          {region === 'Region II' && (
+                                            <>
+                                              <div className="flex justify-between text-xs">
+                                                <span className="text-muted-foreground">Typical pH Range:</span>
+                                                <span>4.02–5.56</span>
+                                              </div>
+                                              <div className="flex justify-between text-xs">
+                                                <span className="text-muted-foreground">Soil Composition:</span>
+                                                <span className="text-right">Red to brown clayey to loamy soils</span>
+                                              </div>
+                                              <div className="flex gap-1 flex-wrap mt-1">
+                                                <span className="text-xs bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 rounded-full px-2 py-0.5">
+                                                  Shallow rooting zones
+                                                </span>
+                                                <span className="text-xs bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 rounded-full px-2 py-0.5">
+                                                  Leached soil
+                                                </span>
+                                              </div>
+                                            </>
+                                          )}
+                                          
+                                          {region === 'Region III' && (
+                                            <>
+                                              <div className="flex justify-between text-xs">
+                                                <span className="text-muted-foreground">Typical pH Range:</span>
+                                                <span>4.0–6.9</span>
+                                              </div>
+                                              <div className="flex justify-between text-xs">
+                                                <span className="text-muted-foreground">Soil Composition:</span>
+                                                <span className="text-right">Highly weathered, leached soils</span>
+                                              </div>
+                                              <div className="flex gap-1 flex-wrap mt-1">
+                                                <span className="text-xs bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 rounded-full px-2 py-0.5">
+                                                  Extreme acidity
+                                                </span>
+                                                <span className="text-xs bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 rounded-full px-2 py-0.5">
+                                                  Low nutrient availability
+                                                </span>
+                                              </div>
+                                            </>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                               </div>
                             </CardContent>
                           </Card>
