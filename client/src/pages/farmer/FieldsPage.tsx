@@ -28,7 +28,8 @@ export default function FieldsPage() {
   
   // Field form schema with validation
   const fieldFormSchema = insertFieldSchema.extend({
-    // Add any extra validation here
+    // Ensure size is handled as a number
+    size: z.number().optional().or(z.string().transform(val => val ? parseFloat(val) : undefined))
   });
   
   // Crop form schema with validation
