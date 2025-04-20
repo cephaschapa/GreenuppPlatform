@@ -912,6 +912,7 @@ export default function WeatherPage() {
                           <RegionalSeedRecommendations 
                             location={activeLocation} 
                             soilType={climateData?.soilConditions?.type}
+                            onLocationChange={setActiveLocation}
                           />
                         </div>
                         

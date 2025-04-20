@@ -7,8 +7,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Leaf, Droplets, Thermometer, Calendar, MapPin } from "lucide-react";
+import { Leaf, Droplets, Thermometer, Calendar, MapPin, ChevronDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 
 interface RegionalVariety {
   id: string;
@@ -42,6 +51,7 @@ interface RegionalSeedRecommendationsProps {
   soilType?: string;
   cropType?: string;
   region?: string; // Specific region data from location
+  onLocationChange?: (location: string) => void; // Callback for location changes
 }
 
 const RegionalSeedRecommendations: React.FC<RegionalSeedRecommendationsProps> = ({
@@ -49,11 +59,24 @@ const RegionalSeedRecommendations: React.FC<RegionalSeedRecommendationsProps> = 
   soilType,
   cropType = "maize",
   region,
+  onLocationChange,
 }) => {
   const [activeTab, setActiveTab] = useState<string>("region1");
   const [selectedRegion, setSelectedRegion] = useState<RegionInfo | null>(null);
   const [filteredVarieties, setFilteredVarieties] = useState<RegionalVariety[]>([]);
   const [detectedRegion, setDetectedRegion] = useState<string | null>(null);
+  
+  // Fetch saved locations from weather preferences
+  const { data: weatherPreferences, isLoading: isLoadingPreferences } = useQuery<{
+    id: number;
+    userId: number;
+    locations: string[];
+    units: string;
+    alerts: boolean;
+  }>({ 
+    queryKey: ['/api/weather-preferences'],
+    enabled: !!onLocationChange // Only fetch if we have a location change handler
+  });
 
   // Zambian agricultural regions with comprehensive soil data
   const regions: RegionInfo[] = [
@@ -365,9 +388,30 @@ const RegionalSeedRecommendations: React.FC<RegionalSeedRecommendationsProps> = 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <Leaf className="h-5 w-5 mr-2 text-green-500" />
-          Regional Seed Recommendations
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Leaf className="h-5 w-5 mr-2 text-green-500" />
+            Regional Seed Recommendations
+          </div>
+          {onLocationChange && weatherPreferences?.locations?.length > 0 && (
+            <div className="flex items-center">
+              <Select 
+                value={location || ''} 
+                onValueChange={(value) => onLocationChange(value)}
+              >
+                <SelectTrigger className="w-[180px] h-8 text-sm">
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {weatherPreferences.locations.map((loc: string) => (
+                    <SelectItem key={loc} value={loc}>
+                      {loc}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </CardTitle>
         <CardDescription>
           {location ? (
