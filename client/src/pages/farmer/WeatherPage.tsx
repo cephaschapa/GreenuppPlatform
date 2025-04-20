@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { WeatherPreferences } from "@/components/farmer/WeatherPreferences";
 import { useWeatherPreferences } from "@/hooks/use-weather-preferences";
+import RegionalSeedRecommendations from "@/components/RegionalSeedRecommendations";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -699,6 +700,14 @@ export default function WeatherPage() {
                               </div>
                             </CardContent>
                           </Card>
+                        </div>
+                        
+                        {/* Regional Seed Recommendations */}
+                        <div className="pt-2">
+                          <RegionalSeedRecommendations 
+                            location={activeLocation} 
+                            soilType={climateData?.soilConditions?.type} 
+                          />
                         </div>
                         
                         {/* Monthly Climate Data */}
