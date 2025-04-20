@@ -702,13 +702,7 @@ export default function WeatherPage() {
                           </Card>
                         </div>
                         
-                        {/* Regional Seed Recommendations */}
-                        <div className="pt-2">
-                          <RegionalSeedRecommendations 
-                            location={activeLocation} 
-                            soilType={climateData?.soilConditions?.type} 
-                          />
-                        </div>
+
                         
                         {/* Monthly Climate Data */}
                         <Card>
@@ -795,6 +789,15 @@ export default function WeatherPage() {
                       </div>
                     ) : cropRecommendations && (
                       <div className="space-y-6">
+                        {/* Regional Seed Recommendations based on location */}
+                        <div className="mb-6">
+                          <RegionalSeedRecommendations 
+                            location={activeLocation} 
+                            soilType={climateData?.soilConditions?.type}
+                          />
+                        </div>
+                        
+                        <h3 className="text-lg font-medium">AI-Generated Crop Recommendations</h3>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                           {cropRecommendations.slice(0, 6).map((crop, index) => (
                             <div key={index} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">

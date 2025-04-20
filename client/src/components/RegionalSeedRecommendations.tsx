@@ -35,16 +35,19 @@ interface RegionalSeedRecommendationsProps {
   location?: string;
   soilType?: string;
   cropType?: string;
+  region?: string; // Specific region data from location
 }
 
 const RegionalSeedRecommendations: React.FC<RegionalSeedRecommendationsProps> = ({
   location,
   soilType,
   cropType = "maize",
+  region,
 }) => {
   const [activeTab, setActiveTab] = useState<string>("region1");
   const [selectedRegion, setSelectedRegion] = useState<RegionInfo | null>(null);
   const [filteredVarieties, setFilteredVarieties] = useState<RegionalVariety[]>([]);
+  const [detectedRegion, setDetectedRegion] = useState<string | null>(null);
 
   // Zambian agricultural regions
   const regions: RegionInfo[] = [
@@ -224,17 +227,78 @@ const RegionalSeedRecommendations: React.FC<RegionalSeedRecommendationsProps> = 
     }
   ];
 
-  useEffect(() => {
-    // Initialize with Region I
-    const defaultRegion = regions.find(r => r.region === "Region I") || null;
-    setSelectedRegion(defaultRegion);
+  // Determine region based on location
+  const determineRegionFromLocation = (location: string) => {
+    // Extract province name from location format "City, Province"
+    const parts = location.split(',');
+    let province = parts.length > 1 ? parts[1].trim() : parts[0].trim();
     
-    // Filter varieties for Region I
-    const defaultVarieties = seedVarieties.filter(
-      v => v.region.includes("Region I") || v.region.includes("Regions I")
+    // Remove country code if present
+    if (province.includes(' ')) {
+      province = province.split(' ')[0].trim();
+    }
+    
+    // Check which region this province belongs to
+    for (const r of regions) {
+      if (r.provinces.some(p => p.toLowerCase() === province.toLowerCase())) {
+        return r.region;
+      }
+    }
+    
+    // Special case handling for major cities
+    if (location.toLowerCase().includes('lusaka')) {
+      return "Region II";
+    } else if (location.toLowerCase().includes('ndola') || 
+               location.toLowerCase().includes('kitwe') || 
+               location.toLowerCase().includes('solwezi')) {
+      return "Region III";
+    } else if (location.toLowerCase().includes('livingstone') || 
+               location.toLowerCase().includes('chipata')) {
+      return "Region I";
+    }
+    
+    // Return Region II as default if we can't determine
+    return "Region II";
+  };
+  
+  useEffect(() => {
+    // Determine the region from location if available, otherwise use Region I as default
+    let regionToUse = "Region I";
+    
+    if (region) {
+      // If region is directly provided, use it
+      regionToUse = region;
+    } else if (location) {
+      // Try to determine region from location
+      regionToUse = determineRegionFromLocation(location);
+    }
+    
+    // Set the detected region for display
+    setDetectedRegion(regionToUse);
+    
+    // Find the region object
+    const detectedRegionObj = regions.find(r => r.region === regionToUse) || null;
+    setSelectedRegion(detectedRegionObj);
+    
+    // Set active tab based on region
+    switch(regionToUse) {
+      case "Region I":
+        setActiveTab("region1");
+        break;
+      case "Region II":
+        setActiveTab("region2");
+        break;
+      case "Region III":
+        setActiveTab("region3");
+        break;
+    }
+    
+    // Filter varieties for detected region
+    const regionVarieties = seedVarieties.filter(
+      v => v.region.includes(regionToUse) || v.region.includes(`Regions ${regionToUse.split(' ')[1]}`)
     );
-    setFilteredVarieties(defaultVarieties);
-  }, []);
+    setFilteredVarieties(regionVarieties);
+  }, [region, location]);
 
   // Handle region tab change
   const handleRegionChange = (regionId: string) => {
@@ -273,7 +337,16 @@ const RegionalSeedRecommendations: React.FC<RegionalSeedRecommendationsProps> = 
           Regional Seed Recommendations
         </CardTitle>
         <CardDescription>
-          Find the best seed varieties for your agricultural region
+          {location ? (
+            <>
+              Seed varieties for <span className="font-medium text-primary">{location}</span> 
+              {detectedRegion && (
+                <span> ({detectedRegion})</span>
+              )}
+            </>
+          ) : (
+            "Find the best seed varieties for your agricultural region"
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>
