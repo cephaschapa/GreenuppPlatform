@@ -10,7 +10,7 @@ import {
   createDefaultNotificationSettings
 } from "../services/notifications";
 import { sendTestEmail } from "../services/email";
-import { notificationTypeEnum } from "@shared/schema";
+
 import { z } from "zod";
 
 const router = express.Router();
@@ -28,6 +28,10 @@ router.get("/", isAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated properly" });
+    }
+    
     // Parse query parameters
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = parseInt(req.query.offset as string) || 0;
@@ -41,9 +45,11 @@ router.get("/", isAuthenticated, async (req: Request, res: Response) => {
     
     // Optional type filter
     const type = req.query.type as string;
-    if (type && !Object.values(notificationTypeEnum.enumValues).includes(type)) {
+    // Define valid notification types
+    const validTypes = ['weather_alert', 'task_reminder', 'market_price_alert', 'system_notification', 'message', 'crop_update'];
+    if (type && !validTypes.includes(type)) {
       return res.status(400).json({
-        message: `Invalid notification type. Must be one of: ${Object.values(notificationTypeEnum.enumValues).join(', ')}`
+        message: `Invalid notification type. Must be one of: ${validTypes.join(', ')}`
       });
     }
     
@@ -65,6 +71,11 @@ router.get("/", isAuthenticated, async (req: Request, res: Response) => {
 router.get("/unread/count", isAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated properly" });
+    }
+    
     const count = await countUnreadNotifications(userId);
     res.json({ count });
   } catch (error: any) {
@@ -77,6 +88,11 @@ router.get("/unread/count", isAuthenticated, async (req: Request, res: Response)
 router.get("/settings", isAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated properly" });
+    }
+    
     let settings = await getUserNotificationSettings(userId);
     
     if (!settings) {
@@ -95,6 +111,11 @@ router.get("/settings", isAuthenticated, async (req: Request, res: Response) => 
 router.patch("/:id/read", isAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated properly" });
+    }
+    
     const notificationId = parseInt(req.params.id);
     
     if (isNaN(notificationId)) {
@@ -118,6 +139,11 @@ router.patch("/:id/read", isAuthenticated, async (req: Request, res: Response) =
 router.patch("/:id/archive", isAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated properly" });
+    }
+    
     const notificationId = parseInt(req.params.id);
     
     if (isNaN(notificationId)) {
@@ -141,6 +167,10 @@ router.patch("/:id/archive", isAuthenticated, async (req: Request, res: Response
 router.patch("/settings", isAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated properly" });
+    }
     
     // Define validation schema for settings update
     const updateSchema = z.object({
@@ -182,9 +212,10 @@ router.post("/", isAuthenticated, async (req: Request, res: Response) => {
     const isAdmin = req.user?.role === 'admin';
     
     // Define validation schema
+    const validTypes = ['weather_alert', 'task_reminder', 'market_price_alert', 'system_notification', 'message', 'crop_update'];
     const createSchema = z.object({
       userId: z.number().optional(), // Optional: if not provided, use current user ID
-      type: z.enum(Object.values(notificationTypeEnum.enumValues) as [string, ...string[]]),
+      type: z.enum(validTypes as [string, ...string[]]),
       title: z.string().min(1).max(255),
       message: z.string().min(1),
       data: z.record(z.any()).optional(),
