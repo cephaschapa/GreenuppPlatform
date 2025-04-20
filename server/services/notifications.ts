@@ -3,9 +3,23 @@ import { notifications, notificationSettings, users, type Notification, type Ins
 import { eq, and, desc, lt, gte, count, or, isNull } from "drizzle-orm";
 import { sendEmail } from "./email";
 
+// Notification status values
+export type NotificationStatus = 'unread' | 'read' | 'archived';
+
+// Valid notification types
+export const notificationTypes = [
+  'weather_alert',
+  'task_reminder',
+  'market_price_alert',
+  'message',
+  'system_notification'
+] as const;
+
+export type NotificationType = typeof notificationTypes[number];
+
 export interface NotificationOptions {
   userId: number;
-  type: string; // Using string type for simplicity
+  type: NotificationType;
   title: string;
   message: string;
   data?: Record<string, any>;
@@ -103,22 +117,22 @@ export async function createNotification({
 export async function getUserNotifications(userId: number, options?: {
   limit?: number;
   offset?: number;
-  status?: 'unread' | 'read' | 'archived' | 'all';
-  type?: string;
+  status?: NotificationStatus | 'all';
+  type?: NotificationType;
 }) {
   const { limit = 20, offset = 0, status = 'all', type } = options || {};
   
   // Start with the base condition
-  let conditions = eq(notifications.userId, userId);
+  let conditions: any = eq(notifications.userId, userId);
   
   // Add status filter if not 'all'
   if (status !== 'all') {
-    conditions = and(conditions, eq(notifications.status, status as any));
+    conditions = and(conditions, eq(notifications.status, status));
   }
   
   // Add type filter if provided
   if (type) {
-    conditions = and(conditions, eq(notifications.type, type as any));
+    conditions = and(conditions, eq(notifications.type, type));
   }
   
   // Don't include expired notifications
@@ -265,8 +279,8 @@ export async function countUnreadNotifications(userId: number) {
  * Helper function to determine if a notification type is enabled for a user
  */
 function isNotificationTypeEnabled(
-  settings: any, // Using any for now for simplicity
-  type: string
+  settings: NotificationSettings | undefined,
+  type: NotificationType
 ) {
   if (!settings) return true; // Default to enabled if no settings
   
@@ -290,8 +304,8 @@ function isNotificationTypeEnabled(
  * Helper function to determine if we should send an email now based on user preferences
  */
 function shouldSendEmailNow(
-  settings: any, // Using any for now for simplicity
-  type: string
+  settings: NotificationSettings | undefined,
+  type: NotificationType
 ) {
   if (!settings || !settings.emailEnabled) return false;
   
@@ -319,7 +333,7 @@ async function sendNotificationEmail(
   notification: {
     title: string;
     message: string;
-    type: string;
+    type: NotificationType;
     actionUrl?: string;
   }
 ): Promise<boolean> {

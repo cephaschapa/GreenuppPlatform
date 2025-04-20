@@ -1,50 +1,53 @@
 import React from 'react';
-import { Link } from 'wouter';
-import { ChevronLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useLocation } from "wouter";
 
 interface PageHeaderProps {
   title: string;
   description?: string;
-  backUrl?: string;
-  backText?: string;
-  className?: string;
-  action?: React.ReactNode;
-  children?: React.ReactNode;
+  backLink?: string;
+  rightContent?: React.ReactNode;
 }
 
-export function PageHeader({
-  title,
-  description,
-  backUrl,
-  backText = 'Back',
-  className,
-  action,
-  children
+export function PageHeader({ 
+  title, 
+  description, 
+  backLink, 
+  rightContent 
 }: PageHeaderProps) {
+  const [, navigate] = useLocation();
+
   return (
-    <div className={cn('mb-6 space-y-2', className)}>
-      {backUrl && (
-        <Button 
-          variant="link" 
-          asChild 
-          className="px-0 text-gray-400 hover:text-white flex items-center gap-1 -ml-1 mb-1"
-        >
-          <Link href={backUrl}>
-            <ChevronLeft className="h-4 w-4" />
-            {backText}
-          </Link>
-        </Button>
-      )}
-      <div className="flex items-center justify-between gap-4">
-        <div>
+    <div className="flex flex-col space-y-2 mb-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {backLink && (
+            <Button
+              onClick={() => navigate(backLink)}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          )}
           <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-          {description && <p className="text-muted-foreground mt-1">{description}</p>}
         </div>
-        {action && <div>{action}</div>}
+        {rightContent && (
+          <div className="flex items-center gap-2">
+            {rightContent}
+          </div>
+        )}
       </div>
-      {children}
+      {description && (
+        <p className="text-muted-foreground">
+          {description}
+        </p>
+      )}
     </div>
   );
 }
+
+export default PageHeader;
