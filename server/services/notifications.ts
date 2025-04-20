@@ -113,22 +113,21 @@ export async function getUserNotifications(userId: number, options?: {
   
   // Add status filter if not 'all'
   if (status !== 'all') {
-    conditions = and(conditions, eq(notifications.status, status));
+    conditions = and(conditions, eq(notifications.status, status as any));
   }
   
   // Add type filter if provided
   if (type) {
-    conditions = and(conditions, eq(notifications.type, type));
+    conditions = and(conditions, eq(notifications.type, type as any));
   }
   
   // Don't include expired notifications
-  conditions = and(
-    conditions,
-    or(
-      isNull(notifications.expiresAt),
-      gte(notifications.expiresAt, new Date())
-    )
+  const expiryCondition = or(
+    isNull(notifications.expiresAt),
+    gte(notifications.expiresAt, new Date())
   );
+  
+  conditions = and(conditions, expiryCondition);
   
   // Apply all conditions at once
   const query = db.select()
