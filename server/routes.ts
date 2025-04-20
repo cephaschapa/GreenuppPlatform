@@ -5,6 +5,7 @@ import setupMarketplaceRoutes from "./routes/marketplace";
 import cartRoutes from "./routes/cart";
 import sellerRoutes from "./routes/seller";
 import cropTraceRoutes from "./routes/croptrace";
+import notificationRoutes from "./routes/notifications";
 
 import { 
   contactFormSchema, 
@@ -58,6 +59,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Public crop trace verification route
   app.use("/api/trace", cropTraceRoutes);
+  
+  // Set up notification routes
+  app.use("/api/notifications", notificationRoutes);
 
   // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();
