@@ -9,15 +9,19 @@ router.post('/api/test-notification', async (req, res) => {
     // For testing, use a fixed userId instead of requiring authentication
     // In a real app, you would require authentication for this endpoint
     const userId = req.body.userId || 2; // Default to user ID 2 for testing
+    const type = req.body.type || 'system_notification';
+    const title = req.body.title || 'Test Notification';
+    const message = req.body.message || 'This is a test notification from Greenupp!';
+    const actionUrl = req.body.actionUrl || '/dashboard';
     
     const notification = await createNotification({
       userId,
-      type: 'system_notification',
-      title: 'Test Notification',
-      message: 'This is a test notification from Greenupp!',
-      data: { test: true },
-      actionUrl: '/dashboard',
-      sendEmail: false
+      type: type as any, // Cast to any to bypass type checking in test endpoint
+      title,
+      message,
+      data: { test: true, ...req.body.data },
+      actionUrl,
+      sendEmail: req.body.sendEmail || false
     });
 
     res.status(201).json(notification);

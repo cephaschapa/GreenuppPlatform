@@ -1,5 +1,12 @@
 import { db } from "../db";
-import { notifications, notificationSettings, users, type Notification, type InsertNotification } from "@shared/schema";
+import { 
+  notifications, 
+  notificationSettings, 
+  users, 
+  type Notification, 
+  type InsertNotification,
+  type NotificationSettings 
+} from "@shared/schema";
 import { eq, and, desc, lt, gte, count, or, isNull } from "drizzle-orm";
 import { sendEmail } from "./email";
 
