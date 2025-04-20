@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Leaf, Droplets, Thermometer, Calendar } from "lucide-react";
+import { Leaf, Droplets, Thermometer, Calendar, MapPin } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface RegionalVariety {
@@ -29,6 +29,12 @@ interface RegionInfo {
   rainfall: string;
   growingSeason: string;
   provinces: string[];
+  soilPh?: string;
+  soilOrganicCarbon?: string;
+  availablePhosphorus?: string;
+  soilTexture?: string;
+  soilConstraints?: string[];
+  sources?: string[];
 }
 
 interface RegionalSeedRecommendationsProps {
@@ -49,7 +55,7 @@ const RegionalSeedRecommendations: React.FC<RegionalSeedRecommendationsProps> = 
   const [filteredVarieties, setFilteredVarieties] = useState<RegionalVariety[]>([]);
   const [detectedRegion, setDetectedRegion] = useState<string | null>(null);
 
-  // Zambian agricultural regions
+  // Zambian agricultural regions with comprehensive soil data
   const regions: RegionInfo[] = [
     {
       region: "Region I",
@@ -57,6 +63,15 @@ const RegionalSeedRecommendations: React.FC<RegionalSeedRecommendationsProps> = 
       rainfall: "600-800mm",
       growingSeason: "80-120 days",
       provinces: ["Southern", "Eastern", "Western"],
+      soilPh: "4.77–5.11",
+      soilOrganicCarbon: "0.55–0.60%",
+      availablePhosphorus: "10.5 mg/kg",
+      soilTexture: "Slightly acidic loamy and clayey soils with loam topsoil to acidic sandy soils",
+      soilConstraints: ["Erosion prone", "Limited depth", "Low water-holding capacity"],
+      sources: [
+        "Plant and Soil: Multi-year regional on-farm trials in Zambia (Springer)",
+        "Global Yield Gap Atlas"
+      ]
     },
     {
       region: "Region II",
@@ -64,6 +79,15 @@ const RegionalSeedRecommendations: React.FC<RegionalSeedRecommendationsProps> = 
       rainfall: "800-1000mm",
       growingSeason: "100-140 days",
       provinces: ["Central", "Southern", "Eastern", "Lusaka"],
+      soilPh: "4.02–5.56",
+      soilOrganicCarbon: "<2%",
+      availablePhosphorus: "3–5 mg/kg",
+      soilTexture: "Red to brown clayey to loamy soils, moderately to strongly leached",
+      soilConstraints: ["Low water-holding capacity", "Shallow rooting zones", "Erosion prone"],
+      sources: [
+        "MDPI Agronomy: Phosphorus Availability and Uptake following a Maize-Pigeon Pea Cropping in Zambia",
+        "Environmental Systems Research: Soil fertility status of cassava fields"
+      ]
     },
     {
       region: "Region III",
@@ -71,6 +95,15 @@ const RegionalSeedRecommendations: React.FC<RegionalSeedRecommendationsProps> = 
       rainfall: "over 1000mm",
       growingSeason: "120-150 days",
       provinces: ["Northern", "Luapula", "Copperbelt", "Northwestern"],
+      soilPh: "4.0–6.9",
+      soilOrganicCarbon: "0.08–10.1%",
+      availablePhosphorus: "0.8–38.6 mg/kg",
+      soilTexture: "Highly weathered, leached soils",
+      soilConstraints: ["Extreme acidity", "High exchangeable Al & Mn", "Low nutrient availability"],
+      sources: [
+        "AGU: Anthropogenic disturbances superimpose climate effects on SOC in savanna woodlands",
+        "Global Yield Gap Atlas"
+      ]
     },
   ];
 
@@ -379,6 +412,77 @@ const RegionalSeedRecommendations: React.FC<RegionalSeedRecommendationsProps> = 
                       <Thermometer className="h-4 w-4 text-red-500" />
                       <span className="text-sm">Provinces: {selectedRegion.provinces.join(', ')}</span>
                     </div>
+                  </div>
+                  
+                  {/* Soil Information Section with details from CSV data */}
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium mb-2">Soil Characteristics:</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div className="bg-muted/20 p-2 rounded-md">
+                        <div className="font-medium mb-1 flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                          Soil pH
+                        </div>
+                        <div className="text-muted-foreground">
+                          {selectedRegion.soilPh}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-muted/20 p-2 rounded-md">
+                        <div className="font-medium mb-1 flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                          Organic Carbon
+                        </div>
+                        <div className="text-muted-foreground">
+                          {selectedRegion.soilOrganicCarbon}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-muted/20 p-2 rounded-md">
+                        <div className="font-medium mb-1 flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                          Available Phosphorus
+                        </div>
+                        <div className="text-muted-foreground">
+                          {selectedRegion.availablePhosphorus}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-muted/20 p-2 rounded-md">
+                        <div className="font-medium mb-1 flex items-center gap-1">
+                          <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                          Soil Texture
+                        </div>
+                        <div className="text-muted-foreground text-xs">
+                          {selectedRegion.soilTexture}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Soil Constraints */}
+                    {selectedRegion.soilConstraints && selectedRegion.soilConstraints.length > 0 && (
+                      <div className="mt-3">
+                        <div className="text-sm font-medium mb-1">Constraints:</div>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedRegion.soilConstraints.map((constraint, index) => (
+                            <span 
+                              key={index} 
+                              className="text-xs px-2 py-1 bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 rounded-full"
+                            >
+                              {constraint}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Data Sources */}
+                    {selectedRegion.sources && selectedRegion.sources.length > 0 && (
+                      <div className="mt-3 text-xs text-muted-foreground">
+                        <span className="italic">Sources: </span>
+                        {selectedRegion.sources.join('; ')}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
