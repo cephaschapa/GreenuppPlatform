@@ -20,6 +20,7 @@ import InstallPWA from "@/components/ui/InstallPWA";
 import OfflineIndicator from "@/components/ui/OfflineIndicator";
 import { CartProvider } from "@/hooks/use-cart";
 import { HelmetProvider } from 'react-helmet-async';
+import { NotificationProvider } from "@/hooks/use-notifications";
 
 // Import farmer-specific pages
 import FieldsPage from "@/pages/farmer/FieldsPage";
@@ -36,6 +37,8 @@ import CartPage from "@/pages/farmer/CartPage";
 import CheckoutPage from "@/pages/farmer/CheckoutPage";
 import CropTraceabilityPage from "@/pages/farmer/CropTraceabilityPage";
 import ListCropOnMarketplace from "@/pages/farmer/ListCropOnMarketplace";
+import NotificationsPage from "@/pages/farmer/NotificationsPage";
+import NotificationSettingsPage from "@/pages/farmer/NotificationSettingsPage";
 
 function Router() {
   return (
@@ -72,6 +75,10 @@ function Router() {
       <ProtectedRoute path="/dashboard/crops/:cropId/trace" component={CropTraceabilityPage} />
       <ProtectedRoute path="/dashboard/marketplace/list-crop" component={ListCropOnMarketplace} />
       
+      {/* Notification routes */}
+      <ProtectedRoute path="/dashboard/notifications" component={NotificationsPage} />
+      <ProtectedRoute path="/dashboard/notification-settings" component={NotificationSettingsPage} />
+      
       {/* Role-specific dashboard redirects */}
       <ProtectedRoute path="/buyer" component={() => <Redirect to="/dashboard/marketplace" />} />
       <ProtectedRoute path="/supplier" component={() => <Redirect to="/dashboard/marketplace" />} />
@@ -86,15 +93,17 @@ function App() {
     <ThemeProvider defaultTheme="system">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <CartProvider>
-            <HelmetProvider>
-              <Router />
-              <Toaster />
-              {/* PWA Components */}
-              <InstallPWA />
-              <OfflineIndicator />
-            </HelmetProvider>
-          </CartProvider>
+          <NotificationProvider>
+            <CartProvider>
+              <HelmetProvider>
+                <Router />
+                <Toaster />
+                {/* PWA Components */}
+                <InstallPWA />
+                <OfflineIndicator />
+              </HelmetProvider>
+            </CartProvider>
+          </NotificationProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
