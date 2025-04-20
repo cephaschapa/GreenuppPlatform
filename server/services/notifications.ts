@@ -108,30 +108,35 @@ export async function getUserNotifications(userId: number, options?: {
 }) {
   const { limit = 20, offset = 0, status = 'all', type } = options || {};
   
-  let query = db.select()
-    .from(notifications)
-    .where(eq(notifications.userId, userId))
-    .orderBy(desc(notifications.createdAt))
-    .limit(limit)
-    .offset(offset);
+  // Start with the base condition
+  let conditions = eq(notifications.userId, userId);
   
   // Add status filter if not 'all'
   if (status !== 'all') {
-    query = query.where(eq(notifications.status, status));
+    conditions = and(conditions, eq(notifications.status, status));
   }
   
   // Add type filter if provided
   if (type) {
-    query = query.where(eq(notifications.type, type));
+    conditions = and(conditions, eq(notifications.type, type));
   }
   
   // Don't include expired notifications
-  query = query.where(
+  conditions = and(
+    conditions,
     or(
       isNull(notifications.expiresAt),
       gte(notifications.expiresAt, new Date())
     )
   );
+  
+  // Apply all conditions at once
+  const query = db.select()
+    .from(notifications)
+    .where(conditions)
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit)
+    .offset(offset);
   
   return await query;
 }

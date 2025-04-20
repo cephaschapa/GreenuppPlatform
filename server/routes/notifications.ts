@@ -211,6 +211,10 @@ router.post("/", isAuthenticated, async (req: Request, res: Response) => {
     // Only allow admins or system to create notifications for others
     const isAdmin = req.user?.role === 'admin';
     
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "User not authenticated properly" });
+    }
+    
     // Define validation schema
     const validTypes = ['weather_alert', 'task_reminder', 'market_price_alert', 'system_notification', 'message', 'crop_update'];
     const createSchema = z.object({
@@ -236,14 +240,14 @@ router.post("/", isAuthenticated, async (req: Request, res: Response) => {
     const data = validation.data;
     
     // If userId is provided, ensure only admins can create notifications for others
-    if (data.userId && data.userId !== req.user?.id && !isAdmin) {
+    if (data.userId && data.userId !== req.user.id && !isAdmin) {
       return res.status(403).json({ 
         message: "Only admins can create notifications for other users" 
       });
     }
     
     // Use current user ID if none provided
-    const userId = data.userId || req.user?.id;
+    const userId = data.userId || req.user.id;
     
     // Parse expiresAt if provided
     const expiresAt = data.expiresAt ? new Date(data.expiresAt) : undefined;
