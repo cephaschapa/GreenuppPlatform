@@ -8,7 +8,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -70,7 +69,9 @@ export default function PublicTraceVerificationPage() {
     });
   };
   
-  const getRegionBadge = (seedSource: string, seedVariety: string) => {
+  const getRegionBadge = (seedSource: string, seedVariety: string = "") => {
+    if (!seedSource || !seedVariety) return "All Regions";
+    
     // ZAMSEED varieties
     if (seedSource === "zamseed") {
       switch (seedVariety) {
@@ -115,21 +116,26 @@ export default function PublicTraceVerificationPage() {
     return "All Regions";
   };
   
-  const getRegionDescription = (seedSource: string, seedVariety: string) => {
-    const regionDescriptions = {
+  const getRegionDescription = (seedSource: string, seedVariety: string = "") => {
+    if (!seedSource || !seedVariety) return "Suitable for appropriate growing conditions.";
+    
+    const regionDescriptions: Record<string, string> = {
       "Region I": "Southern, Eastern & Western provinces; 600–800 mm rainfall; 80–120 day season.",
       "Region II": "Central, Southern, Eastern & Lusaka provinces; 800–1000 mm rainfall; 100–140 day season.",
-      "Region III": "Northern, Luapula, Copperbelt & Northwestern provinces; >1000 mm rainfall; 120–150 day season.",
+      "Region III": "Northern, Luapula, Copperbelt & Northwestern provinces; over 1000 mm rainfall; 120–150 day season.",
       "Regions I & II": "Suitable for areas with 600-1000 mm rainfall; 80-140 day growing season.",
       "Regions II & III": "Suitable for areas with 800+ mm rainfall; 100-150 day growing season.",
       "Regions I-III": "Widely adaptable across all Zambian agricultural regions.",
       "All Regions": "Can be grown throughout Zambia in suitable conditions."
     };
     
-    return regionDescriptions[getRegionBadge(seedSource, seedVariety) as keyof typeof regionDescriptions] || "Suitable for appropriate growing conditions.";
+    const regionBadge = getRegionBadge(seedSource, seedVariety);
+    return regionDescriptions[regionBadge] || "Suitable for appropriate growing conditions.";
   };
   
-  const renderSeedVarietyInfo = (seedSource: string, seedVariety: string) => {
+  const renderSeedVarietyInfo = (seedSource: string, seedVariety: string = "") => {
+    if (!seedSource || !seedVariety) return seedVariety || "Not specified";
+    
     // ZAMSEED varieties
     if (seedSource === "zamseed") {
       switch (seedVariety) {
@@ -307,7 +313,7 @@ export default function PublicTraceVerificationPage() {
             <CardContent>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Enter batch ID (e.g., batch_1a2b3c4d5e6f)"
+                  placeholder="Enter batch ID (e.g., NOR-250420-2604)"
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -436,7 +442,9 @@ export default function PublicTraceVerificationPage() {
                                 {getRegionBadge(data.crop.seedSource, data.crop.seedVariety)}
                               </Badge>
                             </div>
-                            <p className="text-xs text-muted-foreground">{getRegionDescription(data.crop.seedSource, data.crop.seedVariety)}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {getRegionDescription(data.crop.seedSource, data.crop.seedVariety)}
+                            </p>
                           </div>
                         </div>
                       </div>
