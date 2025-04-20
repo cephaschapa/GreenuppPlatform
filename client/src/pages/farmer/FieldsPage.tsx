@@ -850,7 +850,9 @@ export default function FieldsPage() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="seedco">SeedCo</SelectItem>
+                                  <SelectItem value="zamseed">Zambia Seed Company Ltd (ZAMSEED)</SelectItem>
+                                  <SelectItem value="seedco">Seed Co Zambia</SelectItem>
+                                  <SelectItem value="amiran">Amiran Zambia (Balton CP)</SelectItem>
                                   <SelectItem value="pioneer">Pioneer Seeds</SelectItem>
                                   <SelectItem value="pannar">Pannar Seed</SelectItem>
                                   <SelectItem value="monsanto">Monsanto</SelectItem>
@@ -883,11 +885,36 @@ export default function FieldsPage() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
+                                  {cropForm.watch("seedSource") === "zamseed" && (
+                                    <>
+                                      <SelectItem value="zms301">ZMS 301 (Early maturity, drought tolerant)</SelectItem>
+                                      <SelectItem value="zms405">ZMS 405 (High-yielding early maturity)</SelectItem>
+                                      <SelectItem value="zms520">ZMS 520 (Medium maturity, high yield)</SelectItem>
+                                      <SelectItem value="zms606">ZMS 606 (Medium-late maturity, double cobbing)</SelectItem>
+                                      <SelectItem value="zms620">ZMS 620 (High yield potential)</SelectItem>
+                                      <SelectItem value="zms638">ZMS 638 (High & stable yield potential)</SelectItem>
+                                      <SelectItem value="zms720">ZMS 720 (Large cobs, excellent grain quality)</SelectItem>
+                                      <SelectItem value="zms721">ZMS 721 (Double cobbing, excellent for silage)</SelectItem>
+                                      <SelectItem value="gv664">GV664 (A) (Vitamin A enriched)</SelectItem>
+                                    </>
+                                  )}
                                   {cropForm.watch("seedSource") === "seedco" && (
                                     <>
-                                      <SelectItem value="sc513">SC 513</SelectItem>
-                                      <SelectItem value="sc633">SC 633</SelectItem>
-                                      <SelectItem value="sc719">SC 719</SelectItem>
+                                      <SelectItem value="sc633">SC 633 (Drought tolerant, high yielding)</SelectItem>
+                                      <SelectItem value="sc637">SC 637 (Excellent cob rot tolerance)</SelectItem>
+                                      <SelectItem value="sc647">SC 647 (Heat & drought tolerant)</SelectItem>
+                                      <SelectItem value="sc657">SC 657 (Stay-green trait, high yielding)</SelectItem>
+                                    </>
+                                  )}
+                                  {cropForm.watch("seedSource") === "amiran" && (
+                                    <>
+                                      <SelectItem value="dominique">Dominique F1 (Tomato: Resistant to TYLCV)</SelectItem>
+                                      <SelectItem value="topacio">Topacio F1 (Tomato: Excellent shelf life)</SelectItem>
+                                      <SelectItem value="yaara">Yaara F1 (Tomato: Tolerant to bacterial wilt)</SelectItem>
+                                      <SelectItem value="karni">Karni F1 (Tomato: Resistant to TSWV)</SelectItem>
+                                      <SelectItem value="nemonetta">Nemo-netta F1 (Tomato: Resistant to nematodes)</SelectItem>
+                                      <SelectItem value="superelad">Super Elad F1 (Onion: Resistant to pink root)</SelectItem>
+                                      <SelectItem value="landini">Landini F1 (Cabbage: Heat tolerant)</SelectItem>
                                     </>
                                   )}
                                   {cropForm.watch("seedSource") === "pioneer" && (
@@ -904,7 +931,9 @@ export default function FieldsPage() {
                                       <SelectItem value="pn53">PN53</SelectItem>
                                     </>
                                   )}
-                                  {(cropForm.watch("seedSource") !== "seedco" && 
+                                  {(cropForm.watch("seedSource") !== "zamseed" &&
+                                   cropForm.watch("seedSource") !== "seedco" && 
+                                   cropForm.watch("seedSource") !== "amiran" &&
                                    cropForm.watch("seedSource") !== "pioneer" && 
                                    cropForm.watch("seedSource") !== "pannar" && 
                                    cropForm.watch("seedSource")) && (
