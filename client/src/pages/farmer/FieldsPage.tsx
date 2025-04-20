@@ -1,15 +1,50 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Field, Crop, CropActivity, insertFieldSchema, insertCropSchema } from "@shared/schema";
+import {
+  Field,
+  Crop,
+  CropActivity,
+  insertFieldSchema,
+  insertCropSchema,
+} from "@shared/schema";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,27 +60,24 @@ export default function FieldsPage() {
   const [selectedCrop, setSelectedCrop] = useState<Crop | null>(null);
   const [showNewFieldDialog, setShowNewFieldDialog] = useState(false);
   const [showNewCropDialog, setShowNewCropDialog] = useState(false);
-  
+
   // Field form schema with validation
   const fieldFormSchema = insertFieldSchema.extend({
     // Handle size - convert to string before submission since server expects string
-    size: z.union([
-      z.string(), 
-      z.number().transform(val => val.toString())
-    ])
+    size: z.union([z.string(), z.number().transform((val) => val.toString())]),
   });
-  
+
   // Crop form schema with validation
   const cropFormSchema = insertCropSchema.extend({
     // Handle fieldSize - convert to string before submission since server expects string
     fieldSize: z.union([
-      z.string(), 
-      z.number().transform(val => val.toString())
+      z.string(),
+      z.number().transform((val) => val.toString()),
     ]),
     // Add sizeUnit field
-    sizeUnit: z.string().optional()
+    sizeUnit: z.string().optional(),
   });
-  
+
   // Field form
   const fieldForm = useForm<z.infer<typeof fieldFormSchema>>({
     resolver: zodResolver(fieldFormSchema),
@@ -54,16 +86,17 @@ export default function FieldsPage() {
       name: "",
       location: "",
       size: "0",
-      sizeUnit: "hectares", 
+      sizeUnit: "hectares",
       soilType: "",
-      notes: ""
-    }
+      notes: "",
+    },
   });
-  
+
   // Crop form
   const cropForm = useForm<z.infer<typeof cropFormSchema>>({
     resolver: zodResolver(cropFormSchema),
     defaultValues: {
+      userId: 0,
       name: "",
       variety: "",
       fieldId: selectedField?.id || 0,
@@ -72,37 +105,40 @@ export default function FieldsPage() {
       fieldSize: "0",
       sizeUnit: "hectares",
       status: "planning",
-      notes: ""
-    }
+      notes: "",
+      
+    },
   });
-  
+
   // Fetch fields
   const { data: fields, isLoading: fieldsLoading } = useQuery<Field[]>({
-    queryKey: ['/api/fields'],
+    queryKey: ["/api/fields"],
     queryFn: async () => {
-      const response = await fetch('/api/fields');
+      const response = await fetch("/api/fields");
       if (!response.ok) {
         throw new Error("Failed to fetch fields");
       }
       return await response.json();
-    }
+    },
   });
-  
+
   // Fetch crops for the selected field
   const { data: crops, isLoading: cropsLoading } = useQuery<Crop[]>({
-    queryKey: ['/api/crops'],
+    queryKey: ["/api/crops"],
     queryFn: async () => {
-      const response = await fetch('/api/crops');
+      const response = await fetch("/api/crops");
       if (!response.ok) {
         throw new Error("Failed to fetch crops");
       }
       return await response.json();
-    }
+    },
   });
-  
+
   // Fetch activities for the selected crop
-  const { data: activities, isLoading: activitiesLoading } = useQuery<CropActivity[]>({
-    queryKey: ['/api/crops', selectedCrop?.id, 'activities'],
+  const { data: activities, isLoading: activitiesLoading } = useQuery<
+    CropActivity[]
+  >({
+    queryKey: ["/api/crops", selectedCrop?.id, "activities"],
     enabled: !!selectedCrop,
     queryFn: async () => {
       const response = await fetch(`/api/crops/${selectedCrop?.id}/activities`);
@@ -110,23 +146,23 @@ export default function FieldsPage() {
         throw new Error("Failed to fetch crop activities");
       }
       return await response.json();
-    }
+    },
   });
-  
+
   // Create field mutation
   const createFieldMutation = useMutation({
     mutationFn: async (data: z.infer<typeof fieldFormSchema>) => {
-      const response = await fetch('/api/fields', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+      const response = await fetch("/api/fields", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || "Failed to create field");
       }
-      
+
       return await response.json();
     },
     onSuccess: () => {
@@ -134,7 +170,7 @@ export default function FieldsPage() {
         title: "Field created",
         description: "Your field has been created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/fields'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fields"] });
       setShowNewFieldDialog(false);
       fieldForm.reset();
     },
@@ -144,26 +180,26 @@ export default function FieldsPage() {
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
-  
+
   // Create crop mutation
   const createCropMutation = useMutation({
     mutationFn: async (data: z.infer<typeof cropFormSchema>) => {
-      const response = await fetch('/api/crops', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/crops", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
-          fieldId: selectedField?.id
-        })
+          fieldId: selectedField?.id,
+        }),
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || "Failed to create crop");
       }
-      
+
       return await response.json();
     },
     onSuccess: () => {
@@ -171,7 +207,7 @@ export default function FieldsPage() {
         title: "Crop created",
         description: "Your crop has been created successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/crops'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/crops"] });
       setShowNewCropDialog(false);
       cropForm.reset();
     },
@@ -181,20 +217,20 @@ export default function FieldsPage() {
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
-  
+
   // Delete field mutation
   const deleteFieldMutation = useMutation({
     mutationFn: async (fieldId: number) => {
       const response = await fetch(`/api/fields/${fieldId}`, {
-        method: 'DELETE'
+        method: "DELETE",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to delete field");
       }
-      
+
       return await response.json();
     },
     onSuccess: () => {
@@ -202,7 +238,7 @@ export default function FieldsPage() {
         title: "Field deleted",
         description: "Your field has been deleted successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/fields'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fields"] });
       setSelectedField(null);
     },
     onError: (error) => {
@@ -211,20 +247,20 @@ export default function FieldsPage() {
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
-  
+
   // Delete crop mutation
   const deleteCropMutation = useMutation({
     mutationFn: async (cropId: number) => {
       const response = await fetch(`/api/crops/${cropId}`, {
-        method: 'DELETE'
+        method: "DELETE",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to delete crop");
       }
-      
+
       return await response.json();
     },
     onSuccess: () => {
@@ -232,7 +268,7 @@ export default function FieldsPage() {
         title: "Crop deleted",
         description: "Your crop has been deleted successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/crops'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/crops"] });
       setSelectedCrop(null);
     },
     onError: (error) => {
@@ -241,14 +277,14 @@ export default function FieldsPage() {
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
-  
+
   // Handle field form submission
   const onSubmitField = (data: z.infer<typeof fieldFormSchema>) => {
     createFieldMutation.mutate(data);
   };
-  
+
   // Handle crop form submission
   const onSubmitCrop = (data: z.infer<typeof cropFormSchema>) => {
     if (!selectedField) {
@@ -259,32 +295,32 @@ export default function FieldsPage() {
       });
       return;
     }
-    
+
     createCropMutation.mutate(data);
   };
-  
+
   // Handle field selection
   const handleFieldSelect = (field: Field) => {
     setSelectedField(field);
     setSelectedCrop(null);
   };
-  
+
   // Handle crop selection
   const handleCropSelect = (crop: Crop) => {
     setSelectedCrop(crop);
   };
-  
+
   // Get field-related crops
   const getFieldCrops = (fieldId: number) => {
-    return crops?.filter(crop => crop.fieldId === fieldId) || [];
+    return crops?.filter((crop) => crop.fieldId === fieldId) || [];
   };
-  
+
   // Formatted date helper
   const formatDate = (dateStr: string | null | Date | undefined) => {
     if (!dateStr) return "Not set";
     return new Date(dateStr).toLocaleDateString();
   };
-  
+
   return (
     <DashboardLayout
       title="Fields & Crops"
@@ -298,7 +334,10 @@ export default function FieldsPage() {
               <CardTitle className="text-xl">Fields</CardTitle>
               <CardDescription>Your registered fields</CardDescription>
             </div>
-            <Dialog open={showNewFieldDialog} onOpenChange={setShowNewFieldDialog}>
+            <Dialog
+              open={showNewFieldDialog}
+              onOpenChange={setShowNewFieldDialog}
+            >
               <DialogTrigger asChild>
                 <Button size="sm" className="gap-1.5">
                   <PlusCircle className="h-4 w-4" />
@@ -313,7 +352,10 @@ export default function FieldsPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...fieldForm}>
-                  <form onSubmit={fieldForm.handleSubmit(onSubmitField)} className="space-y-4">
+                  <form
+                    onSubmit={fieldForm.handleSubmit(onSubmitField)}
+                    className="space-y-4"
+                  >
                     <FormField
                       control={fieldForm.control}
                       name="name"
@@ -348,9 +390,9 @@ export default function FieldsPage() {
                           <FormItem>
                             <FormLabel>Size</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="number" 
-                                placeholder="Size" 
+                              <Input
+                                type="number"
+                                placeholder="Size"
                                 {...field}
                                 onChange={(e) => field.onChange(e.target.value)}
                               />
@@ -365,8 +407,8 @@ export default function FieldsPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Unit</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
+                            <Select
+                              onValueChange={field.onChange}
                               defaultValue={field.value}
                             >
                               <FormControl>
@@ -375,9 +417,13 @@ export default function FieldsPage() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="hectares">Hectares</SelectItem>
+                                <SelectItem value="hectares">
+                                  Hectares
+                                </SelectItem>
                                 <SelectItem value="acres">Acres</SelectItem>
-                                <SelectItem value="sqm">Square Meters</SelectItem>
+                                <SelectItem value="sqm">
+                                  Square Meters
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -405,9 +451,9 @@ export default function FieldsPage() {
                         <FormItem>
                           <FormLabel>Notes</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Additional details about this field" 
-                              {...field} 
+                            <Textarea
+                              placeholder="Additional details about this field"
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -415,8 +461,8 @@ export default function FieldsPage() {
                       )}
                     />
                     <DialogFooter>
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         disabled={createFieldMutation.isPending}
                       >
                         {createFieldMutation.isPending && (
@@ -454,7 +500,8 @@ export default function FieldsPage() {
                           {field.location}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {field.size} {field.sizeUnit} • {field.soilType || "Unknown soil"}
+                          {field.size} {field.sizeUnit} •{" "}
+                          {field.soilType || "Unknown soil"}
                         </p>
                       </div>
                       {selectedField?.id === field.id && (
@@ -464,7 +511,11 @@ export default function FieldsPage() {
                           className="h-7 w-7 text-destructive"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (confirm("Are you sure you want to delete this field?")) {
+                            if (
+                              confirm(
+                                "Are you sure you want to delete this field?",
+                              )
+                            ) {
                               deleteFieldMutation.mutate(field.id);
                             }
                           }}
@@ -499,7 +550,10 @@ export default function FieldsPage() {
               </CardDescription>
             </div>
             {selectedField && (
-              <Dialog open={showNewCropDialog} onOpenChange={setShowNewCropDialog}>
+              <Dialog
+                open={showNewCropDialog}
+                onOpenChange={setShowNewCropDialog}
+              >
                 <DialogTrigger asChild>
                   <Button size="sm" className="gap-1.5">
                     <PlusCircle className="h-4 w-4" />
@@ -510,11 +564,15 @@ export default function FieldsPage() {
                   <DialogHeader>
                     <DialogTitle>Add New Crop</DialogTitle>
                     <DialogDescription>
-                      Enter the details for your new crop in {selectedField.name}.
+                      Enter the details for your new crop in{" "}
+                      {selectedField.name}.
                     </DialogDescription>
                   </DialogHeader>
                   <Form {...cropForm}>
-                    <form onSubmit={cropForm.handleSubmit(onSubmitCrop)} className="space-y-4">
+                    <form
+                      onSubmit={cropForm.handleSubmit(onSubmitCrop)}
+                      className="space-y-4"
+                    >
                       <FormField
                         control={cropForm.control}
                         name="name"
@@ -522,7 +580,10 @@ export default function FieldsPage() {
                           <FormItem>
                             <FormLabel>Crop Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="E.g., Maize, Wheat, Soybean" {...field} />
+                              <Input
+                                placeholder="E.g., Maize, Wheat, Soybean"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -535,7 +596,10 @@ export default function FieldsPage() {
                           <FormItem>
                             <FormLabel>Variety</FormLabel>
                             <FormControl>
-                              <Input placeholder="E.g., SC 513, Pioneer" {...field} />
+                              <Input
+                                placeholder="E.g., SC 513, Pioneer"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -577,11 +641,13 @@ export default function FieldsPage() {
                             <FormItem>
                               <FormLabel>Area</FormLabel>
                               <FormControl>
-                                <Input 
-                                  type="number" 
-                                  placeholder="Area used" 
+                                <Input
+                                  type="number"
+                                  placeholder="Area used"
                                   {...field}
-                                  onChange={(e) => field.onChange(e.target.value)}
+                                  onChange={(e) =>
+                                    field.onChange(e.target.value)
+                                  }
                                 />
                               </FormControl>
                               <FormMessage />
@@ -594,8 +660,8 @@ export default function FieldsPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Unit</FormLabel>
-                              <Select 
-                                onValueChange={field.onChange} 
+                              <Select
+                                onValueChange={field.onChange}
                                 defaultValue={field.value}
                               >
                                 <FormControl>
@@ -604,9 +670,13 @@ export default function FieldsPage() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="hectares">Hectares</SelectItem>
+                                  <SelectItem value="hectares">
+                                    Hectares
+                                  </SelectItem>
                                   <SelectItem value="acres">Acres</SelectItem>
-                                  <SelectItem value="sqm">Square Meters</SelectItem>
+                                  <SelectItem value="sqm">
+                                    Square Meters
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -620,8 +690,8 @@ export default function FieldsPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Status</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
+                            <Select
+                              onValueChange={field.onChange}
                               defaultValue={field.value}
                             >
                               <FormControl>
@@ -630,10 +700,14 @@ export default function FieldsPage() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="planning">Planning</SelectItem>
+                                <SelectItem value="planning">
+                                  Planning
+                                </SelectItem>
                                 <SelectItem value="planted">Planted</SelectItem>
                                 <SelectItem value="growing">Growing</SelectItem>
-                                <SelectItem value="harvested">Harvested</SelectItem>
+                                <SelectItem value="harvested">
+                                  Harvested
+                                </SelectItem>
                                 <SelectItem value="failed">Failed</SelectItem>
                               </SelectContent>
                             </Select>
@@ -648,9 +722,9 @@ export default function FieldsPage() {
                           <FormItem>
                             <FormLabel>Notes</FormLabel>
                             <FormControl>
-                              <Textarea 
-                                placeholder="Additional notes about this crop" 
-                                {...field} 
+                              <Textarea
+                                placeholder="Additional notes about this crop"
+                                {...field}
                               />
                             </FormControl>
                             <FormMessage />
@@ -658,8 +732,8 @@ export default function FieldsPage() {
                         )}
                       />
                       <DialogFooter>
-                        <Button 
-                          type="submit" 
+                        <Button
+                          type="submit"
                           disabled={createCropMutation.isPending}
                         >
                           {createCropMutation.isPending && (
@@ -713,7 +787,11 @@ export default function FieldsPage() {
                             className="h-7 w-7 text-destructive"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (confirm("Are you sure you want to delete this crop?")) {
+                              if (
+                                confirm(
+                                  "Are you sure you want to delete this crop?",
+                                )
+                              ) {
                                 deleteCropMutation.mutate(crop.id);
                               }
                             }}
@@ -724,42 +802,62 @@ export default function FieldsPage() {
                       </div>
                       <div className="mt-2 grid grid-cols-2 text-xs text-muted-foreground">
                         <div>
-                          <p><span className="font-medium">Status:</span> {crop.status}</p>
-                          <p><span className="font-medium">Area:</span> {crop.fieldSize} {crop.sizeUnit}</p>
+                          <p>
+                            <span className="font-medium">Status:</span>{" "}
+                            {crop.status}
+                          </p>
+                          <p>
+                            <span className="font-medium">Area:</span>{" "}
+                            {crop.fieldSize} {crop.sizeUnit}
+                          </p>
                         </div>
                         <div>
-                          <p><span className="font-medium">Planted:</span> {formatDate(crop.plantingDate)}</p>
-                          <p><span className="font-medium">Harvest:</span> {formatDate(crop.expectedHarvestDate)}</p>
+                          <p>
+                            <span className="font-medium">Planted:</span>{" "}
+                            {formatDate(crop.plantingDate)}
+                          </p>
+                          <p>
+                            <span className="font-medium">Harvest:</span>{" "}
+                            {formatDate(crop.expectedHarvestDate)}
+                          </p>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-                
+
                 {selectedCrop && (
                   <Card className="mt-6">
                     <CardHeader>
-                      <CardTitle>Manage {selectedCrop.name} ({selectedCrop.variety})</CardTitle>
-                      <CardDescription>Track activities and manage dates</CardDescription>
+                      <CardTitle>
+                        Manage {selectedCrop.name} ({selectedCrop.variety})
+                      </CardTitle>
+                      <CardDescription>
+                        Track activities and manage dates
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <Tabs defaultValue="activities">
                         <TabsList className="mb-4">
-                          <TabsTrigger value="activities">Activities</TabsTrigger>
+                          <TabsTrigger value="activities">
+                            Activities
+                          </TabsTrigger>
                           <TabsTrigger value="dates">Key Dates</TabsTrigger>
                         </TabsList>
                         <TabsContent value="activities">
-                          <CropActivityManager 
+                          <CropActivityManager
                             cropId={selectedCrop.id}
                             activities={activities || []}
                             isLoading={activitiesLoading}
                           />
                         </TabsContent>
                         <TabsContent value="dates">
-                          <CropDateManager 
+                          <CropDateManager
                             crop={selectedCrop}
                             onUpdate={() => {
-                              queryClient.invalidateQueries({ queryKey: ['/api/crops'] });
+                              queryClient.invalidateQueries({
+                                queryKey: ["/api/crops"],
+                              });
                             }}
                           />
                         </TabsContent>
