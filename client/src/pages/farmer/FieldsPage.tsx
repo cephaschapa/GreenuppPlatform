@@ -82,7 +82,7 @@ export default function FieldsPage() {
   const fieldForm = useForm<z.infer<typeof fieldFormSchema>>({
     resolver: zodResolver(fieldFormSchema),
     defaultValues: {
-      userId: 0,
+      userId: 2, // Hard-coded for now - should come from authentication context
       name: "",
       location: "",
       size: "0",
@@ -96,7 +96,7 @@ export default function FieldsPage() {
   const cropForm = useForm<z.infer<typeof cropFormSchema>>({
     resolver: zodResolver(cropFormSchema),
     defaultValues: {
-      userId: 0,
+      userId: 2, // Hard-coded for now - should come from authentication context
       name: "",
       variety: "",
       fieldId: selectedField?.id || 0,
@@ -192,6 +192,7 @@ export default function FieldsPage() {
         body: JSON.stringify({
           ...data,
           fieldId: selectedField?.id,
+          userId: 2 // Hard-coded for now - should use current user ID from authentication context
         }),
       });
 
