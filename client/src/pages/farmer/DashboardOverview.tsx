@@ -273,14 +273,13 @@ export default function DashboardOverview() {
                             Due: {formatDate(task.dueDate)}
                           </p>
                         </div>
-                        <Badge variant={task.priority === 'high' ? 'destructive' : 'secondary'} 
-                               className={
-                                  task.priority === 'medium' 
-                                    ? 'bg-yellow-600 hover:bg-yellow-700' 
-                                    : task.priority === 'low' 
-                                      ? 'bg-blue-600 hover:bg-blue-700'
-                                      : ''
-                                }>
+                        <Badge variant={
+                          task.priority === 'high'
+                            ? 'destructive'
+                            : task.priority === 'medium'
+                              ? 'warning'
+                              : 'info'
+                        }>
                           {task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : 'Normal'}
                         </Badge>
                       </div>
@@ -312,13 +311,13 @@ export default function DashboardOverview() {
                       <div key={crop.id} className="p-3 border border-border rounded-lg hover:border-muted transition-colors">
                         <div className="flex justify-between">
                           <h4 className="font-medium">{crop.name} {crop.variety ? `(${crop.variety})` : ''}</h4>
-                          <Badge variant="secondary" className="bg-green-600 hover:bg-green-700">
+                          <Badge variant="success">
                             {crop.status.charAt(0).toUpperCase() + crop.status.slice(1)}
                           </Badge>
                         </div>
                         <div className="mt-1 text-sm text-muted-foreground grid grid-cols-2 gap-2">
                           <p>Planted: {formatDate(crop.plantingDate)}</p>
-                          <p>Est. Harvest: {formatDate(crop.estimatedHarvestDate || crop.plantingDate)}</p>
+                          <p>Est. Harvest: {formatDate(crop.expectedHarvestDate || crop.plantingDate)}</p>
                         </div>
                       </div>
                     ))}
