@@ -10,7 +10,7 @@ export default function DashboardPage() {
   // Show loading while checking user
   if (!user) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -28,13 +28,13 @@ export default function DashboardPage() {
       return <Redirect to="/dashboard/buyer" />;
     default:
       return (
-        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
           <div className="flex flex-col items-center justify-center max-w-md text-center">
             <h1 className="text-3xl font-bold mb-4 relative inline-block">
               Welcome to Greenupp
-              <span className="absolute -top-2 -right-12 bg-primary text-black text-xs px-2 py-0.5 rounded-full font-semibold">BETA</span>
+              <span className="absolute -top-2 -right-12 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full font-semibold">BETA</span>
             </h1>
-            <p className="text-gray-300 mb-4">
+            <p className="text-muted-foreground mb-4">
               Your role-specific dashboard is currently unavailable. Please contact support.
             </p>
           </div>
