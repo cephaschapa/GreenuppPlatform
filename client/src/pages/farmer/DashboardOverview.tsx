@@ -2,9 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { FarmerProfile, Field, Crop, FarmerTask } from "@shared/schema";
 import { Loader2, TractorIcon, Leaf, Calendar, ClipboardList, Cloud, Sparkles, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
+import { cn } from "@/lib/utils";
 
 export default function DashboardOverview() {
   // Fetch farmer profile
@@ -149,7 +151,7 @@ export default function DashboardOverview() {
         <div className="space-y-8">
           {/* Stats Overview */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-primary/5 border-primary/20">
+            <Card className="bg-card border-muted hover:border-primary/30 transition-colors">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <TractorIcon className="h-5 w-5 text-primary" />
@@ -172,10 +174,10 @@ export default function DashboardOverview() {
               </CardFooter>
             </Card>
             
-            <Card className="bg-green-950/10 border-green-600/20">
+            <Card className="bg-card border-muted hover:border-green-500/30 transition-colors">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <Leaf className="h-5 w-5 text-green-600" />
+                  <Leaf className="h-5 w-5 text-green-500 dark:text-green-400" />
                   Crops
                 </CardTitle>
               </CardHeader>
@@ -195,10 +197,10 @@ export default function DashboardOverview() {
               </CardFooter>
             </Card>
             
-            <Card className="bg-blue-950/10 border-blue-600/20">
+            <Card className="bg-card border-muted hover:border-blue-500/30 transition-colors">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <ClipboardList className="h-5 w-5 text-blue-600" />
+                  <ClipboardList className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                   Tasks
                 </CardTitle>
               </CardHeader>
@@ -218,10 +220,10 @@ export default function DashboardOverview() {
               </CardFooter>
             </Card>
             
-            <Card className="bg-sky-950/10 border-sky-600/20">
+            <Card className="bg-card border-muted hover:border-sky-500/30 transition-colors">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <Cloud className="h-5 w-5 text-sky-600" />
+                  <Cloud className="h-5 w-5 text-sky-500 dark:text-sky-400" />
                   Weather
                 </CardTitle>
               </CardHeader>
@@ -264,22 +266,23 @@ export default function DashboardOverview() {
                 {getUpcomingTasks().length > 0 ? (
                   <div className="space-y-3">
                     {getUpcomingTasks().map((task) => (
-                      <div key={task.id} className="p-3 border rounded-lg flex justify-between items-center">
+                      <div key={task.id} className="p-3 border border-border rounded-lg flex justify-between items-center hover:border-muted transition-colors">
                         <div>
                           <h4 className="font-medium">{task.title}</h4>
                           <p className="text-sm text-muted-foreground">
                             Due: {formatDate(task.dueDate)}
                           </p>
                         </div>
-                        <div className={`text-xs px-2 py-1 rounded-full ${
-                          task.priority === 'high' 
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' 
-                            : task.priority === 'medium'
-                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-                              : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-                        }`}>
-                          {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
-                        </div>
+                        <Badge variant={task.priority === 'high' ? 'destructive' : 'secondary'} 
+                               className={
+                                  task.priority === 'medium' 
+                                    ? 'bg-yellow-600 hover:bg-yellow-700' 
+                                    : task.priority === 'low' 
+                                      ? 'bg-blue-600 hover:bg-blue-700'
+                                      : ''
+                                }>
+                          {task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : 'Normal'}
+                        </Badge>
                       </div>
                     ))}
                   </div>
@@ -306,16 +309,16 @@ export default function DashboardOverview() {
                 {getActiveGrowingCrops().length > 0 ? (
                   <div className="space-y-3">
                     {getActiveGrowingCrops().slice(0, 5).map((crop) => (
-                      <div key={crop.id} className="p-3 border rounded-lg">
+                      <div key={crop.id} className="p-3 border border-border rounded-lg hover:border-muted transition-colors">
                         <div className="flex justify-between">
-                          <h4 className="font-medium">{crop.name} ({crop.variety})</h4>
-                          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                          <h4 className="font-medium">{crop.name} {crop.variety ? `(${crop.variety})` : ''}</h4>
+                          <Badge variant="secondary" className="bg-green-600 hover:bg-green-700">
                             {crop.status.charAt(0).toUpperCase() + crop.status.slice(1)}
-                          </span>
+                          </Badge>
                         </div>
                         <div className="mt-1 text-sm text-muted-foreground grid grid-cols-2 gap-2">
                           <p>Planted: {formatDate(crop.plantingDate)}</p>
-                          <p>Harvest: {formatDate(crop.harvestDate)}</p>
+                          <p>Est. Harvest: {formatDate(crop.estimatedHarvestDate || crop.plantingDate)}</p>
                         </div>
                       </div>
                     ))}
@@ -337,8 +340,9 @@ export default function DashboardOverview() {
           {/* AI Insights and Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* AI Insights */}
-            <Card className="border-primary/30 bg-gradient-to-br from-black to-primary/20">
-              <CardHeader>
+            <Card className="border-primary/30 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-background to-primary/10 z-0"></div>
+              <CardHeader className="relative z-10">
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-primary" />
                   AI-Powered Insights
@@ -347,13 +351,13 @@ export default function DashboardOverview() {
                   Get intelligent predictions for your crops
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative z-10">
                 <p className="text-sm mb-4">
                   Use our AI technology to predict crop yields, analyze soil conditions,
                   and get recommendations based on weather patterns.
                 </p>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="relative z-10">
                 <Link href="/dashboard/predictions">
                   <Button className="w-full">Generate Predictions</Button>
                 </Link>
