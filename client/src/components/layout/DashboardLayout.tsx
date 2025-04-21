@@ -13,8 +13,8 @@ export function DashboardLayout({
   description,
 }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Sidebar component contains both desktop sidebar and mobile nav */}
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Sidebar is always dark, it handles its own styling */}
       <Sidebar />
 
       {/* Main content with padding adjustments for mobile */}
@@ -27,7 +27,7 @@ export function DashboardLayout({
               <h1 className="text-3xl font-bold font-space mb-2 relative inline-block">
                 {title}
               </h1>
-              {description && <p className="text-gray-400">{description}</p>}
+              {description && <p className="text-muted-foreground">{description}</p>}
             </div>
 
             {children}
