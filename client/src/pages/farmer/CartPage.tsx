@@ -20,25 +20,45 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Trash2, ShoppingBag, ChevronLeft, Plus, Minus } from "lucide-react";
+import {
+  Loader2,
+  Trash2,
+  ShoppingBag,
+  ChevronLeft,
+  Plus,
+  Minus,
+} from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function CartPage() {
-  const { cart, isLoading, itemCount, subtotal, updateQuantity, removeFromCart, clearCart, startCheckout } = useCart();
+  const {
+    cart,
+    isLoading,
+    itemCount,
+    subtotal,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+    startCheckout,
+  } = useCart();
   const { toast } = useToast();
   const [processing, setProcessing] = useState(false);
 
-  const handleUpdateQuantity = (itemId: number, currentQuantity: number, increment: number) => {
+  const handleUpdateQuantity = (
+    itemId: number,
+    currentQuantity: number,
+    increment: number,
+  ) => {
     const newQuantity = currentQuantity + increment;
     if (newQuantity < 1) return;
     updateQuantity(itemId, newQuantity);
   };
 
   const [, setLocation] = useLocation();
-  
+
   const handleCheckout = async () => {
     if (itemCount === 0) {
       toast({
@@ -59,7 +79,8 @@ export default function CartPage() {
       console.error("Checkout error:", error);
       toast({
         title: "Checkout Error",
-        description: "There was a problem starting the checkout process. Please try again.",
+        description:
+          "There was a problem starting the checkout process. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -69,7 +90,7 @@ export default function CartPage() {
 
   if (isLoading) {
     return (
-      <div className="container py-10 flex flex-col items-center justify-center min-h-[60vh]">
+      <div className="container py-10 flex flex-col items-center justify-center min-h-[60vh] w-full mx-auto">
         <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
         <p className="mt-4 text-muted-foreground">Loading your cart...</p>
       </div>
@@ -78,7 +99,7 @@ export default function CartPage() {
 
   if (!cart || cart.items.length === 0) {
     return (
-      <div className="container py-10 space-y-6">
+      <div className="container py-10 space-y-6 w-full mx-auto">
         <div className="flex items-center gap-2">
           <Link href="/dashboard/marketplace">
             <a className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -93,12 +114,11 @@ export default function CartPage() {
             <ShoppingBag className="h-16 w-16 text-muted-foreground/30 mb-4" />
             <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
             <p className="text-muted-foreground mb-6 text-center max-w-md">
-              Looks like you haven't added any items to your cart yet. Explore our marketplace to find agricultural products and services.
+              Looks like you haven't added any items to your cart yet. Explore
+              our marketplace to find agricultural products and services.
             </p>
             <Link href="/dashboard/marketplace">
-              <Button>
-                Browse Marketplace
-              </Button>
+              <Button>Browse Marketplace</Button>
             </Link>
           </CardContent>
         </Card>
@@ -107,7 +127,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="container py-10 space-y-6">
+    <div className="container py-10 space-y-6 w-full mx-auto">
       <div className="flex items-center gap-2">
         <Link href="/dashboard/marketplace">
           <a className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -147,39 +167,51 @@ export default function CartPage() {
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">
                         <div className="flex flex-col">
-                          <span className="font-medium">{item.listing?.title || "Unknown Product"}</span>
+                          <span className="font-medium">
+                            {item.listing?.title || "Unknown Product"}
+                          </span>
                           <span className="text-muted-foreground text-sm">
                             {item.listing?.category || "Unknown Category"}
                           </span>
                           {item.notes && (
-                            <span className="text-sm italic mt-1">Note: {item.notes}</span>
+                            <span className="text-sm italic mt-1">
+                              Note: {item.notes}
+                            </span>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
                         {formatCurrency(Number(item.price))}
-                        {item.priceUnit && <span className="text-sm text-muted-foreground ml-1">
-                          /{item.priceUnit}
-                        </span>}
+                        {item.priceUnit && (
+                          <span className="text-sm text-muted-foreground ml-1">
+                            /{item.priceUnit}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="flex items-center border rounded-md">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className="h-8 w-8 rounded-r-none"
-                              onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
+                              onClick={() =>
+                                handleUpdateQuantity(item.id, item.quantity, -1)
+                              }
                               disabled={item.quantity <= 1}
                             >
                               <Minus className="h-3 w-3" />
                             </Button>
-                            <span className="w-10 text-center">{item.quantity}</span>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
+                            <span className="w-10 text-center">
+                              {item.quantity}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className="h-8 w-8 rounded-l-none"
-                              onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
+                              onClick={() =>
+                                handleUpdateQuantity(item.id, item.quantity, 1)
+                              }
                             >
                               <Plus className="h-3 w-3" />
                             </Button>
@@ -242,23 +274,30 @@ export default function CartPage() {
               <Separator />
               <div className="flex justify-between">
                 <span className="font-medium">Total</span>
-                <span className="font-semibold">{formatCurrency(subtotal)}</span>
+                <span className="font-semibold">
+                  {formatCurrency(subtotal)}
+                </span>
               </div>
 
               <Alert className="mt-4 bg-primary/5 border border-primary/20">
-                <AlertTitle className="text-sm font-medium">Important</AlertTitle>
+                <AlertTitle className="text-sm font-medium">
+                  Important
+                </AlertTitle>
                 <AlertDescription className="text-xs">
-                  Shipping costs and taxes will be calculated during checkout based on your location.
+                  Shipping costs and taxes will be calculated during checkout
+                  based on your location.
                 </AlertDescription>
               </Alert>
             </CardContent>
             <CardFooter>
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 onClick={handleCheckout}
                 disabled={processing || itemCount === 0}
               >
-                {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {processing && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 Proceed to Checkout
               </Button>
             </CardFooter>
