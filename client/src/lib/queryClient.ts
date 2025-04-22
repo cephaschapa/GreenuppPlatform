@@ -84,3 +84,17 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Make queryClient globally accessible for WebSocket-driven updates
+// This allows components outside the React rendering tree to access 
+// the queryClient instance (like WebSocket event handlers)
+declare global {
+  interface Window {
+    __TANSTACK_QUERY_CLIENT__: typeof queryClient;
+  }
+}
+
+// Assign the queryClient to the window object for global access
+if (typeof window !== 'undefined') {
+  window.__TANSTACK_QUERY_CLIENT__ = queryClient;
+}

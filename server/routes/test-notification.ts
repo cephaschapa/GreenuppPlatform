@@ -14,12 +14,25 @@ router.post('/api/test-notification', async (req, res) => {
     const message = req.body.message || 'This is a test notification from Greenupp!';
     const actionUrl = req.body.actionUrl || '/dashboard';
     
+    // Define notification actions if provided
+    const actions = req.body.actions || [
+      {
+        label: "View Details",
+        url: actionUrl,
+        variant: "default"
+      }
+    ];
+    
     const notification = await createNotification({
       userId,
       type: type as any, // Cast to any to bypass type checking in test endpoint
       title,
       message,
-      data: { test: true, ...req.body.data },
+      data: { 
+        test: true, 
+        actions, 
+        ...req.body.data 
+      },
       actionUrl,
       sendEmail: req.body.sendEmail || false
     });

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from './use-auth';
 import { useToast } from './use-toast';
+import { queryClient } from '@/lib/queryClient';
 
 type WebSocketContextType = {
   connected: boolean;
@@ -80,11 +81,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           });
 
           // Refresh notification data using React Query's cache
-          const queryClient = window.__TANSTACK_QUERY_CLIENT__;
-          if (queryClient) {
-            queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
-            queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread/count'] });
-          }
+          queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread/count'] });
           
           // Dispatch a custom event that other components can listen for
           const notificationEvent = new CustomEvent('new-notification', { 

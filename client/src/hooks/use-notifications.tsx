@@ -56,6 +56,24 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       // Once connected, we can rely on real-time notifications
       // We'll still do initial fetching to get existing notifications
       console.log('WebSocket connected - real-time notifications active');
+      
+      // Setup event listener for real-time notifications from WebSocket
+      const handleNewNotification = (event: CustomEvent) => {
+        console.log('Received new notification via custom event:', event.detail);
+        // The queryClient invalidation is already handled in the WebSocket handler
+        // Here we can handle any additional client-side logic for new notifications
+        
+        // We could update local state if needed, but React Query's invalidation
+        // should take care of refreshing the data automatically
+      };
+      
+      // Add event listener for custom notification events
+      window.addEventListener('new-notification', handleNewNotification as EventListener);
+      
+      // Clean up event listener on unmount
+      return () => {
+        window.removeEventListener('new-notification', handleNewNotification as EventListener);
+      };
     }
   }, [connected, isAuthenticated]);
 
