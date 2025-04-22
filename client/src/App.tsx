@@ -21,6 +21,7 @@ import OfflineIndicator from "@/components/ui/OfflineIndicator";
 import { CartProvider } from "@/hooks/use-cart";
 import { HelmetProvider } from 'react-helmet-async';
 import { NotificationProvider } from "@/hooks/use-notifications";
+import { WebSocketProvider } from "@/hooks/use-websocket";
 
 // Import farmer-specific pages
 import FieldsPage from "@/pages/farmer/FieldsPage";
@@ -93,17 +94,19 @@ function App() {
     <ThemeProvider defaultTheme="system">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <NotificationProvider>
-            <CartProvider>
-              <HelmetProvider>
-                <Router />
-                <Toaster />
-                {/* PWA Components */}
-                <InstallPWA />
-                <OfflineIndicator />
-              </HelmetProvider>
-            </CartProvider>
-          </NotificationProvider>
+          <WebSocketProvider>
+            <NotificationProvider>
+              <CartProvider>
+                <HelmetProvider>
+                  <Router />
+                  <Toaster />
+                  {/* PWA Components */}
+                  <InstallPWA />
+                  <OfflineIndicator />
+                </HelmetProvider>
+              </CartProvider>
+            </NotificationProvider>
+          </WebSocketProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>

@@ -9,6 +9,7 @@ import {
 } from "@shared/schema";
 import { eq, and, desc, lt, gte, count, or, isNull } from "drizzle-orm";
 import { sendEmail } from "./email";
+import { sendWebSocketNotification } from "./websocket-notifier";
 
 // Notification status values
 export type NotificationStatus = 'unread' | 'read' | 'archived';
@@ -74,6 +75,9 @@ export async function createNotification({
     expiresAt,
     sentViaEmail: false
   }).returning();
+  
+  // Send real-time notification via WebSocket
+  sendWebSocketNotification(userId, notification);
   
   // Send email if requested and email notifications are enabled
   if (shouldSendEmail && userSettings?.emailEnabled) {

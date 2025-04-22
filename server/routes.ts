@@ -1,5 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import setupMarketplaceRoutes from "./routes/marketplace";
 import cartRoutes from "./routes/cart";
@@ -7,6 +8,7 @@ import sellerRoutes from "./routes/seller";
 import cropTraceRoutes from "./routes/croptrace";
 import notificationRoutes from "./routes/notifications";
 import testNotificationRouter from "./routes/test-notification";
+import { setWebSocketNotifier } from './services/websocket-notifier';
 
 import { 
   contactFormSchema, 
@@ -2709,6 +2711,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Create and return the HTTP server
   const httpServer = createServer(app);
+  
+  // Set up WebSocket server for real-time notifications
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  // Store client connections by userId
+  const clients = new Map<number, Set<WebSocket>>();
+  
+  wss.on('connection', (ws) => {
+    console.log('WebSocket client connected');
+    let userId: number | null = null;
+
+    // Handle authentication message
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        // Handle authentication
+        if (data.type === 'auth') {
+          userId = parseInt(data.userId);
+          if (!isNaN(userId)) {
+            // Add this connection to the user's set
+            if (!clients.has(userId)) {
+              clients.set(userId, new Set());
+            }
+            clients.get(userId)?.add(ws);
+            console.log(`WebSocket authenticated for user ${userId}`);
+            
+            // Send confirmation
+            ws.send(JSON.stringify({ 
+              type: 'auth_success',
+              message: 'Successfully authenticated'
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
+    });
+
+    // Handle disconnection
+    ws.on('close', () => {
+      console.log('WebSocket client disconnected');
+      if (userId) {
+        const userClients = clients.get(userId);
+        if (userClients) {
+          userClients.delete(ws);
+          if (userClients.size === 0) {
+            clients.delete(userId);
+          }
+        }
+      }
+    });
+  });
+
+  // Create a function to send notifications to users via WebSockets
+  // We'll export it to be used by other modules
+  const sendWebSocketNotification = (userId: number, notification: any) => {
+    const userClients = clients.get(userId);
+    if (userClients) {
+      const message = JSON.stringify({
+        type: 'notification',
+        data: notification
+      });
+      
+      userClients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(message);
+        }
+      });
+    }
+  };
+  
+  // Make it available via a specific module to avoid global namespace pollution
+  setWebSocketNotifier(sendWebSocketNotification);
   
   return httpServer;
 }
