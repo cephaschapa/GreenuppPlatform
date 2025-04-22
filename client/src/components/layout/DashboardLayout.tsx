@@ -14,7 +14,6 @@ export function DashboardLayout({
 }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Sidebar is always dark, it handles its own styling */}
       <Sidebar />
 
       {/* Main content with padding adjustments for mobile */}
