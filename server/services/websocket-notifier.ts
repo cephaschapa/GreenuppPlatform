@@ -1,26 +1,26 @@
 /**
- * A simple module that provides a way to send WebSocket notifications
- * without creating a circular dependency between server and notification service
+ * A simple service to handle WebSocket notifications
+ * This avoids circular dependencies between route setup and notification services
  */
 
-// The function type for sending WebSocket notifications
+// Define the notifier function type
 type WebSocketNotifier = (userId: number, notification: any) => void;
 
-// The default no-op implementation
-let notifier: WebSocketNotifier = () => {};
+// Default no-op implementation
+let notifierFunction: WebSocketNotifier = () => {};
 
 /**
- * Set the actual WebSocket notification implementation
- * This is called from routes.ts after the WebSocket server is initialized
+ * Set the WebSocket notifier function
+ * This is called from routes.ts once the WebSocket server is set up
  */
-export function setWebSocketNotifier(fn: WebSocketNotifier) {
-  notifier = fn;
+export function setWebSocketNotifier(fn: WebSocketNotifier): void {
+  notifierFunction = fn;
 }
 
 /**
- * Send a notification to a user via WebSocket
+ * Send a notification via WebSocket
  * This is called from the notification service
  */
-export function sendWebSocketNotification(userId: number, notification: any) {
-  notifier(userId, notification);
+export function sendWebSocketNotification(userId: number, notification: any): void {
+  notifierFunction(userId, notification);
 }

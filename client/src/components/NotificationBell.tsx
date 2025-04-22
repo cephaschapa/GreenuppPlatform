@@ -89,7 +89,27 @@ export function NotificationBell() {
       <PopoverContent className="w-80 p-0" align="end">
         <div className="flex items-center justify-between p-4 font-medium">
           <span>Notifications</span>
-          {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 px-2 text-xs"
+                onClick={() => {
+                  const unreadIds = notifications
+                    .filter(n => n.status === 'unread')
+                    .map(n => n.id);
+                  
+                  // Mark all unread notifications as read
+                  Promise.all(unreadIds.map(id => markAsRead(id)))
+                    .then(() => refetchNotifications());
+                }}
+              >
+                Mark all as read
+              </Button>
+            )}
+            {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+          </div>
         </div>
         <Separator />
         <ScrollArea className="h-[400px]">
@@ -127,6 +147,25 @@ export function NotificationBell() {
                             <p className="text-sm text-muted-foreground">
                               {notification.message}
                             </p>
+                            {notification.data?.actions && (
+                              <div className="mt-2 flex gap-2">
+                                {notification.data.actions.map((action: { label: string; url: string; variant?: string }) => (
+                                  <Button
+                                    key={action.label}
+                                    size="sm"
+                                    variant={action.variant as any || "outline"}
+                                    className="h-7 px-2 text-xs"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      markAsRead(notification.id);
+                                      window.location.href = action.url;
+                                    }}
+                                  >
+                                    {action.label}
+                                  </Button>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <button

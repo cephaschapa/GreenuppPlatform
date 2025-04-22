@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "./use-auth"; 
 import { useToast } from "./use-toast";
+import { useWebSocket } from "./use-websocket";
 
 type Notification = {
   id: number;
@@ -45,8 +46,18 @@ const NotificationContext = createContext<NotificationContextType | null>(null);
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { connected } = useWebSocket();
   const queryClient = useQueryClient();
   const isAuthenticated = !!user;
+  
+  // Listen for WebSocket connection changes
+  useEffect(() => {
+    if (connected && isAuthenticated) {
+      // Once connected, we can rely on real-time notifications
+      // We'll still do initial fetching to get existing notifications
+      console.log('WebSocket connected - real-time notifications active');
+    }
+  }, [connected, isAuthenticated]);
 
   // Get all notifications
   const { 

@@ -79,9 +79,18 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
             ) : undefined
           });
 
-          // Refresh the notification count/list if needed
-          // This depends on how your notification system is implemented
-          // You might want to trigger a query cache invalidation here
+          // Refresh notification data using React Query's cache
+          const queryClient = window.__TANSTACK_QUERY_CLIENT__;
+          if (queryClient) {
+            queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread/count'] });
+          }
+          
+          // Dispatch a custom event that other components can listen for
+          const notificationEvent = new CustomEvent('new-notification', { 
+            detail: notification 
+          });
+          window.dispatchEvent(notificationEvent);
         }
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
