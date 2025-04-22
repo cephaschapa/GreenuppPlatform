@@ -5,14 +5,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, CheckCircle, Clock, AlertTriangle, BadgeInfo, MessageSquare, Sprout } from "lucide-react";
+import {
+  Bell,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  BadgeInfo,
+  MessageSquare,
+  Sprout,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Link } from "wouter";
 
 export default function NotificationsPage() {
-  const { notifications, isLoading, markAsRead, markAsArchived } = useNotifications();
+  const { notifications, isLoading, markAsRead, markAsArchived } =
+    useNotifications();
   const [tab, setTab] = useState("all");
 
   const getIconForType = (type: string) => {
@@ -50,30 +59,40 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="container py-6">
+    <div className="container py-6 w-full mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <PageHeader 
-          title="Notifications" 
+        <PageHeader
+          title="Notifications"
           description="View and manage your notifications"
         />
         <div className="mt-4 sm:mt-0">
           <Button variant="outline" asChild className="mr-2">
-            <Link href="/farmer/notification-settings">Notification Settings</Link>
+            <Link href="/farmer/notification-settings">
+              Notification Settings
+            </Link>
           </Button>
-          <Button onClick={handleMarkAllAsRead} disabled={!filteredNotifications.some(n => n.status === "unread")}>
+          <Button
+            onClick={handleMarkAllAsRead}
+            disabled={!filteredNotifications.some((n) => n.status === "unread")}
+          >
             Mark All as Read
           </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="all" className="mt-6" value={tab} onValueChange={setTab}>
+      <Tabs
+        defaultValue="all"
+        className="mt-6"
+        value={tab}
+        onValueChange={setTab}
+      >
         <div className="flex items-center justify-between mb-4">
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="unread">Unread</TabsTrigger>
             <TabsTrigger value="read">Read</TabsTrigger>
           </TabsList>
-          
+
           <div className="flex items-center gap-2">
             <Switch id="auto-mark-read" />
             <Label htmlFor="auto-mark-read">Auto-mark as read</Label>
@@ -81,27 +100,27 @@ export default function NotificationsPage() {
         </div>
 
         <TabsContent value="all" className="mt-0">
-          <NotificationList 
-            notifications={filteredNotifications} 
-            isLoading={isLoading} 
+          <NotificationList
+            notifications={filteredNotifications}
+            isLoading={isLoading}
             markAsRead={markAsRead}
             markAsArchived={markAsArchived}
             getIconForType={getIconForType}
           />
         </TabsContent>
         <TabsContent value="unread" className="mt-0">
-          <NotificationList 
-            notifications={filteredNotifications} 
-            isLoading={isLoading} 
+          <NotificationList
+            notifications={filteredNotifications}
+            isLoading={isLoading}
             markAsRead={markAsRead}
             markAsArchived={markAsArchived}
             getIconForType={getIconForType}
           />
         </TabsContent>
         <TabsContent value="read" className="mt-0">
-          <NotificationList 
-            notifications={filteredNotifications} 
-            isLoading={isLoading} 
+          <NotificationList
+            notifications={filteredNotifications}
+            isLoading={isLoading}
             markAsRead={markAsRead}
             markAsArchived={markAsArchived}
             getIconForType={getIconForType}
@@ -120,12 +139,12 @@ interface NotificationListProps {
   getIconForType: (type: string) => JSX.Element;
 }
 
-function NotificationList({ 
-  notifications, 
-  isLoading, 
-  markAsRead, 
+function NotificationList({
+  notifications,
+  isLoading,
+  markAsRead,
   markAsArchived,
-  getIconForType 
+  getIconForType,
 }: NotificationListProps) {
   if (isLoading) {
     return (
@@ -153,7 +172,9 @@ function NotificationList({
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <Bell className="h-12 w-12 text-muted-foreground mb-4" />
         <h3 className="text-lg font-medium">No notifications</h3>
-        <p className="text-muted-foreground">You don't have any notifications at the moment.</p>
+        <p className="text-muted-foreground">
+          You don't have any notifications at the moment.
+        </p>
       </div>
     );
   }
@@ -161,29 +182,32 @@ function NotificationList({
   return (
     <div className="space-y-4">
       {notifications.map((notification) => (
-        <Card key={notification.id} className={notification.status === "unread" ? "border-primary border-l-4" : ""}>
+        <Card
+          key={notification.id}
+          className={
+            notification.status === "unread" ? "border border-primary" : ""
+          }
+        >
           <CardContent className="p-4">
             <div className="flex gap-4">
-              <div className="mt-1">
-                {getIconForType(notification.type)}
-              </div>
+              <div className="mt-1">{getIconForType(notification.type)}</div>
               <div className="flex-1">
                 <div className="flex items-start justify-between">
                   <h3 className="font-medium">{notification.title}</h3>
                   <div className="flex items-center space-x-2">
                     {notification.status === "unread" && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => markAsRead(notification.id)}
                         title="Mark as read"
                       >
                         <CheckCircle className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => markAsArchived(notification.id)}
                       title="Archive notification"
                     >
@@ -191,14 +215,18 @@ function NotificationList({
                     </Button>
                   </div>
                 </div>
-                <p className="text-muted-foreground mt-1">{notification.message}</p>
+                <p className="text-muted-foreground mt-1">
+                  {notification.message}
+                </p>
                 {notification.actionUrl && (
                   <Button variant="link" className="p-0 h-auto mt-2" asChild>
                     <a href={notification.actionUrl}>View Details</a>
                   </Button>
                 )}
                 <div className="mt-2 text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(notification.createdAt), {
+                    addSuffix: true,
+                  })}
                 </div>
               </div>
             </div>

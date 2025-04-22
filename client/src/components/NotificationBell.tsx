@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Bell } from "lucide-react";
 import { useNotifications } from "@/hooks/use-notifications";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,18 +14,28 @@ import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
 
 export function NotificationBell() {
-  const { notifications, unreadCount, isLoading, markAsRead, markAsArchived, refetchNotifications } = useNotifications();
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    markAsRead,
+    markAsArchived,
+    refetchNotifications,
+  } = useNotifications();
   const [open, setOpen] = useState(false);
 
   // Group notifications by date
-  const groupedNotifications = notifications.reduce((groups, notification) => {
-    const date = new Date(notification.createdAt).toLocaleDateString();
-    if (!groups[date]) {
-      groups[date] = [];
-    }
-    groups[date].push(notification);
-    return groups;
-  }, {} as Record<string, typeof notifications>);
+  const groupedNotifications = notifications.reduce(
+    (groups, notification) => {
+      const date = new Date(notification.createdAt).toLocaleDateString();
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(notification);
+      return groups;
+    },
+    {} as Record<string, typeof notifications>,
+  );
 
   const getIconForType = (type: string) => {
     switch (type) {
@@ -58,10 +72,15 @@ export function NotificationBell() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative" onClick={() => refetchNotifications()}>
-          <Bell className="h-5 w-5" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative h-full w-16 p-0"
+          onClick={() => refetchNotifications()}
+        >
+          <Bell className="h-5 w-5"/>
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
+            <span className="absolute -top-0 -right-0 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
@@ -75,44 +94,58 @@ export function NotificationBell() {
         <Separator />
         <ScrollArea className="h-[400px]">
           {Object.keys(groupedNotifications).length > 0 ? (
-            Object.entries(groupedNotifications).map(([date, dateNotifications]) => (
-              <div key={date} className="mb-2">
-                <div className="sticky top-0 z-10 bg-background p-2 text-xs font-medium text-muted-foreground">
-                  {date}
-                </div>
-                {dateNotifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={cn(
-                      "flex cursor-pointer flex-col p-3 hover:bg-accent",
-                      notification.status === "unread" && "border-l-4 border-primary bg-accent/30"
-                    )}
-                    onClick={() => handleNotificationClick(notification.id, notification.actionUrl)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex gap-2">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-lg">
-                          {getIconForType(notification.type)}
-                        </span>
-                        <div>
-                          <h4 className="font-medium">{notification.title}</h4>
-                          <p className="text-sm text-muted-foreground">{notification.message}</p>
-                        </div>
-                      </div>
-                      <button
-                        className="text-muted-foreground hover:text-foreground"
-                        onClick={(e) => handleArchive(e, notification.id)}
-                      >
-                        &times;
-                      </button>
-                    </div>
-                    <div className="mt-1 text-right text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                    </div>
+            Object.entries(groupedNotifications).map(
+              ([date, dateNotifications]) => (
+                <div key={date} className="mb-2">
+                  <div className="sticky top-0 z-10 bg-background p-2 text-xs font-medium text-muted-foreground">
+                    {date}
                   </div>
-                ))}
-              </div>
-            ))
+                  {dateNotifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={cn(
+                        "flex cursor-pointer flex-col p-3 hover:bg-accent",
+                        notification.status === "unread" &&
+                          "border-l-4 border-primary bg-accent/30",
+                      )}
+                      onClick={() =>
+                        handleNotificationClick(
+                          notification.id,
+                          notification.actionUrl,
+                        )
+                      }
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex gap-2">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-lg">
+                            {getIconForType(notification.type)}
+                          </span>
+                          <div>
+                            <h4 className="font-medium">
+                              {notification.title}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {notification.message}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          className="text-muted-foreground hover:text-foreground"
+                          onClick={(e) => handleArchive(e, notification.id)}
+                        >
+                          &times;
+                        </button>
+                      </div>
+                      <div className="mt-1 text-right text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(notification.createdAt), {
+                          addSuffix: true,
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ),
+            )
           ) : (
             <div className="flex h-40 flex-col items-center justify-center p-4 text-center text-muted-foreground">
               {isLoading ? (

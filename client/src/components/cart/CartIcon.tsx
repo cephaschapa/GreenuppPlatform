@@ -25,8 +25,8 @@ export function CartIcon({
       )}>
         <div className="relative">
           <ShoppingCart className={cn(
-            "h-5 w-5",
-            variant === "sidebar" && "h-6 w-6",
+            "h-4 w-4",
+            variant === "sidebar" && "h-4 w-4",
             variant === "mobile" && "h-7 w-7"
           )} />
           {hasItems && (
