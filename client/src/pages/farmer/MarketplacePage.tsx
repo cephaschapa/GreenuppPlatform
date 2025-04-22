@@ -1,6 +1,15 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Search, Filter, MapPin, Star, Heart, Plus, ShoppingCart } from "lucide-react";
+import {
+  Loader2,
+  Search,
+  Filter,
+  MapPin,
+  Star,
+  Heart,
+  Plus,
+  ShoppingCart,
+} from "lucide-react";
 import { useLocation } from "wouter";
 
 import { Button } from "@/components/ui/button";
@@ -71,7 +80,7 @@ export default function MarketplacePage() {
     distance: 50,
     negotiableOnly: false,
   });
-  
+
   // Add sorting options
   const [sortBy, setSortBy] = useState<string>("newest");
   const [showFeatured, setShowFeatured] = useState<boolean>(true);
@@ -200,8 +209,9 @@ export default function MarketplacePage() {
   };
 
   // Get user's favorites
-  const { favorites, isLoading: isFavoritesLoading } = useMarketplaceFavorites();
-  
+  const { favorites, isLoading: isFavoritesLoading } =
+    useMarketplaceFavorites();
+
   // Filter real listings from the API
   // Filter listings by search term, category, price and favorites
   const filteredListings = listings
@@ -209,12 +219,14 @@ export default function MarketplacePage() {
         try {
           // Favorites filter
           if (showFavoritesOnly) {
-            const isFavorited = favorites?.some(fav => fav.listingId === listing.id);
+            const isFavorited = favorites?.some(
+              (fav) => fav.listingId === listing.id,
+            );
             if (!isFavorited) {
               return false;
             }
           }
-          
+
           // Search filter
           if (filters.search && listing.title) {
             if (
@@ -292,22 +304,30 @@ export default function MarketplacePage() {
         }
       })
     : [];
-    
+
   // Sort listings based on user preference
   const sortedListings = [...filteredListings].sort((a, b) => {
     try {
       switch (sortBy) {
         case "newest":
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
         case "oldest":
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
         case "price-low":
-          const aPrice = typeof a.price === "string" ? parseFloat(a.price) : Number(a.price);
-          const bPrice = typeof b.price === "string" ? parseFloat(b.price) : Number(b.price);
+          const aPrice =
+            typeof a.price === "string" ? parseFloat(a.price) : Number(a.price);
+          const bPrice =
+            typeof b.price === "string" ? parseFloat(b.price) : Number(b.price);
           return aPrice - bPrice;
         case "price-high":
-          const aPrice2 = typeof a.price === "string" ? parseFloat(a.price) : Number(a.price);
-          const bPrice2 = typeof b.price === "string" ? parseFloat(b.price) : Number(b.price);
+          const aPrice2 =
+            typeof a.price === "string" ? parseFloat(a.price) : Number(a.price);
+          const bPrice2 =
+            typeof b.price === "string" ? parseFloat(b.price) : Number(b.price);
           return bPrice2 - aPrice2;
         default:
           return 0;
@@ -317,117 +337,124 @@ export default function MarketplacePage() {
       return 0;
     }
   });
-  
+
   // Select featured listings - newest + high price
-  const featuredListings = showFeatured && sortedListings.length > 0
-    ? [...sortedListings]
-      .sort((a, b) => {
-        // Complex sorting algorithm for "featured": combination of newness, price, and completeness
-        const aDate = new Date(a.createdAt).getTime();
-        const bDate = new Date(b.createdAt).getTime();
-        const aPrice = typeof a.price === "string" ? parseFloat(a.price) : Number(a.price);
-        const bPrice = typeof b.price === "string" ? parseFloat(b.price) : Number(b.price);
-        
-        // Prefer listings with images
-        const aHasImage = a.images && Array.isArray(a.images) && a.images.length > 0;
-        const bHasImage = b.images && Array.isArray(b.images) && b.images.length > 0;
-        
-        if (aHasImage && !bHasImage) return -1;
-        if (!aHasImage && bHasImage) return 1;
-        
-        // Weighted score combining recency and price
-        const aScore = (aDate * 0.7) + (aPrice * 0.3);
-        const bScore = (bDate * 0.7) + (bPrice * 0.3);
-        
-        return bScore - aScore;
-      })
-      .slice(0, 4)
-    : [];
-    
+  const featuredListings =
+    showFeatured && sortedListings.length > 0
+      ? [...sortedListings]
+          .sort((a, b) => {
+            // Complex sorting algorithm for "featured": combination of newness, price, and completeness
+            const aDate = new Date(a.createdAt).getTime();
+            const bDate = new Date(b.createdAt).getTime();
+            const aPrice =
+              typeof a.price === "string"
+                ? parseFloat(a.price)
+                : Number(a.price);
+            const bPrice =
+              typeof b.price === "string"
+                ? parseFloat(b.price)
+                : Number(b.price);
+
+            // Prefer listings with images
+            const aHasImage =
+              a.images && Array.isArray(a.images) && a.images.length > 0;
+            const bHasImage =
+              b.images && Array.isArray(b.images) && b.images.length > 0;
+
+            if (aHasImage && !bHasImage) return -1;
+            if (!aHasImage && bHasImage) return 1;
+
+            // Weighted score combining recency and price
+            const aScore = aDate * 0.7 + aPrice * 0.3;
+            const bScore = bDate * 0.7 + bPrice * 0.3;
+
+            return bScore - aScore;
+          })
+          .slice(0, 4)
+      : [];
+
   // FavoriteButton component for toggling favorites
-const FavoriteButton = ({ listingId }: { listingId: number }) => {
-  const { isFavorite, toggleFavorite } = useMarketplaceFavorites();
-  const isFav = isFavorite(listingId);
-  
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="h-8 w-8 opacity-70 hover:opacity-100 hover:bg-primary/10 transition-all"
-      onClick={(e) => {
-        e.stopPropagation();
-        toggleFavorite(listingId);
-      }}
-    >
-      <Heart 
-        className={`h-4 w-4 text-primary transition-all ${isFav ? 'fill-primary' : 'hover:fill-primary'}`} 
-      />
-    </Button>
-  );
-};
+  const FavoriteButton = ({ listingId }: { listingId: number }) => {
+    const { isFavorite, toggleFavorite } = useMarketplaceFavorites();
+    const isFav = isFavorite(listingId);
 
-// ReviewStars component for displaying seller ratings
-const ReviewStars = ({ sellerId }: { sellerId: number }) => {
-  const { reviews, reviewCount, averageRating, isLoading } = useMarketplaceReviews(undefined, sellerId);
-  
-  if (isLoading) {
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 opacity-70 hover:opacity-100 hover:bg-primary/10 transition-all"
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleFavorite(listingId);
+        }}
+      >
+        <Heart
+          className={`h-4 w-4 text-primary transition-all ${isFav ? "fill-primary" : "hover:fill-primary"}`}
+        />
+      </Button>
+    );
+  };
+
+  // ReviewStars component for displaying seller ratings
+  const ReviewStars = ({ sellerId }: { sellerId: number }) => {
+    const { reviews, reviewCount, averageRating, isLoading } =
+      useMarketplaceReviews(undefined, sellerId);
+
+    if (isLoading) {
+      return (
+        <div className="flex items-center">
+          <Star className="h-3 w-3 mr-1 text-muted" />
+          <span className="text-muted">Loading...</span>
+        </div>
+      );
+    }
+
+    // If no reviews, show placeholder
+    if (!reviews || reviews.length === 0) {
+      return (
+        <div className="flex items-center">
+          <Star className="h-3 w-3 mr-1 text-muted" />
+          <span className="text-muted">No reviews yet</span>
+        </div>
+      );
+    }
+
+    // Round to nearest 0.5 for display
+    const displayRating = Math.round(averageRating * 2) / 2;
+
     return (
       <div className="flex items-center">
-        <Star className="h-3 w-3 mr-1 text-muted" />
-        <span className="text-muted">Loading...</span>
+        <div className="flex mr-1">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <Star
+              key={star}
+              className={`h-3 w-3 ${
+                star <= displayRating
+                  ? "text-yellow-500 fill-yellow-500"
+                  : star - 0.5 === displayRating
+                    ? "text-yellow-500 fill-yellow-500/50"
+                    : "text-muted-foreground"
+              }`}
+            />
+          ))}
+        </div>
+        <span className="font-medium">{displayRating.toFixed(1)}</span>
+        <span className="ml-1">({reviewCount})</span>
       </div>
     );
-  }
-  
-  // If no reviews, show placeholder
-  if (!reviews || reviews.length === 0) {
-    return (
-      <div className="flex items-center">
-        <Star className="h-3 w-3 mr-1 text-muted" />
-        <span className="text-muted">No reviews yet</span>
-      </div>
-    );
-  }
-  
-  // Round to nearest 0.5 for display
-  const displayRating = Math.round(averageRating * 2) / 2;
-  
-  return (
-    <div className="flex items-center">
-      <div className="flex mr-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`h-3 w-3 ${
-              star <= displayRating
-                ? 'text-yellow-500 fill-yellow-500'
-                : star - 0.5 === displayRating
-                ? 'text-yellow-500 fill-yellow-500/50'
-                : 'text-muted-foreground'
-            }`}
-          />
-        ))}
-      </div>
-      <span className="font-medium">{displayRating.toFixed(1)}</span>
-      <span className="ml-1">({reviewCount})</span>
-    </div>
-  );
-};
+  };
 
-// Final listings to display
-const displayedListings = sortedListings;
+  // Final listings to display
+  const displayedListings = sortedListings;
 
-console.log("Listings after filtering:", {
-  before: listings ? listings.length : 0,
-  after: displayedListings.length,
-  filters,
-});
+  console.log("Listings after filtering:", {
+    before: listings ? listings.length : 0,
+    after: displayedListings.length,
+    filters,
+  });
 
   return (
-    <DashboardLayout
-      title="Marketplace"
-      description="Buy and sell agricultural products and services"
-    >
+    <DashboardLayout title="" description="">
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
@@ -457,11 +484,11 @@ console.log("Listings after filtering:", {
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   className="flex-1 pl-10 transition-all border-border/50 focus:border-primary"
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
               </div>
-              <Button 
-                onClick={handleSearch} 
+              <Button
+                onClick={handleSearch}
                 className="transition-all duration-200 bg-primary hover:bg-primary/90 active:scale-95"
               >
                 <Search className="h-4 w-4 mr-2" />
@@ -489,13 +516,16 @@ console.log("Listings after filtering:", {
 
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="border-border/50 hover:border-primary transition-all active:scale-95 relative"
                   >
                     <Filter className="h-4 w-4 mr-2" />
                     Filters
-                    {(filters.minPrice > 0 || filters.maxPrice < 1000000 || filters.distance !== 50 || filters.negotiableOnly) && (
+                    {(filters.minPrice > 0 ||
+                      filters.maxPrice < 1000000 ||
+                      filters.distance !== 50 ||
+                      filters.negotiableOnly) && (
                       <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full animate-pulse"></span>
                     )}
                   </Button>
@@ -511,8 +541,14 @@ console.log("Listings after filtering:", {
                     <div className="space-y-2">
                       <h3 className="text-sm font-medium flex items-center">
                         <span className="mr-2">Price Range (ZMW)</span>
-                        {(filters.minPrice > 0 || filters.maxPrice < 1000000) && (
-                          <Badge variant="outline" className="text-xs bg-primary/10 text-primary">Active</Badge>
+                        {(filters.minPrice > 0 ||
+                          filters.maxPrice < 1000000) && (
+                          <Badge
+                            variant="outline"
+                            className="text-xs bg-primary/10 text-primary"
+                          >
+                            Active
+                          </Badge>
                         )}
                       </h3>
                       <div className="flex justify-between text-xs text-muted-foreground mb-2">
@@ -538,7 +574,12 @@ console.log("Listings after filtering:", {
                       <h3 className="text-sm font-medium flex items-center">
                         <span className="mr-2">Distance (km)</span>
                         {filters.distance !== 50 && (
-                          <Badge variant="outline" className="text-xs bg-primary/10 text-primary">Active</Badge>
+                          <Badge
+                            variant="outline"
+                            className="text-xs bg-primary/10 text-primary"
+                          >
+                            Active
+                          </Badge>
                         )}
                       </h3>
                       <div className="flex justify-between text-xs text-muted-foreground mb-2">
@@ -560,7 +601,12 @@ console.log("Listings after filtering:", {
                       <span className="text-sm font-medium flex items-center">
                         <span>Negotiable Only</span>
                         {filters.negotiableOnly && (
-                          <Badge variant="outline" className="ml-2 text-xs bg-primary/10 text-primary">Active</Badge>
+                          <Badge
+                            variant="outline"
+                            className="ml-2 text-xs bg-primary/10 text-primary"
+                          >
+                            Active
+                          </Badge>
                         )}
                       </span>
                       <Switch
@@ -577,11 +623,10 @@ console.log("Listings after filtering:", {
           {/* Sort options */}
           <div className="flex flex-wrap gap-4 justify-between items-center">
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-muted-foreground">Sort by:</label>
-              <Select
-                value={sortBy}
-                onValueChange={setSortBy}
-              >
+              <label className="text-sm font-medium text-muted-foreground">
+                Sort by:
+              </label>
+              <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-[140px] border-border/50 bg-card">
                   <SelectValue placeholder="Newest First" />
                 </SelectTrigger>
@@ -595,7 +640,8 @@ console.log("Listings after filtering:", {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
-                {displayedListings.length} {displayedListings.length === 1 ? 'listing' : 'listings'} found
+                {displayedListings.length}{" "}
+                {displayedListings.length === 1 ? "listing" : "listings"} found
               </span>
               <div className="flex items-center gap-2 border-r pr-4 mr-2">
                 <Switch
@@ -605,7 +651,7 @@ console.log("Listings after filtering:", {
                 />
                 <label className="text-sm font-medium">Show Featured</label>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <Switch
                   checked={showFavoritesOnly}
@@ -613,7 +659,9 @@ console.log("Listings after filtering:", {
                   className="data-[state=checked]:bg-primary"
                 />
                 <div className="flex items-center gap-1">
-                  <Heart className={`h-3 w-3 ${showFavoritesOnly ? 'fill-primary text-primary' : 'text-muted-foreground'}`} />
+                  <Heart
+                    className={`h-3 w-3 ${showFavoritesOnly ? "fill-primary text-primary" : "text-muted-foreground"}`}
+                  />
                   <label className="text-sm font-medium">Favorites Only</label>
                 </div>
               </div>
@@ -640,13 +688,22 @@ console.log("Listings after filtering:", {
                         let imageUrl = null;
                         try {
                           if (listing.images) {
-                            if (Array.isArray(listing.images) && listing.images.length > 0) {
-                              const validImages = listing.images.filter(img => img && img !== "");
-                              if (validImages.length > 0) imageUrl = validImages[0];
+                            if (
+                              Array.isArray(listing.images) &&
+                              listing.images.length > 0
+                            ) {
+                              const validImages = listing.images.filter(
+                                (img) => img && img !== "",
+                              );
+                              if (validImages.length > 0)
+                                imageUrl = validImages[0];
                             } else if (typeof listing.images === "string") {
                               try {
                                 const parsed = JSON.parse(listing.images);
-                                if (Array.isArray(parsed) && parsed.length > 0) {
+                                if (
+                                  Array.isArray(parsed) &&
+                                  parsed.length > 0
+                                ) {
                                   imageUrl = parsed[0];
                                 } else {
                                   imageUrl = listing.images;
@@ -657,7 +714,10 @@ console.log("Listings after filtering:", {
                             }
                           }
                         } catch (error) {
-                          console.error(`Error processing image for featured listing ${listing.id}:`, error);
+                          console.error(
+                            `Error processing image for featured listing ${listing.id}:`,
+                            error,
+                          );
                         }
 
                         return imageUrl ? (
@@ -666,7 +726,8 @@ console.log("Listings after filtering:", {
                             alt={listing.title || "Featured item"}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                             onError={(e) => {
-                              e.currentTarget.src = "https://placehold.co/700x500/green/white?text=No+Image";
+                              e.currentTarget.src =
+                                "https://placehold.co/700x500/green/white?text=No+Image";
                             }}
                           />
                         ) : (
@@ -675,9 +736,14 @@ console.log("Listings after filtering:", {
                           </div>
                         );
                       })()}
-                      <Badge className="absolute top-2 right-2 bg-orange-500/90">Featured</Badge>
+                      <Badge className="absolute top-2 right-2 bg-orange-500/90">
+                        Featured
+                      </Badge>
                       <div className="absolute left-0 bottom-0 bg-gradient-to-r from-primary/90 to-primary/60 text-white px-2 py-1 font-bold rounded-tr-md">
-                        ZMW {typeof listing.price === "string" ? parseFloat(listing.price).toFixed(2) : Number(listing.price).toFixed(2)}
+                        ZMW{" "}
+                        {typeof listing.price === "string"
+                          ? parseFloat(listing.price).toFixed(2)
+                          : Number(listing.price).toFixed(2)}
                       </div>
                     </div>
                     <CardContent className="p-3">
@@ -721,13 +787,16 @@ console.log("Listings after filtering:", {
                         <Plus className="h-8 w-8 text-muted-foreground/40 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
                       </div>
                       <div>
-                        <p className="text-lg font-medium mb-1">No favorites yet</p>
+                        <p className="text-lg font-medium mb-1">
+                          No favorites yet
+                        </p>
                         <p className="text-muted-foreground">
-                          Click the heart icon on listings to add them to your favorites
+                          Click the heart icon on listings to add them to your
+                          favorites
                         </p>
                       </div>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="mt-2"
                         onClick={() => setShowFavoritesOnly(false)}
                       >
@@ -814,7 +883,9 @@ console.log("Listings after filtering:", {
                                 />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center bg-muted">
-                                  <p className="text-muted-foreground">No image</p>
+                                  <p className="text-muted-foreground">
+                                    No image
+                                  </p>
                                 </div>
                               );
                             })()}
@@ -837,7 +908,9 @@ console.log("Listings after filtering:", {
                                 }
                               })()}
                               {listing.priceUnit && (
-                                <span className="text-xs font-normal">/{listing.priceUnit}</span>
+                                <span className="text-xs font-normal">
+                                  /{listing.priceUnit}
+                                </span>
                               )}
                             </div>
 
@@ -848,14 +921,19 @@ console.log("Listings after filtering:", {
                                   Negotiable
                                 </Badge>
                               )}
-                              
+
                               {/* Check if listing is new - less than 3 days old */}
                               {(() => {
                                 try {
-                                  const createdDate = new Date(listing.createdAt);
+                                  const createdDate = new Date(
+                                    listing.createdAt,
+                                  );
                                   const now = new Date();
-                                  const diffDays = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
-                                  
+                                  const diffDays = Math.floor(
+                                    (now.getTime() - createdDate.getTime()) /
+                                      (1000 * 60 * 60 * 24),
+                                  );
+
                                   if (diffDays < 3) {
                                     return (
                                       <Badge className="bg-blue-500/90 hover:bg-blue-500">
@@ -877,7 +955,6 @@ console.log("Listings after filtering:", {
                                 {listing.title || "Untitled Listing"}
                               </CardTitle>
                               <FavoriteButton listingId={listing.id} />
-                              
                             </div>
                             <CardDescription className="flex items-center text-xs">
                               <MapPin className="h-3 w-3 mr-1 inline text-primary" />

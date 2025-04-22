@@ -331,7 +331,7 @@ const PlantDiagnosisPage = () => {
   };
 
   return (
-    <DashboardLayout title="Plant Disease Diagnosis">
+    <DashboardLayout title="">
       <div className="container mx-auto py-6">
         <div className="space-y-6">
           <div>

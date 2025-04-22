@@ -103,14 +103,14 @@ export function Sidebar() {
       active: location === "/dashboard/predictions",
       showInMobileNav: false,
     },
-    {
-      title: "Calendar",
-      href: "/dashboard/calendar",
-      icon: <CalendarDays className="h-5 w-5" />,
-      mobileIcon: <CalendarDays className="h-6 w-6" />,
-      active: location === "/dashboard/calendar",
-      showInMobileNav: false,
-    },
+    // {
+    //   title: "Calendar",
+    //   href: "/dashboard/calendar",
+    //   icon: <CalendarDays className="h-5 w-5" />,
+    //   mobileIcon: <CalendarDays className="h-6 w-6" />,
+    //   active: location === "/dashboard/calendar",
+    //   showInMobileNav: false,
+    // },
     {
       title: "Profile",
       href: "/dashboard/profile",
