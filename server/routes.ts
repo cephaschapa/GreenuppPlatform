@@ -8,6 +8,7 @@ import sellerRoutes from "./routes/seller";
 import cropTraceRoutes from "./routes/croptrace";
 import notificationRoutes from "./routes/notifications";
 import testNotificationRouter from "./routes/test-notification";
+import emailRoutes from "./routes/email";
 import { setWebSocketNotifier } from './services/websocket-notifier';
 
 import { 
@@ -68,6 +69,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up test notification route
   app.use(testNotificationRouter);
+  
+  // Set up email routes
+  app.use(emailRoutes);
 
   // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();

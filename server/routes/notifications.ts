@@ -9,7 +9,7 @@ import {
   countUnreadNotifications,
   createDefaultNotificationSettings
 } from "../services/notifications";
-import { sendTestEmail } from "../services/email";
+import { testEmail } from "../services/email";
 
 import { z } from "zod";
 
@@ -284,7 +284,7 @@ router.post("/test-email", isAuthenticated, async (req: Request, res: Response) 
       return res.status(400).json({ message: "No email address provided" });
     }
     
-    const success = await sendTestEmail(email);
+    const success = await testEmail(email);
     
     if (success) {
       res.json({ message: `Test email sent to ${email}` });

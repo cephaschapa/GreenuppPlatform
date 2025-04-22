@@ -20,7 +20,8 @@ export const notificationTypes = [
   'task_reminder',
   'market_price_alert',
   'message',
-  'system_notification'
+  'system_notification',
+  'crop_update'
 ] as const;
 
 export type NotificationType = typeof notificationTypes[number];
@@ -306,6 +307,8 @@ function isNotificationTypeEnabled(
       return settings.messageNotifications;
     case 'system_notification':
       return settings.systemNotifications;
+    case 'crop_update':
+      return true; // Default to enabled for crop updates
     default:
       return true; // Default to enabled for unknown types
   }
@@ -349,6 +352,9 @@ async function sendNotificationEmail(
   }
 ): Promise<boolean> {
   try {
+    // Import the email service
+    const { sendEmail, generateHtmlEmail } = await import('./email');
+    
     // Determine a good friendly sender name based on notification type
     let fromName = 'Greenupp';
     if (notification.type === 'weather_alert') {
@@ -357,33 +363,34 @@ async function sendNotificationEmail(
       fromName = 'Greenupp Task Reminders';
     } else if (notification.type === 'market_price_alert') {
       fromName = 'Greenupp Market Alerts';
+    } else if (notification.type === 'crop_update') {
+      fromName = 'Greenupp Crop Updates';
+    } else if (notification.type === 'message') {
+      fromName = 'Greenupp Messages';
     }
+    
+    // Generate email footer text
+    const footerText = `You received this because you signed up for ${notification.type.replace('_', ' ')} notifications.
+    To update your notification preferences, log in to your Greenupp account and visit Settings.`;
+    
+    // Generate HTML email
+    const html = generateHtmlEmail(
+      notification.title,
+      notification.message,
+      notification.actionUrl,
+      notification.actionUrl ? 'View Details' : undefined,
+      footerText
+    );
+    
+    // Generate plain text fallback
+    const text = `${notification.title}\n\n${notification.message}${notification.actionUrl ? `\n\nView more details: ${notification.actionUrl}` : ''}\n\n${footerText}`;
     
     return await sendEmail({
       to: email,
-      from: `${fromName} <no-reply@greenupp.app>`,
+      from: `${fromName} <notifications@greenupp.app>`,
       subject: notification.title,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #1e293b; padding: 20px; color: white;">
-            <h1 style="margin: 0; font-size: 24px;">${notification.title}</h1>
-          </div>
-          <div style="padding: 20px; border: 1px solid #e2e8f0; border-top: none;">
-            <p>${notification.message}</p>
-            ${notification.actionUrl ? `
-              <div style="margin-top: 20px;">
-                <a href="${notification.actionUrl}" style="display: inline-block; background-color: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">View Details</a>
-              </div>
-            ` : ''}
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
-              <p>This message was sent from Greenupp, the agricultural intelligence platform.</p>
-              <p>You received this because you signed up for ${notification.type.replace('_', ' ')} notifications.</p>
-              <p>To update your notification preferences, log in to your Greenupp account and visit Settings.</p>
-            </div>
-          </div>
-        </div>
-      `,
-      text: `${notification.title}\n\n${notification.message}${notification.actionUrl ? `\n\nView more details: ${notification.actionUrl}` : ''}\n\nYou received this because you signed up for ${notification.type.replace('_', ' ')} notifications. To update your preferences, log in to your Greenupp account and visit Settings.`
+      html,
+      text
     });
   } catch (error) {
     console.error("Email sending failed:", error);
