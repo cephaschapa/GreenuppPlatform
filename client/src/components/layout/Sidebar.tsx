@@ -276,10 +276,7 @@ export function Sidebar() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <Link href="dashboard/marketplace/cart">
-            <CartIcon variant="mobile" />
-          </Link>
-
+          <CartIcon variant="mobile" />
           <NotificationBell />
 
           <DropdownMenu>
