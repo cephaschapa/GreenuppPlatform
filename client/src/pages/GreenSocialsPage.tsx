@@ -11,7 +11,22 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Loader2, MessageCircle, Heart, Share2, Bookmark, Send } from "lucide-react";
+import { 
+  Loader2, 
+  MessageCircle, 
+  Heart, 
+  Share2, 
+  Bookmark, 
+  Send, 
+  Home, 
+  Newspaper, 
+  Users, 
+  Compass, 
+  Lightbulb,
+  Image,
+  Tag,
+  ArrowRight
+} from "lucide-react";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
@@ -173,11 +188,26 @@ const GreenSocialsPage = () => {
         
         <Tabs defaultValue="feed" className="w-full">
           <TabsList className="mb-6">
-            <TabsTrigger value="feed">Feed</TabsTrigger>
-            <TabsTrigger value="news">News</TabsTrigger>
-            <TabsTrigger value="communities">Communities</TabsTrigger>
-            <TabsTrigger value="discover">Discover</TabsTrigger>
-            <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
+            <TabsTrigger value="feed" className="flex items-center gap-1.5">
+              <Home className="h-4 w-4" />
+              <span>Feed</span>
+            </TabsTrigger>
+            <TabsTrigger value="news" className="flex items-center gap-1.5">
+              <Newspaper className="h-4 w-4" />
+              <span>News</span>
+            </TabsTrigger>
+            <TabsTrigger value="communities" className="flex items-center gap-1.5">
+              <Users className="h-4 w-4" />
+              <span>Communities</span>
+            </TabsTrigger>
+            <TabsTrigger value="discover" className="flex items-center gap-1.5">
+              <Compass className="h-4 w-4" />
+              <span>Discover</span>
+            </TabsTrigger>
+            <TabsTrigger value="knowledge" className="flex items-center gap-1.5">
+              <Lightbulb className="h-4 w-4" />
+              <span>Knowledge Base</span>
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="feed" className="space-y-6">
@@ -197,12 +227,19 @@ const GreenSocialsPage = () => {
               </CardContent>
               <CardFooter className="flex justify-between">
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">Photo</Button>
-                  <Button variant="outline" size="sm">Tag Crops</Button>
+                  <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+                    <Image className="h-4 w-4" />
+                    <span>Photo</span>
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+                    <Tag className="h-4 w-4" />
+                    <span>Tag Crops</span>
+                  </Button>
                 </div>
                 <Button 
                   onClick={handleCreatePost}
                   disabled={createPostMutation.isPending}
+                  className="flex items-center gap-1.5"
                 >
                   {createPostMutation.isPending ? (
                     <>
@@ -210,7 +247,10 @@ const GreenSocialsPage = () => {
                       Posting...
                     </>
                   ) : (
-                    <>Post</>
+                    <>
+                      <Send className="h-4 w-4" />
+                      <span>Post</span>
+                    </>
                   )}
                 </Button>
               </CardFooter>
