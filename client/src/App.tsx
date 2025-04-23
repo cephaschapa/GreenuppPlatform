@@ -13,6 +13,7 @@ import PublicSellersPage from "@/pages/PublicSellersPage";
 import PublicSellerProfilePage from "@/pages/PublicSellerProfilePage";
 import PublicTraceVerificationPage from "@/pages/PublicTraceVerificationPage";
 import AiKnowledgeBasePage from "@/pages/AiKnowledgeBasePage";
+import GreenSocialsPage from "@/pages/GreenSocialsPage";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -79,6 +80,9 @@ function Router() {
       {/* Notification routes */}
       <ProtectedRoute path="/dashboard/notifications" component={NotificationsPage} />
       <ProtectedRoute path="/dashboard/notification-settings" component={NotificationSettingsPage} />
+      
+      {/* Green Socials routes */}
+      <ProtectedRoute path="/dashboard/social" component={GreenSocialsPage} />
       
       {/* Role-specific dashboard redirects */}
       <ProtectedRoute path="/buyer" component={() => <Redirect to="/dashboard/marketplace" />} />

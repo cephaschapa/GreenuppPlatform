@@ -25,6 +25,7 @@ import {
   ShoppingBag,
   ShoppingCart,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import { CartIcon } from "@/components/cart/CartIcon";
 import { cn } from "@/lib/utils";
@@ -143,6 +144,14 @@ export function Sidebar() {
       active: location === "/ai-knowledge-base",
       showInMobileNav: false,
     },
+    {
+      title: "Green Socials",
+      href: "/dashboard/social",
+      icon: <Users className="h-5 w-5" />,
+      mobileIcon: <Users className="h-6 w-6" />,
+      active: location === "/dashboard/social",
+      showInMobileNav: true,
+    },
   ];
 
   const supplierNavItems = [
@@ -177,6 +186,14 @@ export function Sidebar() {
       mobileIcon: <Sparkles className="h-6 w-6" />,
       active: location === "/ai-knowledge-base",
       showInMobileNav: false,
+    },
+    {
+      title: "Green Socials",
+      href: "/dashboard/social",
+      icon: <Users className="h-5 w-5" />,
+      mobileIcon: <Users className="h-6 w-6" />,
+      active: location === "/dashboard/social",
+      showInMobileNav: true,
     },
     // Add more supplier-specific navigation items here
   ];
@@ -213,6 +230,14 @@ export function Sidebar() {
       mobileIcon: <Sparkles className="h-6 w-6" />,
       active: location === "/ai-knowledge-base",
       showInMobileNav: false,
+    },
+    {
+      title: "Green Socials",
+      href: "/dashboard/social",
+      icon: <Users className="h-5 w-5" />,
+      mobileIcon: <Users className="h-6 w-6" />,
+      active: location === "/dashboard/social",
+      showInMobileNav: true,
     },
     // Add more buyer-specific navigation items here
   ];

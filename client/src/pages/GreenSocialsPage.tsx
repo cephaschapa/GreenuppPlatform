@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Loader2, MessageCircle, Heart, Share2, Bookmark, Send } from "lucide-react";
 
-import DashboardLayout from "@/components/layout/DashboardLayout";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 interface SocialProfile {
   id: number;
