@@ -341,42 +341,103 @@ export function Sidebar() {
           </Link>
         ))}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="flex flex-col items-center mt-2 justify-center gap-1 w-full h-full rounded-none text-muted-foreground"
+        <Button
+          variant="ghost"
+          className="flex flex-col items-center mt-2 justify-center gap-1 w-full h-full rounded-none text-muted-foreground"
+          onClick={() => setIsMobileMenuOpen(true)}
+        >
+          <Menu className="h-6 w-6" />
+          <span className="text-xs">Menu</span>
+        </Button>
+        
+        {/* Mobile Side Navigation */}
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}>
+            <div 
+              className="fixed top-0 right-0 bottom-0 w-[280px] bg-sidebar border-l border-primary/20 shadow-xl p-4 overflow-y-auto safe-top safe-bottom flex flex-col h-screen" 
+              onClick={(e) => e.stopPropagation()}
             >
-              <Grid className="h-6 w-6" />
-              <span className="text-xs">More</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-60 mr-2 mb-2 rounded-xl border border-border shadow-lg">
-            <DropdownMenuLabel>
-              More Features
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-
-            {navItems
-              .filter((item) => !item.showInMobileNav)
-              .map((item) => (
-                <DropdownMenuItem key={item.href} asChild>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "cursor-pointer w-full",
-                      item.active ? "text-primary" : "",
-                    )}
-                  >
-                    <div className="flex items-center gap-3 py-1">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold">Menu</h2>
+                <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              
+              <div className="mb-6">
+                <div className="flex items-center gap-3 px-2 py-3 mb-2 bg-primary/10 rounded-md">
+                  <Avatar className="h-10 w-10 border border-primary/20">
+                    <AvatarFallback className="bg-primary/20 text-primary">
+                      {(user && (user.firstName?.[0] || user.username?.[0])) || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="truncate">
+                    <p className="font-medium truncate">
+                      {user?.firstName || user?.username}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {user && user.role
+                        ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+                        : "User"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto">
+                <div className="space-y-1 pb-6">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors",
+                        item.active
+                          ? "bg-primary/20 text-primary"
+                          : "text-foreground hover:bg-primary/10",
+                      )}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
                       {item.icon}
                       <span>{item.title}</span>
-                    </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t border-primary/10 mt-auto">
+                <div className="flex gap-2 mb-4">
+                  <Link href="/dashboard/marketplace/cart" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="outline" size="sm" className="w-full">
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      Cart
+                    </Button>
                   </Link>
-                </DropdownMenuItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                  <Link href="/dashboard/notifications" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="outline" size="sm" className="w-full">
+                      <Bell className="h-4 w-4 mr-2" />
+                      Notifications
+                    </Button>
+                  </Link>
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full flex items-center gap-2"
+                  onClick={() => {
+                    logoutMutation.mutate();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  disabled={logoutMutation.isPending}
+                >
+                  <LogOut className="h-4 w-4" />
+                  {logoutMutation.isPending ? "Logging out..." : "Sign Out"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Desktop Sidebar */}
