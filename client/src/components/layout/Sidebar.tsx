@@ -26,6 +26,7 @@ import {
   ShoppingCart,
   ShieldCheck,
   Users,
+  Grid,
 } from "lucide-react";
 import { CartIcon } from "@/components/cart/CartIcon";
 import { cn } from "@/lib/utils";
@@ -62,7 +63,7 @@ export function Sidebar() {
       icon: <TractorIcon className="h-5 w-5" />,
       mobileIcon: <TractorIcon className="h-6 w-6" />,
       active: location === "/dashboard/fields",
-      showInMobileNav: true,
+      showInMobileNav: false,
     },
     {
       title: "Tasks",
@@ -70,7 +71,7 @@ export function Sidebar() {
       icon: <ClipboardList className="h-5 w-5" />,
       mobileIcon: <ClipboardList className="h-6 w-6" />,
       active: location === "/dashboard/tasks",
-      showInMobileNav: true,
+      showInMobileNav: false,
     },
     {
       title: "Weather",
@@ -86,7 +87,7 @@ export function Sidebar() {
       icon: <Sprout className="h-5 w-5" />,
       mobileIcon: <Sprout className="h-6 w-6" />,
       active: location === "/dashboard/plant-diagnosis",
-      showInMobileNav: false,
+      showInMobileNav: true,
     },
     {
       title: "Marketplace",
@@ -346,7 +347,7 @@ export function Sidebar() {
               variant="ghost"
               className="flex flex-col items-center mt-2 justify-center gap-1 w-full h-full rounded-none text-muted-foreground"
             >
-              <MoreHorizontal className="h-6 w-6" />
+              <Grid className="h-6 w-6" />
               <span className="text-xs">More</span>
             </Button>
           </DropdownMenuTrigger>
