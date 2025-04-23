@@ -9,6 +9,7 @@ import cropTraceRoutes from "./routes/croptrace";
 import notificationRoutes from "./routes/notifications";
 import testNotificationRouter from "./routes/test-notification";
 import emailRoutes from "./routes/email";
+import { greenSocialsRouter } from "./routes/green-socials";
 import { setWebSocketNotifier } from './services/websocket-notifier';
 
 import { 
@@ -72,6 +73,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up email routes
   app.use(emailRoutes);
+  
+  // Set up Green Socials routes
+  app.use("/api/social", greenSocialsRouter);
 
   // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();

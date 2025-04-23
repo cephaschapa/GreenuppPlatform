@@ -1,7 +1,15 @@
 import { Request, Response, Router } from "express";
 import { db } from "../db";
-import { SocialProfile, communities, posts, comments, socialProfiles, userRelationships } from "@shared/green-socials-schema";
-import { and, desc, eq, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
+import { 
+  SocialProfile, 
+  communities, 
+  posts, 
+  comments, 
+  socialProfiles, 
+  userRelationships,
+  communityMembers
+} from "@shared/green-socials-schema";
+import { and, desc, eq, inArray, isNotNull, isNull, lt, or, sql } from "drizzle-orm";
 import { users } from "@shared/schema";
 
 // Authentication middleware
@@ -300,7 +308,7 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
     await db
       .update(posts)
       .set({
-        commentCount: posts.commentCount + 1,
+        commentCount: sql`${posts.commentCount} + 1`,
         updatedAt: new Date()
       })
       .where(eq(posts.id, req.body.postId));
@@ -310,7 +318,7 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
       await db
         .update(comments)
         .set({
-          replyCount: comments.replyCount + 1,
+          replyCount: sql`${comments.replyCount} + 1`,
           updatedAt: new Date()
         })
         .where(eq(comments.id, req.body.parentId));
@@ -464,13 +472,13 @@ greenSocialsRouter.post("/follow/:userId", isAuthenticated, async (req, res) => 
     // Update follower count for followed user
     await db
       .update(socialProfiles)
-      .set({ followerCount: socialProfiles.followerCount + 1 })
+      .set({ followerCount: sql`${socialProfiles.followerCount} + 1` })
       .where(eq(socialProfiles.userId, followedId));
     
     // Update following count for follower
     await db
       .update(socialProfiles)
-      .set({ followingCount: socialProfiles.followingCount + 1 })
+      .set({ followingCount: sql`${socialProfiles.followingCount} + 1` })
       .where(eq(socialProfiles.userId, followerId));
     
     return res.status(201).json({ message: "User followed successfully" });
@@ -512,13 +520,13 @@ greenSocialsRouter.delete("/follow/:userId", isAuthenticated, async (req, res) =
     // Update follower count for followed user
     await db
       .update(socialProfiles)
-      .set({ followerCount: socialProfiles.followerCount - 1 })
+      .set({ followerCount: sql`${socialProfiles.followerCount} - 1` })
       .where(eq(socialProfiles.userId, followedId));
     
     // Update following count for follower
     await db
       .update(socialProfiles)
-      .set({ followingCount: socialProfiles.followingCount - 1 })
+      .set({ followingCount: sql`${socialProfiles.followingCount} - 1` })
       .where(eq(socialProfiles.userId, followerId));
     
     return res.json({ message: "User unfollowed successfully" });
