@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -173,6 +174,7 @@ const GreenSocialsPage = () => {
         <Tabs defaultValue="feed" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="feed">Feed</TabsTrigger>
+            <TabsTrigger value="news">News</TabsTrigger>
             <TabsTrigger value="communities">Communities</TabsTrigger>
             <TabsTrigger value="discover">Discover</TabsTrigger>
             <TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
@@ -309,6 +311,113 @@ const GreenSocialsPage = () => {
                 </Card>
               )}
             </div>
+          </TabsContent>
+          
+          <TabsContent value="news" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Agricultural News & Updates</CardTitle>
+                <CardDescription>The latest agricultural news and updates from trusted sources</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <Card className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div className="relative h-48 bg-muted">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                        <Badge className="bg-primary mb-2">Featured</Badge>
+                      </div>
+                    </div>
+                    <CardContent className="pt-4">
+                      <p className="text-xs text-muted-foreground mb-2">April 23, 2025</p>
+                      <h3 className="font-bold mb-2 text-base line-clamp-2">New Climate-Resilient Seed Varieties Released for Zambian Farmers</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-3">
+                        The Ministry of Agriculture has announced the release of new drought-resistant maize and sorghum varieties, 
+                        developed to help smallholder farmers adapt to changing climate conditions.
+                      </p>
+                    </CardContent>
+                    <CardFooter className="flex justify-between pt-0">
+                      <Button variant="link" className="p-0 h-auto text-primary">Read More</Button>
+                    </CardFooter>
+                  </Card>
+                  
+                  <Card className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div className="relative h-48 bg-muted">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                        <Badge className="bg-orange-500 mb-2">Market Trends</Badge>
+                      </div>
+                    </div>
+                    <CardContent className="pt-4">
+                      <p className="text-xs text-muted-foreground mb-2">April 22, 2025</p>
+                      <h3 className="font-bold mb-2 text-base line-clamp-2">Agricultural Commodity Prices Show Strong Recovery in Q2</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-3">
+                        Commodity markets for major export crops have shown significant improvement, with prices 
+                        increasing by 15% on average compared to the previous quarter.
+                      </p>
+                    </CardContent>
+                    <CardFooter className="flex justify-between pt-0">
+                      <Button variant="link" className="p-0 h-auto text-primary">Read More</Button>
+                    </CardFooter>
+                  </Card>
+                  
+                  <Card className="overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div className="relative h-48 bg-muted">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                        <Badge className="bg-green-600 mb-2">Sustainability</Badge>
+                      </div>
+                    </div>
+                    <CardContent className="pt-4">
+                      <p className="text-xs text-muted-foreground mb-2">April 20, 2025</p>
+                      <h3 className="font-bold mb-2 text-base line-clamp-2">Regenerative Farming Practices Gain Traction Among Commercial Farmers</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-3">
+                        More farmers are adopting regenerative agriculture methods, reporting improved soil health, 
+                        better water retention, and increased biodiversity on their farms.
+                      </p>
+                    </CardContent>
+                    <CardFooter className="flex justify-between pt-0">
+                      <Button variant="link" className="p-0 h-auto text-primary">Read More</Button>
+                    </CardFooter>
+                  </Card>
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Recent Updates</h3>
+                  
+                  <div className="space-y-4">
+                    <div className="flex gap-4 items-start p-4 rounded-lg border hover:bg-muted/50 transition-colors duration-200">
+                      <div className="w-16 h-16 rounded-md bg-muted flex-shrink-0"></div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">April 19, 2025</p>
+                        <h4 className="font-medium mb-1">New Organic Certification Standards Introduced</h4>
+                        <p className="text-sm text-muted-foreground">Updated organic certification requirements will go into effect next month, focusing on soil health and biodiversity.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-4 items-start p-4 rounded-lg border hover:bg-muted/50 transition-colors duration-200">
+                      <div className="w-16 h-16 rounded-md bg-muted flex-shrink-0"></div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">April 18, 2025</p>
+                        <h4 className="font-medium mb-1">Agricultural Technology Expo Announced for July</h4>
+                        <p className="text-sm text-muted-foreground">The annual AgTech Expo will showcase the latest innovations in farming technology, precision agriculture, and IoT solutions.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-4 items-start p-4 rounded-lg border hover:bg-muted/50 transition-colors duration-200">
+                      <div className="w-16 h-16 rounded-md bg-muted flex-shrink-0"></div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">April 16, 2025</p>
+                        <h4 className="font-medium mb-1">Government Extends Subsidies for Small-Scale Farmers</h4>
+                        <p className="text-sm text-muted-foreground">The Ministry of Agriculture has extended its subsidy program for smallholder farmers for another year, covering seeds, fertilizers, and equipment.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="justify-center border-t pt-6">
+                <Button variant="outline">View All News</Button>
+              </CardFooter>
+            </Card>
           </TabsContent>
           
           <TabsContent value="communities">
