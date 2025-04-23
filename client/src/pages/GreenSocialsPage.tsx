@@ -191,26 +191,31 @@ const GreenSocialsPage = () => {
         <h1 className="text-3xl font-bold mb-6">Green Socials</h1>
         
         <Tabs defaultValue="feed" className="w-full">
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 flex-wrap">
             <TabsTrigger value="feed" className="flex items-center gap-1.5">
               <Home className="h-4 w-4" />
-              <span>Feed</span>
+              <span className="hidden sm:inline-block">Feed</span>
+              <span className="sr-only sm:hidden">Feed</span>
             </TabsTrigger>
             <TabsTrigger value="news" className="flex items-center gap-1.5">
               <Newspaper className="h-4 w-4" />
-              <span>News</span>
+              <span className="hidden sm:inline-block">News</span>
+              <span className="sr-only sm:hidden">News</span>
             </TabsTrigger>
             <TabsTrigger value="communities" className="flex items-center gap-1.5">
               <Users className="h-4 w-4" />
-              <span>Communities</span>
+              <span className="hidden sm:inline-block">Communities</span>
+              <span className="sr-only sm:hidden">Communities</span>
             </TabsTrigger>
             <TabsTrigger value="discover" className="flex items-center gap-1.5">
               <Compass className="h-4 w-4" />
-              <span>Discover</span>
+              <span className="hidden sm:inline-block">Discover</span>
+              <span className="sr-only sm:hidden">Discover</span>
             </TabsTrigger>
             <TabsTrigger value="knowledge" className="flex items-center gap-1.5">
               <Lightbulb className="h-4 w-4" />
-              <span>Knowledge Base</span>
+              <span className="hidden sm:inline-block">Knowledge Base</span>
+              <span className="sr-only sm:hidden">Knowledge Base</span>
             </TabsTrigger>
           </TabsList>
           
@@ -344,11 +349,11 @@ const GreenSocialsPage = () => {
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" className="flex items-center gap-1.5">
                         <Image className="h-4 w-4" />
-                        <span>Photo</span>
+                        <span className="hidden sm:inline-block">Photo</span>
                       </Button>
                       <Button variant="outline" size="sm" className="flex items-center gap-1.5">
                         <Tag className="h-4 w-4" />
-                        <span>Tag Crops</span>
+                        <span className="hidden sm:inline-block">Tag Crops</span>
                       </Button>
                     </div>
                     <Button 
@@ -358,13 +363,13 @@ const GreenSocialsPage = () => {
                     >
                       {createPostMutation.isPending ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Posting...
+                          <Loader2 className="h-4 w-4 animate-spin sm:mr-2" />
+                          <span className="hidden sm:inline-block">Posting...</span>
                         </>
                       ) : (
                         <>
                           <Send className="h-4 w-4" />
-                          <span>Post</span>
+                          <span className="hidden sm:inline-block">Post</span>
                         </>
                       )}
                     </Button>
@@ -422,16 +427,16 @@ const GreenSocialsPage = () => {
                           <div className="flex justify-between w-full">
                             <Button variant="ghost" size="sm" className="gap-1">
                               <Heart className="h-4 w-4" />
-                              <span>{post.post.likeCount}</span>
+                              <span className="text-xs">{post.post.likeCount}</span>
                             </Button>
                             <Button variant="ghost" size="sm" className="gap-1">
                               <MessageCircle className="h-4 w-4" />
-                              <span>{post.post.commentCount}</span>
+                              <span className="text-xs">{post.post.commentCount}</span>
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="aspect-square p-0 sm:aspect-auto sm:px-3">
                               <Share2 className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="aspect-square p-0 sm:aspect-auto sm:px-3">
                               <Bookmark className="h-4 w-4" />
                             </Button>
                           </div>
@@ -463,7 +468,8 @@ const GreenSocialsPage = () => {
                         </p>
                         <Button variant="outline" className="flex items-center gap-1.5">
                           <Compass className="h-4 w-4" />
-                          <span>Discover Users and Communities</span>
+                          <span className="hidden sm:inline-block">Discover Users and Communities</span>
+                          <span className="sm:hidden">Discover</span>
                         </Button>
                       </CardContent>
                     </Card>
@@ -525,7 +531,8 @@ const GreenSocialsPage = () => {
                   <CardFooter className="pt-0">
                     <Button variant="outline" size="sm" className="w-full flex items-center gap-1.5">
                       <Compass className="h-4 w-4" />
-                      <span>Browse Marketplace</span>
+                      <span className="hidden sm:inline-block">Browse Marketplace</span>
+                      <span className="sm:hidden">Browse</span>
                     </Button>
                   </CardFooter>
                 </Card>
@@ -564,7 +571,8 @@ const GreenSocialsPage = () => {
                   <CardFooter className="pt-0">
                     <Button variant="outline" size="sm" className="w-full flex items-center gap-1.5">
                       <Cloud className="h-4 w-4" />
-                      <span>See Full Forecast</span>
+                      <span className="hidden sm:inline-block">See Full Forecast</span>
+                      <span className="sm:hidden">Forecast</span>
                     </Button>
                   </CardFooter>
                 </Card>
@@ -685,7 +693,8 @@ const GreenSocialsPage = () => {
               <CardFooter className="justify-center border-t pt-6">
                 <Button variant="outline" className="flex items-center gap-1.5">
                   <Newspaper className="h-4 w-4" />
-                  <span>View All News</span>
+                  <span className="hidden sm:inline-block">View All News</span>
+                  <span className="sm:hidden">View All</span>
                   <ArrowRight className="h-3.5 w-3.5 ml-1" />
                 </Button>
               </CardFooter>
