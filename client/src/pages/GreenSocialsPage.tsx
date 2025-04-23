@@ -28,7 +28,8 @@ import {
   ArrowRight,
   Cloud,
   AlertTriangle,
-  Sprout
+  Sprout,
+  Plus
 } from "lucide-react";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -216,6 +217,115 @@ const GreenSocialsPage = () => {
           <TabsContent value="feed">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
+                {/* Stories Section */}
+                <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-primary/10 rounded-full p-1.5">
+                          <Users className="h-4 w-4 text-primary" />
+                        </div>
+                        <h3 className="font-medium">Stories</h3>
+                      </div>
+                      <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1.5">
+                        <span>View All</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    
+                    <div className="flex overflow-x-auto pb-2 gap-4 scrollbar-hide">
+                      {/* Add Story */}
+                      <div className="flex flex-col items-center space-y-1.5 flex-shrink-0">
+                        <div className="relative w-16 h-16 rounded-full border-2 border-muted flex items-center justify-center bg-background cursor-pointer hover:bg-primary/10 transition-colors group">
+                          <div className="bg-primary/10 rounded-full p-1.5 group-hover:bg-primary/20 transition-colors">
+                            <Plus className="h-5 w-5 text-primary" />
+                          </div>
+                        </div>
+                        <span className="text-xs text-muted-foreground">Add Story</span>
+                      </div>
+                      
+                      {/* User Stories */}
+                      <div className="flex flex-col items-center space-y-1.5 flex-shrink-0">
+                        <div className="relative w-16 h-16 cursor-pointer">
+                          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary to-primary-foreground animate-pulse"></div>
+                          <div className="absolute inset-0 rounded-full border-2 border-background m-0.5">
+                            <Avatar className="w-full h-full border-2 border-background">
+                              <AvatarImage src="https://ui.shadcn.com/avatars/01.png" />
+                              <AvatarFallback>MK</AvatarFallback>
+                            </Avatar>
+                          </div>
+                        </div>
+                        <span className="text-xs">Maria K.</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center space-y-1.5 flex-shrink-0">
+                        <div className="relative w-16 h-16 cursor-pointer">
+                          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary to-green-500 animate-pulse"></div>
+                          <div className="absolute inset-0 rounded-full border-2 border-background m-0.5">
+                            <Avatar className="w-full h-full border-2 border-background">
+                              <AvatarImage src="https://ui.shadcn.com/avatars/02.png" />
+                              <AvatarFallback>JD</AvatarFallback>
+                            </Avatar>
+                          </div>
+                        </div>
+                        <span className="text-xs">James D.</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center space-y-1.5 flex-shrink-0">
+                        <div className="relative w-16 h-16 cursor-pointer">
+                          <div className="absolute inset-0 rounded-full bg-muted"></div>
+                          <div className="absolute inset-0 rounded-full border-2 border-background m-0.5">
+                            <Avatar className="w-full h-full border-2 border-background">
+                              <AvatarImage src="https://ui.shadcn.com/avatars/03.png" />
+                              <AvatarFallback>SC</AvatarFallback>
+                            </Avatar>
+                          </div>
+                        </div>
+                        <span className="text-xs">Sarah C.</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center space-y-1.5 flex-shrink-0">
+                        <div className="relative w-16 h-16 cursor-pointer">
+                          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary to-blue-500 animate-pulse"></div>
+                          <div className="absolute inset-0 rounded-full border-2 border-background m-0.5">
+                            <Avatar className="w-full h-full border-2 border-background">
+                              <AvatarImage src="https://ui.shadcn.com/avatars/04.png" />
+                              <AvatarFallback>TM</AvatarFallback>
+                            </Avatar>
+                          </div>
+                        </div>
+                        <span className="text-xs">Thabo M.</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center space-y-1.5 flex-shrink-0">
+                        <div className="relative w-16 h-16 cursor-pointer">
+                          <div className="absolute inset-0 rounded-full bg-muted"></div>
+                          <div className="absolute inset-0 rounded-full border-2 border-background m-0.5">
+                            <Avatar className="w-full h-full border-2 border-background">
+                              <AvatarImage src="https://ui.shadcn.com/avatars/05.png" />
+                              <AvatarFallback>EJ</AvatarFallback>
+                            </Avatar>
+                          </div>
+                        </div>
+                        <span className="text-xs">Esther J.</span>
+                      </div>
+                      
+                      <div className="flex flex-col items-center space-y-1.5 flex-shrink-0">
+                        <div className="relative w-16 h-16 cursor-pointer">
+                          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary to-orange-500 animate-pulse"></div>
+                          <div className="absolute inset-0 rounded-full border-2 border-background m-0.5">
+                            <Avatar className="w-full h-full border-2 border-background">
+                              <AvatarImage src="https://ui.shadcn.com/avatars/06.png" />
+                              <AvatarFallback>KN</AvatarFallback>
+                            </Avatar>
+                          </div>
+                        </div>
+                        <span className="text-xs">Kwame N.</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
                 {/* Create Post Card */}
                 <Card>
                   <CardHeader className="pb-3">
