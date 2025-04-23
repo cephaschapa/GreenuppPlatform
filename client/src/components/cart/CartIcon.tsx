@@ -121,7 +121,7 @@ export function CartIcon({
                     <div className="flex items-start gap-3">
                       <div className="h-14 w-14 rounded bg-muted/80 flex-shrink-0"></div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm leading-tight truncate">{item.productTitle}</p>
+                        <p className="font-medium text-sm leading-tight truncate">{item.listing?.title || "Product"}</p>
                         <p className="text-xs text-muted-foreground mb-1">{formatCurrency(Number(item.price))}</p>
                         
                         <div className="flex items-center justify-between">
