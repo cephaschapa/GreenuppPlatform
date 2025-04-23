@@ -485,7 +485,10 @@ const GreenSocialsPage = () => {
                       </p>
                     </CardContent>
                     <CardFooter className="flex justify-between pt-0">
-                      <Button variant="link" className="p-0 h-auto text-primary">Read More</Button>
+                      <Button variant="link" className="p-0 h-auto text-primary flex items-center gap-1.5">
+                        <span>Read More</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
                     </CardFooter>
                   </Card>
                   
@@ -504,7 +507,10 @@ const GreenSocialsPage = () => {
                       </p>
                     </CardContent>
                     <CardFooter className="flex justify-between pt-0">
-                      <Button variant="link" className="p-0 h-auto text-primary">Read More</Button>
+                      <Button variant="link" className="p-0 h-auto text-primary flex items-center gap-1.5">
+                        <span>Read More</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
                     </CardFooter>
                   </Card>
                   
@@ -523,7 +529,10 @@ const GreenSocialsPage = () => {
                       </p>
                     </CardContent>
                     <CardFooter className="flex justify-between pt-0">
-                      <Button variant="link" className="p-0 h-auto text-primary">Read More</Button>
+                      <Button variant="link" className="p-0 h-auto text-primary flex items-center gap-1.5">
+                        <span>Read More</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Button>
                     </CardFooter>
                   </Card>
                 </div>
