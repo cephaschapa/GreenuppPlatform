@@ -83,22 +83,22 @@ const GreenSocialsPage = () => {
 
   // Query for fetching user's social profile
   const { data: profile, isLoading: isProfileLoading } = useQuery({
-    queryKey: ["/api/social/profile", user?.id],
-    queryFn: () => apiRequest("GET", `/api/social/profile/${user?.id}`).then(res => res.json()),
+    queryKey: ["/profile", user?.id],
+    queryFn: () => apiRequest("GET", `/profile/${user?.id}`).then(res => res.json()),
     enabled: !!user,
   });
 
   // Query for fetching social feed
   const { data: feed, isLoading: isFeedLoading } = useQuery({
-    queryKey: ["/api/social/feed"],
-    queryFn: () => apiRequest("GET", "/api/social/feed").then(res => res.json()),
+    queryKey: ["/feed"],
+    queryFn: () => apiRequest("GET", "/feed").then(res => res.json()),
     enabled: !!user,
   });
 
   // Mutation for creating a new post
   const createPostMutation = useMutation({
     mutationFn: async (content: string) => {
-      const res = await apiRequest("POST", "/api/social/posts", {
+      const res = await apiRequest("POST", "/posts", {
         content,
         postType: "text",
         visibility: "public"
@@ -111,7 +111,7 @@ const GreenSocialsPage = () => {
         description: "Your post has been published successfully!",
       });
       setNewPostContent("");
-      queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/feed"] });
     },
     onError: (error: any) => {
       toast({
@@ -157,7 +157,7 @@ const GreenSocialsPage = () => {
 
   if (isProfileLoading) {
     return (
-      <DashboardLayout>
+      <DashboardLayout title="Green Socials">
         <div className="flex justify-center items-center h-96">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
@@ -166,7 +166,7 @@ const GreenSocialsPage = () => {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Green Socials">
       <div className="container mx-auto py-6">
         <h1 className="text-3xl font-bold mb-6">Green Socials</h1>
         
