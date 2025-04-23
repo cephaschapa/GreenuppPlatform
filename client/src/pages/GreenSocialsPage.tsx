@@ -29,7 +29,8 @@ import {
   Cloud,
   AlertTriangle,
   Sprout,
-  Plus
+  Plus,
+  ShoppingBag
 } from "lucide-react";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -191,28 +192,28 @@ const GreenSocialsPage = () => {
         <h1 className="text-3xl font-bold mb-6">Green Socials</h1>
         
         <Tabs defaultValue="feed" className="w-full">
-          <TabsList className="mb-6 flex-wrap">
-            <TabsTrigger value="feed" className="flex items-center gap-1.5">
+          <TabsList className="mb-6 flex w-full grid grid-cols-5">
+            <TabsTrigger value="feed" className="flex items-center justify-center gap-1.5">
               <Home className="h-4 w-4" />
               <span className="hidden sm:inline-block">Feed</span>
               <span className="sr-only sm:hidden">Feed</span>
             </TabsTrigger>
-            <TabsTrigger value="news" className="flex items-center gap-1.5">
+            <TabsTrigger value="news" className="flex items-center justify-center gap-1.5">
               <Newspaper className="h-4 w-4" />
               <span className="hidden sm:inline-block">News</span>
               <span className="sr-only sm:hidden">News</span>
             </TabsTrigger>
-            <TabsTrigger value="communities" className="flex items-center gap-1.5">
+            <TabsTrigger value="communities" className="flex items-center justify-center gap-1.5">
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline-block">Communities</span>
               <span className="sr-only sm:hidden">Communities</span>
             </TabsTrigger>
-            <TabsTrigger value="discover" className="flex items-center gap-1.5">
+            <TabsTrigger value="discover" className="flex items-center justify-center gap-1.5">
               <Compass className="h-4 w-4" />
               <span className="hidden sm:inline-block">Discover</span>
               <span className="sr-only sm:hidden">Discover</span>
             </TabsTrigger>
-            <TabsTrigger value="knowledge" className="flex items-center gap-1.5">
+            <TabsTrigger value="knowledge" className="flex items-center justify-center gap-1.5">
               <Lightbulb className="h-4 w-4" />
               <span className="hidden sm:inline-block">Knowledge Base</span>
               <span className="sr-only sm:hidden">Knowledge Base</span>
@@ -383,82 +384,265 @@ const GreenSocialsPage = () => {
                       <Loader2 className="w-8 h-8 animate-spin text-primary" />
                     </div>
                   ) : feed && feed.length > 0 ? (
-                    feed.map((post: Post) => (
-                      <Card key={post.post.id} className="overflow-hidden">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start gap-4">
-                            <Avatar>
-                              <AvatarImage src={post.author.profileImage || undefined} />
-                              <AvatarFallback>{getInitials(post.profile.displayName || post.author.username)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <CardTitle className="text-base">{post.profile.displayName || post.author.username}</CardTitle>
-                              <CardDescription>{formatDate(post.post.publishedAt)}</CardDescription>
+                    // Create a combined array with posts and sponsored content for mobile view
+                    <>
+                      {/* Merged Feed for Mobile */}
+                      <div className="lg:hidden space-y-6">
+                        {[...feed]
+                          // Insert sponsored ads at positions 2 and 5
+                          .reduce((result: (Post | { isSponsoredAd: boolean; adId: number; adContent: React.ReactNode })[], post, idx) => {
+                            result.push(post);
+                            
+                            // After second post, add first sponsored ad
+                            if (idx === 1) {
+                              result.push({
+                                isSponsoredAd: true,
+                                adId: 1,
+                                adContent: (
+                                  <Card className="overflow-hidden">
+                                    <CardHeader className="pb-3">
+                                      <div className="flex items-start gap-4">
+                                        <div className="bg-primary/10 rounded-full p-2">
+                                          <Bookmark className="h-4 w-4 text-primary" />
+                                        </div>
+                                        <div>
+                                          <CardTitle className="text-base flex items-center">
+                                            Sponsored
+                                            <Badge variant="outline" className="ml-2 text-xs">Premium Seed</Badge>
+                                          </CardTitle>
+                                          <CardDescription>Climate-Resilient Maize Seeds</CardDescription>
+                                        </div>
+                                      </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <div className="aspect-video bg-muted rounded-md mb-3 relative">
+                                        <div className="absolute inset-0 flex items-end p-3">
+                                          <span className="text-xs bg-black/60 text-white px-2 py-1 rounded">Product</span>
+                                        </div>
+                                      </div>
+                                      <p className="text-sm">Early-maturing, drought-resistant variety perfect for uncertain climate conditions.</p>
+                                      <div className="mt-2 flex justify-between items-center">
+                                        <span className="font-bold">ZMW 850</span>
+                                        <Button variant="outline" size="sm" className="h-8 px-2 text-xs flex items-center gap-1">
+                                          <span>View Listing</span>
+                                          <ArrowRight className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+                                )
+                              });
+                            }
+                            
+                            // After fifth post, add second sponsored ad
+                            if (idx === 4 && feed.length > 4) {
+                              result.push({
+                                isSponsoredAd: true,
+                                adId: 2,
+                                adContent: (
+                                  <Card className="overflow-hidden">
+                                    <CardHeader className="pb-3">
+                                      <div className="flex items-start gap-4">
+                                        <div className="bg-orange-500/10 rounded-full p-2">
+                                          <ShoppingBag className="h-4 w-4 text-orange-500" />
+                                        </div>
+                                        <div>
+                                          <CardTitle className="text-base flex items-center">
+                                            Sponsored
+                                            <Badge variant="outline" className="ml-2 text-xs bg-orange-500/10">Equipment</Badge>
+                                          </CardTitle>
+                                          <CardDescription>Portable Soil Testing Kit</CardDescription>
+                                        </div>
+                                      </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <div className="aspect-video bg-muted rounded-md mb-3 relative">
+                                        <div className="absolute inset-0 flex items-end p-3">
+                                          <span className="text-xs bg-black/60 text-white px-2 py-1 rounded">Equipment</span>
+                                        </div>
+                                      </div>
+                                      <p className="text-sm">Analyze soil nutrients in minutes with this portable testing kit.</p>
+                                      <div className="mt-2 flex justify-between items-center">
+                                        <span className="font-bold">ZMW 1,200</span>
+                                        <Button variant="outline" size="sm" className="h-8 px-2 text-xs flex items-center gap-1">
+                                          <span>View Listing</span>
+                                          <ArrowRight className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+                                )
+                              });
+                            }
+                            
+                            return result;
+                          }, [])
+                          .map((item, idx) => {
+                            if ('isSponsoredAd' in item) {
+                              return <div key={`ad-${item.adId}`}>{item.adContent}</div>;
+                            }
+                            
+                            const post = item as Post;
+                            return (
+                              <Card key={`post-${post.post.id}`} className="overflow-hidden">
+                                <CardHeader className="pb-3">
+                                  <div className="flex items-start gap-4">
+                                    <Avatar>
+                                      <AvatarImage src={post.author.profileImage || undefined} />
+                                      <AvatarFallback>{getInitials(post.profile.displayName || post.author.username)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                      <CardTitle className="text-base">{post.profile.displayName || post.author.username}</CardTitle>
+                                      <CardDescription>{formatDate(post.post.publishedAt)}</CardDescription>
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                                <CardContent>
+                                  <div className="whitespace-pre-wrap">{post.post.content}</div>
+                                  
+                                  {post.post.media && post.post.media.length > 0 && (
+                                    <div className="mt-4 rounded-md overflow-hidden">
+                                      {post.post.media.map((item, idx) => (
+                                        item.type.includes('image') ? (
+                                          <img 
+                                            key={idx}
+                                            src={item.url} 
+                                            alt={item.caption || 'Post image'} 
+                                            className="w-full h-auto object-cover max-h-96"
+                                          />
+                                        ) : null
+                                      ))}
+                                    </div>
+                                  )}
+                                  
+                                  {post.post.hashtags && post.post.hashtags.length > 0 && (
+                                    <div className="mt-2">
+                                      {post.post.hashtags.map((tag, idx) => (
+                                        <span key={idx} className="text-primary mr-2">#{tag}</span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </CardContent>
+                                <CardFooter className="border-t px-6 py-3">
+                                  <div className="flex justify-between w-full">
+                                    <Button variant="ghost" size="sm" className="gap-1">
+                                      <Heart className="h-4 w-4" />
+                                      <span className="text-xs">{post.post.likeCount}</span>
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="gap-1">
+                                      <MessageCircle className="h-4 w-4" />
+                                      <span className="text-xs">{post.post.commentCount}</span>
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="aspect-square p-0 sm:aspect-auto sm:px-3">
+                                      <Share2 className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="aspect-square p-0 sm:aspect-auto sm:px-3">
+                                      <Bookmark className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </CardFooter>
+                                
+                                {/* Comment section (collapsed by default) */}
+                                <div className="px-6 py-3 bg-muted/20">
+                                  <div className="flex gap-2">
+                                    <Avatar className="w-8 h-8">
+                                      <AvatarImage src={user?.profileImage || undefined} />
+                                      <AvatarFallback>{getInitials(user?.username || "")}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 flex items-center gap-2">
+                                      <Input placeholder="Write a comment..." className="h-9" />
+                                      <Button size="icon" className="h-9 w-9">
+                                        <Send className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Card>
+                            );
+                          })
+                        }
+                      </div>
+                      
+                      {/* Regular Feed for Desktop */}
+                      <div className="hidden lg:block space-y-6">
+                        {feed.map((post: Post) => (
+                          <Card key={post.post.id} className="overflow-hidden">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start gap-4">
+                                <Avatar>
+                                  <AvatarImage src={post.author.profileImage || undefined} />
+                                  <AvatarFallback>{getInitials(post.profile.displayName || post.author.username)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <CardTitle className="text-base">{post.profile.displayName || post.author.username}</CardTitle>
+                                  <CardDescription>{formatDate(post.post.publishedAt)}</CardDescription>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="whitespace-pre-wrap">{post.post.content}</div>
+                              
+                              {post.post.media && post.post.media.length > 0 && (
+                                <div className="mt-4 rounded-md overflow-hidden">
+                                  {post.post.media.map((item, idx) => (
+                                    item.type.includes('image') ? (
+                                      <img 
+                                        key={idx}
+                                        src={item.url} 
+                                        alt={item.caption || 'Post image'} 
+                                        className="w-full h-auto object-cover max-h-96"
+                                      />
+                                    ) : null
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {post.post.hashtags && post.post.hashtags.length > 0 && (
+                                <div className="mt-2">
+                                  {post.post.hashtags.map((tag, idx) => (
+                                    <span key={idx} className="text-primary mr-2">#{tag}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </CardContent>
+                            <CardFooter className="border-t px-6 py-3">
+                              <div className="flex justify-between w-full">
+                                <Button variant="ghost" size="sm" className="gap-1">
+                                  <Heart className="h-4 w-4" />
+                                  <span className="text-xs">{post.post.likeCount}</span>
+                                </Button>
+                                <Button variant="ghost" size="sm" className="gap-1">
+                                  <MessageCircle className="h-4 w-4" />
+                                  <span className="text-xs">{post.post.commentCount}</span>
+                                </Button>
+                                <Button variant="ghost" size="sm" className="aspect-square p-0 sm:aspect-auto sm:px-3">
+                                  <Share2 className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="aspect-square p-0 sm:aspect-auto sm:px-3">
+                                  <Bookmark className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </CardFooter>
+                            
+                            {/* Comment section (collapsed by default) */}
+                            <div className="px-6 py-3 bg-muted/20">
+                              <div className="flex gap-2">
+                                <Avatar className="w-8 h-8">
+                                  <AvatarImage src={user?.profileImage || undefined} />
+                                  <AvatarFallback>{getInitials(user?.username || "")}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 flex items-center gap-2">
+                                  <Input placeholder="Write a comment..." className="h-9" />
+                                  <Button size="icon" className="h-9 w-9">
+                                    <Send className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="whitespace-pre-wrap">{post.post.content}</div>
-                          
-                          {post.post.media && post.post.media.length > 0 && (
-                            <div className="mt-4 rounded-md overflow-hidden">
-                              {post.post.media.map((item, idx) => (
-                                item.type.includes('image') ? (
-                                  <img 
-                                    key={idx}
-                                    src={item.url} 
-                                    alt={item.caption || 'Post image'} 
-                                    className="w-full h-auto object-cover max-h-96"
-                                  />
-                                ) : null
-                              ))}
-                            </div>
-                          )}
-                          
-                          {post.post.hashtags && post.post.hashtags.length > 0 && (
-                            <div className="mt-2">
-                              {post.post.hashtags.map((tag, idx) => (
-                                <span key={idx} className="text-primary mr-2">#{tag}</span>
-                              ))}
-                            </div>
-                          )}
-                        </CardContent>
-                        <CardFooter className="border-t px-6 py-3">
-                          <div className="flex justify-between w-full">
-                            <Button variant="ghost" size="sm" className="gap-1">
-                              <Heart className="h-4 w-4" />
-                              <span className="text-xs">{post.post.likeCount}</span>
-                            </Button>
-                            <Button variant="ghost" size="sm" className="gap-1">
-                              <MessageCircle className="h-4 w-4" />
-                              <span className="text-xs">{post.post.commentCount}</span>
-                            </Button>
-                            <Button variant="ghost" size="sm" className="aspect-square p-0 sm:aspect-auto sm:px-3">
-                              <Share2 className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="aspect-square p-0 sm:aspect-auto sm:px-3">
-                              <Bookmark className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </CardFooter>
-                        
-                        {/* Comment section (collapsed by default) */}
-                        <div className="px-6 py-3 bg-muted/20">
-                          <div className="flex gap-2">
-                            <Avatar className="w-8 h-8">
-                              <AvatarImage src={user?.profileImage || undefined} />
-                              <AvatarFallback>{getInitials(user?.username || "")}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 flex items-center gap-2">
-                              <Input placeholder="Write a comment..." className="h-9" />
-                              <Button size="icon" className="h-9 w-9">
-                                <Send className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </Card>
-                    ))
+                          </Card>
+                        ))}
+                      </div>
+                    </>
                   ) : (
                     <Card>
                       <CardContent className="flex flex-col items-center justify-center py-12">
