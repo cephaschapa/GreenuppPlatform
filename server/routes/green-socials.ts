@@ -660,8 +660,8 @@ greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
     
     const followedIdsStr = followedIds.join(',') || '0';
     
-    // Find expert/verified users that the current user doesn't follow
-    const expertUsersResult = await db.execute(
+    // First, let's get all users with social profiles (debug - to see if we have any)
+    const allUsersResult = await db.execute(
       sql`SELECT 
             u.id as "userId",
             u.username,
@@ -676,61 +676,19 @@ greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
             sp.following_count as "followingCount"
           FROM users u
           JOIN social_profiles sp ON u.id = sp.user_id
-          WHERE u.id NOT IN (${sql.raw(followedIdsStr)})
-          AND (sp.expertise IS NOT NULL OR sp.verification_status = 'verified' OR sp.verification_status = 'expert')
+          WHERE u.id != ${userId}
           ORDER BY sp.follower_count DESC
           LIMIT ${limit}`
     );
     
-    // If we don't have enough experts, add regular users
-    let expertUserCount = 0;
-    const expertUserIds: number[] = [];
+    // Convert to array of objects
+    const allSuggestedUsers = Array.isArray(allUsersResult) ? allUsersResult : [];
     
-    if (Array.isArray(expertUsersResult)) {
-      expertUserCount = expertUsersResult.length;
-      expertUsersResult.forEach((u: any) => {
-        if (u && u.userId) {
-          expertUserIds.push(u.userId);
-        }
-      });
-    }
+    // Filter out users that the current user is already following
+    const expertUsersResult = allSuggestedUsers.filter(user => !followedIds.includes(user.userId));
     
-    if (expertUserCount < limit) {
-      const expertUserIdsStr = expertUserIds.join(',') || '0';
-      const remainingLimit = limit - expertUserCount;
-      
-      const regularUsersResult = await db.execute(
-        sql`SELECT 
-              u.id as "userId",
-              u.username,
-              u.profile_image as "profileImage",
-              sp.display_name as "displayName",
-              sp.bio,
-              sp.expertise,
-              sp.specializations,
-              sp.location,
-              sp.verification_status as "verificationStatus",
-              sp.follower_count as "followerCount",
-              sp.following_count as "followingCount"
-            FROM users u
-            JOIN social_profiles sp ON u.id = sp.user_id
-            WHERE u.id NOT IN (${sql.raw(followedIdsStr)})
-            AND u.id NOT IN (${sql.raw(expertUserIdsStr)})
-            ORDER BY sp.follower_count DESC
-            LIMIT ${remainingLimit}`
-      );
-      
-      // Combine both results
-      const combinedResults = [];
-      if (Array.isArray(expertUsersResult)) {
-        combinedResults.push(...expertUsersResult);
-      }
-      if (Array.isArray(regularUsersResult)) {
-        combinedResults.push(...regularUsersResult);
-      }
-      
-      return res.json(combinedResults);
-    }
+    // Return all suggested users
+    console.log(`Found ${allSuggestedUsers.length} potential suggested users, filtered to ${expertUsersResult.length} not followed`);
     
     return res.json(expertUsersResult);
   } catch (error) {
