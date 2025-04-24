@@ -124,29 +124,29 @@ const GreenSocialsPage = () => {
   
   // Query for fetching people the user follows
   const followingQuery = useQuery({
-    queryKey: ["/social/following"],
-    queryFn: () => apiRequest("GET", "/social/following").then(res => res.json()),
+    queryKey: ["/api/social/following"],
+    queryFn: () => apiRequest("GET", "/api/social/following").then(res => res.json()),
     enabled: !!user,
   });
   
   // Query for fetching suggested people to follow
   const suggestedQuery = useQuery({
-    queryKey: ["/social/suggested"],
-    queryFn: () => apiRequest("GET", "/social/suggested").then(res => res.json()),
+    queryKey: ["/api/social/suggested"],
+    queryFn: () => apiRequest("GET", "/api/social/suggested").then(res => res.json()),
     enabled: !!user,
   });
   
   // Query for fetching recent activity
   const activityQuery = useQuery({
-    queryKey: ["/social/activity"],
-    queryFn: () => apiRequest("GET", "/social/activity").then(res => res.json()),
+    queryKey: ["/api/social/activity"],
+    queryFn: () => apiRequest("GET", "/api/social/activity").then(res => res.json()),
     enabled: !!user,
   });
   
   // Query for fetching expertise categories
   const categoriesQuery = useQuery({
-    queryKey: ["/social/expertise-categories"],
-    queryFn: () => apiRequest("GET", "/social/expertise-categories").then(res => res.json()),
+    queryKey: ["/api/social/expertise-categories"],
+    queryFn: () => apiRequest("GET", "/api/social/expertise-categories").then(res => res.json()),
     enabled: !!user,
   });
 
@@ -180,7 +180,7 @@ const GreenSocialsPage = () => {
   // Mutation for following a user
   const followMutation = useMutation({
     mutationFn: async (userId: number) => {
-      const res = await apiRequest("POST", `/social/follow/${userId}`);
+      const res = await apiRequest("POST", `/api/social/follow/${userId}`);
       return res.json();
     },
     onSuccess: () => {
@@ -190,9 +190,9 @@ const GreenSocialsPage = () => {
       });
       
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["/social/following"] });
-      queryClient.invalidateQueries({ queryKey: ["/social/suggested"] });
-      queryClient.invalidateQueries({ queryKey: ["/social/activity"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/following"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/suggested"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/activity"] });
     },
     onError: (error: any) => {
       toast({
@@ -206,7 +206,7 @@ const GreenSocialsPage = () => {
   // Mutation for unfollowing a user
   const unfollowMutation = useMutation({
     mutationFn: async (userId: number) => {
-      const res = await apiRequest("DELETE", `/social/follow/${userId}`);
+      const res = await apiRequest("DELETE", `/api/social/follow/${userId}`);
       return res.json();
     },
     onSuccess: () => {
@@ -216,9 +216,9 @@ const GreenSocialsPage = () => {
       });
       
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["/social/following"] });
-      queryClient.invalidateQueries({ queryKey: ["/social/suggested"] });
-      queryClient.invalidateQueries({ queryKey: ["/social/activity"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/following"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/suggested"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/activity"] });
     },
     onError: (error: any) => {
       toast({
