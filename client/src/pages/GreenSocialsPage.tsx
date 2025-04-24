@@ -21,6 +21,7 @@ import {
   Home, 
   Newspaper, 
   Users, 
+  UserPlus,
   Compass, 
   Lightbulb,
   Image,
@@ -31,7 +32,11 @@ import {
   Sprout,
   Plus,
   ShoppingBag,
-  MapPin
+  MapPin,
+  UserCheck,
+  Award,
+  Star,
+  Crop
 } from "lucide-react";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -205,7 +210,7 @@ const GreenSocialsPage = () => {
               <span className="sr-only sm:hidden">News</span>
             </TabsTrigger>
             <TabsTrigger value="communities" className="flex items-center justify-center gap-1.5">
-              <Users className="h-4 w-4" />
+              <UserPlus className="h-4 w-4" />
               <span className="hidden sm:inline-block">Communities</span>
               <span className="sr-only sm:hidden">Communities</span>
             </TabsTrigger>
@@ -214,10 +219,10 @@ const GreenSocialsPage = () => {
               <span className="hidden sm:inline-block">Discover</span>
               <span className="sr-only sm:hidden">Discover</span>
             </TabsTrigger>
-            <TabsTrigger value="knowledge" className="flex items-center justify-center gap-1.5">
-              <Lightbulb className="h-4 w-4" />
-              <span className="hidden sm:inline-block">Knowledge Base</span>
-              <span className="sr-only sm:hidden">Knowledge Base</span>
+            <TabsTrigger value="people" className="flex items-center justify-center gap-1.5">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline-block">People</span>
+              <span className="sr-only sm:hidden">People</span>
             </TabsTrigger>
           </TabsList>
           
@@ -955,12 +960,306 @@ const GreenSocialsPage = () => {
             </Card>
           </TabsContent>
           
-          <TabsContent value="knowledge">
-            <Card>
-              <CardContent className="pt-6">
-                <p>Knowledge Base features are coming soon!</p>
-              </CardContent>
-            </Card>
+          <TabsContent value="people">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* People You Follow Section */}
+              <div className="md:col-span-2 space-y-6">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-primary/10 rounded-full p-1.5">
+                          <UserCheck className="h-5 w-5 text-primary" />
+                        </div>
+                        <CardTitle className="text-xl">People You Follow</CardTitle>
+                      </div>
+                      <Button variant="outline" size="sm" className="h-8 text-xs">
+                        See All
+                      </Button>
+                    </div>
+                    <CardDescription>Connect with farming experts and friends in your network</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {/* Person Card 1 */}
+                      <div className="flex flex-col items-center border rounded-lg p-4 hover:border-primary/50 hover:shadow-sm transition-all">
+                        <div className="relative mb-2">
+                          <Avatar className="h-16 w-16">
+                            <AvatarImage src="https://ui.shadcn.com/avatars/01.png" />
+                            <AvatarFallback>MK</AvatarFallback>
+                          </Avatar>
+                          <div className="absolute -top-1 -right-1 bg-primary/10 rounded-full p-1">
+                            <Award className="h-4 w-4 text-primary" />
+                          </div>
+                        </div>
+                        <h4 className="font-medium">Maria Kamau</h4>
+                        <p className="text-xs text-muted-foreground mb-2">Soil Specialist • Lusaka</p>
+                        <div className="flex gap-1 mb-3">
+                          <Badge variant="outline" className="text-xs">Organic</Badge>
+                          <Badge variant="outline" className="text-xs">Maize</Badge>
+                        </div>
+                        <div className="flex gap-2 w-full">
+                          <Button variant="secondary" size="sm" className="flex-1 text-xs">Message</Button>
+                          <Button variant="outline" size="sm" className="text-xs">Unfollow</Button>
+                        </div>
+                      </div>
+                      
+                      {/* Person Card 2 */}
+                      <div className="flex flex-col items-center border rounded-lg p-4 hover:border-primary/50 hover:shadow-sm transition-all">
+                        <div className="relative mb-2">
+                          <Avatar className="h-16 w-16">
+                            <AvatarImage src="https://ui.shadcn.com/avatars/03.png" />
+                            <AvatarFallback>TK</AvatarFallback>
+                          </Avatar>
+                          <div className="absolute -top-1 -right-1 bg-green-500/10 rounded-full p-1">
+                            <Crop className="h-4 w-4 text-green-500" />
+                          </div>
+                        </div>
+                        <h4 className="font-medium">Thomas Kasongo</h4>
+                        <p className="text-xs text-muted-foreground mb-2">Crop Farmer • Northern Province</p>
+                        <div className="flex gap-1 mb-3">
+                          <Badge variant="outline" className="text-xs">Sorghum</Badge>
+                          <Badge variant="outline" className="text-xs">Rice</Badge>
+                        </div>
+                        <div className="flex gap-2 w-full">
+                          <Button variant="secondary" size="sm" className="flex-1 text-xs">Message</Button>
+                          <Button variant="outline" size="sm" className="text-xs">Unfollow</Button>
+                        </div>
+                      </div>
+                      
+                      {/* Person Card 3 */}
+                      <div className="flex flex-col items-center border rounded-lg p-4 hover:border-primary/50 hover:shadow-sm transition-all">
+                        <div className="relative mb-2">
+                          <Avatar className="h-16 w-16">
+                            <AvatarImage src="https://ui.shadcn.com/avatars/04.png" />
+                            <AvatarFallback>EJ</AvatarFallback>
+                          </Avatar>
+                        </div>
+                        <h4 className="font-medium">Emmanuel Juma</h4>
+                        <p className="text-xs text-muted-foreground mb-2">Equipment Supplier • Lusaka</p>
+                        <div className="flex gap-1 mb-3">
+                          <Badge variant="outline" className="text-xs">Irrigation</Badge>
+                          <Badge variant="outline" className="text-xs">Tools</Badge>
+                        </div>
+                        <div className="flex gap-2 w-full">
+                          <Button variant="secondary" size="sm" className="flex-1 text-xs">Message</Button>
+                          <Button variant="outline" size="sm" className="text-xs">Unfollow</Button>
+                        </div>
+                      </div>
+                      
+                      {/* Person Card 4 */}
+                      <div className="flex flex-col items-center border rounded-lg p-4 hover:border-primary/50 hover:shadow-sm transition-all">
+                        <div className="relative mb-2">
+                          <Avatar className="h-16 w-16">
+                            <AvatarImage src="https://ui.shadcn.com/avatars/05.png" />
+                            <AvatarFallback>SS</AvatarFallback>
+                          </Avatar>
+                          <div className="absolute -top-1 -right-1 bg-blue-500/10 rounded-full p-1">
+                            <Users className="h-4 w-4 text-blue-500" />
+                          </div>
+                        </div>
+                        <h4 className="font-medium">Sarah Sichone</h4>
+                        <p className="text-xs text-muted-foreground mb-2">Cooperative Leader • Eastern Province</p>
+                        <div className="flex gap-1 mb-3">
+                          <Badge variant="outline" className="text-xs">Cooperative</Badge>
+                          <Badge variant="outline" className="text-xs">Training</Badge>
+                        </div>
+                        <div className="flex gap-2 w-full">
+                          <Button variant="secondary" size="sm" className="flex-1 text-xs">Message</Button>
+                          <Button variant="outline" size="sm" className="text-xs">Unfollow</Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Activity Feed */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <div className="bg-primary/10 rounded-full p-1.5">
+                        <MessageCircle className="h-5 w-5 text-primary" />
+                      </div>
+                      <CardTitle>Recent Activity</CardTitle>
+                    </div>
+                    <CardDescription>See what people in your network have been up to</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex gap-3 p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src="https://ui.shadcn.com/avatars/01.png" />
+                        <AvatarFallback>MK</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm"><span className="font-medium">Maria Kamau</span> shared a post about soil testing techniques</p>
+                        <p className="text-xs text-muted-foreground mt-1">1 hour ago</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-3 p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src="https://ui.shadcn.com/avatars/03.png" />
+                        <AvatarFallback>TK</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm"><span className="font-medium">Thomas Kasongo</span> added new photos of sorghum fields</p>
+                        <p className="text-xs text-muted-foreground mt-1">3 hours ago</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-3 p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src="https://ui.shadcn.com/avatars/04.png" />
+                        <AvatarFallback>EJ</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm"><span className="font-medium">Emmanuel Juma</span> listed new irrigation equipment in the marketplace</p>
+                        <p className="text-xs text-muted-foreground mt-1">Yesterday</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Suggested People Section */}
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <div className="bg-primary/10 rounded-full p-1.5">
+                        <UserPlus className="h-5 w-5 text-primary" />
+                      </div>
+                      <CardTitle>Suggested People</CardTitle>
+                    </div>
+                    <CardDescription>Connect with more farmers and experts</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                      <div className="flex gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src="https://ui.shadcn.com/avatars/02.png" />
+                          <AvatarFallback>DM</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">Daniel Mulenga</p>
+                          <p className="text-xs text-muted-foreground">Livestock Farmer • Copperbelt</p>
+                          <div className="flex gap-1 mt-1">
+                            <Badge variant="outline" className="text-xs">Dairy</Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <Button size="sm" className="h-8 px-3">Follow</Button>
+                    </div>
+                    
+                    <div className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                      <div className="flex gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src="https://ui.shadcn.com/avatars/06.png" />
+                          <AvatarFallback>GN</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="flex items-center gap-1">
+                            <p className="text-sm font-medium">Grace Nyoni</p>
+                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                          </div>
+                          <p className="text-xs text-muted-foreground">Seed Expert • Lusaka</p>
+                          <div className="flex gap-1 mt-1">
+                            <Badge variant="outline" className="text-xs">Seeds</Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <Button size="sm" className="h-8 px-3">Follow</Button>
+                    </div>
+                    
+                    <div className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                      <div className="flex gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src="https://ui.shadcn.com/avatars/07.png" />
+                          <AvatarFallback>CS</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">Charles Sitali</p>
+                          <p className="text-xs text-muted-foreground">Cooperative Member • Southern Province</p>
+                          <div className="flex gap-1 mt-1">
+                            <Badge variant="outline" className="text-xs">Cotton</Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <Button size="sm" className="h-8 px-3">Follow</Button>
+                    </div>
+                    
+                    <div className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                      <div className="flex gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src="https://ui.shadcn.com/avatars/08.png" />
+                          <AvatarFallback>BM</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="flex items-center gap-1">
+                            <p className="text-sm font-medium">Beatrice Mumba</p>
+                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                          </div>
+                          <p className="text-xs text-muted-foreground">Organic Farming Expert • Central Province</p>
+                          <div className="flex gap-1 mt-1">
+                            <Badge variant="outline" className="text-xs">Organic</Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <Button size="sm" className="h-8 px-3">Follow</Button>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button variant="outline" className="w-full">View More Suggestions</Button>
+                  </CardFooter>
+                </Card>
+                
+                {/* Farmers By Expertise */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <div className="bg-primary/10 rounded-full p-1.5">
+                        <Award className="h-5 w-5 text-primary" />
+                      </div>
+                      <CardTitle>Expertise Categories</CardTitle>
+                    </div>
+                    <CardDescription>Find farmers by their areas of expertise</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex justify-between p-3 border rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <Crop className="h-4 w-4 text-green-600" />
+                        <span>Crop Specialists</span>
+                      </div>
+                      <Badge>64</Badge>
+                    </div>
+                    
+                    <div className="flex justify-between p-3 border rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <Sprout className="h-4 w-4 text-green-600" />
+                        <span>Organic Farming</span>
+                      </div>
+                      <Badge>38</Badge>
+                    </div>
+                    
+                    <div className="flex justify-between p-3 border rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <Cloud className="h-4 w-4 text-blue-500" />
+                        <span>Climate Smart</span>
+                      </div>
+                      <Badge>27</Badge>
+                    </div>
+                    
+                    <div className="flex justify-between p-3 border rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <ShoppingBag className="h-4 w-4 text-orange-500" />
+                        <span>Agro Dealers</span>
+                      </div>
+                      <Badge>41</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
