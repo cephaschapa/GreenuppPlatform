@@ -266,15 +266,26 @@ export function Sidebar() {
     <>
       {/* Mobile Status Bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-sidebar text-sidebar-foreground border-b border-primary/20 flex items-center justify-between px-4 safe-top">
-        <Link
-          href="/dashboard"
-          className="text-xl font-bold font-space tracking-wider relative"
-        >
-          Green<span className="text-primary">upp</span>
-          <span className="absolute -top-1 -right-10 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
-            BETA
-          </span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="mr-1" 
+            onClick={() => setIsMobileMenuOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          
+          <Link
+            href="/dashboard"
+            className="text-xl font-bold font-space tracking-wider relative"
+          >
+            Green<span className="text-primary">upp</span>
+            <span className="absolute -top-1 -right-10 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
+              BETA
+            </span>
+          </Link>
+        </div>
 
         <div className="flex items-center gap-2">
           <CartIcon variant="mobile" />
@@ -340,15 +351,6 @@ export function Sidebar() {
             </span>
           </Link>
         ))}
-
-        <Button
-          variant="ghost"
-          className="flex flex-col items-center mt-2 justify-center gap-1 w-full h-full rounded-none text-muted-foreground"
-          onClick={() => setIsMobileMenuOpen(true)}
-        >
-          <Menu className="h-6 w-6" />
-          <span className="text-xs">Menu</span>
-        </Button>
         
         {/* Mobile Side Navigation */}
         {isMobileMenuOpen && (
