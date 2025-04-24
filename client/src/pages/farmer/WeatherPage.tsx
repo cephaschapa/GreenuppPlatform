@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { 
   Loader2, Cloud, Droplets, Thermometer, Wind, CloudRain, Sun, 
   RefreshCw, AlertTriangle, Calendar, Sprout, BarChart4, CloudFog, 
-  CloudLightning, CloudSnow, CloudDrizzle, CloudSun, Umbrella
+  CloudLightning, CloudSnow, CloudDrizzle, CloudSun, Umbrella,
+  CalendarDays, BarChart2, History, Settings
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
@@ -360,13 +361,37 @@ export default function WeatherPage() {
     >
       <div className="grid gap-8">
         <Tabs defaultValue="current" className="w-full">
-          <TabsList className="mb-4 flex flex-wrap">
-            <TabsTrigger value="current">Current Weather</TabsTrigger>
-            <TabsTrigger value="forecast">Forecast</TabsTrigger>
-            <TabsTrigger value="climate">Climate Analysis</TabsTrigger>
-            <TabsTrigger value="recommendations">Crop Recommendations</TabsTrigger>
-            <TabsTrigger value="historical">Historical Data</TabsTrigger>
-            <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          <TabsList className="mb-4 flex flex-wrap overflow-x-auto scrollbar-hide">
+            <TabsTrigger value="current" className="flex items-center gap-1.5">
+              <Cloud className="h-4 w-4" />
+              <span className="hidden sm:inline">Current Weather</span>
+              <span className="sm:hidden">Current</span>
+            </TabsTrigger>
+            <TabsTrigger value="forecast" className="flex items-center gap-1.5">
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">Forecast</span>
+              <span className="sm:hidden">Forecast</span>
+            </TabsTrigger>
+            <TabsTrigger value="climate" className="flex items-center gap-1.5">
+              <BarChart4 className="h-4 w-4" />
+              <span className="hidden sm:inline">Climate Analysis</span>
+              <span className="sm:hidden">Climate</span>
+            </TabsTrigger>
+            <TabsTrigger value="recommendations" className="flex items-center gap-1.5">
+              <Sprout className="h-4 w-4" />
+              <span className="hidden sm:inline">Crop Recommendations</span>
+              <span className="sm:hidden">Crops</span>
+            </TabsTrigger>
+            <TabsTrigger value="historical" className="flex items-center gap-1.5">
+              <RefreshCw className="h-4 w-4" />
+              <span className="hidden sm:inline">Historical Data</span>
+              <span className="sm:hidden">History</span>
+            </TabsTrigger>
+            <TabsTrigger value="preferences" className="flex items-center gap-1.5">
+              <AlertTriangle className="h-4 w-4" />
+              <span className="hidden sm:inline">Preferences</span>
+              <span className="sm:hidden">Settings</span>
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="current">
