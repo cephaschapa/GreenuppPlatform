@@ -359,31 +359,11 @@ export function Sidebar() {
               className="fixed top-0 right-0 bottom-0 w-[280px] bg-sidebar border-l border-primary/20 shadow-xl p-4 overflow-y-auto safe-top safe-bottom flex flex-col h-screen" 
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Menu</h2>
                 <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
                   <X className="h-5 w-5" />
                 </Button>
-              </div>
-              
-              <div className="mb-6">
-                <div className="flex items-center gap-3 px-2 py-3 mb-2 bg-primary/10 rounded-md">
-                  <Avatar className="h-10 w-10 border border-primary/20">
-                    <AvatarFallback className="bg-primary/20 text-primary">
-                      {(user && (user.firstName?.[0] || user.username?.[0])) || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="truncate">
-                    <p className="font-medium truncate">
-                      {user?.firstName || user?.username}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {user && user.role
-                        ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
-                        : "User"}
-                    </p>
-                  </div>
-                </div>
               </div>
               
               <div className="flex-1 overflow-y-auto">
@@ -408,21 +388,6 @@ export function Sidebar() {
               </div>
               
               <div className="pt-4 border-t border-primary/10 mt-auto">
-                <div className="flex gap-2 mb-4">
-                  <Link href="/dashboard/marketplace/cart" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button variant="outline" size="sm" className="w-full">
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      Cart
-                    </Button>
-                  </Link>
-                  <Link href="/dashboard/notifications" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button variant="outline" size="sm" className="w-full">
-                      <Bell className="h-4 w-4 mr-2" />
-                      Notifications
-                    </Button>
-                  </Link>
-                </div>
-                
                 <Button
                   variant="outline"
                   size="sm"
