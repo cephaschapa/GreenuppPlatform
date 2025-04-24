@@ -647,7 +647,17 @@ greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
     );
     
     // Extract followed IDs from the result
-    const followedIds = [...followingResult.map((row: any) => row.followed_id), userId];
+    const followedIds = [userId]; // Always include the current user
+    
+    // Handle results safely
+    if (Array.isArray(followingResult)) {
+      followingResult.forEach((row: any) => {
+        if (row && row.followed_id) {
+          followedIds.push(row.followed_id);
+        }
+      });
+    }
+    
     const followedIdsStr = followedIds.join(',') || '0';
     
     // Find expert/verified users that the current user doesn't follow
@@ -673,9 +683,21 @@ greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
     );
     
     // If we don't have enough experts, add regular users
-    if (expertUsersResult.length < limit) {
-      const expertUserIds = expertUsersResult.map((u: any) => u.userId).join(',') || '0';
-      const remainingLimit = limit - expertUsersResult.length;
+    let expertUserCount = 0;
+    const expertUserIds: number[] = [];
+    
+    if (Array.isArray(expertUsersResult)) {
+      expertUserCount = expertUsersResult.length;
+      expertUsersResult.forEach((u: any) => {
+        if (u && u.userId) {
+          expertUserIds.push(u.userId);
+        }
+      });
+    }
+    
+    if (expertUserCount < limit) {
+      const expertUserIdsStr = expertUserIds.join(',') || '0';
+      const remainingLimit = limit - expertUserCount;
       
       const regularUsersResult = await db.execute(
         sql`SELECT 
@@ -693,12 +715,21 @@ greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
             FROM users u
             JOIN social_profiles sp ON u.id = sp.user_id
             WHERE u.id NOT IN (${sql.raw(followedIdsStr)})
-            AND u.id NOT IN (${sql.raw(expertUserIds)})
+            AND u.id NOT IN (${sql.raw(expertUserIdsStr)})
             ORDER BY sp.follower_count DESC
             LIMIT ${remainingLimit}`
       );
       
-      return res.json([...expertUsersResult, ...regularUsersResult]);
+      // Combine both results
+      const combinedResults = [];
+      if (Array.isArray(expertUsersResult)) {
+        combinedResults.push(...expertUsersResult);
+      }
+      if (Array.isArray(regularUsersResult)) {
+        combinedResults.push(...regularUsersResult);
+      }
+      
+      return res.json(combinedResults);
     }
     
     return res.json(expertUsersResult);
@@ -724,7 +755,16 @@ greenSocialsRouter.get("/activity", isAuthenticated, async (req, res) => {
       sql`SELECT followed_id FROM user_relationships WHERE follower_id = ${userId}`
     );
     
-    const followedIds = followingResult.map((row: any) => row.followed_id);
+    const followedIds: number[] = [];
+    
+    // Handle results safely
+    if (Array.isArray(followingResult)) {
+      followingResult.forEach((row: any) => {
+        if (row && row.followed_id) {
+          followedIds.push(row.followed_id);
+        }
+      });
+    }
     
     if (followedIds.length === 0) {
       return res.json([]);
