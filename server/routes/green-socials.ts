@@ -447,39 +447,43 @@ greenSocialsRouter.post("/communities", isAuthenticated, async (req, res) => {
 // Follow a user
 greenSocialsRouter.post("/follow/:userId", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const followerId = req.user.id;
     const followedId = parseInt(req.params.userId);
     
     // Check if already following
-    const existingRelationship = await db.query.userRelationships.findFirst({
-      where: and(
-        eq(userRelationships.followerId, followerId),
-        eq(userRelationships.followedId, followedId)
-      )
-    });
+    const existingRelationship = await db.execute(
+      sql`SELECT * FROM user_relationships 
+          WHERE follower_id = ${followerId} 
+          AND followed_id = ${followedId} LIMIT 1`
+    );
     
-    if (existingRelationship) {
+    if (existingRelationship.length > 0) {
       return res.status(400).json({ message: "Already following this user" });
     }
     
-    // Create relationship
-    await db.insert(userRelationships).values({
-      followerId,
-      followedId,
-      status: 'following'
-    });
+    // Create relationship directly with SQL
+    await db.execute(
+      sql`INSERT INTO user_relationships (follower_id, followed_id, status)
+          VALUES (${followerId}, ${followedId}, 'following')`
+    );
     
     // Update follower count for followed user
-    await db
-      .update(socialProfiles)
-      .set({ followerCount: sql`${socialProfiles.followerCount} + 1` })
-      .where(eq(socialProfiles.userId, followedId));
+    await db.execute(
+      sql`UPDATE social_profiles 
+          SET follower_count = follower_count + 1 
+          WHERE user_id = ${followedId}`
+    );
     
     // Update following count for follower
-    await db
-      .update(socialProfiles)
-      .set({ followingCount: sql`${socialProfiles.followingCount} + 1` })
-      .where(eq(socialProfiles.userId, followerId));
+    await db.execute(
+      sql`UPDATE social_profiles 
+          SET following_count = following_count + 1 
+          WHERE user_id = ${followerId}`
+    );
     
     return res.status(201).json({ message: "User followed successfully" });
   } catch (error) {
@@ -492,42 +496,44 @@ greenSocialsRouter.post("/follow/:userId", isAuthenticated, async (req, res) => 
 // Unfollow a user
 greenSocialsRouter.delete("/follow/:userId", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const followerId = req.user.id;
     const followedId = parseInt(req.params.userId);
     
     // Check if following
-    const existingRelationship = await db.query.userRelationships.findFirst({
-      where: and(
-        eq(userRelationships.followerId, followerId),
-        eq(userRelationships.followedId, followedId)
-      )
-    });
+    const existingRelationship = await db.execute(
+      sql`SELECT * FROM user_relationships 
+          WHERE follower_id = ${followerId} 
+          AND followed_id = ${followedId} LIMIT 1`
+    );
     
-    if (!existingRelationship) {
+    if (existingRelationship.length === 0) {
       return res.status(400).json({ message: "Not following this user" });
     }
     
     // Delete relationship
-    await db
-      .delete(userRelationships)
-      .where(
-        and(
-          eq(userRelationships.followerId, followerId),
-          eq(userRelationships.followedId, followedId)
-        )
-      );
+    await db.execute(
+      sql`DELETE FROM user_relationships 
+          WHERE follower_id = ${followerId} 
+          AND followed_id = ${followedId}`
+    );
     
     // Update follower count for followed user
-    await db
-      .update(socialProfiles)
-      .set({ followerCount: sql`${socialProfiles.followerCount} - 1` })
-      .where(eq(socialProfiles.userId, followedId));
+    await db.execute(
+      sql`UPDATE social_profiles 
+          SET follower_count = follower_count - 1 
+          WHERE user_id = ${followedId}`
+    );
     
     // Update following count for follower
-    await db
-      .update(socialProfiles)
-      .set({ followingCount: sql`${socialProfiles.followingCount} - 1` })
-      .where(eq(socialProfiles.userId, followerId));
+    await db.execute(
+      sql`UPDATE social_profiles 
+          SET following_count = following_count - 1 
+          WHERE user_id = ${followerId}`
+    );
     
     return res.json({ message: "User unfollowed successfully" });
   } catch (error) {
@@ -540,37 +546,38 @@ greenSocialsRouter.delete("/follow/:userId", isAuthenticated, async (req, res) =
 // Get users that the current user follows
 greenSocialsRouter.get("/following", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const userId = req.user.id;
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = parseInt(req.query.offset as string) || 0;
     
-    // Get relationships with user and profile info
-    const following = await db
-      .select({
-        relationship: userRelationships,
-        user: {
-          id: users.id,
-          username: users.username,
-          profileImage: users.profileImage,
-        },
-        profile: {
-          displayName: socialProfiles.displayName,
-          bio: socialProfiles.bio,
-          expertise: socialProfiles.expertise,
-          location: socialProfiles.location,
-          verificationStatus: socialProfiles.verificationStatus,
-          experienceYears: socialProfiles.experienceYears,
-          specializations: socialProfiles.specializations,
-          badges: socialProfiles.badges
-        }
-      })
-      .from(userRelationships)
-      .innerJoin(users, eq(userRelationships.followedId, users.id))
-      .leftJoin(socialProfiles, eq(users.id, socialProfiles.userId))
-      .where(eq(userRelationships.followerId, userId))
-      .limit(limit)
-      .offset(offset)
-      .orderBy(desc(userRelationships.createdAt));
+    // Get relationships with user and profile info using direct SQL
+    const following = await db.execute(
+      sql`SELECT 
+            ur.id as "relationshipId", 
+            ur.status as "relationshipStatus",
+            ur.created_at as "relationshipCreatedAt",
+            u.id as "userId",
+            u.username,
+            u.profile_image as "profileImage",
+            sp.display_name as "displayName",
+            sp.bio,
+            sp.expertise,
+            sp.location,
+            sp.verification_status as "verificationStatus",
+            sp.experience_years as "experienceYears",
+            sp.specializations,
+            sp.badges
+          FROM user_relationships ur
+          INNER JOIN users u ON ur.followed_id = u.id
+          LEFT JOIN social_profiles sp ON u.id = sp.user_id
+          WHERE ur.follower_id = ${userId}
+          ORDER BY ur.created_at DESC
+          LIMIT ${limit} OFFSET ${offset}`
+    );
     
     return res.json(following);
   } catch (error) {
@@ -583,37 +590,38 @@ greenSocialsRouter.get("/following", isAuthenticated, async (req, res) => {
 // Get users who follow the current user
 greenSocialsRouter.get("/followers", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const userId = req.user.id;
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = parseInt(req.query.offset as string) || 0;
     
-    // Get relationships with user and profile info
-    const followers = await db
-      .select({
-        relationship: userRelationships,
-        user: {
-          id: users.id,
-          username: users.username,
-          profileImage: users.profileImage,
-        },
-        profile: {
-          displayName: socialProfiles.displayName,
-          bio: socialProfiles.bio,
-          expertise: socialProfiles.expertise,
-          location: socialProfiles.location,
-          verificationStatus: socialProfiles.verificationStatus,
-          experienceYears: socialProfiles.experienceYears,
-          specializations: socialProfiles.specializations,
-          badges: socialProfiles.badges
-        }
-      })
-      .from(userRelationships)
-      .innerJoin(users, eq(userRelationships.followerId, users.id))
-      .leftJoin(socialProfiles, eq(users.id, socialProfiles.userId))
-      .where(eq(userRelationships.followedId, userId))
-      .limit(limit)
-      .offset(offset)
-      .orderBy(desc(userRelationships.createdAt));
+    // Get relationships with user and profile info using direct SQL
+    const followers = await db.execute(
+      sql`SELECT 
+            ur.id as "relationshipId", 
+            ur.status as "relationshipStatus",
+            ur.created_at as "relationshipCreatedAt",
+            u.id as "userId",
+            u.username,
+            u.profile_image as "profileImage",
+            sp.display_name as "displayName",
+            sp.bio,
+            sp.expertise,
+            sp.location,
+            sp.verification_status as "verificationStatus",
+            sp.experience_years as "experienceYears",
+            sp.specializations,
+            sp.badges
+          FROM user_relationships ur
+          INNER JOIN users u ON ur.follower_id = u.id
+          LEFT JOIN social_profiles sp ON u.id = sp.user_id
+          WHERE ur.followed_id = ${userId}
+          ORDER BY ur.created_at DESC
+          LIMIT ${limit} OFFSET ${offset}`
+    );
     
     return res.json(followers);
   } catch (error) {
@@ -626,75 +634,74 @@ greenSocialsRouter.get("/followers", isAuthenticated, async (req, res) => {
 // Get suggested users to follow
 greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const userId = req.user.id;
     const limit = parseInt(req.query.limit as string) || 10;
     
-    // Get existing followed users
-    const following = await db
-      .select({ followedId: userRelationships.followedId })
-      .from(userRelationships)
-      .where(eq(userRelationships.followerId, userId));
+    // Get IDs of users the current user follows
+    const followingResult = await db.execute(
+      sql`SELECT followed_id FROM user_relationships WHERE follower_id = ${userId}`
+    );
     
-    const followedIds = following.map(f => f.followedId);
-    // Add current user to exclude from suggestions
-    followedIds.push(userId);
+    // Extract followed IDs from the result
+    const followedIds = [...followingResult.map((row: any) => row.followed_id), userId];
+    const followedIdsStr = followedIds.join(',') || '0';
     
-    // First try to find users with expertise (verified experts)
-    const expertUsers = await db
-      .select({
-        user: {
-          id: users.id,
-          username: users.username,
-          profileImage: users.profileImage,
-        },
-        profile: socialProfiles
-      })
-      .from(users)
-      .innerJoin(socialProfiles, eq(users.id, socialProfiles.userId))
-      .where(
-        and(
-          // Not already following
-          sql`${users.id} NOT IN (${followedIds.length > 0 ? followedIds : [0]})`,
-          // Has expertise and/or is verified
-          or(
-            isNotNull(socialProfiles.expertise),
-            eq(socialProfiles.verificationStatus, 'verified'),
-            eq(socialProfiles.verificationStatus, 'expert')
-          )
-        )
-      )
-      .orderBy(desc(socialProfiles.followerCount))
-      .limit(limit);
-      
+    // Find expert/verified users that the current user doesn't follow
+    const expertUsersResult = await db.execute(
+      sql`SELECT 
+            u.id as "userId",
+            u.username,
+            u.profile_image as "profileImage",
+            sp.display_name as "displayName",
+            sp.bio,
+            sp.expertise,
+            sp.specializations,
+            sp.location,
+            sp.verification_status as "verificationStatus",
+            sp.follower_count as "followerCount",
+            sp.following_count as "followingCount"
+          FROM users u
+          JOIN social_profiles sp ON u.id = sp.user_id
+          WHERE u.id NOT IN (${sql.raw(followedIdsStr)})
+          AND (sp.expertise IS NOT NULL OR sp.verification_status = 'verified' OR sp.verification_status = 'expert')
+          ORDER BY sp.follower_count DESC
+          LIMIT ${limit}`
+    );
+    
     // If we don't have enough experts, add regular users
-    if (expertUsers.length < limit) {
-      const remainingLimit = limit - expertUsers.length;
-      const regularUsers = await db
-        .select({
-          user: {
-            id: users.id,
-            username: users.username,
-            profileImage: users.profileImage,
-          },
-          profile: socialProfiles
-        })
-        .from(users)
-        .innerJoin(socialProfiles, eq(users.id, socialProfiles.userId))
-        .where(
-          and(
-            // Not already following
-            sql`${users.id} NOT IN (${followedIds.length > 0 ? followedIds : [0]})`,
-            // Not already in expert list
-            sql`${users.id} NOT IN (${expertUsers.map(e => e.user.id).length > 0 ? expertUsers.map(e => e.user.id) : [0]})`
-          )
-        )
-        .orderBy(desc(socialProfiles.followerCount))
-        .limit(remainingLimit);
-        
-      return res.json([...expertUsers, ...regularUsers]);
+    if (expertUsersResult.length < limit) {
+      const expertUserIds = expertUsersResult.map((u: any) => u.userId).join(',') || '0';
+      const remainingLimit = limit - expertUsersResult.length;
+      
+      const regularUsersResult = await db.execute(
+        sql`SELECT 
+              u.id as "userId",
+              u.username,
+              u.profile_image as "profileImage",
+              sp.display_name as "displayName",
+              sp.bio,
+              sp.expertise,
+              sp.specializations,
+              sp.location,
+              sp.verification_status as "verificationStatus",
+              sp.follower_count as "followerCount",
+              sp.following_count as "followingCount"
+            FROM users u
+            JOIN social_profiles sp ON u.id = sp.user_id
+            WHERE u.id NOT IN (${sql.raw(followedIdsStr)})
+            AND u.id NOT IN (${sql.raw(expertUserIds)})
+            ORDER BY sp.follower_count DESC
+            LIMIT ${remainingLimit}`
+      );
+      
+      return res.json([...expertUsersResult, ...regularUsersResult]);
     }
     
-    return res.json(expertUsers);
+    return res.json(expertUsersResult);
   } catch (error) {
     console.error("Error fetching suggested users:", error);
     return res.status(500).json({ message: "Server error" });
@@ -705,74 +712,69 @@ greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
 // Get recent activity from followed users
 greenSocialsRouter.get("/activity", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const userId = req.user.id;
     const limit = parseInt(req.query.limit as string) || 10;
     
-    // Get users that this user follows
-    const following = await db
-      .select({ followedId: userRelationships.followedId })
-      .from(userRelationships)
-      .where(eq(userRelationships.followerId, userId));
+    // Get users that this user follows using SQL
+    const followingResult = await db.execute(
+      sql`SELECT followed_id FROM user_relationships WHERE follower_id = ${userId}`
+    );
     
-    const followedIds = following.map(f => f.followedId);
+    const followedIds = followingResult.map((row: any) => row.followed_id);
     
     if (followedIds.length === 0) {
       return res.json([]);
     }
     
-    // Get recent posts from followed users
-    const recentPosts = await db
-      .select({
-        type: sql<string>`'post'`,
-        id: posts.id,
-        content: posts.content,
-        createdAt: posts.createdAt,
-        user: {
-          id: users.id,
-          username: users.username,
-          profileImage: users.profileImage
-        },
-        profile: {
-          displayName: socialProfiles.displayName
-        }
-      })
-      .from(posts)
-      .innerJoin(users, eq(posts.userId, users.id))
-      .leftJoin(socialProfiles, eq(users.id, socialProfiles.userId))
-      .where(inArray(posts.userId, followedIds))
-      .orderBy(desc(posts.createdAt))
-      .limit(limit);
-      
-    // Get recent comments from followed users
-    const recentComments = await db
-      .select({
-        type: sql<string>`'comment'`,
-        id: comments.id,
-        content: comments.content,
-        createdAt: comments.createdAt,
-        postId: comments.postId,
-        user: {
-          id: users.id,
-          username: users.username,
-          profileImage: users.profileImage
-        },
-        profile: {
-          displayName: socialProfiles.displayName
-        }
-      })
-      .from(comments)
-      .innerJoin(users, eq(comments.userId, users.id))
-      .leftJoin(socialProfiles, eq(users.id, socialProfiles.userId))
-      .where(inArray(comments.userId, followedIds))
-      .orderBy(desc(comments.createdAt))
-      .limit(limit);
-      
-    // Combine and sort by date
-    const combinedActivity = [...recentPosts, ...recentComments]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, limit);
+    const followedIdsString = followedIds.join(',');
     
-    return res.json(combinedActivity);
+    // Get recent posts and comments in one query, ordered by date
+    const activityResult = await db.execute(
+      sql`(
+        SELECT 
+          'post' as "type",
+          p.id,
+          p.content,
+          p.created_at as "createdAt",
+          u.id as "userId",
+          u.username,
+          u.profile_image as "profileImage",
+          sp.display_name as "displayName"
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN social_profiles sp ON u.id = sp.user_id
+        WHERE p.user_id IN (${sql.raw(followedIdsString)})
+        ORDER BY p.created_at DESC
+        LIMIT ${limit}
+      )
+      UNION ALL
+      (
+        SELECT 
+          'comment' as "type",
+          c.id,
+          c.content,
+          c.created_at as "createdAt",
+          c.post_id as "postId",
+          u.id as "userId",
+          u.username,
+          u.profile_image as "profileImage",
+          sp.display_name as "displayName"
+        FROM comments c
+        JOIN users u ON c.user_id = u.id
+        LEFT JOIN social_profiles sp ON u.id = sp.user_id
+        WHERE c.user_id IN (${sql.raw(followedIdsString)})
+        ORDER BY c.created_at DESC
+        LIMIT ${limit}
+      )
+      ORDER BY "createdAt" DESC
+      LIMIT ${limit}`
+    );
+    
+    return res.json(activityResult);
   } catch (error) {
     console.error("Error fetching activity:", error);
     return res.status(500).json({ message: "Server error" });
