@@ -361,7 +361,7 @@ export default function WeatherPage() {
     >
       <div className="grid gap-8">
         <Tabs defaultValue="current" className="w-full">
-          <TabsList className="mb-4 flex flex-wrap overflow-x-auto scrollbar-hide">
+          <TabsList className="mb-4 flex w-full overflow-x-auto scrollbar-hide">
             <TabsTrigger value="current" className="flex items-center gap-1.5">
               <Cloud className="h-4 w-4" />
               <span className="hidden sm:inline">Current Weather</span>

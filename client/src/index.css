@@ -255,6 +255,21 @@
     @apply text-lg sm:text-xl;
   }
   
+  /* Mobile TabsList optimization */
+  @media (max-width: 640px) {
+    [role="tabslist"] {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+    }
+    
+    [role="tabslist"] [role="tab"] {
+      flex: 1;
+      min-width: auto;
+      white-space: nowrap;
+    }
+  }
+  
   /* Safe area insets for modern mobile devices */
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0);
