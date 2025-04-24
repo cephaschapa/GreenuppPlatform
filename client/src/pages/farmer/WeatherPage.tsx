@@ -361,33 +361,33 @@ export default function WeatherPage() {
     >
       <div className="grid gap-8">
         <Tabs defaultValue="current" className="w-full">
-          <TabsList className="mb-4 flex w-full overflow-x-auto scrollbar-hide">
-            <TabsTrigger value="current" className="flex items-center gap-1.5">
+          <TabsList className="mb-4 flex w-full overflow-x-auto scrollbar-hide" role="tabslist">
+            <TabsTrigger value="current" className="flex items-center gap-1.5" role="tab">
               <Cloud className="h-4 w-4" />
               <span className="hidden sm:inline">Current Weather</span>
               <span className="sm:hidden">Current</span>
             </TabsTrigger>
-            <TabsTrigger value="forecast" className="flex items-center gap-1.5">
+            <TabsTrigger value="forecast" className="flex items-center gap-1.5" role="tab">
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">Forecast</span>
               <span className="sm:hidden">Forecast</span>
             </TabsTrigger>
-            <TabsTrigger value="climate" className="flex items-center gap-1.5">
+            <TabsTrigger value="climate" className="flex items-center gap-1.5" role="tab">
               <BarChart4 className="h-4 w-4" />
               <span className="hidden sm:inline">Climate Analysis</span>
               <span className="sm:hidden">Climate</span>
             </TabsTrigger>
-            <TabsTrigger value="recommendations" className="flex items-center gap-1.5">
+            <TabsTrigger value="recommendations" className="flex items-center gap-1.5" role="tab">
               <Sprout className="h-4 w-4" />
               <span className="hidden sm:inline">Crop Recommendations</span>
               <span className="sm:hidden">Crops</span>
             </TabsTrigger>
-            <TabsTrigger value="historical" className="flex items-center gap-1.5">
+            <TabsTrigger value="historical" className="flex items-center gap-1.5" role="tab">
               <RefreshCw className="h-4 w-4" />
               <span className="hidden sm:inline">Historical Data</span>
               <span className="sm:hidden">History</span>
             </TabsTrigger>
-            <TabsTrigger value="preferences" className="flex items-center gap-1.5">
+            <TabsTrigger value="preferences" className="flex items-center gap-1.5" role="tab">
               <AlertTriangle className="h-4 w-4" />
               <span className="hidden sm:inline">Preferences</span>
               <span className="sm:hidden">Settings</span>

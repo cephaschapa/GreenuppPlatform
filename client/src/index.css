@@ -260,13 +260,22 @@
     [role="tabslist"] {
       display: flex;
       width: 100%;
-      justify-content: space-between;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    [role="tabslist"]::-webkit-scrollbar {
+      display: none;
     }
     
     [role="tabslist"] [role="tab"] {
-      flex: 1;
+      flex: 0 0 auto;
       min-width: auto;
       white-space: nowrap;
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
     }
   }
   
