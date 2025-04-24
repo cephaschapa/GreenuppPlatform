@@ -660,37 +660,70 @@ greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
     
     const followedIdsStr = followedIds.join(',') || '0';
     
-    // First, let's get all users with social profiles (debug - to see if we have any)
+    console.log(`DEBUG: Looking for users that are not user id ${userId}`);
+    
+    // Manually get profiles for direct debugging
     const allUsersResult = await db.execute(
       sql`SELECT 
-            u.id as "userId",
+            u.id,
             u.username,
-            u.profile_image as "profileImage",
-            sp.display_name as "displayName",
-            sp.bio,
-            sp.expertise,
-            sp.specializations,
-            sp.location,
-            sp.verification_status as "verificationStatus",
-            sp.follower_count as "followerCount",
-            sp.following_count as "followingCount"
+            sp.user_id
           FROM users u
           JOIN social_profiles sp ON u.id = sp.user_id
-          WHERE u.id != ${userId}
-          ORDER BY sp.follower_count DESC
-          LIMIT ${limit}`
+          WHERE u.id != ${userId}`
     );
     
-    // Convert to array of objects
-    const allSuggestedUsers = Array.isArray(allUsersResult) ? allUsersResult : [];
+    console.log("DEBUG SQL RESULT:", JSON.stringify(allUsersResult));
     
-    // Filter out users that the current user is already following
-    const expertUsersResult = allSuggestedUsers.filter(user => !followedIds.includes(user.userId));
+    // Format for the frontend - handle the QueryResult properly
+    const formattedResults = [];
+    // Check if the result has rows property (QueryResult interface)
+    const userRows = allUsersResult && allUsersResult.rows ? allUsersResult.rows : 
+                    Array.isArray(allUsersResult) ? allUsersResult : [];
     
-    // Return all suggested users
-    console.log(`Found ${allSuggestedUsers.length} potential suggested users, filtered to ${expertUsersResult.length} not followed`);
+    // Log what we're working with
+    console.log("User rows:", JSON.stringify(userRows));
     
-    return res.json(expertUsersResult);
+    for (const user of userRows) {
+      if (user && user.id && !followedIds.includes(user.id)) {
+        console.log(`Processing user ${user.username} (${user.id})`);
+        try {
+          // Get complete user profile using raw SQL for more direct debugging
+          const profileData = await db.execute(
+            sql`SELECT 
+                  u.id as "userId", 
+                  u.username,
+                  COALESCE(u.profile_image, '') as "profileImage",
+                  COALESCE(sp.display_name, u.username) as "displayName",
+                  COALESCE(sp.bio, '') as "bio",
+                  sp.expertise,
+                  sp.specializations,
+                  COALESCE(sp.location, '') as "location",
+                  COALESCE(sp.verification_status, 'unverified') as "verificationStatus",
+                  COALESCE(sp.follower_count, 0) as "followerCount",
+                  COALESCE(sp.following_count, 0) as "followingCount"
+                FROM users u
+                JOIN social_profiles sp ON u.id = sp.user_id
+                WHERE u.id = ${user.id}`
+          );
+          
+          // Extract the profile from the result
+          if (profileData && profileData.rows && profileData.rows.length > 0) {
+            formattedResults.push(profileData.rows[0]);
+          } else if (Array.isArray(profileData) && profileData.length > 0) {
+            formattedResults.push(profileData[0]);
+          }
+        } catch (err) {
+          console.error(`Error getting profile for user ${user.id}:`, err);
+        }
+      }
+    }
+    
+    // Return the formatted results from our direct approach
+    console.log(`DEBUG: Found ${formattedResults.length} users to suggest after filtering`);
+    console.log("Formatted results:", JSON.stringify(formattedResults));
+    
+    return res.json(formattedResults);
   } catch (error) {
     console.error("Error fetching suggested users:", error);
     return res.status(500).json({ message: "Server error" });
