@@ -121,6 +121,34 @@ const GreenSocialsPage = () => {
     queryFn: () => apiRequest("GET", "/feed").then(res => res.json()),
     enabled: !!user,
   });
+  
+  // Query for fetching people the user follows
+  const followingQuery = useQuery({
+    queryKey: ["/social/following"],
+    queryFn: () => apiRequest("GET", "/social/following").then(res => res.json()),
+    enabled: !!user,
+  });
+  
+  // Query for fetching suggested people to follow
+  const suggestedQuery = useQuery({
+    queryKey: ["/social/suggested"],
+    queryFn: () => apiRequest("GET", "/social/suggested").then(res => res.json()),
+    enabled: !!user,
+  });
+  
+  // Query for fetching recent activity
+  const activityQuery = useQuery({
+    queryKey: ["/social/activity"],
+    queryFn: () => apiRequest("GET", "/social/activity").then(res => res.json()),
+    enabled: !!user,
+  });
+  
+  // Query for fetching expertise categories
+  const categoriesQuery = useQuery({
+    queryKey: ["/social/expertise-categories"],
+    queryFn: () => apiRequest("GET", "/social/expertise-categories").then(res => res.json()),
+    enabled: !!user,
+  });
 
   // Mutation for creating a new post
   const createPostMutation = useMutation({
@@ -144,6 +172,58 @@ const GreenSocialsPage = () => {
       toast({
         title: "Failed to create post",
         description: error.message || "There was an error creating your post",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutation for following a user
+  const followMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const res = await apiRequest("POST", `/social/follow/${userId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success!",
+        description: "You are now following this user",
+      });
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["/social/following"] });
+      queryClient.invalidateQueries({ queryKey: ["/social/suggested"] });
+      queryClient.invalidateQueries({ queryKey: ["/social/activity"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to follow user",
+        description: error.message || "There was an error following this user",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutation for unfollowing a user
+  const unfollowMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const res = await apiRequest("DELETE", `/social/follow/${userId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success!",
+        description: "You have unfollowed this user",
+      });
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["/social/following"] });
+      queryClient.invalidateQueries({ queryKey: ["/social/suggested"] });
+      queryClient.invalidateQueries({ queryKey: ["/social/activity"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to unfollow user",
+        description: error.message || "There was an error unfollowing this user",
         variant: "destructive",
       });
     }
@@ -180,6 +260,33 @@ const GreenSocialsPage = () => {
       hour: '2-digit',
       minute: '2-digit'
     }).format(date);
+  };
+  
+  // Format relative time (e.g., "2 hours ago")
+  const formatRelativeTime = (date: Date) => {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) {
+      return 'Just now';
+    }
+    
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+    }
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) {
+      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    }
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) {
+      return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+    }
+    
+    return formatDate(date.toISOString());
   };
 
   if (isProfileLoading) {
@@ -980,95 +1087,69 @@ const GreenSocialsPage = () => {
                     <CardDescription>Connect with farming experts and friends in your network</CardDescription>
                   </CardHeader>
                   <CardContent>
+                    {/* Following List */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {/* Person Card 1 */}
-                      <div className="flex flex-col items-center border rounded-lg p-4 hover:border-primary/50 hover:shadow-sm transition-all">
-                        <div className="relative mb-2">
-                          <Avatar className="h-16 w-16">
-                            <AvatarImage src="https://ui.shadcn.com/avatars/01.png" />
-                            <AvatarFallback>MK</AvatarFallback>
-                          </Avatar>
-                          <div className="absolute -top-1 -right-1 bg-primary/10 rounded-full p-1">
-                            <Award className="h-4 w-4 text-primary" />
+                      {followingQuery.isLoading ? (
+                        <div className="col-span-full flex justify-center py-10">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                      ) : followingQuery.data && followingQuery.data.length > 0 ? (
+                        followingQuery.data.slice(0, 4).map((item) => (
+                          <div 
+                            key={item.relationship.id} 
+                            className="flex flex-col items-center border rounded-lg p-4 hover:border-primary/50 hover:shadow-sm transition-all"
+                          >
+                            <div className="relative mb-2">
+                              <Avatar className="h-16 w-16">
+                                <AvatarImage src={item.user.profileImage || undefined} />
+                                <AvatarFallback>{getInitials(item.profile?.displayName || item.user.username)}</AvatarFallback>
+                              </Avatar>
+                              {item.profile?.verificationStatus === 'verified' && (
+                                <div className="absolute -top-1 -right-1 bg-primary/10 rounded-full p-1">
+                                  <Award className="h-4 w-4 text-primary" />
+                                </div>
+                              )}
+                              {item.profile?.expertise?.includes('crop') && (
+                                <div className="absolute -top-1 -right-1 bg-green-500/10 rounded-full p-1">
+                                  <Crop className="h-4 w-4 text-green-500" />
+                                </div>
+                              )}
+                            </div>
+                            <h4 className="font-medium">{item.profile?.displayName || item.user.username}</h4>
+                            <p className="text-xs text-muted-foreground mb-2">
+                              {item.profile?.expertise?.[0] || 'Farmer'} • {item.profile?.location || 'Zambia'}
+                            </p>
+                            <div className="flex gap-1 mb-3 flex-wrap justify-center">
+                              {item.profile?.specializations?.slice(0, 2).map((spec, i) => (
+                                <Badge key={i} variant="outline" className="text-xs">{spec}</Badge>
+                              ))}
+                              {!item.profile?.specializations?.length && item.profile?.expertise?.slice(0, 2).map((exp, i) => (
+                                <Badge key={i} variant="outline" className="text-xs">{exp}</Badge>
+                              ))}
+                            </div>
+                            <div className="flex gap-2 w-full">
+                              <Button variant="secondary" size="sm" className="flex-1 text-xs">Message</Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-xs"
+                                onClick={() => unfollowMutation.mutate(item.user.id)}
+                                disabled={unfollowMutation.isPending}
+                              >
+                                {unfollowMutation.isPending && unfollowMutation.variables === item.user.id ? (
+                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                ) : null}
+                                Unfollow
+                              </Button>
+                            </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="col-span-full text-center py-10">
+                          <p className="text-muted-foreground">You're not following anyone yet.</p>
+                          <p className="text-sm text-muted-foreground mt-1">Check out the suggestions and find people to follow.</p>
                         </div>
-                        <h4 className="font-medium">Maria Kamau</h4>
-                        <p className="text-xs text-muted-foreground mb-2">Soil Specialist • Lusaka</p>
-                        <div className="flex gap-1 mb-3">
-                          <Badge variant="outline" className="text-xs">Organic</Badge>
-                          <Badge variant="outline" className="text-xs">Maize</Badge>
-                        </div>
-                        <div className="flex gap-2 w-full">
-                          <Button variant="secondary" size="sm" className="flex-1 text-xs">Message</Button>
-                          <Button variant="outline" size="sm" className="text-xs">Unfollow</Button>
-                        </div>
-                      </div>
-                      
-                      {/* Person Card 2 */}
-                      <div className="flex flex-col items-center border rounded-lg p-4 hover:border-primary/50 hover:shadow-sm transition-all">
-                        <div className="relative mb-2">
-                          <Avatar className="h-16 w-16">
-                            <AvatarImage src="https://ui.shadcn.com/avatars/03.png" />
-                            <AvatarFallback>TK</AvatarFallback>
-                          </Avatar>
-                          <div className="absolute -top-1 -right-1 bg-green-500/10 rounded-full p-1">
-                            <Crop className="h-4 w-4 text-green-500" />
-                          </div>
-                        </div>
-                        <h4 className="font-medium">Thomas Kasongo</h4>
-                        <p className="text-xs text-muted-foreground mb-2">Crop Farmer • Northern Province</p>
-                        <div className="flex gap-1 mb-3">
-                          <Badge variant="outline" className="text-xs">Sorghum</Badge>
-                          <Badge variant="outline" className="text-xs">Rice</Badge>
-                        </div>
-                        <div className="flex gap-2 w-full">
-                          <Button variant="secondary" size="sm" className="flex-1 text-xs">Message</Button>
-                          <Button variant="outline" size="sm" className="text-xs">Unfollow</Button>
-                        </div>
-                      </div>
-                      
-                      {/* Person Card 3 */}
-                      <div className="flex flex-col items-center border rounded-lg p-4 hover:border-primary/50 hover:shadow-sm transition-all">
-                        <div className="relative mb-2">
-                          <Avatar className="h-16 w-16">
-                            <AvatarImage src="https://ui.shadcn.com/avatars/04.png" />
-                            <AvatarFallback>EJ</AvatarFallback>
-                          </Avatar>
-                        </div>
-                        <h4 className="font-medium">Emmanuel Juma</h4>
-                        <p className="text-xs text-muted-foreground mb-2">Equipment Supplier • Lusaka</p>
-                        <div className="flex gap-1 mb-3">
-                          <Badge variant="outline" className="text-xs">Irrigation</Badge>
-                          <Badge variant="outline" className="text-xs">Tools</Badge>
-                        </div>
-                        <div className="flex gap-2 w-full">
-                          <Button variant="secondary" size="sm" className="flex-1 text-xs">Message</Button>
-                          <Button variant="outline" size="sm" className="text-xs">Unfollow</Button>
-                        </div>
-                      </div>
-                      
-                      {/* Person Card 4 */}
-                      <div className="flex flex-col items-center border rounded-lg p-4 hover:border-primary/50 hover:shadow-sm transition-all">
-                        <div className="relative mb-2">
-                          <Avatar className="h-16 w-16">
-                            <AvatarImage src="https://ui.shadcn.com/avatars/05.png" />
-                            <AvatarFallback>SS</AvatarFallback>
-                          </Avatar>
-                          <div className="absolute -top-1 -right-1 bg-blue-500/10 rounded-full p-1">
-                            <Users className="h-4 w-4 text-blue-500" />
-                          </div>
-                        </div>
-                        <h4 className="font-medium">Sarah Sichone</h4>
-                        <p className="text-xs text-muted-foreground mb-2">Cooperative Leader • Eastern Province</p>
-                        <div className="flex gap-1 mb-3">
-                          <Badge variant="outline" className="text-xs">Cooperative</Badge>
-                          <Badge variant="outline" className="text-xs">Training</Badge>
-                        </div>
-                        <div className="flex gap-2 w-full">
-                          <Button variant="secondary" size="sm" className="flex-1 text-xs">Message</Button>
-                          <Button variant="outline" size="sm" className="text-xs">Unfollow</Button>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -1085,38 +1166,38 @@ const GreenSocialsPage = () => {
                     <CardDescription>See what people in your network have been up to</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex gap-3 p-3 border rounded-lg hover:bg-muted/30 transition-colors">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src="https://ui.shadcn.com/avatars/01.png" />
-                        <AvatarFallback>MK</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm"><span className="font-medium">Maria Kamau</span> shared a post about soil testing techniques</p>
-                        <p className="text-xs text-muted-foreground mt-1">1 hour ago</p>
+                    {activityQuery.isLoading ? (
+                      <div className="flex justify-center py-10">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
                       </div>
-                    </div>
-                    
-                    <div className="flex gap-3 p-3 border rounded-lg hover:bg-muted/30 transition-colors">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src="https://ui.shadcn.com/avatars/03.png" />
-                        <AvatarFallback>TK</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm"><span className="font-medium">Thomas Kasongo</span> added new photos of sorghum fields</p>
-                        <p className="text-xs text-muted-foreground mt-1">3 hours ago</p>
+                    ) : activityQuery.data && activityQuery.data.length > 0 ? (
+                      activityQuery.data.map((activity) => (
+                        <div key={`${activity.type}-${activity.id}`} className="flex gap-3 p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={activity.user.profileImage || undefined} />
+                            <AvatarFallback>{getInitials(activity.profile?.displayName || activity.user.username)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="text-sm">
+                              <span className="font-medium">{activity.profile?.displayName || activity.user.username}</span> 
+                              {activity.type === 'post' ? (
+                                ' shared a new post'
+                              ) : (
+                                ' commented on a post'
+                              )}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {formatRelativeTime(new Date(activity.createdAt))}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-10">
+                        <p className="text-muted-foreground">No recent activity</p>
+                        <p className="text-sm text-muted-foreground mt-1">Follow more people to see their activity here</p>
                       </div>
-                    </div>
-                    
-                    <div className="flex gap-3 p-3 border rounded-lg hover:bg-muted/30 transition-colors">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src="https://ui.shadcn.com/avatars/04.png" />
-                        <AvatarFallback>EJ</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm"><span className="font-medium">Emmanuel Juma</span> listed new irrigation equipment in the marketplace</p>
-                        <p className="text-xs text-muted-foreground mt-1">Yesterday</p>
-                      </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -1134,82 +1215,61 @@ const GreenSocialsPage = () => {
                     <CardDescription>Connect with more farmers and experts</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/30 transition-colors">
-                      <div className="flex gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src="https://ui.shadcn.com/avatars/02.png" />
-                          <AvatarFallback>DM</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-sm font-medium">Daniel Mulenga</p>
-                          <p className="text-xs text-muted-foreground">Livestock Farmer • Copperbelt</p>
-                          <div className="flex gap-1 mt-1">
-                            <Badge variant="outline" className="text-xs">Dairy</Badge>
-                          </div>
-                        </div>
+                    {suggestedQuery.isLoading ? (
+                      <div className="flex justify-center py-10">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
                       </div>
-                      <Button size="sm" className="h-8 px-3">Follow</Button>
-                    </div>
-                    
-                    <div className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/30 transition-colors">
-                      <div className="flex gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src="https://ui.shadcn.com/avatars/06.png" />
-                          <AvatarFallback>GN</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-1">
-                            <p className="text-sm font-medium">Grace Nyoni</p>
-                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                    ) : suggestedQuery.data && suggestedQuery.data.length > 0 ? (
+                      suggestedQuery.data.map((item) => (
+                        <div key={item.user.id} className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                          <div className="flex gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={item.user.profileImage || undefined} />
+                              <AvatarFallback>{getInitials(item.profile?.displayName || item.user.username)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="flex items-center gap-1">
+                                <p className="text-sm font-medium">{item.profile?.displayName || item.user.username}</p>
+                                {item.profile?.verificationStatus === 'verified' && (
+                                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                {item.profile?.expertise?.[0] || 'Farmer'} • {item.profile?.location || 'Zambia'}
+                              </p>
+                              <div className="flex gap-1 mt-1 flex-wrap">
+                                {item.profile?.specializations?.slice(0, 1).map((spec, i) => (
+                                  <Badge key={i} variant="outline" className="text-xs">{spec}</Badge>
+                                ))}
+                                {!item.profile?.specializations?.length && item.profile?.expertise?.slice(0, 1).map((exp, i) => (
+                                  <Badge key={i} variant="outline" className="text-xs">{exp}</Badge>
+                                ))}
+                              </div>
+                            </div>
                           </div>
-                          <p className="text-xs text-muted-foreground">Seed Expert • Lusaka</p>
-                          <div className="flex gap-1 mt-1">
-                            <Badge variant="outline" className="text-xs">Seeds</Badge>
-                          </div>
+                          <Button 
+                            size="sm" 
+                            className="h-8 px-3"
+                            onClick={() => followMutation.mutate(item.user.id)}
+                            disabled={followMutation.isPending}
+                          >
+                            {followMutation.isPending && followMutation.variables === item.user.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                            ) : null}
+                            Follow
+                          </Button>
                         </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-10">
+                        <p className="text-muted-foreground">No suggestions available</p>
                       </div>
-                      <Button size="sm" className="h-8 px-3">Follow</Button>
-                    </div>
-                    
-                    <div className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/30 transition-colors">
-                      <div className="flex gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src="https://ui.shadcn.com/avatars/07.png" />
-                          <AvatarFallback>CS</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-sm font-medium">Charles Sitali</p>
-                          <p className="text-xs text-muted-foreground">Cooperative Member • Southern Province</p>
-                          <div className="flex gap-1 mt-1">
-                            <Badge variant="outline" className="text-xs">Cotton</Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <Button size="sm" className="h-8 px-3">Follow</Button>
-                    </div>
-                    
-                    <div className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/30 transition-colors">
-                      <div className="flex gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src="https://ui.shadcn.com/avatars/08.png" />
-                          <AvatarFallback>BM</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-1">
-                            <p className="text-sm font-medium">Beatrice Mumba</p>
-                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                          </div>
-                          <p className="text-xs text-muted-foreground">Organic Farming Expert • Central Province</p>
-                          <div className="flex gap-1 mt-1">
-                            <Badge variant="outline" className="text-xs">Organic</Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <Button size="sm" className="h-8 px-3">Follow</Button>
-                    </div>
+                    )}
                   </CardContent>
                   <CardFooter>
-                    <Button variant="outline" className="w-full">View More Suggestions</Button>
+                    <Button variant="outline" className="w-full" onClick={() => suggestedQuery.refetch()}>
+                      View More Suggestions
+                    </Button>
                   </CardFooter>
                 </Card>
                 
@@ -1225,37 +1285,28 @@ const GreenSocialsPage = () => {
                     <CardDescription>Find farmers by their areas of expertise</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <div className="flex justify-between p-3 border rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <Crop className="h-4 w-4 text-green-600" />
-                        <span>Crop Specialists</span>
+                    {categoriesQuery.isLoading ? (
+                      <div className="flex justify-center py-10">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
                       </div>
-                      <Badge>64</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between p-3 border rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <Sprout className="h-4 w-4 text-green-600" />
-                        <span>Organic Farming</span>
+                    ) : categoriesQuery.data && categoriesQuery.data.length > 0 ? (
+                      categoriesQuery.data.map((category) => (
+                        <div key={category.id} className="flex justify-between p-3 border rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
+                          <div className="flex items-center gap-2">
+                            {category.icon === 'crop' && <Crop className={`h-4 w-4 text-${category.color}`} />}
+                            {category.icon === 'sprout' && <Sprout className={`h-4 w-4 text-${category.color}`} />}
+                            {category.icon === 'cloud' && <Cloud className={`h-4 w-4 text-${category.color}`} />}
+                            {category.icon === 'shopping-bag' && <ShoppingBag className={`h-4 w-4 text-${category.color}`} />}
+                            <span>{category.name}</span>
+                          </div>
+                          <Badge>{category.count}</Badge>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-10">
+                        <p className="text-muted-foreground">No categories available</p>
                       </div>
-                      <Badge>38</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between p-3 border rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <Cloud className="h-4 w-4 text-blue-500" />
-                        <span>Climate Smart</span>
-                      </div>
-                      <Badge>27</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between p-3 border rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <ShoppingBag className="h-4 w-4 text-orange-500" />
-                        <span>Agro Dealers</span>
-                      </div>
-                      <Badge>41</Badge>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>

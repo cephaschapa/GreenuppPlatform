@@ -382,6 +382,12 @@ export const insertPostSchema = createInsertSchema(posts).omit({
   updatedAt: true,
 });
 
+export const insertUserRelationshipSchema = createInsertSchema(userRelationships).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertCommentSchema = createInsertSchema(comments).omit({
   id: true,
   likeCount: true,
@@ -454,3 +460,6 @@ export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 
 export type SeasonalActivity = typeof seasonalActivities.$inferSelect;
+
+export type UserRelationship = typeof userRelationships.$inferSelect;
+export type InsertUserRelationship = z.infer<typeof insertUserRelationshipSchema>;

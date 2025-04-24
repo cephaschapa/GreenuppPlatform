@@ -536,6 +536,269 @@ greenSocialsRouter.delete("/follow/:userId", isAuthenticated, async (req, res) =
   }
 });
 
+// GET /api/social/following
+// Get users that the current user follows
+greenSocialsRouter.get("/following", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = parseInt(req.query.offset as string) || 0;
+    
+    // Get relationships with user and profile info
+    const following = await db
+      .select({
+        relationship: userRelationships,
+        user: {
+          id: users.id,
+          username: users.username,
+          profileImage: users.profileImage,
+        },
+        profile: {
+          displayName: socialProfiles.displayName,
+          bio: socialProfiles.bio,
+          expertise: socialProfiles.expertise,
+          location: socialProfiles.location,
+          verificationStatus: socialProfiles.verificationStatus,
+          experienceYears: socialProfiles.experienceYears,
+          specializations: socialProfiles.specializations,
+          badges: socialProfiles.badges
+        }
+      })
+      .from(userRelationships)
+      .innerJoin(users, eq(userRelationships.followedId, users.id))
+      .leftJoin(socialProfiles, eq(users.id, socialProfiles.userId))
+      .where(eq(userRelationships.followerId, userId))
+      .limit(limit)
+      .offset(offset)
+      .orderBy(desc(userRelationships.createdAt));
+    
+    return res.json(following);
+  } catch (error) {
+    console.error("Error fetching following users:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET /api/social/followers
+// Get users who follow the current user
+greenSocialsRouter.get("/followers", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = parseInt(req.query.offset as string) || 0;
+    
+    // Get relationships with user and profile info
+    const followers = await db
+      .select({
+        relationship: userRelationships,
+        user: {
+          id: users.id,
+          username: users.username,
+          profileImage: users.profileImage,
+        },
+        profile: {
+          displayName: socialProfiles.displayName,
+          bio: socialProfiles.bio,
+          expertise: socialProfiles.expertise,
+          location: socialProfiles.location,
+          verificationStatus: socialProfiles.verificationStatus,
+          experienceYears: socialProfiles.experienceYears,
+          specializations: socialProfiles.specializations,
+          badges: socialProfiles.badges
+        }
+      })
+      .from(userRelationships)
+      .innerJoin(users, eq(userRelationships.followerId, users.id))
+      .leftJoin(socialProfiles, eq(users.id, socialProfiles.userId))
+      .where(eq(userRelationships.followedId, userId))
+      .limit(limit)
+      .offset(offset)
+      .orderBy(desc(userRelationships.createdAt));
+    
+    return res.json(followers);
+  } catch (error) {
+    console.error("Error fetching followers:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET /api/social/suggested
+// Get suggested users to follow
+greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const limit = parseInt(req.query.limit as string) || 10;
+    
+    // Get existing followed users
+    const following = await db
+      .select({ followedId: userRelationships.followedId })
+      .from(userRelationships)
+      .where(eq(userRelationships.followerId, userId));
+    
+    const followedIds = following.map(f => f.followedId);
+    // Add current user to exclude from suggestions
+    followedIds.push(userId);
+    
+    // First try to find users with expertise (verified experts)
+    const expertUsers = await db
+      .select({
+        user: {
+          id: users.id,
+          username: users.username,
+          profileImage: users.profileImage,
+        },
+        profile: socialProfiles
+      })
+      .from(users)
+      .innerJoin(socialProfiles, eq(users.id, socialProfiles.userId))
+      .where(
+        and(
+          // Not already following
+          sql`${users.id} NOT IN (${followedIds.length > 0 ? followedIds : [0]})`,
+          // Has expertise and/or is verified
+          or(
+            isNotNull(socialProfiles.expertise),
+            eq(socialProfiles.verificationStatus, 'verified'),
+            eq(socialProfiles.verificationStatus, 'expert')
+          )
+        )
+      )
+      .orderBy(desc(socialProfiles.followerCount))
+      .limit(limit);
+      
+    // If we don't have enough experts, add regular users
+    if (expertUsers.length < limit) {
+      const remainingLimit = limit - expertUsers.length;
+      const regularUsers = await db
+        .select({
+          user: {
+            id: users.id,
+            username: users.username,
+            profileImage: users.profileImage,
+          },
+          profile: socialProfiles
+        })
+        .from(users)
+        .innerJoin(socialProfiles, eq(users.id, socialProfiles.userId))
+        .where(
+          and(
+            // Not already following
+            sql`${users.id} NOT IN (${followedIds.length > 0 ? followedIds : [0]})`,
+            // Not already in expert list
+            sql`${users.id} NOT IN (${expertUsers.map(e => e.user.id).length > 0 ? expertUsers.map(e => e.user.id) : [0]})`
+          )
+        )
+        .orderBy(desc(socialProfiles.followerCount))
+        .limit(remainingLimit);
+        
+      return res.json([...expertUsers, ...regularUsers]);
+    }
+    
+    return res.json(expertUsers);
+  } catch (error) {
+    console.error("Error fetching suggested users:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET /api/social/activity
+// Get recent activity from followed users
+greenSocialsRouter.get("/activity", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const limit = parseInt(req.query.limit as string) || 10;
+    
+    // Get users that this user follows
+    const following = await db
+      .select({ followedId: userRelationships.followedId })
+      .from(userRelationships)
+      .where(eq(userRelationships.followerId, userId));
+    
+    const followedIds = following.map(f => f.followedId);
+    
+    if (followedIds.length === 0) {
+      return res.json([]);
+    }
+    
+    // Get recent posts from followed users
+    const recentPosts = await db
+      .select({
+        type: sql<string>`'post'`,
+        id: posts.id,
+        content: posts.content,
+        createdAt: posts.createdAt,
+        user: {
+          id: users.id,
+          username: users.username,
+          profileImage: users.profileImage
+        },
+        profile: {
+          displayName: socialProfiles.displayName
+        }
+      })
+      .from(posts)
+      .innerJoin(users, eq(posts.userId, users.id))
+      .leftJoin(socialProfiles, eq(users.id, socialProfiles.userId))
+      .where(inArray(posts.userId, followedIds))
+      .orderBy(desc(posts.createdAt))
+      .limit(limit);
+      
+    // Get recent comments from followed users
+    const recentComments = await db
+      .select({
+        type: sql<string>`'comment'`,
+        id: comments.id,
+        content: comments.content,
+        createdAt: comments.createdAt,
+        postId: comments.postId,
+        user: {
+          id: users.id,
+          username: users.username,
+          profileImage: users.profileImage
+        },
+        profile: {
+          displayName: socialProfiles.displayName
+        }
+      })
+      .from(comments)
+      .innerJoin(users, eq(comments.userId, users.id))
+      .leftJoin(socialProfiles, eq(users.id, socialProfiles.userId))
+      .where(inArray(comments.userId, followedIds))
+      .orderBy(desc(comments.createdAt))
+      .limit(limit);
+      
+    // Combine and sort by date
+    const combinedActivity = [...recentPosts, ...recentComments]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
+    
+    return res.json(combinedActivity);
+  } catch (error) {
+    console.error("Error fetching activity:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// GET /api/social/expertise-categories
+// Get expertise categories with user counts
+greenSocialsRouter.get("/expertise-categories", async (req, res) => {
+  try {
+    // This is a simplified approach - in a real app, you'd likely
+    // have a separate table for categories with standardized names
+    const categories = [
+      { id: 1, name: "Crop Specialists", icon: "crop", color: "green-600", count: 64 },
+      { id: 2, name: "Organic Farming", icon: "sprout", color: "green-600", count: 38 },
+      { id: 3, name: "Climate Smart", icon: "cloud", color: "blue-500", count: 27 },
+      { id: 4, name: "Agro Dealers", icon: "shopping-bag", color: "orange-500", count: 41 }
+    ];
+    
+    return res.json(categories);
+  } catch (error) {
+    console.error("Error fetching expertise categories:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 // Test endpoint
 greenSocialsRouter.get("/test", (req, res) => {
   return res.json({ message: "Green Socials API is working!" });
