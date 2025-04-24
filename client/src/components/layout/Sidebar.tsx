@@ -82,7 +82,7 @@ export function Sidebar() {
       showInMobileNav: true,
     },
     {
-      title: "Plant Diagnosis",
+      title: "Diagnose",
       href: "/dashboard/plant-diagnosis",
       icon: <Sprout className="h-5 w-5" />,
       mobileIcon: <Sprout className="h-6 w-6" />,
@@ -90,7 +90,7 @@ export function Sidebar() {
       showInMobileNav: true,
     },
     {
-      title: "Marketplace",
+      title: "Shop",
       href: "/dashboard/marketplace",
       icon: <ShoppingBag className="h-5 w-5" />,
       mobileIcon: <ShoppingBag className="h-6 w-6" />,
@@ -146,7 +146,7 @@ export function Sidebar() {
       showInMobileNav: false,
     },
     {
-      title: "Green Socials",
+      title: "Socials",
       href: "/dashboard/social",
       icon: <Users className="h-5 w-5" />,
       mobileIcon: <Users className="h-6 w-6" />,
@@ -267,21 +267,21 @@ export function Sidebar() {
       {/* Mobile Status Bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-sidebar text-sidebar-foreground border-b border-primary/20 flex items-center justify-between px-4 safe-top">
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="mr-1" 
+          <Button
+            variant="ghost"
+            size="icon"
+            className="mr-1"
             onClick={() => setIsMobileMenuOpen(true)}
           >
             <Menu className="h-5 w-5" />
           </Button>
-          
+
           <Link
             href="/dashboard"
             className="text-xl font-bold font-space tracking-wider relative"
           >
             Green<span className="text-primary">upp</span>
-            <span className="absolute -top-1 -right-10 bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded-full font-semibold">
+            <span className="absolute -top-1 -right-10 text-slate-600 text-[10px] px-1 py-0.5 rounded-full font-semibold">
               BETA
             </span>
           </Link>
@@ -351,33 +351,43 @@ export function Sidebar() {
             </span>
           </Link>
         ))}
-        
+
         {/* Mobile Side Navigation */}
         {isMobileMenuOpen && (
-          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}>
-            <div 
-              className="fixed top-0 right-0 bottom-0 w-[280px] bg-sidebar border-l border-primary/20 shadow-xl p-4 overflow-y-auto safe-top safe-bottom flex flex-col h-screen" 
+          <div
+            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-fade-in"
+            onClick={() => setIsMobileMenuOpen(false)}
+            style={{ animationDuration: '0.25s' }}
+          >
+            <div
+              className="fixed top-0 right-0 bottom-0 w-[280px] bg-sidebar border-l border-primary/20 shadow-xl p-4 overflow-y-auto safe-top safe-bottom flex flex-col h-screen animate-slide-in-right"
               onClick={(e) => e.stopPropagation()}
+              style={{ animationDuration: '0.3s' }}
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Menu</h2>
-                <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
                   <X className="h-5 w-5" />
                 </Button>
               </div>
-              
+
               <div className="flex-1 overflow-y-auto">
                 <div className="space-y-1 pb-6">
-                  {navItems.map((item) => (
+                  {navItems.map((item, index) => (
                     <Link
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors",
+                        "flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors animate-scale-in",
                         item.active
                           ? "bg-primary/20 text-primary"
                           : "text-foreground hover:bg-primary/10",
                       )}
+                      style={{ animationDelay: `${index * 0.05}s` }}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       {item.icon}
@@ -386,12 +396,13 @@ export function Sidebar() {
                   ))}
                 </div>
               </div>
-              
+
               <div className="pt-4 border-t border-primary/10 mt-auto">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full flex items-center gap-2"
+                  className="w-full flex items-center gap-2 animate-fade-in"
+                  style={{ animationDelay: '0.5s' }}
                   onClick={() => {
                     logoutMutation.mutate();
                     setIsMobileMenuOpen(false);

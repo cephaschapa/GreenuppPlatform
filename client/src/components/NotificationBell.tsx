@@ -75,10 +75,10 @@ export function NotificationBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-full w-16 p-0"
+          className="relative h-full h-[30px] w-[30px] p-0"
           onClick={() => refetchNotifications()}
         >
-          <Bell className="h-5 w-5"/>
+          <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <span className="absolute -top-0 -right-0 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
               {unreadCount > 9 ? "9+" : unreadCount}
@@ -91,18 +91,19 @@ export function NotificationBell() {
           <span>Notifications</span>
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="h-7 px-2 text-xs"
                 onClick={() => {
                   const unreadIds = notifications
-                    .filter(n => n.status === 'unread')
-                    .map(n => n.id);
-                  
+                    .filter((n) => n.status === "unread")
+                    .map((n) => n.id);
+
                   // Mark all unread notifications as read
-                  Promise.all(unreadIds.map(id => markAsRead(id)))
-                    .then(() => refetchNotifications());
+                  Promise.all(unreadIds.map((id) => markAsRead(id))).then(() =>
+                    refetchNotifications(),
+                  );
                 }}
               >
                 Mark all as read
@@ -149,21 +150,29 @@ export function NotificationBell() {
                             </p>
                             {notification.data?.actions && (
                               <div className="mt-2 flex gap-2">
-                                {notification.data.actions.map((action: { label: string; url: string; variant?: string }) => (
-                                  <Button
-                                    key={action.label}
-                                    size="sm"
-                                    variant={action.variant as any || "outline"}
-                                    className="h-7 px-2 text-xs"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      markAsRead(notification.id);
-                                      window.location.href = action.url;
-                                    }}
-                                  >
-                                    {action.label}
-                                  </Button>
-                                ))}
+                                {notification.data.actions.map(
+                                  (action: {
+                                    label: string;
+                                    url: string;
+                                    variant?: string;
+                                  }) => (
+                                    <Button
+                                      key={action.label}
+                                      size="sm"
+                                      variant={
+                                        (action.variant as any) || "outline"
+                                      }
+                                      className="h-7 px-2 text-xs"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        markAsRead(notification.id);
+                                        window.location.href = action.url;
+                                      }}
+                                    >
+                                      {action.label}
+                                    </Button>
+                                  ),
+                                )}
                               </div>
                             )}
                           </div>
