@@ -30,7 +30,8 @@ import {
   AlertTriangle,
   Sprout,
   Plus,
-  ShoppingBag
+  ShoppingBag,
+  MapPin
 } from "lucide-react";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -667,54 +668,104 @@ const GreenSocialsPage = () => {
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
-                      <span className="bg-primary/10 rounded-full p-1">
-                        <Bookmark className="h-4 w-4 text-primary" />
+                      <span className="bg-primary/10 rounded-full p-1.5">
+                        <ShoppingBag className="h-4 w-4 text-primary" />
                       </span>
-                      Sponsored Listings
+                      Marketplace Highlights
                     </CardTitle>
+                    <CardDescription className="text-xs">Products from verified agricultural suppliers</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="rounded-lg border overflow-hidden hover:shadow-md transition-shadow">
-                      <div className="aspect-video bg-muted relative">
+                    <div className="rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 hover:border-primary/50 cursor-pointer group">
+                      <div className="aspect-video bg-muted relative overflow-hidden">
+                        <div className="absolute top-0 right-0 m-2">
+                          <Badge variant="outline" className="bg-background/80 backdrop-blur-sm text-xs font-medium">
+                            2.4km away
+                          </Badge>
+                        </div>
                         <div className="absolute bottom-0 left-0 p-2">
                           <Badge className="bg-primary text-xs">Premium Seed</Badge>
                         </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       </div>
                       <div className="p-3">
-                        <h4 className="font-medium text-sm mb-1">Climate-Resilient Maize Seeds</h4>
+                        <h4 className="font-medium text-sm mb-1 group-hover:text-primary transition-colors">Climate-Resilient Maize Seeds</h4>
+                        <div className="flex items-center gap-1 mb-1.5">
+                          <MapPin className="h-3 w-3 text-muted-foreground" />
+                          <p className="text-xs text-muted-foreground">Lusaka Central Market</p>
+                        </div>
                         <p className="text-xs text-muted-foreground mb-2">Early-maturing, drought-resistant variety</p>
                         <div className="flex justify-between items-center">
                           <span className="font-bold text-sm">ZMW 850</span>
-                          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs flex items-center gap-1">
+                          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs flex items-center gap-1 group-hover:text-primary transition-colors">
                             <span>View</span>
-                            <ArrowRight className="h-3 w-3" />
+                            <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
                           </Button>
                         </div>
                       </div>
                     </div>
 
-                    <div className="rounded-lg border overflow-hidden hover:shadow-md transition-shadow">
-                      <div className="aspect-video bg-muted relative">
+                    <div className="rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 hover:border-primary/50 cursor-pointer group">
+                      <div className="aspect-video bg-muted relative overflow-hidden">
+                        <div className="absolute top-0 right-0 m-2">
+                          <Badge variant="outline" className="bg-background/80 backdrop-blur-sm text-xs font-medium">
+                            5.1km away
+                          </Badge>
+                        </div>
                         <div className="absolute bottom-0 left-0 p-2">
                           <Badge className="bg-orange-500 text-xs">Equipment</Badge>
                         </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       </div>
                       <div className="p-3">
-                        <h4 className="font-medium text-sm mb-1">Portable Soil Testing Kit</h4>
+                        <h4 className="font-medium text-sm mb-1 group-hover:text-primary transition-colors">Portable Soil Testing Kit</h4>
+                        <div className="flex items-center gap-1 mb-1.5">
+                          <MapPin className="h-3 w-3 text-muted-foreground" />
+                          <p className="text-xs text-muted-foreground">AgriTech Center, Lusaka</p>
+                        </div>
                         <p className="text-xs text-muted-foreground mb-2">Analyze soil nutrients in minutes</p>
                         <div className="flex justify-between items-center">
                           <span className="font-bold text-sm">ZMW 1,200</span>
-                          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs flex items-center gap-1">
+                          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs flex items-center gap-1 group-hover:text-primary transition-colors">
                             <span>View</span>
-                            <ArrowRight className="h-3 w-3" />
+                            <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="rounded-lg border overflow-hidden hover:shadow-md transition-all duration-300 hover:border-primary/50 cursor-pointer group">
+                      <div className="aspect-video bg-muted relative overflow-hidden">
+                        <div className="absolute top-0 right-0 m-2">
+                          <Badge variant="outline" className="bg-background/80 backdrop-blur-sm text-xs font-medium">
+                            3.7km away
+                          </Badge>
+                        </div>
+                        <div className="absolute bottom-0 left-0 p-2">
+                          <Badge className="bg-green-600 text-xs">Organic</Badge>
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      </div>
+                      <div className="p-3">
+                        <h4 className="font-medium text-sm mb-1 group-hover:text-primary transition-colors">Organic Fertilizer Blend</h4>
+                        <div className="flex items-center gap-1 mb-1.5">
+                          <MapPin className="h-3 w-3 text-muted-foreground" />
+                          <p className="text-xs text-muted-foreground">Green Earth Farm, Chongwe</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">Natural nutrients for improved soil health</p>
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-sm">ZMW 450</span>
+                          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs flex items-center gap-1 group-hover:text-primary transition-colors">
+                            <span>View</span>
+                            <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
                           </Button>
                         </div>
                       </div>
                     </div>
                   </CardContent>
                   <CardFooter className="pt-0">
-                    <Button variant="outline" size="sm" className="w-full flex items-center gap-1.5">
-                      <Compass className="h-4 w-4" />
+                    <Button variant="outline" size="sm" className="w-full flex items-center gap-1.5 hover:bg-primary/5 transition-colors">
+                      <ShoppingBag className="h-4 w-4" />
                       <span className="hidden sm:inline-block">Browse Marketplace</span>
                       <span className="sm:hidden">Browse</span>
                     </Button>
@@ -725,35 +776,38 @@ const GreenSocialsPage = () => {
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
-                      <span className="bg-blue-500/10 rounded-full p-1">
+                      <span className="bg-blue-500/10 rounded-full p-1.5">
                         <Cloud className="h-4 w-4 text-blue-500" />
                       </span>
                       Weather Alerts
                     </CardTitle>
+                    <CardDescription className="text-xs">Recent weather conditions that may affect your area</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-center gap-3 p-3 bg-yellow-500/10 rounded-lg border-l-4 border-yellow-500">
+                    <div className="flex items-center gap-3 p-3 bg-yellow-500/10 rounded-lg border-l-4 border-yellow-500 hover:bg-yellow-500/15 transition-colors cursor-pointer">
                       <div className="shrink-0">
                         <AlertTriangle className="h-5 w-5 text-yellow-500" />
                       </div>
                       <div>
                         <h4 className="font-medium text-sm">Heavy Rainfall Expected</h4>
                         <p className="text-xs text-muted-foreground">Lusaka Region • Next 48 Hours</p>
+                        <p className="text-xs text-yellow-600 mt-1">Secure your crops and ensure proper drainage</p>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3 p-3 rounded-lg border">
+                    <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer">
                       <div className="shrink-0 text-green-500">
                         <Sprout className="h-5 w-5" />
                       </div>
                       <div>
                         <h4 className="font-medium text-sm">Favorable Planting Conditions</h4>
                         <p className="text-xs text-muted-foreground">Northern Region • Next Week</p>
+                        <p className="text-xs text-green-600 mt-1">Optimal soil moisture levels for seed germination</p>
                       </div>
                     </div>
                   </CardContent>
                   <CardFooter className="pt-0">
-                    <Button variant="outline" size="sm" className="w-full flex items-center gap-1.5">
+                    <Button variant="outline" size="sm" className="w-full flex items-center gap-1.5 hover:bg-blue-500/5 transition-colors">
                       <Cloud className="h-4 w-4" />
                       <span className="hidden sm:inline-block">See Full Forecast</span>
                       <span className="sm:hidden">Forecast</span>
