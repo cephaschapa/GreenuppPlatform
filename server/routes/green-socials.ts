@@ -171,36 +171,34 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
     const userId = req.user.id;
     const limit = parseInt(req.query.limit as string) || 20;
     
-    console.log("Complete rewrite of the feed endpoint");
-    
-    // Using direct pool query for maximum reliability
-    const query = `
-      SELECT 
-        p.id, p.user_id, p.content, p.post_type, p.visibility, p.published_at, 
-        p.community_id, p.media, p.location_name, p.latitude, p.longitude,
-        p.season, p.growing_zone, p.weather_conditions, p.hashtags, 
-        p.mentioned_users, p.crops_tags, p.like_count, p.comment_count, 
-        p.share_count, u.id as author_id, u.username as author_username, 
-        u.profile_image as author_profile_image, 
-        COALESCE(sp.display_name, u.username) as author_display_name
-      FROM 
-        posts p
-        JOIN users u ON p.user_id = u.id
-        LEFT JOIN social_profiles sp ON p.user_id = sp.user_id
-      ORDER BY p.published_at DESC
-      LIMIT $1
-    `;
+    console.log("Final ultra-simplified feed endpoint - bare minimum query");
     
     try {
-      const rawResult = await pool.query(query, [limit]);
+      // The absolute simplest query we can do - just get all posts with no filters at all
+      const result = await db.execute(sql`
+        SELECT 
+          p.id, p.user_id, p.content, p.post_type, p.visibility, p.published_at, 
+          p.community_id, p.media, p.location_name, p.latitude, p.longitude,
+          p.season, p.growing_zone, p.weather_conditions, p.hashtags, 
+          p.mentioned_users, p.crops_tags, p.like_count, p.comment_count, 
+          p.share_count,
+          u.id as author_id, u.username as author_username, u.profile_image as author_profile_image,
+          sp.display_name as author_display_name
+        FROM 
+          posts p
+          JOIN users u ON p.user_id = u.id
+          LEFT JOIN social_profiles sp ON p.user_id = sp.user_id
+        ORDER BY p.published_at DESC
+        LIMIT ${limit}
+      `);
       
       // If no posts are found, return an empty array
-      if (!rawResult.rows.length) {
+      if (!result.rows.length) {
         return res.json([]);
       }
       
       // Transform the raw results into the expected structure
-      const feed = rawResult.rows.map(row => ({
+      const feed = result.rows.map((row: any) => ({
         post: {
           id: row.id,
           userId: row.user_id,
