@@ -601,6 +601,19 @@ greenSocialsRouter.get("/following", isAuthenticated, async (req, res) => {
     const offset = parseInt(req.query.offset as string) || 0;
     
     // Get relationships with user and profile info using direct SQL
+    console.log(`Fetching following list for user ${userId}`);
+    
+    // First get relationship IDs to debug
+    const relationshipIds = await db.execute(
+      sql`SELECT id, follower_id, followed_id, status 
+          FROM user_relationships 
+          WHERE follower_id = ${userId}
+          ORDER BY created_at DESC`
+    );
+    
+    console.log("DEBUG: Found relationships:", JSON.stringify(relationshipIds));
+    
+    // Get relationships with user and profile info using direct SQL
     const following = await db.execute(
       sql`SELECT 
             ur.id as "relationshipId", 
@@ -608,15 +621,17 @@ greenSocialsRouter.get("/following", isAuthenticated, async (req, res) => {
             ur.created_at as "relationshipCreatedAt",
             u.id as "userId",
             u.username,
-            u.profile_image as "profileImage",
-            sp.display_name as "displayName",
-            sp.bio,
+            COALESCE(u.profile_image, '') as "profileImage",
+            COALESCE(sp.display_name, u.username) as "displayName",
+            COALESCE(sp.bio, '') as "bio",
             sp.expertise,
-            sp.location,
-            sp.verification_status as "verificationStatus",
-            sp.experience_years as "experienceYears",
             sp.specializations,
-            sp.badges
+            COALESCE(sp.location, '') as "location",
+            COALESCE(sp.verification_status, 'unverified') as "verificationStatus",
+            sp.experience_years as "experienceYears",
+            sp.badges,
+            COALESCE(sp.follower_count, 0) as "followerCount",
+            COALESCE(sp.following_count, 0) as "followingCount"
           FROM user_relationships ur
           INNER JOIN users u ON ur.followed_id = u.id
           LEFT JOIN social_profiles sp ON u.id = sp.user_id
@@ -625,7 +640,19 @@ greenSocialsRouter.get("/following", isAuthenticated, async (req, res) => {
           LIMIT ${limit} OFFSET ${offset}`
     );
     
-    return res.json(following);
+    console.log(`DEBUG: Found ${following.length || (following.rows ? following.rows.length : 0)} following users`);
+    
+    // Format the response consistently
+    const formattedResults = [];
+    if (following && following.rows && following.rows.length > 0) {
+      formattedResults.push(...following.rows);
+    } else if (Array.isArray(following) && following.length > 0) {
+      formattedResults.push(...following);
+    }
+    
+    console.log("DEBUG: Formatted following:", JSON.stringify(formattedResults));
+    
+    return res.json(formattedResults);
   } catch (error) {
     console.error("Error fetching following users:", error);
     return res.status(500).json({ message: "Server error" });
@@ -687,83 +714,65 @@ greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
     const userId = req.user.id;
     const limit = parseInt(req.query.limit as string) || 10;
     
-    // Get IDs of users the current user follows
-    const followingResult = await db.execute(
+    console.log(`DEBUG: Looking for users that are not user id ${userId}`);
+    
+    // Get all followed IDs for filtering
+    console.log(`Getting followed user IDs for user ${userId}`);
+    const followedResult = await db.execute(
       sql`SELECT followed_id FROM user_relationships WHERE follower_id = ${userId}`
     );
     
-    // Extract followed IDs from the result
-    const followedIds = [userId]; // Always include the current user
-    
-    // Handle results safely
-    if (Array.isArray(followingResult)) {
-      followingResult.forEach((row: any) => {
+    // Extract the followed IDs more carefully and convert to integers
+    const followedUserIds = [userId]; // Always exclude current user
+    if (followedResult && followedResult.rows) {
+      followedResult.rows.forEach((row: any) => {
         if (row && row.followed_id) {
-          followedIds.push(row.followed_id);
+          followedUserIds.push(parseInt(String(row.followed_id), 10));
+        }
+      });
+    } else if (Array.isArray(followedResult)) {
+      followedResult.forEach((row: any) => {
+        if (row && row.followed_id) {
+          followedUserIds.push(parseInt(String(row.followed_id), 10));
         }
       });
     }
     
-    const followedIdsStr = followedIds.join(',') || '0';
+    console.log(`User ${userId} is following these users:`, followedUserIds);
     
-    console.log(`DEBUG: Looking for users that are not user id ${userId}`);
+    // Format the followed IDs for the SQL NOT IN clause
+    const followedIdsStringForSql = followedUserIds.join(',') || '0';
     
-    // Manually get profiles for direct debugging
-    const allUsersResult = await db.execute(
+    // Get only users that have profiles and are not already followed
+    console.log(`Getting users not in: ${followedIdsStringForSql}`);
+    const suggestedUsers = await db.execute(
       sql`SELECT 
-            u.id,
+            u.id as "userId", 
             u.username,
-            sp.user_id
+            COALESCE(u.profile_image, '') as "profileImage",
+            COALESCE(sp.display_name, u.username) as "displayName",
+            COALESCE(sp.bio, '') as "bio",
+            sp.expertise,
+            sp.specializations,
+            COALESCE(sp.location, '') as "location",
+            COALESCE(sp.verification_status, 'unverified') as "verificationStatus",
+            COALESCE(sp.follower_count, 0) as "followerCount",
+            COALESCE(sp.following_count, 0) as "followingCount"
           FROM users u
           JOIN social_profiles sp ON u.id = sp.user_id
-          WHERE u.id != ${userId}`
+          WHERE u.id NOT IN (${sql.raw(followedIdsStringForSql)})
+          LIMIT ${limit}`
     );
     
-    console.log("DEBUG SQL RESULT:", JSON.stringify(allUsersResult));
-    
-    // Format for the frontend - handle the QueryResult properly
+    // Format the response consistently
     const formattedResults = [];
-    // Check if the result has rows property (QueryResult interface)
-    const userRows = allUsersResult && allUsersResult.rows ? allUsersResult.rows : 
-                    Array.isArray(allUsersResult) ? allUsersResult : [];
-    
-    // Log what we're working with
-    console.log("User rows:", JSON.stringify(userRows));
-    
-    for (const user of userRows) {
-      if (user && user.id && !followedIds.includes(user.id)) {
-        console.log(`Processing user ${user.username} (${user.id})`);
-        try {
-          // Get complete user profile using raw SQL for more direct debugging
-          const profileData = await db.execute(
-            sql`SELECT 
-                  u.id as "userId", 
-                  u.username,
-                  COALESCE(u.profile_image, '') as "profileImage",
-                  COALESCE(sp.display_name, u.username) as "displayName",
-                  COALESCE(sp.bio, '') as "bio",
-                  sp.expertise,
-                  sp.specializations,
-                  COALESCE(sp.location, '') as "location",
-                  COALESCE(sp.verification_status, 'unverified') as "verificationStatus",
-                  COALESCE(sp.follower_count, 0) as "followerCount",
-                  COALESCE(sp.following_count, 0) as "followingCount"
-                FROM users u
-                JOIN social_profiles sp ON u.id = sp.user_id
-                WHERE u.id = ${user.id}`
-          );
-          
-          // Extract the profile from the result
-          if (profileData && profileData.rows && profileData.rows.length > 0) {
-            formattedResults.push(profileData.rows[0]);
-          } else if (Array.isArray(profileData) && profileData.length > 0) {
-            formattedResults.push(profileData[0]);
-          }
-        } catch (err) {
-          console.error(`Error getting profile for user ${user.id}:`, err);
-        }
-      }
+    if (suggestedUsers && suggestedUsers.rows && suggestedUsers.rows.length > 0) {
+      formattedResults.push(...suggestedUsers.rows);
+    } else if (Array.isArray(suggestedUsers) && suggestedUsers.length > 0) {
+      formattedResults.push(...suggestedUsers);
     }
+    
+    console.log(`Found ${formattedResults.length} suggested users after filtering`);
     
     // Return the formatted results from our direct approach
     console.log(`DEBUG: Found ${formattedResults.length} users to suggest after filtering`);
