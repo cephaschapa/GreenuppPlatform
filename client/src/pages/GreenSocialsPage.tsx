@@ -125,12 +125,7 @@ const GreenSocialsPage = () => {
   // Query for fetching people the user follows
   const followingQuery = useQuery({
     queryKey: ["/api/social/following"],
-    queryFn: async () => {
-      const res = await apiRequest("GET", "/api/social/following");
-      const data = await res.json();
-      console.log("DEBUG: Following data:", data);
-      return data;
-    },
+    queryFn: () => apiRequest("GET", "/api/social/following").then(res => res.json()),
     enabled: !!user,
   });
   
@@ -1099,36 +1094,37 @@ const GreenSocialsPage = () => {
                           <Loader2 className="h-8 w-8 animate-spin text-primary" />
                         </div>
                       ) : followingQuery.data && followingQuery.data.length > 0 ? (
-                        followingQuery.data.slice(0, 4).map((item) => (
+                        followingQuery.data.slice(0, 4).map((item: any) => (
                           <div 
-                            key={item.relationship.id} 
+                            key={item.relationshipId} 
                             className="flex flex-col items-center border rounded-lg p-4 hover:border-primary/50 hover:shadow-sm transition-all"
                           >
                             <div className="relative mb-2">
                               <Avatar className="h-16 w-16">
-                                <AvatarImage src={item.user.profileImage || undefined} />
-                                <AvatarFallback>{getInitials(item.profile?.displayName || item.user.username)}</AvatarFallback>
+                                <AvatarImage src={item.profileImage || undefined} />
+                                <AvatarFallback>{getInitials(item.displayName || item.username)}</AvatarFallback>
                               </Avatar>
-                              {item.profile?.verificationStatus === 'verified' && (
+                              {item.verificationStatus === 'verified' && (
                                 <div className="absolute -top-1 -right-1 bg-primary/10 rounded-full p-1">
                                   <Award className="h-4 w-4 text-primary" />
                                 </div>
                               )}
-                              {item.profile?.expertise?.includes('crop') && (
+                              {item.expertise?.some((exp: string) => exp.toLowerCase().includes('crop')) && (
                                 <div className="absolute -top-1 -right-1 bg-green-500/10 rounded-full p-1">
                                   <Crop className="h-4 w-4 text-green-500" />
                                 </div>
                               )}
                             </div>
-                            <h4 className="font-medium">{item.profile?.displayName || item.user.username}</h4>
+                            <h4 className="font-medium">{item.displayName || item.username}</h4>
                             <p className="text-xs text-muted-foreground mb-2">
-                              {item.profile?.expertise?.[0] || 'Farmer'} • {item.profile?.location || 'Zambia'}
+                              {item.expertise?.[0] || 'Farmer'} • {item.location || 'Zambia'}
                             </p>
                             <div className="flex gap-1 mb-3 flex-wrap justify-center">
-                              {item.profile?.specializations?.slice(0, 2).map((spec, i) => (
+                              {item.specializations?.slice(0, 2).map((spec: string, i: number) => (
                                 <Badge key={i} variant="outline" className="text-xs">{spec}</Badge>
                               ))}
-                              {!item.profile?.specializations?.length && item.profile?.expertise?.slice(0, 2).map((exp, i) => (
+                              {(!item.specializations || item.specializations.length === 0) && 
+                               item.expertise?.slice(0, 2).map((exp: string, i: number) => (
                                 <Badge key={i} variant="outline" className="text-xs">{exp}</Badge>
                               ))}
                             </div>
@@ -1138,10 +1134,10 @@ const GreenSocialsPage = () => {
                                 variant="outline" 
                                 size="sm" 
                                 className="text-xs"
-                                onClick={() => unfollowMutation.mutate(item.user.id)}
+                                onClick={() => unfollowMutation.mutate(item.userId)}
                                 disabled={unfollowMutation.isPending}
                               >
-                                {unfollowMutation.isPending && unfollowMutation.variables === item.user.id ? (
+                                {unfollowMutation.isPending && unfollowMutation.variables === item.userId ? (
                                   <Loader2 className="h-3 w-3 animate-spin mr-1" />
                                 ) : null}
                                 Unfollow
@@ -1176,15 +1172,15 @@ const GreenSocialsPage = () => {
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                       </div>
                     ) : activityQuery.data && activityQuery.data.length > 0 ? (
-                      activityQuery.data.map((activity) => (
+                      activityQuery.data.map((activity: any) => (
                         <div key={`${activity.type}-${activity.id}`} className="flex gap-3 p-3 border rounded-lg hover:bg-muted/30 transition-colors">
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={activity.user.profileImage || undefined} />
-                            <AvatarFallback>{getInitials(activity.profile?.displayName || activity.user.username)}</AvatarFallback>
+                            <AvatarImage src={activity.profileImage || undefined} />
+                            <AvatarFallback>{getInitials(activity.displayName || activity.username)}</AvatarFallback>
                           </Avatar>
                           <div>
                             <p className="text-sm">
-                              <span className="font-medium">{activity.profile?.displayName || activity.user.username}</span> 
+                              <span className="font-medium">{activity.displayName || activity.username}</span> 
                               {activity.type === 'post' ? (
                                 ' shared a new post'
                               ) : (
@@ -1225,7 +1221,7 @@ const GreenSocialsPage = () => {
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                       </div>
                     ) : suggestedQuery.data && suggestedQuery.data.length > 0 ? (
-                      suggestedQuery.data.map((item) => (
+                      suggestedQuery.data.map((item: any) => (
                         <div key={item.userId} className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/30 transition-colors">
                           <div className="flex gap-3">
                             <Avatar className="h-10 w-10">
@@ -1302,7 +1298,7 @@ const GreenSocialsPage = () => {
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                       </div>
                     ) : categoriesQuery.data && categoriesQuery.data.length > 0 ? (
-                      categoriesQuery.data.map((category) => (
+                      categoriesQuery.data.map((category: any) => (
                         <div key={category.id} className="flex justify-between p-3 border rounded-lg hover:bg-primary/5 transition-colors cursor-pointer">
                           <div className="flex items-center gap-2">
                             {category.icon === 'crop' && <Crop className={`h-4 w-4 text-${category.color}`} />}
