@@ -310,7 +310,7 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
         let comments = [];
         try {
           // Get comments using raw SQL for now since we're having issues with Drizzle query builder variable names
-          const commentsResult = await db.execute(sql`
+          const commentResults = await db.execute(sql`
             SELECT 
               c.id, c.user_id as "userId", c.post_id as "postId", c.parent_id as "parentId",
               c.content, c.media, c.like_count as "likeCount", c.reply_count as "replyCount",
@@ -327,7 +327,14 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
               c.parent_id ASC, c.created_at DESC
           `);
           
-          comments = commentsResult.map(comment => ({
+          // Add debugging for comment results
+          console.log(`Fetched comments for post ${row.id}:`, commentResults);
+          
+          // Access rows property of the result (which may be in different formats)
+          const commentRows = commentResults.rows || commentResults;
+          console.log(`Comment rows for post ${row.id}:`, commentRows.length, "comments found");
+          
+          comments = commentRows.map((comment: any) => ({
             comment: {
               id: comment.id,
               userId: comment.userId,
@@ -634,6 +641,12 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id;
     console.log("Creating comment using Drizzle query builder");
+    console.log("Comment data:", {
+      userId,
+      postId: req.body.postId,
+      parentId: req.body.parentId || null,
+      content: req.body.content
+    });
 
     // Create comment using Drizzle query builder
     const now = new Date();
