@@ -193,37 +193,14 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
     
     const communityIds = communities.rows.map(c => c.communityId);
     
-    // Construct the WHERE clause dynamically
-    let whereClause = '';
-    const beforeClause = before ? `AND p.id < ${parseInt(before)}` : '';
-    
     // Define result variable here so it's available in the outer scope
     let result;
     
     try {
-      console.log("Constructing SQL feed query with user filter");
+      console.log("Trying completely different approach for feed SQL query");
       
-      // We need to handle the IN conditions more carefully
-      if (followingIds.length > 0) {
-        whereClause += `(p.user_id IN (${followingIds.join(',')})`;
-      } else {
-        whereClause += `(p.user_id = ${userId}`;
-      }
-      
-      if (communityIds.length > 0) {
-        whereClause += ` OR p.community_id IN (${communityIds.join(',')})`;
-      }
-      
-      // Always include public posts
-      whereClause += ` OR p.visibility = 'public')`;
-      
-      // Append the beforeClause
-      whereClause += beforeClause;
-      
-      console.log("Final WHERE clause:", whereClause);
-      
-      // Build the full query with raw SQL and safely constructed WHERE clause
-      const query = sql`
+      // Let's build a more reliable query with proper parameter binding
+      let baseQuery = `
         SELECT 
           p.id, p.user_id as "userId", p.content, p.post_type as "postType", 
           p.visibility, p.published_at as "publishedAt", p.community_id as "communityId",
@@ -238,13 +215,53 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
           LEFT JOIN users u ON p.user_id = u.id
           LEFT JOIN social_profiles sp ON p.user_id = sp.user_id
         WHERE 
-          ${sql.raw(whereClause)}
+          (p.visibility = 'public' OR p.user_id = ${userId}`;
+          
+      // Add the following users to the query if any
+      if (followingIds.length > 1) { // More than just the current user
+        baseQuery += ` OR p.user_id IN (`;
+        for (let i = 0; i < followingIds.length; i++) {
+          if (followingIds[i] !== userId) { // Skip current user as it's already included
+            baseQuery += `${followingIds[i]}`;
+            if (i < followingIds.length - 1) {
+              baseQuery += `, `;
+            }
+          }
+        }
+        baseQuery += `)`;
+      }
+      
+      // Add community filter
+      if (communityIds.length > 0) {
+        baseQuery += ` OR p.community_id IN (`;
+        for (let i = 0; i < communityIds.length; i++) {
+          baseQuery += `${communityIds[i]}`;
+          if (i < communityIds.length - 1) {
+            baseQuery += `, `;
+          }
+        }
+        baseQuery += `)`;
+      }
+      
+      // Close the parenthesis
+      baseQuery += `)`;
+      
+      // Add before condition if needed
+      if (before) {
+        baseQuery += ` AND p.id < ${parseInt(before)}`;
+      }
+      
+      // Add ORDER BY and LIMIT
+      baseQuery += `
         ORDER BY 
           p.published_at DESC
         LIMIT ${limit}
       `;
       
-      result = await db.execute(query);
+      console.log("Executing feed query:", baseQuery);
+      
+      // Use raw SQL since we've already carefully constructed the query
+      result = await db.execute(sql.raw(baseQuery));
     } catch (error) {
       console.error("Error in feed query construction:", error);
       return res.status(500).json({ message: "Error building feed query" });
