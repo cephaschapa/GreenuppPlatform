@@ -1203,19 +1203,23 @@ const GreenSocialsPage = () => {
                                 <CardContent>
                                   <div className="whitespace-pre-wrap">{post.post.content}</div>
                                   
-                                  {post.post.media && post.post.media.length > 0 && (
+                                  {post.post.media && Array.isArray(post.post.media) && post.post.media.length > 0 && (
                                     <div className={`mt-4 ${post.post.media.length > 1 ? 'grid grid-cols-2 gap-2' : ''}`}>
                                       {post.post.media.map((item, idx) => (
-                                        item.type.includes('image') ? (
+                                        item && typeof item === 'object' && item.type && item.type.includes('image') ? (
                                           <div 
                                             key={idx} 
                                             className="rounded-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
-                                            onClick={() => window.open(item.url, '_blank')}
+                                            onClick={() => item.url ? window.open(item.url, '_blank') : null}
                                           >
                                             <img 
-                                              src={item.url} 
+                                              src={item.url || ''} 
                                               alt={item.caption || 'Post image'} 
                                               className={`w-full h-auto object-cover ${post.post.media && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
+                                              onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                target.src = 'https://placehold.co/600x400?text=Image+Unavailable';
+                                              }}
                                             />
                                             {item.caption && (
                                               <div className="p-2 text-xs text-gray-500">
@@ -1228,7 +1232,7 @@ const GreenSocialsPage = () => {
                                     </div>
                                   )}
                                   
-                                  {post.post.hashtags && post.post.hashtags.length > 0 && (
+                                  {post.post.hashtags && Array.isArray(post.post.hashtags) && post.post.hashtags.length > 0 && (
                                     <div className="mt-2">
                                       {post.post.hashtags.map((tag, idx) => (
                                         <span key={idx} className="text-primary mr-2">#{tag}</span>
@@ -1295,19 +1299,23 @@ const GreenSocialsPage = () => {
                             <CardContent>
                               <div className="whitespace-pre-wrap">{post.post.content}</div>
                               
-                              {post.post.media && post.post.media.length > 0 && (
+                              {post.post.media && Array.isArray(post.post.media) && post.post.media.length > 0 && (
                                 <div className={`mt-4 ${post.post.media.length > 1 ? 'grid grid-cols-2 gap-2' : ''}`}>
                                   {post.post.media.map((item, idx) => (
-                                    item.type.includes('image') ? (
+                                    item && typeof item === 'object' && item.type && item.type.includes('image') ? (
                                       <div 
                                         key={idx} 
                                         className="rounded-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
-                                        onClick={() => window.open(item.url, '_blank')}
+                                        onClick={() => item.url ? window.open(item.url, '_blank') : null}
                                       >
                                         <img 
-                                          src={item.url} 
+                                          src={item.url || ''} 
                                           alt={item.caption || 'Post image'} 
                                           className={`w-full h-auto object-cover ${post.post.media && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
+                                          onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.src = 'https://placehold.co/600x400?text=Image+Unavailable';
+                                          }}
                                         />
                                         {item.caption && (
                                           <div className="p-2 text-xs text-gray-500">
@@ -1320,7 +1328,7 @@ const GreenSocialsPage = () => {
                                 </div>
                               )}
                               
-                              {post.post.hashtags && post.post.hashtags.length > 0 && (
+                              {post.post.hashtags && Array.isArray(post.post.hashtags) && post.post.hashtags.length > 0 && (
                                 <div className="mt-2">
                                   {post.post.hashtags.map((tag, idx) => (
                                     <span key={idx} className="text-primary mr-2">#{tag}</span>
