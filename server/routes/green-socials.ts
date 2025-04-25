@@ -1275,39 +1275,38 @@ greenSocialsRouter.post("/posts/:postId/like", isAuthenticated, async (req, res)
 // Unlike a post
 greenSocialsRouter.delete("/posts/:postId/like", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const userId = req.user.id;
     const postId = parseInt(req.params.postId);
+    const now = new Date().toISOString();
     
-    // Check if the like exists
-    const existingLike = await db
-      .select({ id: postLikes.id })
-      .from(postLikes)
-      .where(and(
-        eq(postLikes.postId, postId),
-        eq(postLikes.userId, userId)
-      ))
-      .limit(1);
+    // Check if the like exists using raw SQL
+    const likeCheckResult = await db.execute(sql`
+      SELECT id FROM post_likes 
+      WHERE post_id = ${postId} AND user_id = ${userId}
+      LIMIT 1
+    `);
       
-    if (!existingLike.length) {
+    if (!likeCheckResult.rows.length) {
       return res.status(404).json({ message: "Like not found" });
     }
     
-    // Delete the like
-    await db
-      .delete(postLikes)
-      .where(and(
-        eq(postLikes.postId, postId),
-        eq(postLikes.userId, userId)
-      ));
+    // Delete the like using raw SQL
+    await db.execute(sql`
+      DELETE FROM post_likes
+      WHERE post_id = ${postId} AND user_id = ${userId}
+    `);
       
-    // Decrement the post's like count
-    await db
-      .update(posts)
-      .set({
-        likeCount: sql`GREATEST(${posts.likeCount} - 1, 0)`,
-        updatedAt: new Date()
-      })
-      .where(eq(posts.id, postId));
+    // Decrement the post's like count using raw SQL
+    await db.execute(sql`
+      UPDATE posts
+      SET like_count = GREATEST(like_count - 1, 0),
+          updated_at = ${now}
+      WHERE id = ${postId}
+    `);
       
     return res.status(200).json({ message: "Post unliked successfully" });
   } catch (error) {
@@ -1320,74 +1319,84 @@ greenSocialsRouter.delete("/posts/:postId/like", isAuthenticated, async (req, re
 // Like a comment
 greenSocialsRouter.post("/comments/:commentId/like", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const userId = req.user.id;
     const commentId = parseInt(req.params.commentId);
+    const now = new Date().toISOString();
     
-    // Check if the comment exists
-    const commentExists = await db
-      .select({ id: comments.id, userId: comments.userId, postId: comments.postId })
-      .from(comments)
-      .where(eq(comments.id, commentId))
-      .limit(1);
+    // Check if the comment exists using raw SQL
+    const commentCheckResult = await db.execute(sql`
+      SELECT id, user_id as "userId", post_id as "postId" 
+      FROM comments
+      WHERE id = ${commentId}
+      LIMIT 1
+    `);
       
-    if (!commentExists.length) {
+    if (!commentCheckResult.rows.length) {
       return res.status(404).json({ message: "Comment not found" });
     }
     
-    // Check if the user already liked the comment
-    const existingLike = await db
-      .select({ id: commentLikes.id })
-      .from(commentLikes)
-      .where(and(
-        eq(commentLikes.commentId, commentId),
-        eq(commentLikes.userId, userId)
-      ))
-      .limit(1);
+    const commentData = commentCheckResult.rows[0];
+    
+    // Check if the user already liked the comment using raw SQL
+    const likeCheckResult = await db.execute(sql`
+      SELECT id FROM comment_likes
+      WHERE comment_id = ${commentId} AND user_id = ${userId}
+      LIMIT 1
+    `);
       
-    if (existingLike.length) {
+    if (likeCheckResult.rows.length) {
       return res.status(400).json({ message: "You already liked this comment" });
     }
     
-    // Create the like
-    await db
-      .insert(commentLikes)
-      .values({
-        commentId,
-        userId
-      });
+    // Create the like using raw SQL
+    await db.execute(sql`
+      INSERT INTO comment_likes (comment_id, user_id, created_at)
+      VALUES (${commentId}, ${userId}, ${now})
+    `);
       
-    // Increment the comment's like count
-    await db
-      .update(comments)
-      .set({
-        likeCount: sql`${comments.likeCount} + 1`,
-        updatedAt: new Date()
-      })
-      .where(eq(comments.id, commentId));
+    // Increment the comment's like count using raw SQL
+    await db.execute(sql`
+      UPDATE comments
+      SET like_count = like_count + 1,
+          updated_at = ${now}
+      WHERE id = ${commentId}
+    `);
       
     // Create a notification for the comment owner
-    if (commentExists[0].userId !== userId) {
-      const commentDetails = await db
-        .select({ content: comments.content })
-        .from(comments)
-        .where(eq(comments.id, commentId))
-        .limit(1);
+    if (commentData.userId !== userId) {
+      // Get comment content for notification using raw SQL
+      const commentContentResult = await db.execute(sql`
+        SELECT content FROM comments
+        WHERE id = ${commentId}
+        LIMIT 1
+      `);
         
-      if (commentDetails.length) {
-        const shortContent = commentDetails[0].content.length > 50 
-          ? commentDetails[0].content.substring(0, 50) + '...' 
-          : commentDetails[0].content;
+      if (commentContentResult.rows.length) {
+        const commentContent = commentContentResult.rows[0].content;
+        const shortContent = commentContent.length > 50 
+          ? commentContent.substring(0, 50) + '...' 
+          : commentContent;
           
-        await db
-          .insert(socialNotifications)
-          .values({
-            userId: commentExists[0].userId,
-            type: 'comment_like',
-            content: `liked your comment: "${shortContent}"`,
-            relatedUserId: userId,
-            relatedCommentId: commentId,
-            relatedPostId: commentExists[0].postId
-          });
+        // Create notification using raw SQL
+        await db.execute(sql`
+          INSERT INTO social_notifications (
+            user_id, type, content, related_user_id, 
+            related_comment_id, related_post_id, created_at
+          )
+          VALUES (
+            ${commentData.userId},
+            'comment_like',
+            ${`liked your comment: "${shortContent}"`},
+            ${userId},
+            ${commentId},
+            ${commentData.postId},
+            ${now}
+          )
+        `);
       }
     }
     
@@ -1402,39 +1411,38 @@ greenSocialsRouter.post("/comments/:commentId/like", isAuthenticated, async (req
 // Unlike a comment
 greenSocialsRouter.delete("/comments/:commentId/like", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const userId = req.user.id;
     const commentId = parseInt(req.params.commentId);
+    const now = new Date().toISOString();
     
-    // Check if the like exists
-    const existingLike = await db
-      .select({ id: commentLikes.id })
-      .from(commentLikes)
-      .where(and(
-        eq(commentLikes.commentId, commentId),
-        eq(commentLikes.userId, userId)
-      ))
-      .limit(1);
+    // Check if the like exists using raw SQL
+    const likeCheckResult = await db.execute(sql`
+      SELECT id FROM comment_likes
+      WHERE comment_id = ${commentId} AND user_id = ${userId}
+      LIMIT 1
+    `);
       
-    if (!existingLike.length) {
+    if (!likeCheckResult.rows.length) {
       return res.status(404).json({ message: "Like not found" });
     }
     
-    // Delete the like
-    await db
-      .delete(commentLikes)
-      .where(and(
-        eq(commentLikes.commentId, commentId),
-        eq(commentLikes.userId, userId)
-      ));
+    // Delete the like using raw SQL
+    await db.execute(sql`
+      DELETE FROM comment_likes
+      WHERE comment_id = ${commentId} AND user_id = ${userId}
+    `);
       
-    // Decrement the comment's like count
-    await db
-      .update(comments)
-      .set({
-        likeCount: sql`GREATEST(${comments.likeCount} - 1, 0)`,
-        updatedAt: new Date()
-      })
-      .where(eq(comments.id, commentId));
+    // Decrement the comment's like count using raw SQL
+    await db.execute(sql`
+      UPDATE comments
+      SET like_count = GREATEST(like_count - 1, 0),
+          updated_at = ${now}
+      WHERE id = ${commentId}
+    `);
       
     return res.status(200).json({ message: "Comment unliked successfully" });
   } catch (error) {
@@ -1624,55 +1632,54 @@ greenSocialsRouter.post("/comments/:commentId/report", isAuthenticated, async (r
 // Save a post (bookmark)
 greenSocialsRouter.post("/posts/:postId/save", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const userId = req.user.id;
     const postId = parseInt(req.params.postId);
     const { collectionName } = req.body;
+    const collection = collectionName || 'Saved';
+    const now = new Date().toISOString();
     
-    // Check if the post exists
-    const postExists = await db
-      .select({ id: posts.id })
-      .from(posts)
-      .where(eq(posts.id, postId))
-      .limit(1);
-      
-    if (!postExists.length) {
+    // Check if the post exists using raw SQL
+    const postCheckResult = await db.execute(sql`
+      SELECT id FROM posts 
+      WHERE id = ${postId}
+      LIMIT 1
+    `);
+    
+    if (!postCheckResult.rows.length) {
       return res.status(404).json({ message: "Post not found" });
     }
     
-    // Check if the user already saved this post
-    const existingSave = await db
-      .select({ id: savedPosts.id })
-      .from(savedPosts)
-      .where(and(
-        eq(savedPosts.userId, userId),
-        eq(savedPosts.postId, postId)
-      ))
-      .limit(1);
-      
-    if (existingSave.length) {
+    // Check if the user already saved this post using raw SQL
+    const saveCheckResult = await db.execute(sql`
+      SELECT id FROM saved_posts
+      WHERE user_id = ${userId} AND post_id = ${postId}
+      LIMIT 1
+    `);
+    
+    if (saveCheckResult.rows.length) {
       return res.status(400).json({ message: "You already saved this post" });
     }
     
-    // Create the save
-    const newSave = await db
-      .insert(savedPosts)
-      .values({
-        userId,
-        postId,
-        collectionName: collectionName || 'Saved'
-      })
-      .returning();
-      
-    // Update the post's updated timestamp
+    // Create the save using raw SQL
+    const saveResult = await db.execute(sql`
+      INSERT INTO saved_posts (user_id, post_id, collection_name, created_at)
+      VALUES (${userId}, ${postId}, ${collection}, ${now})
+      RETURNING id, user_id as "userId", post_id as "postId", collection_name as "collectionName", created_at as "createdAt"
+    `);
+    
+    // Update the post's updated timestamp using raw SQL
     // Note: saveCount field doesn't exist in the database table
-    await db
-      .update(posts)
-      .set({
-        updatedAt: new Date()
-      })
-      .where(eq(posts.id, postId));
-      
-    return res.status(201).json(newSave[0]);
+    await db.execute(sql`
+      UPDATE posts
+      SET updated_at = ${now}
+      WHERE id = ${postId}
+    `);
+    
+    return res.status(201).json(saveResult.rows[0]);
   } catch (error) {
     console.error("Error saving post:", error);
     return res.status(500).json({ message: "Server error" });
@@ -1683,37 +1690,40 @@ greenSocialsRouter.post("/posts/:postId/save", isAuthenticated, async (req, res)
 // Unsave a post (remove bookmark)
 greenSocialsRouter.delete("/posts/:postId/save", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const userId = req.user.id;
     const postId = parseInt(req.params.postId);
+    const now = new Date().toISOString();
     
-    // Check if the save exists
-    const existingSave = await db
-      .select({ id: savedPosts.id })
-      .from(savedPosts)
-      .where(and(
-        eq(savedPosts.userId, userId),
-        eq(savedPosts.postId, postId)
-      ))
-      .limit(1);
-      
-    if (!existingSave.length) {
+    // Check if the save exists using raw SQL
+    const saveCheckResult = await db.execute(sql`
+      SELECT id FROM saved_posts
+      WHERE user_id = ${userId} AND post_id = ${postId}
+      LIMIT 1
+    `);
+    
+    if (!saveCheckResult.rows.length) {
       return res.status(404).json({ message: "Saved post not found" });
     }
     
-    // Delete the save
-    await db
-      .delete(savedPosts)
-      .where(eq(savedPosts.id, existingSave[0].id));
-      
-    // Update the post's updated timestamp
-    // Note: saveCount field doesn't exist in the database table
-    await db
-      .update(posts)
-      .set({
-        updatedAt: new Date()
-      })
-      .where(eq(posts.id, postId));
-      
+    const savedPostId = saveCheckResult.rows[0].id;
+    
+    // Delete the save using raw SQL
+    await db.execute(sql`
+      DELETE FROM saved_posts
+      WHERE id = ${savedPostId}
+    `);
+    
+    // Update the post's updated timestamp using raw SQL
+    await db.execute(sql`
+      UPDATE posts
+      SET updated_at = ${now}
+      WHERE id = ${postId}
+    `);
+    
     return res.status(200).json({ message: "Post unsaved successfully" });
   } catch (error) {
     console.error("Error unsaving post:", error);
