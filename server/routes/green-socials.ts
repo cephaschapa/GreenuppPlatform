@@ -171,24 +171,56 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
     const userId = req.user.id;
     const limit = parseInt(req.query.limit as string) || 20;
     const before = req.query.before as string;
-    let beforeCondition = '';
     
+    // Get users that this user follows using raw SQL
+    const following = await db.execute(sql`
+      SELECT followed_id as "followedId" 
+      FROM user_relationships 
+      WHERE follower_id = ${userId}
+    `);
+    
+    const followingIds = following.rows.map(f => f.followedId);
+    // Add current user to see their own posts
+    followingIds.push(userId);
+    
+    // Get communities this user belongs to with raw SQL
+    const communities = await db.execute(sql`
+      SELECT community_id as "communityId" 
+      FROM community_members 
+      WHERE user_id = ${userId} 
+      AND is_active = true
+    `);
+    
+    const communityIds = communities.rows.map(c => c.communityId);
+    
+    // Construct the before condition
+    let beforeCondition = '';
     if (before) {
       const beforeId = parseInt(before);
       if (!isNaN(beforeId)) {
-        beforeCondition = `AND p.id < ${beforeId}`;
+        beforeCondition = ` AND p.id < ${beforeId}`;
       }
     }
     
-    // Extremely simplified query - just get all public posts for now
-    // Once this works, we can add complexity back in
     let result;
     
     try {
-      console.log("Using simplified feed query to debug the issue");
+      console.log("Using completely rewritten feed query with database investigation");
       
-      // This should be the absolute simplest query that works
-      result = await db.execute(sql`
+      // Build the IN conditions for following and communities
+      let followingCondition = '';
+      let communityCondition = '';
+      
+      if (followingIds.length > 0) {
+        followingCondition = ` OR p.user_id IN (${followingIds.join(',')})`;
+      }
+      
+      if (communityIds.length > 0) {
+        communityCondition = ` OR p.community_id IN (${communityIds.join(',')})`;
+      }
+      
+      // This is the most basic query that should work with our database schema
+      const query = `
         SELECT 
           p.id, p.user_id as "userId", p.content, p.post_type as "postType", 
           p.visibility, p.published_at as "publishedAt", p.community_id as "communityId",
@@ -203,14 +235,15 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
           LEFT JOIN users u ON p.user_id = u.id
           LEFT JOIN social_profiles sp ON p.user_id = sp.user_id
         WHERE 
-          p.visibility = 'public'
-          ${sql.raw(beforeCondition)}
+          (p.visibility = 'public'${followingCondition}${communityCondition})
+          ${beforeCondition}
         ORDER BY 
           p.published_at DESC
         LIMIT ${limit}
-      `);
+      `;
       
-      console.log("Feed query executed successfully");
+      console.log("Executing final feed query:", query);
+      result = await db.execute(sql.raw(query));
     } catch (error) {
       console.error("Error in feed query construction:", error);
       return res.status(500).json({ message: "Error building feed query" });
