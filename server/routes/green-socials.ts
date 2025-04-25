@@ -305,37 +305,87 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
       }
 
       // Transform the results into the expected structure
-      const feed = result.map((row) => ({
-        post: {
-          id: row.id,
-          userId: row.user_id,
-          content: row.content,
-          postType: row.post_type,
-          visibility: row.visibility,
-          publishedAt: row.published_at,
-          communityId: row.community_id,
-          media: row.media,
-          locationName: row.location_name,
-          latitude: row.latitude,
-          longitude: row.longitude,
-          season: row.season,
-          growingZone: row.growing_zone,
-          weatherConditions: row.weather_conditions,
-          hashtags: row.hashtags,
-          mentionedUsers: row.mentioned_users,
-          cropsTags: row.crops_tags,
-          likeCount: row.like_count,
-          commentCount: row.comment_count,
-          shareCount: row.share_count,
-        },
-        author: {
-          id: row.author_id,
-          username: row.author_username,
-          profileImage: row.author_profile_image,
-        },
-        profile: {
-          displayName: row.author_display_name,
-        },
+      const feed = await Promise.all(result.map(async (row) => {
+        // Fetch comments for this post using our new endpoint
+        let comments = [];
+        try {
+          // Get comments using raw SQL for now since we're having issues with Drizzle query builder variable names
+          const commentsResult = await db.execute(sql`
+            SELECT 
+              c.id, c.user_id as "userId", c.post_id as "postId", c.parent_id as "parentId",
+              c.content, c.media, c.like_count as "likeCount", c.reply_count as "replyCount",
+              c.created_at as "createdAt", c.updated_at as "updatedAt",
+              u.id as "author_id", u.username as "author_username", u.profile_image as "author_profileImage",
+              sp.display_name as "profile_displayName"
+            FROM 
+              comments c
+              LEFT JOIN users u ON c.user_id = u.id
+              LEFT JOIN social_profiles sp ON c.user_id = sp.user_id
+            WHERE 
+              c.post_id = ${row.id}
+            ORDER BY 
+              c.parent_id ASC, c.created_at DESC
+          `);
+          
+          comments = commentsResult.map(comment => ({
+            comment: {
+              id: comment.id,
+              userId: comment.userId,
+              postId: comment.postId,
+              parentId: comment.parentId,
+              content: comment.content,
+              media: comment.media,
+              likeCount: comment.likeCount,
+              replyCount: comment.replyCount,
+              createdAt: comment.createdAt,
+              updatedAt: comment.updatedAt
+            },
+            author: {
+              id: comment.author_id,
+              username: comment.author_username,
+              profileImage: comment.author_profileImage
+            },
+            profile: {
+              displayName: comment.profile_displayName
+            }
+          }));
+        } catch (error) {
+          console.error("Error fetching comments for post:", row.id, error);
+        }
+
+        return {
+          post: {
+            id: row.id,
+            userId: row.user_id,
+            content: row.content,
+            postType: row.post_type,
+            visibility: row.visibility,
+            publishedAt: row.published_at,
+            communityId: row.community_id,
+            media: row.media,
+            locationName: row.location_name,
+            latitude: row.latitude,
+            longitude: row.longitude,
+            season: row.season,
+            growingZone: row.growing_zone,
+            weatherConditions: row.weather_conditions,
+            hashtags: row.hashtags,
+            mentionedUsers: row.mentioned_users,
+            cropsTags: row.crops_tags,
+            likeCount: row.like_count,
+            commentCount: row.comment_count,
+            shareCount: row.share_count,
+            comments: comments // Include the fetched comments
+          },
+          author: {
+            id: row.author_id,
+            username: row.author_username,
+            profileImage: row.author_profile_image,
+          },
+          profile: {
+            displayName: row.author_display_name,
+          },
+        };
       }));
 
       return res.json(feed);
