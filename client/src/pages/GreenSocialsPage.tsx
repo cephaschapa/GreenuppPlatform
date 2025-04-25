@@ -125,7 +125,12 @@ const GreenSocialsPage = () => {
   // Query for fetching people the user follows
   const followingQuery = useQuery({
     queryKey: ["/api/social/following"],
-    queryFn: () => apiRequest("GET", "/api/social/following").then(res => res.json()),
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/social/following");
+      const data = await res.json();
+      console.log("DEBUG: Following data:", data);
+      return data;
+    },
     enabled: !!user,
   });
   
