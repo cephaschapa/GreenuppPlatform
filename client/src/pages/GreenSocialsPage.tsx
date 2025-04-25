@@ -110,6 +110,7 @@ interface Post {
     commentCount: number;
     shareCount: number;
     publishedAt: string;
+    comments?: Comment[];
   };
   author: {
     id: number;
@@ -131,6 +132,7 @@ interface Comment {
     likeCount: number;
     replyCount: number;
     createdAt: string;
+    replies?: Comment[];
   };
   author: {
     id: number;
