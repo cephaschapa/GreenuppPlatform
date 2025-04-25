@@ -267,49 +267,97 @@ greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Create post - only including fields that exist in the database table
-    const newPost = await db
-      .insert(posts)
-      .values({
-        userId,
-        content: req.body.content,
-        postType: req.body.postType || 'text',
-        visibility: req.body.visibility || 'public',
-        communityId: req.body.communityId,
-        media: req.body.media,
-        locationName: req.body.locationName,
-        latitude: req.body.latitude,
-        longitude: req.body.longitude,
-        season: req.body.season,
-        growingZone: req.body.growingZone,
-        weatherConditions: req.body.weatherConditions,
-        hashtags: req.body.hashtags,
-        mentionedUsers: req.body.mentionedUsers,
-        cropsTags: req.body.cropsTags,
-        likeCount: 0,
-        commentCount: 0,
-        shareCount: 0,
-        // Don't include saveCount as it doesn't exist in the database table
-      })
-      .returning();
+    // Create post using raw SQL - only including fields that exist in the database table
+    const now = new Date().toISOString();
+    const insertResult = await db.execute(sql`
+      INSERT INTO posts (
+        user_id, content, post_type, visibility, community_id, media,
+        location_name, latitude, longitude, season, growing_zone,
+        weather_conditions, hashtags, mentioned_users, crops_tags,
+        like_count, comment_count, share_count, published_at, created_at, updated_at
+      ) VALUES (
+        ${userId}, 
+        ${req.body.content}, 
+        ${req.body.postType || 'text'}, 
+        ${req.body.visibility || 'public'}, 
+        ${req.body.communityId || null}, 
+        ${req.body.media || null},
+        ${req.body.locationName || null}, 
+        ${req.body.latitude || null}, 
+        ${req.body.longitude || null}, 
+        ${req.body.season || null}, 
+        ${req.body.growingZone || null},
+        ${req.body.weatherConditions || null}, 
+        ${req.body.hashtags || null}, 
+        ${req.body.mentionedUsers || null}, 
+        ${req.body.cropsTags || null},
+        0, 0, 0, ${now}, ${now}, ${now}
+      )
+      RETURNING id
+    `);
     
-    // Get full post with user info
-    const post = await db.select({
-      post: posts,
+    // Extract the ID of the newly created post
+    const postId = insertResult.rows[0].id;
+    
+    // Get full post with user info using raw SQL
+    const postResult = await db.execute(sql`
+      SELECT 
+        p.id, p.user_id as "userId", p.content, p.post_type as "postType", 
+        p.visibility, p.published_at as "publishedAt", p.community_id as "communityId",
+        p.media, p.location_name as "locationName", p.latitude, p.longitude,
+        p.season, p.growing_zone as "growingZone", p.weather_conditions as "weatherConditions",
+        p.hashtags, p.mentioned_users as "mentionedUsers", p.crops_tags as "cropsTags",
+        p.like_count as "likeCount", p.comment_count as "commentCount", p.share_count as "shareCount",
+        u.id as "author_id", u.username as "author_username", u.profile_image as "author_profileImage",
+        sp.display_name as "profile_displayName"
+      FROM 
+        posts p
+        LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN social_profiles sp ON p.user_id = sp.user_id
+      WHERE 
+        p.id = ${postId}
+      LIMIT 1
+    `);
+    
+    // If post not found (unlikely since we just created it)
+    if (!postResult.rows.length) {
+      return res.status(500).json({ message: "Error retrieving created post" });
+    }
+    
+    // Transform the raw results into the expected structure
+    const postRow = postResult.rows[0];
+    const post = [{
+      post: {
+        id: postRow.id,
+        userId: postRow.userId,
+        content: postRow.content,
+        postType: postRow.postType,
+        visibility: postRow.visibility,
+        publishedAt: postRow.publishedAt,
+        communityId: postRow.communityId,
+        media: postRow.media,
+        locationName: postRow.locationName, 
+        latitude: postRow.latitude,
+        longitude: postRow.longitude,
+        season: postRow.season,
+        growingZone: postRow.growingZone,
+        weatherConditions: postRow.weatherConditions,
+        hashtags: postRow.hashtags,
+        mentionedUsers: postRow.mentionedUsers,
+        cropsTags: postRow.cropsTags,
+        likeCount: postRow.likeCount,
+        commentCount: postRow.commentCount,
+        shareCount: postRow.shareCount
+      },
       author: {
-        id: users.id,
-        username: users.username,
-        profileImage: users.profileImage
+        id: postRow.author_id,
+        username: postRow.author_username,
+        profileImage: postRow.author_profileImage
       },
       profile: {
-        displayName: socialProfiles.displayName
+        displayName: postRow.profile_displayName
       }
-    })
-    .from(posts)
-    .leftJoin(users, eq(posts.userId, users.id))
-    .leftJoin(socialProfiles, eq(posts.userId, socialProfiles.userId))
-    .where(eq(posts.id, newPost[0].id))
-    .limit(1);
+    }];
     
     return res.status(201).json(post[0]);
   } catch (error) {
@@ -384,28 +432,48 @@ greenSocialsRouter.get("/posts/:postId", async (req, res) => {
       }
     }];
     
-    // Get comments
-    const postComments = await db.select({
-      comment: comments,
+    // Get comments using raw SQL
+    const commentsResult = await db.execute(sql`
+      SELECT 
+        c.id, c.user_id as "userId", c.post_id as "postId", c.parent_id as "parentId",
+        c.content, c.media, c.like_count as "likeCount", c.reply_count as "replyCount",
+        c.created_at as "createdAt", c.updated_at as "updatedAt",
+        u.id as "author_id", u.username as "author_username", u.profile_image as "author_profileImage",
+        sp.display_name as "profile_displayName"
+      FROM 
+        comments c
+        LEFT JOIN users u ON c.user_id = u.id
+        LEFT JOIN social_profiles sp ON c.user_id = sp.user_id
+      WHERE 
+        c.post_id = ${postId}
+        AND c.parent_id IS NULL
+      ORDER BY 
+        c.created_at DESC
+    `);
+    
+    // Transform the raw results into the expected structure
+    const postComments = commentsResult.rows.map(row => ({
+      comment: {
+        id: row.id,
+        userId: row.userId,
+        postId: row.postId,
+        parentId: row.parentId,
+        content: row.content,
+        media: row.media,
+        likeCount: row.likeCount,
+        replyCount: row.replyCount,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt
+      },
       author: {
-        id: users.id,
-        username: users.username,
-        profileImage: users.profileImage
+        id: row.author_id,
+        username: row.author_username,
+        profileImage: row.author_profileImage
       },
       profile: {
-        displayName: socialProfiles.displayName
+        displayName: row.profile_displayName
       }
-    })
-    .from(comments)
-    .leftJoin(users, eq(comments.userId, users.id))
-    .leftJoin(socialProfiles, eq(comments.userId, socialProfiles.userId))
-    .where(
-      and(
-        eq(comments.postId, postId),
-        isNull(comments.parentId) // Only get top-level comments
-      )
-    )
-    .orderBy(desc(comments.createdAt));
+    }));
     
     // Return post with comments
     return res.json({
@@ -424,57 +492,92 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Create comment
-    const newComment = await db
-      .insert(comments)
-      .values({
-        userId,
-        postId: req.body.postId,
-        parentId: req.body.parentId || null,
-        content: req.body.content,
-        media: req.body.media
-      })
-      .returning();
+    // Create comment with raw SQL
+    const now = new Date().toISOString();
+    const insertResult = await db.execute(sql`
+      INSERT INTO comments (
+        user_id, post_id, parent_id, content, media, 
+        like_count, reply_count, created_at, updated_at
+      ) VALUES (
+        ${userId},
+        ${req.body.postId},
+        ${req.body.parentId || null},
+        ${req.body.content},
+        ${req.body.media || null},
+        0, 0, ${now}, ${now}
+      )
+      RETURNING id
+    `);
     
-    // Update comment count on the post
-    await db
-      .update(posts)
-      .set({
-        commentCount: sql`${posts.commentCount} + 1`,
-        updatedAt: new Date()
-      })
-      .where(eq(posts.id, req.body.postId));
+    // Extract the ID of the newly created comment
+    const commentId = insertResult.rows[0].id;
+    
+    // Update comment count on the post with raw SQL
+    await db.execute(sql`
+      UPDATE posts 
+      SET comment_count = comment_count + 1,
+          updated_at = ${now}
+      WHERE id = ${req.body.postId}
+    `);
     
     // If this is a reply, update the parent comment's reply count
     if (req.body.parentId) {
-      await db
-        .update(comments)
-        .set({
-          replyCount: sql`${comments.replyCount} + 1`,
-          updatedAt: new Date()
-        })
-        .where(eq(comments.id, req.body.parentId));
+      await db.execute(sql`
+        UPDATE comments 
+        SET reply_count = reply_count + 1,
+            updated_at = ${now}
+        WHERE id = ${req.body.parentId}
+      `);
     }
     
-    // Get full comment with user info
-    const comment = await db.select({
-      comment: comments,
+    // Get full comment with user info using raw SQL
+    const commentResult = await db.execute(sql`
+      SELECT 
+        c.id, c.user_id as "userId", c.post_id as "postId", c.parent_id as "parentId",
+        c.content, c.media, c.like_count as "likeCount", c.reply_count as "replyCount",
+        c.created_at as "createdAt", c.updated_at as "updatedAt",
+        u.id as "author_id", u.username as "author_username", u.profile_image as "author_profileImage",
+        sp.display_name as "profile_displayName"
+      FROM 
+        comments c
+        LEFT JOIN users u ON c.user_id = u.id
+        LEFT JOIN social_profiles sp ON c.user_id = sp.user_id
+      WHERE 
+        c.id = ${commentId}
+      LIMIT 1
+    `);
+    
+    // If no comment found (unlikely since we just created it)
+    if (!commentResult.rows.length) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+    
+    // Transform the raw results into the expected structure
+    const commentRow = commentResult.rows[0];
+    const comment = {
+      comment: {
+        id: commentRow.id,
+        userId: commentRow.userId,
+        postId: commentRow.postId,
+        parentId: commentRow.parentId,
+        content: commentRow.content,
+        media: commentRow.media,
+        likeCount: commentRow.likeCount,
+        replyCount: commentRow.replyCount,
+        createdAt: commentRow.createdAt,
+        updatedAt: commentRow.updatedAt
+      },
       author: {
-        id: users.id,
-        username: users.username,
-        profileImage: users.profileImage
+        id: commentRow.author_id,
+        username: commentRow.author_username,
+        profileImage: commentRow.author_profileImage
       },
       profile: {
-        displayName: socialProfiles.displayName
+        displayName: commentRow.profile_displayName
       }
-    })
-    .from(comments)
-    .leftJoin(users, eq(comments.userId, users.id))
-    .leftJoin(socialProfiles, eq(comments.userId, socialProfiles.userId))
-    .where(eq(comments.id, newComment[0].id))
-    .limit(1);
+    };
     
-    return res.status(201).json(comment[0]);
+    return res.status(201).json(comment);
   } catch (error) {
     console.error("Error creating comment:", error);
     return res.status(500).json({ message: "Server error" });
