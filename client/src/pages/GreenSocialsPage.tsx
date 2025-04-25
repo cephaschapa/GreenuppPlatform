@@ -1221,39 +1221,46 @@ const GreenSocialsPage = () => {
                       </div>
                     ) : suggestedQuery.data && suggestedQuery.data.length > 0 ? (
                       suggestedQuery.data.map((item) => (
-                        <div key={item.user.id} className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/30 transition-colors">
+                        <div key={item.userId} className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/30 transition-colors">
                           <div className="flex gap-3">
                             <Avatar className="h-10 w-10">
-                              <AvatarImage src={item.user.profileImage || undefined} />
-                              <AvatarFallback>{getInitials(item.profile?.displayName || item.user.username)}</AvatarFallback>
+                              <AvatarImage src={item.profileImage || undefined} />
+                              <AvatarFallback>{getInitials(item.displayName || item.username)}</AvatarFallback>
                             </Avatar>
                             <div>
                               <div className="flex items-center gap-1">
-                                <p className="text-sm font-medium">{item.profile?.displayName || item.user.username}</p>
-                                {item.profile?.verificationStatus === 'verified' && (
+                                <p className="text-sm font-medium">{item.displayName || item.username}</p>
+                                {item.verificationStatus === 'verified' && (
                                   <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                                 )}
                               </div>
                               <p className="text-xs text-muted-foreground">
-                                {item.profile?.expertise?.[0] || 'Farmer'} • {item.profile?.location || 'Zambia'}
+                                {Array.isArray(item.expertise) && item.expertise.length > 0 
+                                  ? item.expertise[0] 
+                                  : 'Farmer'} • {item.location || 'Zambia'}
                               </p>
                               <div className="flex gap-1 mt-1 flex-wrap">
-                                {item.profile?.specializations?.slice(0, 1).map((spec, i) => (
-                                  <Badge key={i} variant="outline" className="text-xs">{spec}</Badge>
-                                ))}
-                                {!item.profile?.specializations?.length && item.profile?.expertise?.slice(0, 1).map((exp, i) => (
-                                  <Badge key={i} variant="outline" className="text-xs">{exp}</Badge>
-                                ))}
+                                {Array.isArray(item.specializations) && item.specializations.length > 0 && 
+                                  item.specializations.slice(0, 1).map((spec: string, i: number) => (
+                                    <Badge key={i} variant="outline" className="text-xs">{spec}</Badge>
+                                  ))
+                                }
+                                {(!item.specializations || !Array.isArray(item.specializations) || item.specializations.length === 0) && 
+                                  Array.isArray(item.expertise) && item.expertise.length > 0 &&
+                                  item.expertise.slice(0, 1).map((exp: string, i: number) => (
+                                    <Badge key={i} variant="outline" className="text-xs">{exp}</Badge>
+                                  ))
+                                }
                               </div>
                             </div>
                           </div>
                           <Button 
                             size="sm" 
                             className="h-8 px-3"
-                            onClick={() => followMutation.mutate(item.user.id)}
+                            onClick={() => followMutation.mutate(item.userId)}
                             disabled={followMutation.isPending}
                           >
-                            {followMutation.isPending && followMutation.variables === item.user.id ? (
+                            {followMutation.isPending && followMutation.variables === item.userId ? (
                               <Loader2 className="h-3 w-3 animate-spin mr-1" />
                             ) : null}
                             Follow
