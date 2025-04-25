@@ -952,64 +952,50 @@ greenSocialsRouter.get("/following", isAuthenticated, async (req, res) => {
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = parseInt(req.query.offset as string) || 0;
 
-    // Get relationships with user and profile info using direct SQL
-    console.log(`Fetching following list for user ${userId}`);
+    // Get relationships with user and profile info using Drizzle query builder
+    console.log(`Fetching following list for user ${userId} using Drizzle query builder`);
 
-    // First get relationship IDs to debug
-    const relationshipIds = await db.execute(
-      sql`SELECT id, follower_id, followed_id, status 
-          FROM user_relationships 
-          WHERE follower_id = ${userId}
-          ORDER BY created_at DESC`,
-    );
+    // First get relationship IDs for debugging
+    const relationshipCount = await db
+      .select({count: sql`count(*)`})
+      .from(userRelationships)
+      .where(eq(userRelationships.followerId, userId));
+      
+    console.log(`DEBUG: Found ${relationshipCount[0].count} following users`);
 
-    console.log("DEBUG: Found relationships:", JSON.stringify(relationshipIds));
+    // Get relationships with user profiles using Drizzle query builder
+    const following = await db
+      .select({
+        relationshipId: userRelationships.id,
+        relationshipStatus: userRelationships.status,
+        relationshipCreatedAt: userRelationships.createdAt,
+        userId: users.id,
+        username: users.username,
+        profileImage: sql`COALESCE(${users.profileImage}, '')`,
+        displayName: sql`COALESCE(${socialProfiles.displayName}, ${users.username})`,
+        bio: sql`COALESCE(${socialProfiles.bio}, '')`,
+        expertise: socialProfiles.expertise,
+        specializations: socialProfiles.specializations,
+        location: sql`COALESCE(${socialProfiles.location}, '')`,
+        verificationStatus: sql`COALESCE(${socialProfiles.verificationStatus}, 'unverified')`,
+        experienceYears: socialProfiles.experienceYears,
+        badges: socialProfiles.badges,
+        followerCount: sql`COALESCE(${socialProfiles.followerCount}, 0)`,
+        followingCount: sql`COALESCE(${socialProfiles.followingCount}, 0)`
+      })
+      .from(userRelationships)
+      .innerJoin(users, eq(userRelationships.followedId, users.id))
+      .leftJoin(socialProfiles, eq(users.id, socialProfiles.userId))
+      .where(eq(userRelationships.followerId, userId))
+      .orderBy(desc(userRelationships.createdAt))
+      .limit(limit)
+      .offset(offset);
 
-    // Get relationships with user and profile info using direct SQL
-    const following = await db.execute(
-      sql`SELECT 
-            ur.id as "relationshipId", 
-            ur.status as "relationshipStatus",
-            ur.created_at as "relationshipCreatedAt",
-            u.id as "userId",
-            u.username,
-            COALESCE(u.profile_image, '') as "profileImage",
-            COALESCE(sp.display_name, u.username) as "displayName",
-            COALESCE(sp.bio, '') as "bio",
-            sp.expertise,
-            sp.specializations,
-            COALESCE(sp.location, '') as "location",
-            COALESCE(sp.verification_status, 'unverified') as "verificationStatus",
-            sp.experience_years as "experienceYears",
-            sp.badges,
-            COALESCE(sp.follower_count, 0) as "followerCount",
-            COALESCE(sp.following_count, 0) as "followingCount"
-          FROM user_relationships ur
-          INNER JOIN users u ON ur.followed_id = u.id
-          LEFT JOIN social_profiles sp ON u.id = sp.user_id
-          WHERE ur.follower_id = ${userId}
-          ORDER BY ur.created_at DESC
-          LIMIT ${limit} OFFSET ${offset}`,
-    );
+    console.log(`DEBUG: Found ${following.length} following users`);
 
-    console.log(
-      `DEBUG: Found ${following.length || (following.rows ? following.rows.length : 0)} following users`,
-    );
+    console.log("DEBUG: Formatted following:", JSON.stringify(following));
 
-    // Format the response consistently
-    const formattedResults = [];
-    if (following && following.rows && following.rows.length > 0) {
-      formattedResults.push(...following.rows);
-    } else if (Array.isArray(following) && following.length > 0) {
-      formattedResults.push(...following);
-    }
-
-    console.log(
-      "DEBUG: Formatted following:",
-      JSON.stringify(formattedResults),
-    );
-
-    return res.json(formattedResults);
+    return res.json(following);
   } catch (error) {
     console.error("Error fetching following users:", error);
     return res.status(500).json({ message: "Server error" });
