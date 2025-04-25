@@ -174,18 +174,34 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
     let result;
     
     try {
-      console.log("Using extremely simplified feed query - just get all posts");
+      console.log("Using final ultra simplified feed query - no WHERE clauses at all");
       
-      // Super simplified query - just get public posts
+      // The most basic query possible - no filtering
       result = await db.execute(sql`
         SELECT 
-          p.id, p.user_id as "userId", p.content, p.post_type as "postType", 
-          p.visibility, p.published_at as "publishedAt", p.community_id as "communityId",
-          p.media, p.location_name as "locationName", p.latitude, p.longitude,
-          p.season, p.growing_zone as "growingZone", p.weather_conditions as "weatherConditions",
-          p.hashtags, p.mentioned_users as "mentionedUsers", p.crops_tags as "cropsTags",
-          p.like_count as "likeCount", p.comment_count as "commentCount", p.share_count as "shareCount",
-          u.id as "author_id", u.username as "author_username", u.profile_image as "author_profileImage",
+          p.id, 
+          p.user_id as "userId", 
+          p.content, 
+          p.post_type as "postType", 
+          p.visibility, 
+          p.published_at as "publishedAt", 
+          p.community_id as "communityId",
+          p.media, 
+          p.location_name as "locationName", 
+          p.latitude, 
+          p.longitude,
+          p.season, 
+          p.growing_zone as "growingZone", 
+          p.weather_conditions as "weatherConditions",
+          p.hashtags, 
+          p.mentioned_users as "mentionedUsers", 
+          p.crops_tags as "cropsTags",
+          p.like_count as "likeCount", 
+          p.comment_count as "commentCount", 
+          p.share_count as "shareCount",
+          u.id as "author_id", 
+          u.username as "author_username", 
+          u.profile_image as "author_profileImage",
           sp.display_name as "profile_displayName"
         FROM 
           posts p
