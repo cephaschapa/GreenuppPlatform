@@ -7,7 +7,13 @@ import {
   comments, 
   socialProfiles, 
   userRelationships,
-  communityMembers
+  communityMembers,
+  postLikes,
+  commentLikes,
+  savedPosts,
+  postShares,
+  contentReports,
+  socialNotifications
 } from "@shared/green-socials-schema";
 import { and, desc, eq, inArray, isNotNull, isNull, lt, or, sql } from "drizzle-orm";
 import { users } from "@shared/schema";
@@ -890,4 +896,533 @@ greenSocialsRouter.get("/expertise-categories", async (req, res) => {
 // Test endpoint
 greenSocialsRouter.get("/test", (req, res) => {
   return res.json({ message: "Green Socials API is working!" });
+});
+
+// POST /api/social/posts/:postId/like
+// Like a post
+greenSocialsRouter.post("/posts/:postId/like", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const postId = parseInt(req.params.postId);
+    
+    // Check if the post exists
+    const postExists = await db
+      .select({ id: posts.id })
+      .from(posts)
+      .where(eq(posts.id, postId))
+      .limit(1);
+      
+    if (!postExists.length) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    
+    // Check if the user already liked the post
+    const existingLike = await db
+      .select({ id: postLikes.id })
+      .from(postLikes)
+      .where(and(
+        eq(postLikes.postId, postId),
+        eq(postLikes.userId, userId)
+      ))
+      .limit(1);
+      
+    if (existingLike.length) {
+      return res.status(400).json({ message: "You already liked this post" });
+    }
+    
+    // Create the like
+    await db
+      .insert(postLikes)
+      .values({
+        postId,
+        userId
+      });
+      
+    // Increment the post's like count
+    await db
+      .update(posts)
+      .set({
+        likeCount: sql`${posts.likeCount} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(posts.id, postId));
+      
+    // Create a notification for the post owner
+    const postOwner = await db
+      .select({ userId: posts.userId, content: posts.content })
+      .from(posts)
+      .where(eq(posts.id, postId))
+      .limit(1);
+      
+    if (postOwner.length && postOwner[0].userId !== userId) {
+      const shortContent = postOwner[0].content.length > 50 
+        ? postOwner[0].content.substring(0, 50) + '...' 
+        : postOwner[0].content;
+        
+      await db
+        .insert(socialNotifications)
+        .values({
+          userId: postOwner[0].userId,
+          type: 'like',
+          content: `liked your post: "${shortContent}"`,
+          relatedUserId: userId,
+          relatedPostId: postId
+        });
+    }
+    
+    return res.status(200).json({ message: "Post liked successfully" });
+  } catch (error) {
+    console.error("Error liking post:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// DELETE /api/social/posts/:postId/like
+// Unlike a post
+greenSocialsRouter.delete("/posts/:postId/like", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const postId = parseInt(req.params.postId);
+    
+    // Check if the like exists
+    const existingLike = await db
+      .select({ id: postLikes.id })
+      .from(postLikes)
+      .where(and(
+        eq(postLikes.postId, postId),
+        eq(postLikes.userId, userId)
+      ))
+      .limit(1);
+      
+    if (!existingLike.length) {
+      return res.status(404).json({ message: "Like not found" });
+    }
+    
+    // Delete the like
+    await db
+      .delete(postLikes)
+      .where(and(
+        eq(postLikes.postId, postId),
+        eq(postLikes.userId, userId)
+      ));
+      
+    // Decrement the post's like count
+    await db
+      .update(posts)
+      .set({
+        likeCount: sql`GREATEST(${posts.likeCount} - 1, 0)`,
+        updatedAt: new Date()
+      })
+      .where(eq(posts.id, postId));
+      
+    return res.status(200).json({ message: "Post unliked successfully" });
+  } catch (error) {
+    console.error("Error unliking post:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// POST /api/social/comments/:commentId/like
+// Like a comment
+greenSocialsRouter.post("/comments/:commentId/like", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const commentId = parseInt(req.params.commentId);
+    
+    // Check if the comment exists
+    const commentExists = await db
+      .select({ id: comments.id, userId: comments.userId, postId: comments.postId })
+      .from(comments)
+      .where(eq(comments.id, commentId))
+      .limit(1);
+      
+    if (!commentExists.length) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+    
+    // Check if the user already liked the comment
+    const existingLike = await db
+      .select({ id: commentLikes.id })
+      .from(commentLikes)
+      .where(and(
+        eq(commentLikes.commentId, commentId),
+        eq(commentLikes.userId, userId)
+      ))
+      .limit(1);
+      
+    if (existingLike.length) {
+      return res.status(400).json({ message: "You already liked this comment" });
+    }
+    
+    // Create the like
+    await db
+      .insert(commentLikes)
+      .values({
+        commentId,
+        userId
+      });
+      
+    // Increment the comment's like count
+    await db
+      .update(comments)
+      .set({
+        likeCount: sql`${comments.likeCount} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(comments.id, commentId));
+      
+    // Create a notification for the comment owner
+    if (commentExists[0].userId !== userId) {
+      const commentDetails = await db
+        .select({ content: comments.content })
+        .from(comments)
+        .where(eq(comments.id, commentId))
+        .limit(1);
+        
+      if (commentDetails.length) {
+        const shortContent = commentDetails[0].content.length > 50 
+          ? commentDetails[0].content.substring(0, 50) + '...' 
+          : commentDetails[0].content;
+          
+        await db
+          .insert(socialNotifications)
+          .values({
+            userId: commentExists[0].userId,
+            type: 'comment_like',
+            content: `liked your comment: "${shortContent}"`,
+            relatedUserId: userId,
+            relatedCommentId: commentId,
+            relatedPostId: commentExists[0].postId
+          });
+      }
+    }
+    
+    return res.status(200).json({ message: "Comment liked successfully" });
+  } catch (error) {
+    console.error("Error liking comment:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// DELETE /api/social/comments/:commentId/like
+// Unlike a comment
+greenSocialsRouter.delete("/comments/:commentId/like", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const commentId = parseInt(req.params.commentId);
+    
+    // Check if the like exists
+    const existingLike = await db
+      .select({ id: commentLikes.id })
+      .from(commentLikes)
+      .where(and(
+        eq(commentLikes.commentId, commentId),
+        eq(commentLikes.userId, userId)
+      ))
+      .limit(1);
+      
+    if (!existingLike.length) {
+      return res.status(404).json({ message: "Like not found" });
+    }
+    
+    // Delete the like
+    await db
+      .delete(commentLikes)
+      .where(and(
+        eq(commentLikes.commentId, commentId),
+        eq(commentLikes.userId, userId)
+      ));
+      
+    // Decrement the comment's like count
+    await db
+      .update(comments)
+      .set({
+        likeCount: sql`GREATEST(${comments.likeCount} - 1, 0)`,
+        updatedAt: new Date()
+      })
+      .where(eq(comments.id, commentId));
+      
+    return res.status(200).json({ message: "Comment unliked successfully" });
+  } catch (error) {
+    console.error("Error unliking comment:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// POST /api/social/posts/:postId/share
+// Share a post
+greenSocialsRouter.post("/posts/:postId/share", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const postId = parseInt(req.params.postId);
+    const { targetType, targetId, externalPlatform } = req.body;
+    
+    // Check if the post exists
+    const postExists = await db
+      .select({ id: posts.id, userId: posts.userId, content: posts.content })
+      .from(posts)
+      .where(eq(posts.id, postId))
+      .limit(1);
+      
+    if (!postExists.length) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    
+    // Create the share
+    const newShare = await db
+      .insert(postShares)
+      .values({
+        postId,
+        userId,
+        targetType,
+        targetId: targetId || undefined,
+        externalPlatform: externalPlatform || undefined
+      })
+      .returning();
+      
+    // Increment the post's share count
+    await db
+      .update(posts)
+      .set({
+        shareCount: sql`${posts.shareCount} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(posts.id, postId));
+      
+    // Create a notification for the post owner
+    if (postExists[0].userId !== userId) {
+      const shortContent = postExists[0].content.length > 50 
+        ? postExists[0].content.substring(0, 50) + '...' 
+        : postExists[0].content;
+        
+      let shareType = 'their profile';
+      if (targetType === 'community') {
+        shareType = 'a community';
+      } else if (targetType === 'external') {
+        shareType = externalPlatform || 'an external platform';
+      }
+      
+      await db
+        .insert(socialNotifications)
+        .values({
+          userId: postExists[0].userId,
+          type: 'share',
+          content: `shared your post to ${shareType}: "${shortContent}"`,
+          relatedUserId: userId,
+          relatedPostId: postId
+        });
+    }
+    
+    return res.status(201).json(newShare[0]);
+  } catch (error) {
+    console.error("Error sharing post:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// POST /api/social/posts/:postId/report
+// Report a post
+greenSocialsRouter.post("/posts/:postId/report", isAuthenticated, async (req, res) => {
+  try {
+    const reporterId = req.user.id;
+    const postId = parseInt(req.params.postId);
+    const { reason, description } = req.body;
+    
+    // Check if the post exists
+    const postExists = await db
+      .select({ id: posts.id })
+      .from(posts)
+      .where(eq(posts.id, postId))
+      .limit(1);
+      
+    if (!postExists.length) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    
+    // Check if the user already reported this post
+    const existingReport = await db
+      .select({ id: contentReports.id })
+      .from(contentReports)
+      .where(and(
+        eq(contentReports.reporterId, reporterId),
+        eq(contentReports.targetType, 'post'),
+        eq(contentReports.targetId, postId)
+      ))
+      .limit(1);
+      
+    if (existingReport.length) {
+      return res.status(400).json({ message: "You already reported this post" });
+    }
+    
+    // Create the report
+    const newReport = await db
+      .insert(contentReports)
+      .values({
+        reporterId,
+        targetType: 'post',
+        targetId: postId,
+        reason,
+        description
+      })
+      .returning();
+      
+    return res.status(201).json({ message: "Report submitted successfully", id: newReport[0].id });
+  } catch (error) {
+    console.error("Error reporting post:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// POST /api/social/comments/:commentId/report
+// Report a comment
+greenSocialsRouter.post("/comments/:commentId/report", isAuthenticated, async (req, res) => {
+  try {
+    const reporterId = req.user.id;
+    const commentId = parseInt(req.params.commentId);
+    const { reason, description } = req.body;
+    
+    // Check if the comment exists
+    const commentExists = await db
+      .select({ id: comments.id })
+      .from(comments)
+      .where(eq(comments.id, commentId))
+      .limit(1);
+      
+    if (!commentExists.length) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+    
+    // Check if the user already reported this comment
+    const existingReport = await db
+      .select({ id: contentReports.id })
+      .from(contentReports)
+      .where(and(
+        eq(contentReports.reporterId, reporterId),
+        eq(contentReports.targetType, 'comment'),
+        eq(contentReports.targetId, commentId)
+      ))
+      .limit(1);
+      
+    if (existingReport.length) {
+      return res.status(400).json({ message: "You already reported this comment" });
+    }
+    
+    // Create the report
+    const newReport = await db
+      .insert(contentReports)
+      .values({
+        reporterId,
+        targetType: 'comment',
+        targetId: commentId,
+        reason,
+        description
+      })
+      .returning();
+      
+    return res.status(201).json({ message: "Report submitted successfully", id: newReport[0].id });
+  } catch (error) {
+    console.error("Error reporting comment:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// POST /api/social/posts/:postId/save
+// Save a post (bookmark)
+greenSocialsRouter.post("/posts/:postId/save", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const postId = parseInt(req.params.postId);
+    const { collectionName } = req.body;
+    
+    // Check if the post exists
+    const postExists = await db
+      .select({ id: posts.id })
+      .from(posts)
+      .where(eq(posts.id, postId))
+      .limit(1);
+      
+    if (!postExists.length) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    
+    // Check if the user already saved this post
+    const existingSave = await db
+      .select({ id: savedPosts.id })
+      .from(savedPosts)
+      .where(and(
+        eq(savedPosts.userId, userId),
+        eq(savedPosts.postId, postId)
+      ))
+      .limit(1);
+      
+    if (existingSave.length) {
+      return res.status(400).json({ message: "You already saved this post" });
+    }
+    
+    // Create the save
+    const newSave = await db
+      .insert(savedPosts)
+      .values({
+        userId,
+        postId,
+        collectionName: collectionName || 'Saved'
+      })
+      .returning();
+      
+    // Increment the post's save count
+    await db
+      .update(posts)
+      .set({
+        saveCount: sql`${posts.saveCount} + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(posts.id, postId));
+      
+    return res.status(201).json(newSave[0]);
+  } catch (error) {
+    console.error("Error saving post:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+// DELETE /api/social/posts/:postId/save
+// Unsave a post (remove bookmark)
+greenSocialsRouter.delete("/posts/:postId/save", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const postId = parseInt(req.params.postId);
+    
+    // Check if the save exists
+    const existingSave = await db
+      .select({ id: savedPosts.id })
+      .from(savedPosts)
+      .where(and(
+        eq(savedPosts.userId, userId),
+        eq(savedPosts.postId, postId)
+      ))
+      .limit(1);
+      
+    if (!existingSave.length) {
+      return res.status(404).json({ message: "Saved post not found" });
+    }
+    
+    // Delete the save
+    await db
+      .delete(savedPosts)
+      .where(eq(savedPosts.id, existingSave[0].id));
+      
+    // Decrement the post's save count
+    await db
+      .update(posts)
+      .set({
+        saveCount: sql`GREATEST(${posts.saveCount} - 1, 0)`,
+        updatedAt: new Date()
+      })
+      .where(eq(posts.id, postId));
+      
+    return res.status(200).json({ message: "Post unsaved successfully" });
+  } catch (error) {
+    console.error("Error unsaving post:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
 });

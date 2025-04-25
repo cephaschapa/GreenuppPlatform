@@ -509,3 +509,6 @@ export type SeasonalActivity = typeof seasonalActivities.$inferSelect;
 
 export type UserRelationship = typeof userRelationships.$inferSelect;
 export type InsertUserRelationship = z.infer<typeof insertUserRelationshipSchema>;
+
+export type ContentReport = typeof contentReports.$inferSelect;
+export type InsertContentReport = z.infer<typeof insertContentReportSchema>;
