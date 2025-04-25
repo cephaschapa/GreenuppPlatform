@@ -164,6 +164,10 @@ greenSocialsRouter.post("/profile", isAuthenticated, async (req, res) => {
 // Get posts for the main feed
 greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const userId = req.user.id;
     const limit = parseInt(req.query.limit as string) || 20;
     const before = req.query.before as string;
@@ -189,39 +193,70 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
     
     const communityIds = communities.rows.map(c => c.communityId);
     
-    // Build query with raw SQL
-    const followingIdsArray = followingIds.join(',');
-    const communityIdsArray = communityIds.length ? communityIds.join(',') : '0';
-    const beforeCondition = before ? `AND p.id < ${parseInt(before)}` : '';
+    // Construct the WHERE clause dynamically
+    let whereClause = '';
+    const beforeClause = before ? `AND p.id < ${parseInt(before)}` : '';
     
-    const query = sql`
-      SELECT 
-        p.id, p.user_id as "userId", p.content, p.post_type as "postType", 
-        p.visibility, p.published_at as "publishedAt", p.community_id as "communityId",
-        p.media, p.location_name as "locationName", p.latitude, p.longitude,
-        p.season, p.growing_zone as "growingZone", p.weather_conditions as "weatherConditions",
-        p.hashtags, p.mentioned_users as "mentionedUsers", p.crops_tags as "cropsTags",
-        p.like_count as "likeCount", p.comment_count as "commentCount", p.share_count as "shareCount",
-        u.id as "author_id", u.username as "author_username", u.profile_image as "author_profileImage",
-        sp.display_name as "profile_displayName"
-      FROM 
-        posts p
-        LEFT JOIN users u ON p.user_id = u.id
-        LEFT JOIN social_profiles sp ON p.user_id = sp.user_id
-      WHERE 
-        (p.user_id IN (${followingIdsArray})
-        OR p.community_id IN (${communityIdsArray})
-        OR p.visibility = 'public')
-        ${beforeCondition}
-      ORDER BY 
-        p.published_at DESC
-      LIMIT ${limit}
-    `;
+    // Define result variable here so it's available in the outer scope
+    let result;
     
-    const result = await db.execute(query);
+    try {
+      console.log("Constructing SQL feed query with user filter");
+      
+      // We need to handle the IN conditions more carefully
+      if (followingIds.length > 0) {
+        whereClause += `(p.user_id IN (${followingIds.join(',')})`;
+      } else {
+        whereClause += `(p.user_id = ${userId}`;
+      }
+      
+      if (communityIds.length > 0) {
+        whereClause += ` OR p.community_id IN (${communityIds.join(',')})`;
+      }
+      
+      // Always include public posts
+      whereClause += ` OR p.visibility = 'public')`;
+      
+      // Append the beforeClause
+      whereClause += beforeClause;
+      
+      console.log("Final WHERE clause:", whereClause);
+      
+      // Build the full query with raw SQL and safely constructed WHERE clause
+      const query = sql`
+        SELECT 
+          p.id, p.user_id as "userId", p.content, p.post_type as "postType", 
+          p.visibility, p.published_at as "publishedAt", p.community_id as "communityId",
+          p.media, p.location_name as "locationName", p.latitude, p.longitude,
+          p.season, p.growing_zone as "growingZone", p.weather_conditions as "weatherConditions",
+          p.hashtags, p.mentioned_users as "mentionedUsers", p.crops_tags as "cropsTags",
+          p.like_count as "likeCount", p.comment_count as "commentCount", p.share_count as "shareCount",
+          u.id as "author_id", u.username as "author_username", u.profile_image as "author_profileImage",
+          sp.display_name as "profile_displayName"
+        FROM 
+          posts p
+          LEFT JOIN users u ON p.user_id = u.id
+          LEFT JOIN social_profiles sp ON p.user_id = sp.user_id
+        WHERE 
+          ${sql.raw(whereClause)}
+        ORDER BY 
+          p.published_at DESC
+        LIMIT ${limit}
+      `;
+      
+      result = await db.execute(query);
+    } catch (error) {
+      console.error("Error in feed query construction:", error);
+      return res.status(500).json({ message: "Error building feed query" });
+    }
+    
+    if (!result || !result.rows) {
+      console.error("No result or rows returned from feed query");
+      return res.status(500).json({ message: "Error retrieving feed data" });
+    }
     
     // Transform the raw results into the expected structure
-    const feed = result.rows.map(row => ({
+    const feed = result.rows.map((row: any) => ({
       post: {
         id: row.id,
         userId: row.userId,
@@ -1455,48 +1490,59 @@ greenSocialsRouter.delete("/comments/:commentId/like", isAuthenticated, async (r
 // Share a post
 greenSocialsRouter.post("/posts/:postId/share", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const userId = req.user.id;
     const postId = parseInt(req.params.postId);
     const { targetType, targetId, externalPlatform } = req.body;
+    const now = new Date().toISOString();
     
-    // Check if the post exists
-    const postExists = await db
-      .select({ id: posts.id, userId: posts.userId, content: posts.content })
-      .from(posts)
-      .where(eq(posts.id, postId))
-      .limit(1);
-      
-    if (!postExists.length) {
+    // Check if the post exists using raw SQL
+    const postCheckResult = await db.execute(sql`
+      SELECT id, user_id as "userId", content 
+      FROM posts 
+      WHERE id = ${postId}
+      LIMIT 1
+    `);
+    
+    if (!postCheckResult.rows.length) {
       return res.status(404).json({ message: "Post not found" });
     }
     
-    // Create the share
-    const newShare = await db
-      .insert(postShares)
-      .values({
-        postId,
-        userId,
-        targetType,
-        targetId: targetId || undefined,
-        externalPlatform: externalPlatform || undefined
-      })
-      .returning();
-      
-    // Increment the post's share count
-    await db
-      .update(posts)
-      .set({
-        shareCount: sql`${posts.shareCount} + 1`,
-        updatedAt: new Date()
-      })
-      .where(eq(posts.id, postId));
-      
+    const postData = postCheckResult.rows[0];
+    
+    // Create the share using raw SQL
+    const shareResult = await db.execute(sql`
+      INSERT INTO post_shares (
+        post_id, user_id, target_type, 
+        target_id, external_platform, created_at
+      )
+      VALUES (
+        ${postId}, ${userId}, ${targetType || null}, 
+        ${targetId || null}, ${externalPlatform || null}, ${now}
+      )
+      RETURNING id, post_id as "postId", user_id as "userId", 
+                target_type as "targetType", target_id as "targetId", 
+                external_platform as "externalPlatform", created_at as "createdAt"
+    `);
+    
+    // Increment the post's share count using raw SQL
+    await db.execute(sql`
+      UPDATE posts
+      SET share_count = share_count + 1,
+          updated_at = ${now}
+      WHERE id = ${postId}
+    `);
+    
     // Create a notification for the post owner
-    if (postExists[0].userId !== userId) {
-      const shortContent = postExists[0].content.length > 50 
-        ? postExists[0].content.substring(0, 50) + '...' 
-        : postExists[0].content;
-        
+    if (postData.userId !== userId) {
+      const content = postData.content || '';
+      const shortContent = content.length > 50 
+        ? content.substring(0, 50) + '...' 
+        : content;
+      
       let shareType = 'their profile';
       if (targetType === 'community') {
         shareType = 'a community';
@@ -1504,18 +1550,24 @@ greenSocialsRouter.post("/posts/:postId/share", isAuthenticated, async (req, res
         shareType = externalPlatform || 'an external platform';
       }
       
-      await db
-        .insert(socialNotifications)
-        .values({
-          userId: postExists[0].userId,
-          type: 'share',
-          content: `shared your post to ${shareType}: "${shortContent}"`,
-          relatedUserId: userId,
-          relatedPostId: postId
-        });
+      // Create notification using raw SQL
+      await db.execute(sql`
+        INSERT INTO social_notifications (
+          user_id, type, content, related_user_id, 
+          related_post_id, created_at
+        )
+        VALUES (
+          ${postData.userId},
+          'share',
+          ${`shared your post to ${shareType}: "${shortContent}"`},
+          ${userId},
+          ${postId},
+          ${now}
+        )
+      `);
     }
     
-    return res.status(201).json(newShare[0]);
+    return res.status(201).json(shareResult.rows[0]);
   } catch (error) {
     console.error("Error sharing post:", error);
     return res.status(500).json({ message: "Server error" });
@@ -1526,49 +1578,56 @@ greenSocialsRouter.post("/posts/:postId/share", isAuthenticated, async (req, res
 // Report a post
 greenSocialsRouter.post("/posts/:postId/report", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const reporterId = req.user.id;
     const postId = parseInt(req.params.postId);
     const { reason, description } = req.body;
+    const now = new Date().toISOString();
     
-    // Check if the post exists
-    const postExists = await db
-      .select({ id: posts.id })
-      .from(posts)
-      .where(eq(posts.id, postId))
-      .limit(1);
-      
-    if (!postExists.length) {
+    // Check if the post exists using raw SQL
+    const postCheckResult = await db.execute(sql`
+      SELECT id FROM posts 
+      WHERE id = ${postId}
+      LIMIT 1
+    `);
+    
+    if (!postCheckResult.rows.length) {
       return res.status(404).json({ message: "Post not found" });
     }
     
-    // Check if the user already reported this post
-    const existingReport = await db
-      .select({ id: contentReports.id })
-      .from(contentReports)
-      .where(and(
-        eq(contentReports.reporterId, reporterId),
-        eq(contentReports.targetType, 'post'),
-        eq(contentReports.targetId, postId)
-      ))
-      .limit(1);
-      
-    if (existingReport.length) {
+    // Check if the user already reported this post using raw SQL
+    const reportCheckResult = await db.execute(sql`
+      SELECT id FROM content_reports
+      WHERE reporter_id = ${reporterId} 
+        AND target_type = 'post' 
+        AND target_id = ${postId}
+      LIMIT 1
+    `);
+    
+    if (reportCheckResult.rows.length) {
       return res.status(400).json({ message: "You already reported this post" });
     }
     
-    // Create the report
-    const newReport = await db
-      .insert(contentReports)
-      .values({
-        reporterId,
-        targetType: 'post',
-        targetId: postId,
-        reason,
-        description
-      })
-      .returning();
-      
-    return res.status(201).json({ message: "Report submitted successfully", id: newReport[0].id });
+    // Create the report using raw SQL
+    const reportResult = await db.execute(sql`
+      INSERT INTO content_reports (
+        reporter_id, target_type, target_id, 
+        reason, description, created_at
+      )
+      VALUES (
+        ${reporterId}, 'post', ${postId}, 
+        ${reason || null}, ${description || null}, ${now}
+      )
+      RETURNING id
+    `);
+    
+    return res.status(201).json({ 
+      message: "Report submitted successfully", 
+      id: reportResult.rows[0].id 
+    });
   } catch (error) {
     console.error("Error reporting post:", error);
     return res.status(500).json({ message: "Server error" });
@@ -1579,49 +1638,56 @@ greenSocialsRouter.post("/posts/:postId/report", isAuthenticated, async (req, re
 // Report a comment
 greenSocialsRouter.post("/comments/:commentId/report", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const reporterId = req.user.id;
     const commentId = parseInt(req.params.commentId);
     const { reason, description } = req.body;
+    const now = new Date().toISOString();
     
-    // Check if the comment exists
-    const commentExists = await db
-      .select({ id: comments.id })
-      .from(comments)
-      .where(eq(comments.id, commentId))
-      .limit(1);
-      
-    if (!commentExists.length) {
+    // Check if the comment exists using raw SQL
+    const commentCheckResult = await db.execute(sql`
+      SELECT id FROM comments 
+      WHERE id = ${commentId}
+      LIMIT 1
+    `);
+    
+    if (!commentCheckResult.rows.length) {
       return res.status(404).json({ message: "Comment not found" });
     }
     
-    // Check if the user already reported this comment
-    const existingReport = await db
-      .select({ id: contentReports.id })
-      .from(contentReports)
-      .where(and(
-        eq(contentReports.reporterId, reporterId),
-        eq(contentReports.targetType, 'comment'),
-        eq(contentReports.targetId, commentId)
-      ))
-      .limit(1);
-      
-    if (existingReport.length) {
+    // Check if the user already reported this comment using raw SQL
+    const reportCheckResult = await db.execute(sql`
+      SELECT id FROM content_reports
+      WHERE reporter_id = ${reporterId} 
+        AND target_type = 'comment' 
+        AND target_id = ${commentId}
+      LIMIT 1
+    `);
+    
+    if (reportCheckResult.rows.length) {
       return res.status(400).json({ message: "You already reported this comment" });
     }
     
-    // Create the report
-    const newReport = await db
-      .insert(contentReports)
-      .values({
-        reporterId,
-        targetType: 'comment',
-        targetId: commentId,
-        reason,
-        description
-      })
-      .returning();
-      
-    return res.status(201).json({ message: "Report submitted successfully", id: newReport[0].id });
+    // Create the report using raw SQL
+    const reportResult = await db.execute(sql`
+      INSERT INTO content_reports (
+        reporter_id, target_type, target_id, 
+        reason, description, created_at
+      )
+      VALUES (
+        ${reporterId}, 'comment', ${commentId}, 
+        ${reason || null}, ${description || null}, ${now}
+      )
+      RETURNING id
+    `);
+    
+    return res.status(201).json({ 
+      message: "Report submitted successfully", 
+      id: reportResult.rows[0].id 
+    });
   } catch (error) {
     console.error("Error reporting comment:", error);
     return res.status(500).json({ message: "Server error" });
