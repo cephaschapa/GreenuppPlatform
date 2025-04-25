@@ -189,37 +189,70 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
     
     const communityIds = communities.rows.map(c => c.communityId);
     
-    // Build query based on pagination
-    let query = db.select({
-      post: posts,
+    // Build query with raw SQL
+    const followingIdsArray = followingIds.join(',');
+    const communityIdsArray = communityIds.length ? communityIds.join(',') : '0';
+    const beforeCondition = before ? `AND p.id < ${parseInt(before)}` : '';
+    
+    const query = sql`
+      SELECT 
+        p.id, p.user_id as "userId", p.content, p.post_type as "postType", 
+        p.visibility, p.published_at as "publishedAt", p.community_id as "communityId",
+        p.media, p.location_name as "locationName", p.latitude, p.longitude,
+        p.season, p.growing_zone as "growingZone", p.weather_conditions as "weatherConditions",
+        p.hashtags, p.mentioned_users as "mentionedUsers", p.crops_tags as "cropsTags",
+        p.like_count as "likeCount", p.comment_count as "commentCount", p.share_count as "shareCount",
+        u.id as "author_id", u.username as "author_username", u.profile_image as "author_profileImage",
+        sp.display_name as "profile_displayName"
+      FROM 
+        posts p
+        LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN social_profiles sp ON p.user_id = sp.user_id
+      WHERE 
+        (p.user_id IN (${followingIdsArray})
+        OR p.community_id IN (${communityIdsArray})
+        OR p.visibility = 'public')
+        ${beforeCondition}
+      ORDER BY 
+        p.published_at DESC
+      LIMIT ${limit}
+    `;
+    
+    const result = await db.execute(query);
+    
+    // Transform the raw results into the expected structure
+    const feed = result.rows.map(row => ({
+      post: {
+        id: row.id,
+        userId: row.userId,
+        content: row.content,
+        postType: row.postType,
+        visibility: row.visibility,
+        publishedAt: row.publishedAt,
+        communityId: row.communityId,
+        media: row.media,
+        locationName: row.locationName, 
+        latitude: row.latitude,
+        longitude: row.longitude,
+        season: row.season,
+        growingZone: row.growingZone,
+        weatherConditions: row.weatherConditions,
+        hashtags: row.hashtags,
+        mentionedUsers: row.mentionedUsers,
+        cropsTags: row.cropsTags,
+        likeCount: row.likeCount,
+        commentCount: row.commentCount,
+        shareCount: row.shareCount
+      },
       author: {
-        id: users.id,
-        username: users.username,
-        profileImage: users.profileImage
+        id: row.author_id,
+        username: row.author_username,
+        profileImage: row.author_profileImage
       },
       profile: {
-        displayName: socialProfiles.displayName
+        displayName: row.profile_displayName
       }
-    })
-    .from(posts)
-    .leftJoin(users, eq(posts.userId, users.id))
-    .leftJoin(socialProfiles, eq(posts.userId, socialProfiles.userId))
-    .where(
-      and(
-        // Post from followed user OR community post from joined community OR public post
-        or(
-          inArray(posts.userId, followingIds),
-          inArray(posts.communityId, communityIds),
-          eq(posts.visibility, 'public')
-        ),
-        // Pagination - get posts before a certain ID
-        before ? lt(posts.id, parseInt(before)) : isNotNull(posts.id)
-      )
-    )
-    .orderBy(desc(posts.publishedAt))
-    .limit(limit);
-    
-    const feed = await query;
+    }));
     
     return res.json(feed);
   } catch (error) {
@@ -291,27 +324,65 @@ greenSocialsRouter.get("/posts/:postId", async (req, res) => {
   try {
     const postId = parseInt(req.params.postId);
     
-    // Get post with user info
-    const post = await db.select({
-      post: posts,
-      author: {
-        id: users.id,
-        username: users.username,
-        profileImage: users.profileImage
-      },
-      profile: {
-        displayName: socialProfiles.displayName
-      }
-    })
-    .from(posts)
-    .leftJoin(users, eq(posts.userId, users.id))
-    .leftJoin(socialProfiles, eq(posts.userId, socialProfiles.userId))
-    .where(eq(posts.id, postId))
-    .limit(1);
+    // Get post with user info using raw SQL
+    const postResult = await db.execute(sql`
+      SELECT 
+        p.id, p.user_id as "userId", p.content, p.post_type as "postType", 
+        p.visibility, p.published_at as "publishedAt", p.community_id as "communityId",
+        p.media, p.location_name as "locationName", p.latitude, p.longitude,
+        p.season, p.growing_zone as "growingZone", p.weather_conditions as "weatherConditions",
+        p.hashtags, p.mentioned_users as "mentionedUsers", p.crops_tags as "cropsTags",
+        p.like_count as "likeCount", p.comment_count as "commentCount", p.share_count as "shareCount",
+        u.id as "author_id", u.username as "author_username", u.profile_image as "author_profileImage",
+        sp.display_name as "profile_displayName"
+      FROM 
+        posts p
+        LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN social_profiles sp ON p.user_id = sp.user_id
+      WHERE 
+        p.id = ${postId}
+      LIMIT 1
+    `);
     
-    if (!post.length) {
+    // If post not found
+    if (!postResult.rows.length) {
       return res.status(404).json({ message: "Post not found" });
     }
+    
+    // Transform the raw results into the expected structure
+    const postRow = postResult.rows[0];
+    const post = [{
+      post: {
+        id: postRow.id,
+        userId: postRow.userId,
+        content: postRow.content,
+        postType: postRow.postType,
+        visibility: postRow.visibility,
+        publishedAt: postRow.publishedAt,
+        communityId: postRow.communityId,
+        media: postRow.media,
+        locationName: postRow.locationName, 
+        latitude: postRow.latitude,
+        longitude: postRow.longitude,
+        season: postRow.season,
+        growingZone: postRow.growingZone,
+        weatherConditions: postRow.weatherConditions,
+        hashtags: postRow.hashtags,
+        mentionedUsers: postRow.mentionedUsers,
+        cropsTags: postRow.cropsTags,
+        likeCount: postRow.likeCount,
+        commentCount: postRow.commentCount,
+        shareCount: postRow.shareCount
+      },
+      author: {
+        id: postRow.author_id,
+        username: postRow.author_username,
+        profileImage: postRow.author_profileImage
+      },
+      profile: {
+        displayName: postRow.profile_displayName
+      }
+    }];
     
     // Get comments
     const postComments = await db.select({
