@@ -517,69 +517,84 @@ greenSocialsRouter.get("/posts/:postId", async (req, res) => {
 greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id;
+    console.log("Creating comment using Drizzle query builder");
 
-    // Create comment with raw SQL
-    const now = new Date().toISOString();
-    const insertResult = await db.execute(sql`
-      INSERT INTO comments (
-        user_id, post_id, parent_id, content, media, 
-        like_count, reply_count, created_at, updated_at
-      ) VALUES (
-        ${userId},
-        ${req.body.postId},
-        ${req.body.parentId || null},
-        ${req.body.content},
-        ${req.body.media || null},
-        0, 0, ${now}, ${now}
-      )
-      RETURNING id
-    `);
-
+    // Create comment using Drizzle query builder
+    const now = new Date();
+    const insertResult = await db
+      .insert(comments)
+      .values({
+        userId,
+        postId: req.body.postId,
+        parentId: req.body.parentId || null,
+        content: req.body.content,
+        media: req.body.media || null,
+        likeCount: 0,
+        replyCount: 0,
+        createdAt: now,
+        updatedAt: now
+      })
+      .returning();
+    
     // Extract the ID of the newly created comment
-    const commentId = insertResult.rows[0].id;
+    const commentId = insertResult[0].id;
 
-    // Update comment count on the post with raw SQL
-    await db.execute(sql`
-      UPDATE posts 
-      SET comment_count = comment_count + 1,
-          updated_at = ${now}
-      WHERE id = ${req.body.postId}
-    `);
+    // Update comment count on the post with Drizzle query builder
+    await db
+      .update(posts)
+      .set({
+        commentCount: sql`${posts.commentCount} + 1`,
+        updatedAt: now
+      })
+      .where(eq(posts.id, req.body.postId));
 
     // If this is a reply, update the parent comment's reply count
     if (req.body.parentId) {
-      await db.execute(sql`
-        UPDATE comments 
-        SET reply_count = reply_count + 1,
-            updated_at = ${now}
-        WHERE id = ${req.body.parentId}
-      `);
+      await db
+        .update(comments)
+        .set({
+          replyCount: sql`${comments.replyCount} + 1`,
+          updatedAt: now
+        })
+        .where(eq(comments.id, req.body.parentId));
     }
 
-    // Get full comment with user info using raw SQL
-    const commentResult = await db.execute(sql`
-      SELECT 
-        c.id, c.user_id as "userId", c.post_id as "postId", c.parent_id as "parentId",
-        c.content, c.media, c.like_count as "likeCount", c.reply_count as "replyCount",
-        c.created_at as "createdAt", c.updated_at as "updatedAt",
-        u.id as "author_id", u.username as "author_username", u.profile_image as "author_profileImage",
-        sp.display_name as "profile_displayName"
-      FROM 
-        comments c
-        LEFT JOIN users u ON c.user_id = u.id
-        LEFT JOIN social_profiles sp ON c.user_id = sp.user_id
-      WHERE 
-        c.id = ${commentId}
-      LIMIT 1
-    `);
+    // Get full comment with user info using Drizzle query builder
+    const commentResult = await db
+      .select({
+        // Comment fields
+        id: comments.id,
+        userId: comments.userId,
+        postId: comments.postId,
+        parentId: comments.parentId,
+        content: comments.content,
+        media: comments.media,
+        likeCount: comments.likeCount,
+        replyCount: comments.replyCount,
+        createdAt: comments.createdAt,
+        updatedAt: comments.updatedAt,
+        
+        // Author fields
+        author_id: users.id,
+        author_username: users.username,
+        author_profileImage: users.profileImage,
+        
+        // Profile fields
+        profile_displayName: socialProfiles.displayName
+      })
+      .from(comments)
+      .leftJoin(users, eq(comments.userId, users.id))
+      .leftJoin(socialProfiles, eq(comments.userId, socialProfiles.userId))
+      .where(eq(comments.id, commentId))
+      .limit(1);
 
-    // If no comment found (unlikely since we just created it)
-    if (!commentResult.rows.length) {
-      return res.status(404).json({ message: "Comment not found" });
+    // If comment not found (unlikely since we just created it)
+    if (!commentResult.length) {
+      return res.status(500).json({ message: "Error retrieving created comment" });
     }
 
-    // Transform the raw results into the expected structure
-    const commentRow = commentResult.rows[0];
+    // Transform the result into the expected structure
+    const commentRow = commentResult[0];
     const comment = {
       comment: {
         id: commentRow.id,
@@ -591,16 +606,16 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
         likeCount: commentRow.likeCount,
         replyCount: commentRow.replyCount,
         createdAt: commentRow.createdAt,
-        updatedAt: commentRow.updatedAt,
+        updatedAt: commentRow.updatedAt
       },
       author: {
         id: commentRow.author_id,
         username: commentRow.author_username,
-        profileImage: commentRow.author_profileImage,
+        profileImage: commentRow.author_profileImage
       },
       profile: {
-        displayName: commentRow.profile_displayName,
-      },
+        displayName: commentRow.profile_displayName
+      }
     };
 
     return res.status(201).json(comment);
