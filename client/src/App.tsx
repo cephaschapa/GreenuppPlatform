@@ -14,6 +14,7 @@ import PublicSellerProfilePage from "@/pages/PublicSellerProfilePage";
 import PublicTraceVerificationPage from "@/pages/PublicTraceVerificationPage";
 import AiKnowledgeBasePage from "@/pages/AiKnowledgeBasePage";
 import GreenSocialsPage from "@/pages/GreenSocialsPage";
+import UploadTestPage from "@/pages/UploadTestPage";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";

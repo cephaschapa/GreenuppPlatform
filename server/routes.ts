@@ -11,6 +11,8 @@ import testNotificationRouter from "./routes/test-notification";
 import emailRoutes from "./routes/email";
 import { greenSocialsRouter, setIsAuthenticatedMiddleware } from "./routes/green-socials";
 import { setWebSocketNotifier } from './services/websocket-notifier';
+import { uploadRouter } from './routes/upload-routes';
+import { testUploadRouter } from './routes/test-upload';
 
 import { 
   contactFormSchema, 
@@ -80,6 +82,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up Green Socials routes
   app.use("/api/social", greenSocialsRouter);
+  
+  // Set up file upload routes
+  app.use("/api/uploads", uploadRouter);
+  
+  // Set up test upload route
+  app.use(testUploadRouter);
 
   // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();
