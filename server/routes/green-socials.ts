@@ -454,22 +454,39 @@ greenSocialsRouter.post("/follow/:userId", isAuthenticated, async (req, res) => 
     const followerId = req.user.id;
     const followedId = parseInt(req.params.userId);
     
-    // Check if already following
-    const existingRelationship = await db.execute(
-      sql`SELECT * FROM user_relationships 
-          WHERE follower_id = ${followerId} 
-          AND followed_id = ${followedId} LIMIT 1`
-    );
-    
-    if (existingRelationship.length > 0) {
-      return res.status(400).json({ message: "Already following this user" });
+    try {
+      // Check if already following using a more robust approach
+      console.log(`Checking if user ${followerId} is already following user ${followedId}`);
+      const existingRelationship = await db.execute(
+        sql`SELECT * FROM user_relationships 
+            WHERE follower_id = ${followerId} 
+            AND followed_id = ${followedId} LIMIT 1`
+      );
+      
+      // Handle both possible response formats from db.execute
+      const hasExistingRelationship = 
+        (existingRelationship && existingRelationship.rows && existingRelationship.rows.length > 0) ||
+        (Array.isArray(existingRelationship) && existingRelationship.length > 0);
+      
+      if (hasExistingRelationship) {
+        console.log(`User ${followerId} is already following user ${followedId}`);
+        return res.status(200).json({ message: "Already following this user" }); // Using 200 instead of 400 for better UX
+      }
+      
+      console.log(`Creating new relationship: ${followerId} following ${followedId}`);
+      // Create relationship directly with SQL
+      await db.execute(
+        sql`INSERT INTO user_relationships (follower_id, followed_id, status)
+            VALUES (${followerId}, ${followedId}, 'following')`
+      );
+    } catch (error: any) {
+      // If we get a unique constraint violation, it means the relationship already exists
+      if (error && error.code === '23505') {
+        console.log(`Relationship already exists (caught duplicate key): ${followerId} -> ${followedId}`);
+        return res.status(200).json({ message: "Already following this user" });
+      }
+      throw error; // Re-throw any other errors
     }
-    
-    // Create relationship directly with SQL
-    await db.execute(
-      sql`INSERT INTO user_relationships (follower_id, followed_id, status)
-          VALUES (${followerId}, ${followedId}, 'following')`
-    );
     
     // Update follower count for followed user
     await db.execute(
@@ -503,23 +520,36 @@ greenSocialsRouter.delete("/follow/:userId", isAuthenticated, async (req, res) =
     const followerId = req.user.id;
     const followedId = parseInt(req.params.userId);
     
-    // Check if following
-    const existingRelationship = await db.execute(
-      sql`SELECT * FROM user_relationships 
-          WHERE follower_id = ${followerId} 
-          AND followed_id = ${followedId} LIMIT 1`
-    );
-    
-    if (existingRelationship.length === 0) {
-      return res.status(400).json({ message: "Not following this user" });
+    try {
+      // Check if following using a more robust approach
+      console.log(`Checking if user ${followerId} is following user ${followedId} before unfollowing`);
+      const existingRelationship = await db.execute(
+        sql`SELECT * FROM user_relationships 
+            WHERE follower_id = ${followerId} 
+            AND followed_id = ${followedId} LIMIT 1`
+      );
+      
+      // Handle both possible response formats from db.execute
+      const hasExistingRelationship = 
+        (existingRelationship && existingRelationship.rows && existingRelationship.rows.length > 0) ||
+        (Array.isArray(existingRelationship) && existingRelationship.length > 0);
+      
+      if (!hasExistingRelationship) {
+        console.log(`User ${followerId} is not following user ${followedId}`);
+        return res.status(200).json({ message: "Not following this user" }); // Using 200 instead of 400 for better UX
+      }
+      
+      console.log(`Deleting relationship: ${followerId} unfollowing ${followedId}`);
+      // Delete relationship
+      await db.execute(
+        sql`DELETE FROM user_relationships 
+            WHERE follower_id = ${followerId} 
+            AND followed_id = ${followedId}`
+      );
+    } catch (error: any) {
+      console.error(`Error in unfollow relationship check:`, error);
+      throw error;
     }
-    
-    // Delete relationship
-    await db.execute(
-      sql`DELETE FROM user_relationships 
-          WHERE follower_id = ${followerId} 
-          AND followed_id = ${followedId}`
-    );
     
     // Update follower count for followed user
     await db.execute(
