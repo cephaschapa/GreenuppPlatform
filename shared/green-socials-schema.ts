@@ -208,6 +208,9 @@ export const postShares = pgTable("post_shares", {
   targetId: integer("target_id"), // Profile or community ID if applicable
   externalPlatform: text("external_platform"), // e.g., 'whatsapp', 'email', etc.
   sharedAt: timestamp("shared_at").notNull().defaultNow(),
+  // Add standard timestamps for compatibility with existing queries
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 // Knowledge base verified facts
@@ -481,6 +484,13 @@ export const insertContentReportSchema = createInsertSchema(contentReports).omit
   updatedAt: true,
 });
 
+export const insertPostShareSchema = createInsertSchema(postShares).omit({
+  id: true,
+  sharedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Export types
 export type SocialProfile = typeof socialProfiles.$inferSelect;
 export type InsertSocialProfile = z.infer<typeof insertSocialProfileSchema>;
@@ -512,3 +522,6 @@ export type InsertUserRelationship = z.infer<typeof insertUserRelationshipSchema
 
 export type ContentReport = typeof contentReports.$inferSelect;
 export type InsertContentReport = z.infer<typeof insertContentReportSchema>;
+
+export type PostShare = typeof postShares.$inferSelect;
+export type InsertPostShare = z.infer<typeof insertPostShareSchema>;
