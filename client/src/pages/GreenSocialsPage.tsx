@@ -163,6 +163,14 @@ const GreenSocialsPage = () => {
   const [replyContent, setReplyContent] = useState("");
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
+  const [visibleComments, setVisibleComments] = useState<{[key: number]: boolean}>({});
+  const [newComments, setNewComments] = useState<{[key: number]: string}>({});
+  const [likedPosts, setLikedPosts] = useState<{[key: number]: boolean}>({});
+  const [savedPosts, setSavedPosts] = useState<{[key: number]: boolean}>({});
+  const [reportPostId, setReportPostId] = useState<number | null>(null);
+  const [reportCommentId, setReportCommentId] = useState<number | null>(null);
+  const [sharePostId, setSharePostId] = useState<number | null>(null);
+  const [shareTarget, setShareTarget] = useState<"profile" | "community" | "external" | null>(null);
   
   // Mutation for creating a new post
   const createPostMutation = useMutation({
@@ -1108,20 +1116,184 @@ const GreenSocialsPage = () => {
                             </CardContent>
                             <CardFooter className="border-t px-6 py-3">
                               <div className="flex justify-between w-full">
-                                <Button variant="ghost" size="sm" className="gap-1">
-                                  <Heart className="h-4 w-4" />
-                                  <span className="text-xs">{post.post.likeCount}</span>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className={`gap-1 ${likedPosts[post.post.id] ? 'text-primary' : ''}`}
+                                  onClick={() => handleToggleLike(post.post.id, likedPosts[post.post.id] || false)}
+                                >
+                                  {likedPosts[post.post.id] ? (
+                                    <HeartFilled className="h-4 w-4 text-primary" />
+                                  ) : (
+                                    <Heart className="h-4 w-4" />
+                                  )}
+                                  <span className="text-xs">{post.post.likeCount + (likedPosts[post.post.id] ? 1 : 0)}</span>
                                 </Button>
-                                <Button variant="ghost" size="sm" className="gap-1">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="gap-1"
+                                  onClick={() => {
+                                    setVisibleComments({
+                                      ...visibleComments,
+                                      [post.post.id]: !visibleComments[post.post.id]
+                                    });
+                                  }}
+                                >
                                   <MessageCircle className="h-4 w-4" />
                                   <span className="text-xs">{post.post.commentCount}</span>
                                 </Button>
-                                <Button variant="ghost" size="sm" className="aspect-square p-0 sm:aspect-auto sm:px-3">
-                                  <Share2 className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="aspect-square p-0 sm:aspect-auto sm:px-3">
-                                  <Bookmark className="h-4 w-4" />
-                                </Button>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="aspect-square p-0 sm:aspect-auto sm:px-3">
+                                      <Share2 className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Share Post</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => {
+                                      setSharePostId(post.post.id);
+                                      setShareTarget("profile");
+                                      handleSharePost(post.post.id, "profile");
+                                    }}>
+                                      <User className="mr-2 h-4 w-4" />
+                                      <span>Share to Profile</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => {
+                                      setSharePostId(post.post.id);
+                                      setShareTarget("community");
+                                      handleSharePost(post.post.id, "community");
+                                    }}>
+                                      <Users className="mr-2 h-4 w-4" />
+                                      <span>Share to Community</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => {
+                                      setSharePostId(post.post.id);
+                                      setShareTarget("external");
+                                      handleSharePost(post.post.id, "external", undefined, "twitter");
+                                    }}>
+                                      <Twitter className="mr-2 h-4 w-4" />
+                                      <span>Share to Twitter</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => {
+                                      setSharePostId(post.post.id);
+                                      setShareTarget("external");
+                                      handleSharePost(post.post.id, "external", undefined, "facebook");
+                                    }}>
+                                      <Facebook className="mr-2 h-4 w-4" />
+                                      <span>Share to Facebook</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => {
+                                      setSharePostId(post.post.id);
+                                      setShareTarget("external");
+                                      handleSharePost(post.post.id, "external", undefined, "whatsapp");
+                                    }}>
+                                      <MessageSquare className="mr-2 h-4 w-4" />
+                                      <span>Share via WhatsApp</span>
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className={`aspect-square p-0 sm:aspect-auto sm:px-3 ${savedPosts[post.post.id] ? 'text-primary' : ''}`}
+                                    >
+                                      {savedPosts[post.post.id] ? (
+                                        <BookmarkFilled className="h-4 w-4 text-primary" />
+                                      ) : (
+                                        <Bookmark className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Save Options</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {!savedPosts[post.post.id] ? (
+                                      <>
+                                        <DropdownMenuItem onClick={() => {
+                                          handleSavePost(post.post.id);
+                                          setSavedPosts({...savedPosts, [post.post.id]: true});
+                                        }}>
+                                          <Bookmark className="mr-2 h-4 w-4" />
+                                          <span>Save to Collection</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => {
+                                          handleSavePost(post.post.id, "Favorites");
+                                          setSavedPosts({...savedPosts, [post.post.id]: true});
+                                        }}>
+                                          <Star className="mr-2 h-4 w-4" />
+                                          <span>Save to Favorites</span>
+                                        </DropdownMenuItem>
+                                      </>
+                                    ) : (
+                                      <DropdownMenuItem onClick={() => {
+                                        handleUnsavePost(post.post.id);
+                                        setSavedPosts({...savedPosts, [post.post.id]: false});
+                                      }}>
+                                        <BookmarkX className="mr-2 h-4 w-4" />
+                                        <span>Remove from Saved</span>
+                                      </DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="aspect-square p-0 sm:aspect-auto sm:px-3">
+                                      <Flag className="h-4 w-4" />
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>Report Post</DialogTitle>
+                                      <DialogDescription>
+                                        Please let us know why you want to report this post. This will help us maintain a safe community.
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="grid gap-4 py-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="report-reason">Reason</Label>
+                                        <Select onValueChange={(value) => setReportReason(value)}>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Select a reason" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="spam">Spam</SelectItem>
+                                            <SelectItem value="harassment">Harassment</SelectItem>
+                                            <SelectItem value="misinformation">Misinformation</SelectItem>
+                                            <SelectItem value="sensitive_content">Sensitive Content</SelectItem>
+                                            <SelectItem value="hate_speech">Hate Speech</SelectItem>
+                                            <SelectItem value="other">Other</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label htmlFor="report-description">Description (Optional)</Label>
+                                        <Textarea 
+                                          id="report-description" 
+                                          placeholder="Add more details about your report..."
+                                          value={reportDescription}
+                                          onChange={(e) => setReportDescription(e.target.value)}
+                                        />
+                                      </div>
+                                    </div>
+                                    <DialogFooter>
+                                      <DialogClose asChild>
+                                        <Button variant="outline">Cancel</Button>
+                                      </DialogClose>
+                                      <DialogClose asChild>
+                                        <Button onClick={() => {
+                                          handleReportPost(post.post.id, reportReason, reportDescription);
+                                          setReportReason("");
+                                          setReportDescription("");
+                                        }}>Submit Report</Button>
+                                      </DialogClose>
+                                    </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
                               </div>
                             </CardFooter>
                             
