@@ -1,5 +1,5 @@
 import { Request, Response, Router, NextFunction } from "express";
-import { db } from "../db";
+import { db, pool } from "../db";
 import { 
   SocialProfile, 
   communities, 
@@ -171,91 +171,73 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
     const userId = req.user.id;
     const limit = parseInt(req.query.limit as string) || 20;
     
-    let result;
+    console.log("Complete rewrite of the feed endpoint");
+    
+    // Using direct pool query for maximum reliability
+    const query = `
+      SELECT 
+        p.id, p.user_id, p.content, p.post_type, p.visibility, p.published_at, 
+        p.community_id, p.media, p.location_name, p.latitude, p.longitude,
+        p.season, p.growing_zone, p.weather_conditions, p.hashtags, 
+        p.mentioned_users, p.crops_tags, p.like_count, p.comment_count, 
+        p.share_count, u.id as author_id, u.username as author_username, 
+        u.profile_image as author_profile_image, 
+        COALESCE(sp.display_name, u.username) as author_display_name
+      FROM 
+        posts p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN social_profiles sp ON p.user_id = sp.user_id
+      ORDER BY p.published_at DESC
+      LIMIT $1
+    `;
     
     try {
-      console.log("Using final ultra simplified feed query - no WHERE clauses at all");
+      const rawResult = await pool.query(query, [limit]);
       
-      // The most basic query possible - no filtering
-      result = await db.execute(sql`
-        SELECT 
-          p.id, 
-          p.user_id as "userId", 
-          p.content, 
-          p.post_type as "postType", 
-          p.visibility, 
-          p.published_at as "publishedAt", 
-          p.community_id as "communityId",
-          p.media, 
-          p.location_name as "locationName", 
-          p.latitude, 
-          p.longitude,
-          p.season, 
-          p.growing_zone as "growingZone", 
-          p.weather_conditions as "weatherConditions",
-          p.hashtags, 
-          p.mentioned_users as "mentionedUsers", 
-          p.crops_tags as "cropsTags",
-          p.like_count as "likeCount", 
-          p.comment_count as "commentCount", 
-          p.share_count as "shareCount",
-          u.id as "author_id", 
-          u.username as "author_username", 
-          u.profile_image as "author_profileImage",
-          sp.display_name as "profile_displayName"
-        FROM 
-          posts p
-          LEFT JOIN users u ON p.user_id = u.id
-          LEFT JOIN social_profiles sp ON p.user_id = sp.user_id
-        ORDER BY 
-          p.published_at DESC
-        LIMIT ${limit}
-      `);
-    } catch (error) {
-      console.error("Error in feed query construction:", error);
+      // If no posts are found, return an empty array
+      if (!rawResult.rows.length) {
+        return res.json([]);
+      }
+      
+      // Transform the raw results into the expected structure
+      const feed = rawResult.rows.map(row => ({
+        post: {
+          id: row.id,
+          userId: row.user_id,
+          content: row.content,
+          postType: row.post_type,
+          visibility: row.visibility,
+          publishedAt: row.published_at,
+          communityId: row.community_id,
+          media: row.media,
+          locationName: row.location_name, 
+          latitude: row.latitude,
+          longitude: row.longitude,
+          season: row.season,
+          growingZone: row.growing_zone,
+          weatherConditions: row.weather_conditions,
+          hashtags: row.hashtags,
+          mentionedUsers: row.mentioned_users,
+          cropsTags: row.crops_tags,
+          likeCount: row.like_count,
+          commentCount: row.comment_count,
+          shareCount: row.share_count
+        },
+        author: {
+          id: row.author_id,
+          username: row.author_username,
+          profileImage: row.author_profile_image
+        },
+        profile: {
+          displayName: row.author_display_name
+        }
+      }));
+      
+      return res.json(feed);
+    } catch (queryError) {
+      console.error("Error in feed query execution:", queryError);
       return res.status(500).json({ message: "Error building feed query" });
     }
-    
-    if (!result || !result.rows) {
-      console.error("No result or rows returned from feed query");
-      return res.status(500).json({ message: "Error retrieving feed data" });
-    }
-    
-    // Transform the raw results into the expected structure
-    const feed = result.rows.map((row: any) => ({
-      post: {
-        id: row.id,
-        userId: row.userId,
-        content: row.content,
-        postType: row.postType,
-        visibility: row.visibility,
-        publishedAt: row.publishedAt,
-        communityId: row.communityId,
-        media: row.media,
-        locationName: row.locationName, 
-        latitude: row.latitude,
-        longitude: row.longitude,
-        season: row.season,
-        growingZone: row.growingZone,
-        weatherConditions: row.weatherConditions,
-        hashtags: row.hashtags,
-        mentionedUsers: row.mentionedUsers,
-        cropsTags: row.cropsTags,
-        likeCount: row.likeCount,
-        commentCount: row.commentCount,
-        shareCount: row.shareCount
-      },
-      author: {
-        id: row.author_id,
-        username: row.author_username,
-        profileImage: row.author_profileImage
-      },
-      profile: {
-        displayName: row.profile_displayName
-      }
-    }));
-    
-    return res.json(feed);
   } catch (error) {
     console.error("Error fetching feed:", error);
     return res.status(500).json({ message: "Server error" });
