@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express";
+import { Request, Response, Router, NextFunction } from "express";
 import { db } from "../db";
 import { 
   SocialProfile, 
@@ -17,16 +17,29 @@ import {
 } from "@shared/green-socials-schema";
 import { and, desc, eq, inArray, isNotNull, isNull, lt, or, sql } from "drizzle-orm";
 import { users } from "@shared/schema";
+import { setupAuth } from "../auth";
 
-// Authentication middleware
-function isAuthenticated(req: Request, res: Response, next: Function) {
+// Define middleware interfaces
+interface IsAuthenticatedMiddleware {
+  (req: Request, res: Response, next: NextFunction): void;
+}
+
+// Create a variable to hold the middleware
+let isAuthenticated: IsAuthenticatedMiddleware = (req, res, next) => {
   if (req.isAuthenticated()) {
     return next();
   }
   return res.status(401).json({ message: "Not authenticated" });
-}
+};
 
+// Export the router and a function to set the middleware
 export const greenSocialsRouter = Router();
+
+// This function will be called from routes.ts to inject the correct middleware
+export function setIsAuthenticatedMiddleware(middleware: IsAuthenticatedMiddleware) {
+  console.log("Setting shared isAuthenticated middleware for Green Socials");
+  isAuthenticated = middleware;
+}
 
 // GET /api/social/profile/:userId
 // Get a social profile

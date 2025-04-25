@@ -9,7 +9,7 @@ import cropTraceRoutes from "./routes/croptrace";
 import notificationRoutes from "./routes/notifications";
 import testNotificationRouter from "./routes/test-notification";
 import emailRoutes from "./routes/email";
-import { greenSocialsRouter } from "./routes/green-socials";
+import { greenSocialsRouter, setIsAuthenticatedMiddleware } from "./routes/green-socials";
 import { setWebSocketNotifier } from './services/websocket-notifier';
 
 import { 
@@ -45,8 +45,12 @@ import multer from "multer";
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log("Registering all API routes...");
   
-  // Set up authentication 
-  setupAuth(app);
+  // Set up authentication and get the isAuthenticated middleware
+  const { isAuthenticated } = setupAuth(app);
+  
+  // Set the isAuthenticated middleware for the Green Socials router
+  setIsAuthenticatedMiddleware(isAuthenticated);
+  console.log("Initialized Green Socials with consistent authentication middleware");
   
   // Set up seller routes FIRST
   // IMPORTANT: We need to register this BEFORE the marketplace routes 
@@ -89,13 +93,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     { name: 'images', maxCount: 5 }
   ]);
 
-  // Middleware to check authentication
-  function isAuthenticated(req: Request, res: Response, next: NextFunction) {
-    if (req.isAuthenticated()) {
-      return next();
-    }
-    res.status(401).json({ message: "Not authenticated" });
-  }
+  // We're using the isAuthenticated middleware from auth.ts
 
   // Middleware to check user role
   function hasRole(role: string) {
