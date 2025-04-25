@@ -467,9 +467,9 @@ greenSocialsRouter.post("/follow/:userId", isAuthenticated, async (req, res) => 
     // Extract count, handling different return formats
     let count = 0;
     if (checkResult && checkResult.rows && checkResult.rows[0]) {
-      count = parseInt(checkResult.rows[0].count);
+      count = parseInt(String(checkResult.rows[0].count), 10);
     } else if (Array.isArray(checkResult) && checkResult[0] && checkResult[0].count) {
-      count = parseInt(checkResult[0].count);
+      count = parseInt(String(checkResult[0].count), 10);
     }
     
     // If already following, return success message
@@ -492,14 +492,14 @@ greenSocialsRouter.post("/follow/:userId", isAuthenticated, async (req, res) => 
       // Update follower count for followed user
       await tx.execute(
         sql`UPDATE social_profiles 
-            SET follower_count = follower_count + 1 
+            SET follower_count = GREATEST(0, follower_count + 1)
             WHERE user_id = ${followedId}`
       );
       
       // Update following count for follower
       await tx.execute(
         sql`UPDATE social_profiles 
-            SET following_count = following_count + 1 
+            SET following_count = GREATEST(0, following_count + 1)
             WHERE user_id = ${followerId}`
       );
     });
@@ -543,9 +543,9 @@ greenSocialsRouter.delete("/follow/:userId", isAuthenticated, async (req, res) =
     // Extract count, handling different return formats
     let count = 0;
     if (checkResult && checkResult.rows && checkResult.rows[0]) {
-      count = parseInt(checkResult.rows[0].count);
+      count = parseInt(String(checkResult.rows[0].count), 10);
     } else if (Array.isArray(checkResult) && checkResult[0] && checkResult[0].count) {
-      count = parseInt(checkResult[0].count);
+      count = parseInt(String(checkResult[0].count), 10);
     }
     
     // If not following, return success message
