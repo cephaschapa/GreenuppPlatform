@@ -151,15 +151,15 @@ const GreenSocialsPage = () => {
 
   // Query for fetching user's social profile
   const { data: profile, isLoading: isProfileLoading } = useQuery({
-    queryKey: ["/profile", user?.id],
-    queryFn: () => apiRequest("GET", `/profile/${user?.id}`).then(res => res.json()),
+    queryKey: ["/api/social/profile", user?.id],
+    queryFn: () => apiRequest("GET", `/api/social/profile/${user?.id}`).then(res => res.json()),
     enabled: !!user,
   });
 
   // Query for fetching social feed
   const { data: feed, isLoading: isFeedLoading } = useQuery({
-    queryKey: ["/feed"],
-    queryFn: () => apiRequest("GET", "/feed").then(res => res.json()),
+    queryKey: ["/api/social/feed"],
+    queryFn: () => apiRequest("GET", "/api/social/feed").then(res => res.json()),
     enabled: !!user,
   });
   
@@ -216,7 +216,7 @@ const GreenSocialsPage = () => {
   // Mutation for creating a new post
   const createPostMutation = useMutation({
     mutationFn: async (content: string) => {
-      const res = await apiRequest("POST", "/posts", {
+      const res = await apiRequest("POST", "/api/social/posts", {
         content,
         postType,
         visibility: postVisibility,
@@ -635,7 +635,7 @@ const GreenSocialsPage = () => {
     
     // Reset reply state
     setReplyContent('');
-    setReplyingTo(null);
+    setSelectedComment(null);
   };
   
   // Handler for toggling comment like
