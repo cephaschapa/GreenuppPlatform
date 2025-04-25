@@ -238,7 +238,7 @@ const GreenSocialsPage = () => {
       setPostType("text");
       setPostVisibility("public");
       setShowPostOptions(false);
-      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
     },
     onError: (error: any) => {
       toast({
@@ -314,7 +314,7 @@ const GreenSocialsPage = () => {
       });
       
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
     },
     onError: (error: any) => {
       toast({
@@ -338,7 +338,7 @@ const GreenSocialsPage = () => {
       });
       
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
     },
     onError: (error: any) => {
       toast({
@@ -370,7 +370,7 @@ const GreenSocialsPage = () => {
       setReplyContent("");
       
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
     },
     onError: (error: any) => {
       toast({
@@ -394,7 +394,7 @@ const GreenSocialsPage = () => {
       });
       
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
     },
     onError: (error: any) => {
       toast({
@@ -418,7 +418,7 @@ const GreenSocialsPage = () => {
       });
       
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
     },
     onError: (error: any) => {
       toast({
@@ -451,7 +451,7 @@ const GreenSocialsPage = () => {
       });
       
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
     },
     onError: (error: any) => {
       toast({
@@ -477,7 +477,7 @@ const GreenSocialsPage = () => {
       });
       
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
     },
     onError: (error: any) => {
       toast({
@@ -501,7 +501,7 @@ const GreenSocialsPage = () => {
       });
       
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
     },
     onError: (error: any) => {
       toast({
