@@ -1204,15 +1204,25 @@ const GreenSocialsPage = () => {
                                   <div className="whitespace-pre-wrap">{post.post.content}</div>
                                   
                                   {post.post.media && post.post.media.length > 0 && (
-                                    <div className="mt-4 rounded-md overflow-hidden">
+                                    <div className={`mt-4 ${post.post.media.length > 1 ? 'grid grid-cols-2 gap-2' : ''}`}>
                                       {post.post.media.map((item, idx) => (
                                         item.type.includes('image') ? (
-                                          <img 
-                                            key={idx}
-                                            src={item.url} 
-                                            alt={item.caption || 'Post image'} 
-                                            className="w-full h-auto object-cover max-h-96"
-                                          />
+                                          <div 
+                                            key={idx} 
+                                            className="rounded-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
+                                            onClick={() => window.open(item.url, '_blank')}
+                                          >
+                                            <img 
+                                              src={item.url} 
+                                              alt={item.caption || 'Post image'} 
+                                              className={`w-full h-auto object-cover ${post.post.media && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
+                                            />
+                                            {item.caption && (
+                                              <div className="p-2 text-xs text-gray-500">
+                                                {item.caption}
+                                              </div>
+                                            )}
+                                          </div>
                                         ) : null
                                       ))}
                                     </div>
@@ -1286,15 +1296,25 @@ const GreenSocialsPage = () => {
                               <div className="whitespace-pre-wrap">{post.post.content}</div>
                               
                               {post.post.media && post.post.media.length > 0 && (
-                                <div className="mt-4 rounded-md overflow-hidden">
+                                <div className={`mt-4 ${post.post.media.length > 1 ? 'grid grid-cols-2 gap-2' : ''}`}>
                                   {post.post.media.map((item, idx) => (
                                     item.type.includes('image') ? (
-                                      <img 
-                                        key={idx}
-                                        src={item.url} 
-                                        alt={item.caption || 'Post image'} 
-                                        className="w-full h-auto object-cover max-h-96"
-                                      />
+                                      <div 
+                                        key={idx} 
+                                        className="rounded-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
+                                        onClick={() => window.open(item.url, '_blank')}
+                                      >
+                                        <img 
+                                          src={item.url} 
+                                          alt={item.caption || 'Post image'} 
+                                          className={`w-full h-auto object-cover ${post.post.media && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
+                                        />
+                                        {item.caption && (
+                                          <div className="p-2 text-xs text-gray-500">
+                                            {item.caption}
+                                          </div>
+                                        )}
+                                      </div>
                                     ) : null
                                   ))}
                                 </div>
