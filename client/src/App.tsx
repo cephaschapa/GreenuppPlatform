@@ -54,6 +54,7 @@ function Router() {
       <Route path="/marketplace/:id" component={PublicListingDetailPage} />
       <Route path="/trace" component={PublicTraceVerificationPage} />
       <Route path="/ai-knowledge-base" component={AiKnowledgeBasePage} />
+      <Route path="/upload-test" component={UploadTestPage} />
       
       {/* Dashboard routes */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />

@@ -38,7 +38,7 @@ export function FileUploadTest() {
       const formData = new FormData();
       formData.append('image', selectedFile);
 
-      const response = await apiRequest('POST', '/api/uploads/single', formData, false);
+      const response = await apiRequest('POST', '/api/uploads/single', formData, { isFormData: true });
       
       if (!response.ok) {
         throw new Error(`Upload failed with status: ${response.status}`);
