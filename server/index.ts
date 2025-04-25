@@ -1,11 +1,20 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Fix for __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 // Increase JSON payload size limit to 25MB for image uploads
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: false, limit: '25mb' }));
+
+// Serve uploaded files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, "../uploads")));
 
 app.use((req, res, next) => {
   const start = Date.now();
