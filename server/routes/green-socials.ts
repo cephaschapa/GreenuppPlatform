@@ -591,14 +591,22 @@ greenSocialsRouter.get("/communities", async (req, res) => {
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = parseInt(req.query.offset as string) || 0;
     
-    const communitiesList = await db
-      .select()
-      .from(communities)
-      .limit(limit)
-      .offset(offset)
-      .orderBy(desc(communities.memberCount));
+    // Get communities using raw SQL
+    const communitiesResult = await db.execute(sql`
+      SELECT 
+        id, name, description, community_icon as "communityIcon", 
+        cover_image as "coverImage", owner_id as "ownerId", 
+        is_private as "isPrivate", member_count as "memberCount",
+        category, tags, location, rules, created_at as "createdAt",
+        updated_at as "updatedAt"
+      FROM 
+        communities
+      ORDER BY 
+        member_count DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `);
     
-    return res.json(communitiesList);
+    return res.json(communitiesResult.rows);
   } catch (error) {
     console.error("Error fetching communities:", error);
     return res.status(500).json({ message: "Server error" });
@@ -611,22 +619,53 @@ greenSocialsRouter.get("/communities/:communityId", async (req, res) => {
   try {
     const communityId = parseInt(req.params.communityId);
     
-    const community = await db.query.communities.findFirst({
-      where: eq(communities.id, communityId),
-      with: {
-        owner: {
-          columns: {
-            id: true,
-            username: true,
-            profileImage: true
-          }
-        }
-      }
-    });
+    // Get community with owner info using raw SQL
+    const communityResult = await db.execute(sql`
+      SELECT 
+        c.id, c.name, c.description, c.community_icon as "communityIcon", 
+        c.cover_image as "coverImage", c.owner_id as "ownerId", 
+        c.is_private as "isPrivate", c.member_count as "memberCount",
+        c.category, c.tags, c.location, c.rules, c.created_at as "createdAt",
+        c.updated_at as "updatedAt",
+        u.id as "owner_id", u.username as "owner_username", 
+        u.profile_image as "owner_profileImage"
+      FROM 
+        communities c
+      LEFT JOIN 
+        users u ON c.owner_id = u.id
+      WHERE 
+        c.id = ${communityId}
+      LIMIT 1
+    `);
     
-    if (!community) {
+    // If community not found
+    if (!communityResult.rows.length) {
       return res.status(404).json({ message: "Community not found" });
     }
+    
+    // Transform the raw results into the expected structure
+    const communityRow = communityResult.rows[0];
+    const community = {
+      id: communityRow.id,
+      name: communityRow.name,
+      description: communityRow.description,
+      communityIcon: communityRow.communityIcon,
+      coverImage: communityRow.coverImage,
+      ownerId: communityRow.ownerId,
+      isPrivate: communityRow.isPrivate,
+      memberCount: communityRow.memberCount,
+      category: communityRow.category,
+      tags: communityRow.tags,
+      location: communityRow.location,
+      rules: communityRow.rules,
+      createdAt: communityRow.createdAt,
+      updatedAt: communityRow.updatedAt,
+      owner: {
+        id: communityRow.owner_id,
+        username: communityRow.owner_username,
+        profileImage: communityRow.owner_profileImage
+      }
+    };
     
     return res.json(community);
   } catch (error) {
@@ -639,39 +678,65 @@ greenSocialsRouter.get("/communities/:communityId", async (req, res) => {
 // Create a new community
 greenSocialsRouter.post("/communities", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const userId = req.user.id;
+    const now = new Date().toISOString();
     
-    // Create community
-    const newCommunity = await db
-      .insert(communities)
-      .values({
-        name: req.body.name,
-        description: req.body.description,
-        communityIcon: req.body.communityIcon,
-        coverImage: req.body.coverImage,
-        ownerId: userId,
-        isPrivate: req.body.isPrivate || false,
-        category: req.body.category,
-        tags: req.body.tags,
-        location: req.body.location,
-        rules: req.body.rules
-      })
-      .returning();
+    // Create community with raw SQL
+    const insertResult = await db.execute(sql`
+      INSERT INTO communities (
+        name, description, community_icon, cover_image, owner_id,
+        is_private, category, tags, location, rules, 
+        member_count, created_at, updated_at
+      ) VALUES (
+        ${req.body.name},
+        ${req.body.description || null},
+        ${req.body.communityIcon || null},
+        ${req.body.coverImage || null},
+        ${userId},
+        ${req.body.isPrivate || false},
+        ${req.body.category || null},
+        ${req.body.tags || null},
+        ${req.body.location || null},
+        ${req.body.rules || null},
+        0, ${now}, ${now}
+      )
+      RETURNING id, name, description, community_icon as "communityIcon", 
+        cover_image as "coverImage", owner_id as "ownerId", 
+        is_private as "isPrivate", member_count as "memberCount",
+        category, tags, location, rules, created_at as "createdAt",
+        updated_at as "updatedAt"
+    `);
     
-    // Add owner as a member with admin role
-    await db.insert(communityMembers).values({
-      communityId: newCommunity[0].id,
-      userId,
-      role: 'admin'
-    });
+    // Get the newly created community
+    const newCommunity = insertResult.rows[0];
     
-    // Update member count
-    await db
-      .update(communities)
-      .set({ memberCount: 1 })
-      .where(eq(communities.id, newCommunity[0].id));
+    // Add owner as a member with admin role using raw SQL
+    await db.execute(sql`
+      INSERT INTO community_members (
+        community_id, user_id, role, joined_at, created_at, updated_at
+      ) VALUES (
+        ${newCommunity.id},
+        ${userId},
+        'admin',
+        ${now}, ${now}, ${now}
+      )
+    `);
     
-    return res.status(201).json(newCommunity[0]);
+    // Update member count using raw SQL
+    await db.execute(sql`
+      UPDATE communities 
+      SET member_count = 1, updated_at = ${now}
+      WHERE id = ${newCommunity.id}
+    `);
+    
+    // Set member count in the returned object as well
+    newCommunity.memberCount = 1;
+    
+    return res.status(201).json(newCommunity);
   } catch (error) {
     console.error("Error creating community:", error);
     return res.status(500).json({ message: "Server error" });
