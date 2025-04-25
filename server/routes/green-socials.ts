@@ -47,22 +47,61 @@ greenSocialsRouter.get("/profile/:userId", async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
     
-    // Directly query the table to bypass drizzle naming issues
-    const profile = await db
-      .select({
-        profile: socialProfiles,
+    // Only select columns that exist in the database
+    const profile = await db.execute(sql`
+      SELECT 
+        sp.id, 
+        sp.user_id as "userId", 
+        sp.display_name as "displayName", 
+        sp.bio, 
+        sp.profile_image as "profileImage", 
+        sp.cover_image as "coverImage", 
+        sp.location, 
+        sp.verification_status as "verificationStatus",
+        sp.expertise,
+        sp.specializations,
+        sp.experience_years as "experienceYears",
+        sp.follower_count as "followerCount",
+        sp.following_count as "followingCount",
+        sp.post_count as "postCount",
+        u.id as "user_id", 
+        u.username as "user_username", 
+        u.first_name as "user_firstName", 
+        u.last_name as "user_lastName"
+      FROM social_profiles sp
+      LEFT JOIN users u ON sp.user_id = u.id
+      WHERE sp.user_id = ${userId}
+      LIMIT 1
+    `).then(result => {
+      if (result.rows.length === 0) return null;
+      
+      // Restructure the result to have nested user object
+      const row = result.rows[0];
+      return {
+        profile: {
+          id: row.id,
+          userId: row.userId,
+          displayName: row.displayName,
+          bio: row.bio,
+          profileImage: row.profileImage,
+          coverImage: row.coverImage,
+          location: row.location,
+          verificationStatus: row.verificationStatus,
+          expertise: row.expertise,
+          specializations: row.specializations,
+          experienceYears: row.experienceYears,
+          followerCount: row.followerCount,
+          followingCount: row.followingCount,
+          postCount: row.postCount
+        },
         user: {
-          id: users.id,
-          username: users.username,
-          firstName: users.firstName,
-          lastName: users.lastName
+          id: row.user_id,
+          username: row.user_username,
+          firstName: row.user_firstName,
+          lastName: row.user_lastName
         }
-      })
-      .from(socialProfiles)
-      .leftJoin(users, eq(socialProfiles.userId, users.id))
-      .where(eq(socialProfiles.userId, userId))
-      .limit(1)
-      .then(result => result[0]);
+      };
+    });
     
     if (!profile) {
       return res.status(404).json({ message: "Profile not found" });
@@ -81,10 +120,12 @@ greenSocialsRouter.post("/profile", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Check if profile already exists
-    const existingProfile = await db.query.socialProfiles.findFirst({
-      where: eq(socialProfiles.userId, userId)
-    });
+    // Check if profile already exists using raw SQL
+    const existingProfile = await db.execute(sql`
+      SELECT id FROM social_profiles 
+      WHERE user_id = ${userId}
+      LIMIT 1
+    `).then(result => result.rows.length > 0 ? result.rows[0] : null);
     
     if (existingProfile) {
       // Update existing profile
@@ -127,30 +168,26 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
     const limit = parseInt(req.query.limit as string) || 20;
     const before = req.query.before as string;
     
-    // Get users that this user follows
-    const following = await db.query.userRelationships.findMany({
-      where: eq(userRelationships.followerId, userId),
-      columns: {
-        followedId: true
-      }
-    });
+    // Get users that this user follows using raw SQL
+    const following = await db.execute(sql`
+      SELECT followed_id as "followedId" 
+      FROM user_relationships 
+      WHERE follower_id = ${userId}
+    `);
     
-    const followingIds = following.map(f => f.followedId);
+    const followingIds = following.rows.map(f => f.followedId);
     // Add current user to see their own posts
     followingIds.push(userId);
     
-    // Get communities this user belongs to
-    const communities = await db.query.communityMembers.findMany({
-      where: and(
-        eq(communityMembers.userId, userId),
-        eq(communityMembers.isActive, true)
-      ),
-      columns: {
-        communityId: true
-      }
-    });
+    // Get communities this user belongs to with raw SQL
+    const communities = await db.execute(sql`
+      SELECT community_id as "communityId" 
+      FROM community_members 
+      WHERE user_id = ${userId} 
+      AND is_active = true
+    `);
     
-    const communityIds = communities.map(c => c.communityId);
+    const communityIds = communities.rows.map(c => c.communityId);
     
     // Build query based on pagination
     let query = db.select({
