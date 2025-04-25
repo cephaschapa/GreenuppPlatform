@@ -1,11 +1,11 @@
 import { Request, Response, Router, NextFunction } from "express";
 import { db, pool } from "../db";
-import { 
-  SocialProfile, 
-  communities, 
-  posts, 
-  comments, 
-  socialProfiles, 
+import {
+  SocialProfile,
+  communities,
+  posts,
+  comments,
+  socialProfiles,
   userRelationships,
   communityMembers,
   postLikes,
@@ -13,9 +13,19 @@ import {
   savedPosts,
   postShares,
   contentReports,
-  socialNotifications
+  socialNotifications,
 } from "@shared/green-socials-schema";
-import { and, desc, eq, inArray, isNotNull, isNull, lt, or, sql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  lt,
+  or,
+  sql,
+} from "drizzle-orm";
 import { users } from "@shared/schema";
 import { setupAuth } from "../auth";
 
@@ -36,7 +46,9 @@ let isAuthenticated: IsAuthenticatedMiddleware = (req, res, next) => {
 export const greenSocialsRouter = Router();
 
 // This function will be called from routes.ts to inject the correct middleware
-export function setIsAuthenticatedMiddleware(middleware: IsAuthenticatedMiddleware) {
+export function setIsAuthenticatedMiddleware(
+  middleware: IsAuthenticatedMiddleware,
+) {
   console.log("Setting shared isAuthenticated middleware for Green Socials");
   isAuthenticated = middleware;
 }
@@ -46,9 +58,11 @@ export function setIsAuthenticatedMiddleware(middleware: IsAuthenticatedMiddlewa
 greenSocialsRouter.get("/profile/:userId", async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
-    
+
     // Only select columns that exist in the database
-    const profile = await db.execute(sql`
+    const profile = await db
+      .execute(
+        sql`
       SELECT 
         sp.id, 
         sp.user_id as "userId", 
@@ -72,41 +86,43 @@ greenSocialsRouter.get("/profile/:userId", async (req, res) => {
       LEFT JOIN users u ON sp.user_id = u.id
       WHERE sp.user_id = ${userId}
       LIMIT 1
-    `).then(result => {
-      if (result.rows.length === 0) return null;
-      
-      // Restructure the result to have nested user object
-      const row = result.rows[0];
-      return {
-        profile: {
-          id: row.id,
-          userId: row.userId,
-          displayName: row.displayName,
-          bio: row.bio,
-          profileImage: row.profileImage,
-          coverImage: row.coverImage,
-          location: row.location,
-          verificationStatus: row.verificationStatus,
-          expertise: row.expertise,
-          specializations: row.specializations,
-          experienceYears: row.experienceYears,
-          followerCount: row.followerCount,
-          followingCount: row.followingCount,
-          postCount: row.postCount
-        },
-        user: {
-          id: row.user_id,
-          username: row.user_username,
-          firstName: row.user_firstName,
-          lastName: row.user_lastName
-        }
-      };
-    });
-    
+    `,
+      )
+      .then((result) => {
+        if (result.rows.length === 0) return null;
+
+        // Restructure the result to have nested user object
+        const row = result.rows[0];
+        return {
+          profile: {
+            id: row.id,
+            userId: row.userId,
+            displayName: row.displayName,
+            bio: row.bio,
+            profileImage: row.profileImage,
+            coverImage: row.coverImage,
+            location: row.location,
+            verificationStatus: row.verificationStatus,
+            expertise: row.expertise,
+            specializations: row.specializations,
+            experienceYears: row.experienceYears,
+            followerCount: row.followerCount,
+            followingCount: row.followingCount,
+            postCount: row.postCount,
+          },
+          user: {
+            id: row.user_id,
+            username: row.user_username,
+            firstName: row.user_firstName,
+            lastName: row.user_lastName,
+          },
+        };
+      });
+
     if (!profile) {
       return res.status(404).json({ message: "Profile not found" });
     }
-    
+
     return res.json(profile);
   } catch (error) {
     console.error("Error fetching profile:", error);
@@ -119,25 +135,29 @@ greenSocialsRouter.get("/profile/:userId", async (req, res) => {
 greenSocialsRouter.post("/profile", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     // Check if profile already exists using raw SQL
-    const existingProfile = await db.execute(sql`
+    const existingProfile = await db
+      .execute(
+        sql`
       SELECT id FROM social_profiles 
       WHERE user_id = ${userId}
       LIMIT 1
-    `).then(result => result.rows.length > 0 ? result.rows[0] : null);
-    
+    `,
+      )
+      .then((result) => (result.rows.length > 0 ? result.rows[0] : null));
+
     if (existingProfile) {
       // Update existing profile
       const updatedProfile = await db
         .update(socialProfiles)
         .set({
           ...req.body,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(socialProfiles.userId, userId))
         .returning();
-      
+
       return res.json(updatedProfile[0]);
     } else {
       // Create new profile
@@ -148,10 +168,10 @@ greenSocialsRouter.post("/profile", isAuthenticated, async (req, res) => {
           displayName: req.body.displayName || req.user.username,
           bio: req.body.bio || "",
           profileImage: req.body.profileImage || req.user.profileImage,
-          ...req.body
+          ...req.body,
         })
         .returning();
-      
+
       return res.status(201).json(newProfile[0]);
     }
   } catch (error) {
@@ -167,38 +187,59 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    
+
     const userId = req.user.id;
     const limit = parseInt(req.query.limit as string) || 20;
-    
-    console.log("Final ultra-simplified feed endpoint - bare minimum query");
-    
+
+    console.log("Using Drizzle query builder API instead of raw SQL");
+
     try {
-      // The absolute simplest query we can do - just get all posts with no filters at all
-      const result = await db.execute(sql`
-        SELECT 
-          p.id, p.user_id, p.content, p.post_type, p.visibility, p.published_at, 
-          p.community_id, p.media, p.location_name, p.latitude, p.longitude,
-          p.season, p.growing_zone, p.weather_conditions, p.hashtags, 
-          p.mentioned_users, p.crops_tags, p.like_count, p.comment_count, 
-          p.share_count,
-          u.id as author_id, u.username as author_username, u.profile_image as author_profile_image,
-          sp.display_name as author_display_name
-        FROM 
-          posts p
-          JOIN users u ON p.user_id = u.id
-          LEFT JOIN social_profiles sp ON p.user_id = sp.user_id
-        ORDER BY p.published_at DESC
-        LIMIT ${limit}
-      `);
-      
+      // Use Drizzle's query builder API instead of raw SQL
+      const result = await db
+        .select({
+          // Post fields
+          id: posts.id,
+          user_id: posts.userId,
+          content: posts.content,
+          post_type: posts.postType,
+          visibility: posts.visibility,
+          published_at: posts.publishedAt,
+          community_id: posts.communityId,
+          media: posts.media,
+          location_name: posts.locationName,
+          latitude: posts.latitude,
+          longitude: posts.longitude,
+          season: posts.season,
+          growing_zone: posts.growingZone,
+          weather_conditions: posts.weatherConditions,
+          hashtags: posts.hashtags,
+          mentioned_users: posts.mentionedUsers,
+          crops_tags: posts.cropsTags,
+          like_count: posts.likeCount,
+          comment_count: posts.commentCount,
+          share_count: posts.shareCount,
+          
+          // User fields
+          author_id: users.id,
+          author_username: users.username,
+          author_profile_image: users.profileImage,
+          
+          // Profile fields (may be null)
+          author_display_name: socialProfiles.displayName
+        })
+        .from(posts)
+        .innerJoin(users, eq(posts.userId, users.id))
+        .leftJoin(socialProfiles, eq(posts.userId, socialProfiles.userId))
+        .orderBy(desc(posts.publishedAt))
+        .limit(limit);
+
       // If no posts are found, return an empty array
-      if (!result.rows.length) {
+      if (!result || result.length === 0) {
         return res.json([]);
       }
-      
-      // Transform the raw results into the expected structure
-      const feed = result.rows.map((row: any) => ({
+
+      // Transform the results into the expected structure
+      const feed = result.map((row) => ({
         post: {
           id: row.id,
           userId: row.user_id,
@@ -208,7 +249,7 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
           publishedAt: row.published_at,
           communityId: row.community_id,
           media: row.media,
-          locationName: row.location_name, 
+          locationName: row.location_name,
           latitude: row.latitude,
           longitude: row.longitude,
           season: row.season,
@@ -219,18 +260,18 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
           cropsTags: row.crops_tags,
           likeCount: row.like_count,
           commentCount: row.comment_count,
-          shareCount: row.share_count
+          shareCount: row.share_count,
         },
         author: {
           id: row.author_id,
           username: row.author_username,
-          profileImage: row.author_profile_image
+          profileImage: row.author_profile_image,
         },
         profile: {
-          displayName: row.author_display_name
-        }
+          displayName: row.author_display_name,
+        },
       }));
-      
+
       return res.json(feed);
     } catch (queryError) {
       console.error("Error in feed query execution:", queryError);
@@ -247,7 +288,7 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
 greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     // Create post using raw SQL - only including fields that exist in the database table
     const now = new Date().toISOString();
     const insertResult = await db.execute(sql`
@@ -259,8 +300,8 @@ greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
       ) VALUES (
         ${userId}, 
         ${req.body.content}, 
-        ${req.body.postType || 'text'}, 
-        ${req.body.visibility || 'public'}, 
+        ${req.body.postType || "text"}, 
+        ${req.body.visibility || "public"}, 
         ${req.body.communityId || null}, 
         ${req.body.media || null},
         ${req.body.locationName || null}, 
@@ -276,10 +317,10 @@ greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
       )
       RETURNING id
     `);
-    
+
     // Extract the ID of the newly created post
     const postId = insertResult.rows[0].id;
-    
+
     // Get full post with user info using raw SQL
     const postResult = await db.execute(sql`
       SELECT 
@@ -299,47 +340,49 @@ greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
         p.id = ${postId}
       LIMIT 1
     `);
-    
+
     // If post not found (unlikely since we just created it)
     if (!postResult.rows.length) {
       return res.status(500).json({ message: "Error retrieving created post" });
     }
-    
+
     // Transform the raw results into the expected structure
     const postRow = postResult.rows[0];
-    const post = [{
-      post: {
-        id: postRow.id,
-        userId: postRow.userId,
-        content: postRow.content,
-        postType: postRow.postType,
-        visibility: postRow.visibility,
-        publishedAt: postRow.publishedAt,
-        communityId: postRow.communityId,
-        media: postRow.media,
-        locationName: postRow.locationName, 
-        latitude: postRow.latitude,
-        longitude: postRow.longitude,
-        season: postRow.season,
-        growingZone: postRow.growingZone,
-        weatherConditions: postRow.weatherConditions,
-        hashtags: postRow.hashtags,
-        mentionedUsers: postRow.mentionedUsers,
-        cropsTags: postRow.cropsTags,
-        likeCount: postRow.likeCount,
-        commentCount: postRow.commentCount,
-        shareCount: postRow.shareCount
+    const post = [
+      {
+        post: {
+          id: postRow.id,
+          userId: postRow.userId,
+          content: postRow.content,
+          postType: postRow.postType,
+          visibility: postRow.visibility,
+          publishedAt: postRow.publishedAt,
+          communityId: postRow.communityId,
+          media: postRow.media,
+          locationName: postRow.locationName,
+          latitude: postRow.latitude,
+          longitude: postRow.longitude,
+          season: postRow.season,
+          growingZone: postRow.growingZone,
+          weatherConditions: postRow.weatherConditions,
+          hashtags: postRow.hashtags,
+          mentionedUsers: postRow.mentionedUsers,
+          cropsTags: postRow.cropsTags,
+          likeCount: postRow.likeCount,
+          commentCount: postRow.commentCount,
+          shareCount: postRow.shareCount,
+        },
+        author: {
+          id: postRow.author_id,
+          username: postRow.author_username,
+          profileImage: postRow.author_profileImage,
+        },
+        profile: {
+          displayName: postRow.profile_displayName,
+        },
       },
-      author: {
-        id: postRow.author_id,
-        username: postRow.author_username,
-        profileImage: postRow.author_profileImage
-      },
-      profile: {
-        displayName: postRow.profile_displayName
-      }
-    }];
-    
+    ];
+
     return res.status(201).json(post[0]);
   } catch (error) {
     console.error("Error creating post:", error);
@@ -352,7 +395,7 @@ greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
 greenSocialsRouter.get("/posts/:postId", async (req, res) => {
   try {
     const postId = parseInt(req.params.postId);
-    
+
     // Get post with user info using raw SQL
     const postResult = await db.execute(sql`
       SELECT 
@@ -372,47 +415,49 @@ greenSocialsRouter.get("/posts/:postId", async (req, res) => {
         p.id = ${postId}
       LIMIT 1
     `);
-    
+
     // If post not found
     if (!postResult.rows.length) {
       return res.status(404).json({ message: "Post not found" });
     }
-    
+
     // Transform the raw results into the expected structure
     const postRow = postResult.rows[0];
-    const post = [{
-      post: {
-        id: postRow.id,
-        userId: postRow.userId,
-        content: postRow.content,
-        postType: postRow.postType,
-        visibility: postRow.visibility,
-        publishedAt: postRow.publishedAt,
-        communityId: postRow.communityId,
-        media: postRow.media,
-        locationName: postRow.locationName, 
-        latitude: postRow.latitude,
-        longitude: postRow.longitude,
-        season: postRow.season,
-        growingZone: postRow.growingZone,
-        weatherConditions: postRow.weatherConditions,
-        hashtags: postRow.hashtags,
-        mentionedUsers: postRow.mentionedUsers,
-        cropsTags: postRow.cropsTags,
-        likeCount: postRow.likeCount,
-        commentCount: postRow.commentCount,
-        shareCount: postRow.shareCount
+    const post = [
+      {
+        post: {
+          id: postRow.id,
+          userId: postRow.userId,
+          content: postRow.content,
+          postType: postRow.postType,
+          visibility: postRow.visibility,
+          publishedAt: postRow.publishedAt,
+          communityId: postRow.communityId,
+          media: postRow.media,
+          locationName: postRow.locationName,
+          latitude: postRow.latitude,
+          longitude: postRow.longitude,
+          season: postRow.season,
+          growingZone: postRow.growingZone,
+          weatherConditions: postRow.weatherConditions,
+          hashtags: postRow.hashtags,
+          mentionedUsers: postRow.mentionedUsers,
+          cropsTags: postRow.cropsTags,
+          likeCount: postRow.likeCount,
+          commentCount: postRow.commentCount,
+          shareCount: postRow.shareCount,
+        },
+        author: {
+          id: postRow.author_id,
+          username: postRow.author_username,
+          profileImage: postRow.author_profileImage,
+        },
+        profile: {
+          displayName: postRow.profile_displayName,
+        },
       },
-      author: {
-        id: postRow.author_id,
-        username: postRow.author_username,
-        profileImage: postRow.author_profileImage
-      },
-      profile: {
-        displayName: postRow.profile_displayName
-      }
-    }];
-    
+    ];
+
     // Get comments using raw SQL
     const commentsResult = await db.execute(sql`
       SELECT 
@@ -431,9 +476,9 @@ greenSocialsRouter.get("/posts/:postId", async (req, res) => {
       ORDER BY 
         c.created_at DESC
     `);
-    
+
     // Transform the raw results into the expected structure
-    const postComments = commentsResult.rows.map(row => ({
+    const postComments = commentsResult.rows.map((row) => ({
       comment: {
         id: row.id,
         userId: row.userId,
@@ -444,22 +489,22 @@ greenSocialsRouter.get("/posts/:postId", async (req, res) => {
         likeCount: row.likeCount,
         replyCount: row.replyCount,
         createdAt: row.createdAt,
-        updatedAt: row.updatedAt
+        updatedAt: row.updatedAt,
       },
       author: {
         id: row.author_id,
         username: row.author_username,
-        profileImage: row.author_profileImage
+        profileImage: row.author_profileImage,
       },
       profile: {
-        displayName: row.profile_displayName
-      }
+        displayName: row.profile_displayName,
+      },
     }));
-    
+
     // Return post with comments
     return res.json({
       ...post[0],
-      comments: postComments
+      comments: postComments,
     });
   } catch (error) {
     console.error("Error fetching post:", error);
@@ -472,7 +517,7 @@ greenSocialsRouter.get("/posts/:postId", async (req, res) => {
 greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     // Create comment with raw SQL
     const now = new Date().toISOString();
     const insertResult = await db.execute(sql`
@@ -489,10 +534,10 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
       )
       RETURNING id
     `);
-    
+
     // Extract the ID of the newly created comment
     const commentId = insertResult.rows[0].id;
-    
+
     // Update comment count on the post with raw SQL
     await db.execute(sql`
       UPDATE posts 
@@ -500,7 +545,7 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
           updated_at = ${now}
       WHERE id = ${req.body.postId}
     `);
-    
+
     // If this is a reply, update the parent comment's reply count
     if (req.body.parentId) {
       await db.execute(sql`
@@ -510,7 +555,7 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
         WHERE id = ${req.body.parentId}
       `);
     }
-    
+
     // Get full comment with user info using raw SQL
     const commentResult = await db.execute(sql`
       SELECT 
@@ -527,12 +572,12 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
         c.id = ${commentId}
       LIMIT 1
     `);
-    
+
     // If no comment found (unlikely since we just created it)
     if (!commentResult.rows.length) {
       return res.status(404).json({ message: "Comment not found" });
     }
-    
+
     // Transform the raw results into the expected structure
     const commentRow = commentResult.rows[0];
     const comment = {
@@ -546,18 +591,18 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
         likeCount: commentRow.likeCount,
         replyCount: commentRow.replyCount,
         createdAt: commentRow.createdAt,
-        updatedAt: commentRow.updatedAt
+        updatedAt: commentRow.updatedAt,
       },
       author: {
         id: commentRow.author_id,
         username: commentRow.author_username,
-        profileImage: commentRow.author_profileImage
+        profileImage: commentRow.author_profileImage,
       },
       profile: {
-        displayName: commentRow.profile_displayName
-      }
+        displayName: commentRow.profile_displayName,
+      },
     };
-    
+
     return res.status(201).json(comment);
   } catch (error) {
     console.error("Error creating comment:", error);
@@ -571,7 +616,7 @@ greenSocialsRouter.get("/communities", async (req, res) => {
   try {
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = parseInt(req.query.offset as string) || 0;
-    
+
     // Get communities using raw SQL
     const communitiesResult = await db.execute(sql`
       SELECT 
@@ -586,7 +631,7 @@ greenSocialsRouter.get("/communities", async (req, res) => {
         member_count DESC
       LIMIT ${limit} OFFSET ${offset}
     `);
-    
+
     return res.json(communitiesResult.rows);
   } catch (error) {
     console.error("Error fetching communities:", error);
@@ -599,7 +644,7 @@ greenSocialsRouter.get("/communities", async (req, res) => {
 greenSocialsRouter.get("/communities/:communityId", async (req, res) => {
   try {
     const communityId = parseInt(req.params.communityId);
-    
+
     // Get community with owner info using raw SQL
     const communityResult = await db.execute(sql`
       SELECT 
@@ -618,12 +663,12 @@ greenSocialsRouter.get("/communities/:communityId", async (req, res) => {
         c.id = ${communityId}
       LIMIT 1
     `);
-    
+
     // If community not found
     if (!communityResult.rows.length) {
       return res.status(404).json({ message: "Community not found" });
     }
-    
+
     // Transform the raw results into the expected structure
     const communityRow = communityResult.rows[0];
     const community = {
@@ -644,10 +689,10 @@ greenSocialsRouter.get("/communities/:communityId", async (req, res) => {
       owner: {
         id: communityRow.owner_id,
         username: communityRow.owner_username,
-        profileImage: communityRow.owner_profileImage
-      }
+        profileImage: communityRow.owner_profileImage,
+      },
     };
-    
+
     return res.json(community);
   } catch (error) {
     console.error("Error fetching community:", error);
@@ -662,10 +707,10 @@ greenSocialsRouter.post("/communities", isAuthenticated, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    
+
     const userId = req.user.id;
     const now = new Date().toISOString();
-    
+
     // Create community with raw SQL
     const insertResult = await db.execute(sql`
       INSERT INTO communities (
@@ -691,10 +736,10 @@ greenSocialsRouter.post("/communities", isAuthenticated, async (req, res) => {
         category, tags, location, rules, created_at as "createdAt",
         updated_at as "updatedAt"
     `);
-    
+
     // Get the newly created community
     const newCommunity = insertResult.rows[0];
-    
+
     // Add owner as a member with admin role using raw SQL
     await db.execute(sql`
       INSERT INTO community_members (
@@ -706,17 +751,17 @@ greenSocialsRouter.post("/communities", isAuthenticated, async (req, res) => {
         ${now}, ${now}, ${now}
       )
     `);
-    
+
     // Update member count using raw SQL
     await db.execute(sql`
       UPDATE communities 
       SET member_count = 1, updated_at = ${now}
       WHERE id = ${newCommunity.id}
     `);
-    
+
     // Set member count in the returned object as well
     newCommunity.memberCount = 1;
-    
+
     return res.status(201).json(newCommunity);
   } catch (error) {
     console.error("Error creating community:", error);
@@ -726,148 +771,174 @@ greenSocialsRouter.post("/communities", isAuthenticated, async (req, res) => {
 
 // POST /api/social/follow/:userId
 // Follow a user
-greenSocialsRouter.post("/follow/:userId", isAuthenticated, async (req, res) => {
-  // Check authentication
-  if (!req.user) {
-    return res.status(401).json({ message: "Not authenticated" });
-  }
-  
-  const followerId = req.user.id;
-  const followedId = parseInt(req.params.userId);
-  
-  console.log(`Follow request from user ${followerId} to follow user ${followedId}`);
-  
-  try {
-    // Check if already following - direct row count approach
-    const checkResult = await db.execute(
-      sql`SELECT COUNT(*) as count FROM user_relationships 
-          WHERE follower_id = ${followerId} 
-          AND followed_id = ${followedId}`
+greenSocialsRouter.post(
+  "/follow/:userId",
+  isAuthenticated,
+  async (req, res) => {
+    // Check authentication
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const followerId = req.user.id;
+    const followedId = parseInt(req.params.userId);
+
+    console.log(
+      `Follow request from user ${followerId} to follow user ${followedId}`,
     );
-    
-    // Extract count, handling different return formats
-    let count = 0;
-    if (checkResult && checkResult.rows && checkResult.rows[0]) {
-      count = parseInt(String(checkResult.rows[0].count), 10);
-    } else if (Array.isArray(checkResult) && checkResult[0] && checkResult[0].count) {
-      count = parseInt(String(checkResult[0].count), 10);
-    }
-    
-    // If already following, return success message
-    if (count > 0) {
-      console.log(`User ${followerId} is already following user ${followedId} (count: ${count})`);
-      return res.status(200).json({ message: "Already following this user" });
-    }
-    
-    console.log(`Creating new relationship: ${followerId} following ${followedId}`);
-    
-    // Use a transaction to ensure all operations succeed or fail together
-    await db.transaction(async (tx) => {
-      // Create relationship
-      await tx.execute(
-        sql`INSERT INTO user_relationships (follower_id, followed_id, status)
+
+    try {
+      // Check if already following - direct row count approach
+      const checkResult = await db.execute(
+        sql`SELECT COUNT(*) as count FROM user_relationships 
+          WHERE follower_id = ${followerId} 
+          AND followed_id = ${followedId}`,
+      );
+
+      // Extract count, handling different return formats
+      let count = 0;
+      if (checkResult && checkResult.rows && checkResult.rows[0]) {
+        count = parseInt(String(checkResult.rows[0].count), 10);
+      } else if (
+        Array.isArray(checkResult) &&
+        checkResult[0] &&
+        checkResult[0].count
+      ) {
+        count = parseInt(String(checkResult[0].count), 10);
+      }
+
+      // If already following, return success message
+      if (count > 0) {
+        console.log(
+          `User ${followerId} is already following user ${followedId} (count: ${count})`,
+        );
+        return res.status(200).json({ message: "Already following this user" });
+      }
+
+      console.log(
+        `Creating new relationship: ${followerId} following ${followedId}`,
+      );
+
+      // Use a transaction to ensure all operations succeed or fail together
+      await db.transaction(async (tx) => {
+        // Create relationship
+        await tx.execute(
+          sql`INSERT INTO user_relationships (follower_id, followed_id, status)
             VALUES (${followerId}, ${followedId}, 'following')
-            ON CONFLICT (follower_id, followed_id) DO NOTHING`
-      );
-      
-      // Update follower count for followed user
-      await tx.execute(
-        sql`UPDATE social_profiles 
+            ON CONFLICT (follower_id, followed_id) DO NOTHING`,
+        );
+
+        // Update follower count for followed user
+        await tx.execute(
+          sql`UPDATE social_profiles 
             SET follower_count = GREATEST(0, follower_count + 1)
-            WHERE user_id = ${followedId}`
-      );
-      
-      // Update following count for follower
-      await tx.execute(
-        sql`UPDATE social_profiles 
+            WHERE user_id = ${followedId}`,
+        );
+
+        // Update following count for follower
+        await tx.execute(
+          sql`UPDATE social_profiles 
             SET following_count = GREATEST(0, following_count + 1)
-            WHERE user_id = ${followerId}`
-      );
-    });
-    
-    return res.status(201).json({ message: "User followed successfully" });
-    
-  } catch (error: any) {
-    // Special handling for duplicate relationships
-    if (error && error.code === '23505') {
-      console.log(`Duplicate relationship handled: ${followerId} -> ${followedId}`);
-      return res.status(200).json({ message: "Already following this user" });
+            WHERE user_id = ${followerId}`,
+        );
+      });
+
+      return res.status(201).json({ message: "User followed successfully" });
+    } catch (error: any) {
+      // Special handling for duplicate relationships
+      if (error && error.code === "23505") {
+        console.log(
+          `Duplicate relationship handled: ${followerId} -> ${followedId}`,
+        );
+        return res.status(200).json({ message: "Already following this user" });
+      }
+
+      // Log and return any other errors
+      console.error("Error following user:", error);
+      return res.status(500).json({ message: "Server error" });
     }
-    
-    // Log and return any other errors
-    console.error("Error following user:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+  },
+);
 
 // DELETE /api/social/follow/:userId
 // Unfollow a user
-greenSocialsRouter.delete("/follow/:userId", isAuthenticated, async (req, res) => {
-  // Check authentication
-  if (!req.user) {
-    return res.status(401).json({ message: "Not authenticated" });
-  }
-  
-  const followerId = req.user.id;
-  const followedId = parseInt(req.params.userId);
-  
-  console.log(`Unfollow request from user ${followerId} to unfollow user ${followedId}`);
-  
-  try {
-    // Check if following - direct row count approach
-    const checkResult = await db.execute(
-      sql`SELECT COUNT(*) as count FROM user_relationships 
-          WHERE follower_id = ${followerId} 
-          AND followed_id = ${followedId}`
+greenSocialsRouter.delete(
+  "/follow/:userId",
+  isAuthenticated,
+  async (req, res) => {
+    // Check authentication
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const followerId = req.user.id;
+    const followedId = parseInt(req.params.userId);
+
+    console.log(
+      `Unfollow request from user ${followerId} to unfollow user ${followedId}`,
     );
-    
-    // Extract count, handling different return formats
-    let count = 0;
-    if (checkResult && checkResult.rows && checkResult.rows[0]) {
-      count = parseInt(String(checkResult.rows[0].count), 10);
-    } else if (Array.isArray(checkResult) && checkResult[0] && checkResult[0].count) {
-      count = parseInt(String(checkResult[0].count), 10);
-    }
-    
-    // If not following, return success message
-    if (count === 0) {
-      console.log(`User ${followerId} is not following user ${followedId}`);
-      return res.status(200).json({ message: "Not following this user" });
-    }
-    
-    console.log(`Deleting relationship: ${followerId} unfollowing ${followedId}`);
-    
-    // Use a transaction to ensure all operations succeed or fail together
-    await db.transaction(async (tx) => {
-      // Delete relationship
-      await tx.execute(
-        sql`DELETE FROM user_relationships 
+
+    try {
+      // Check if following - direct row count approach
+      const checkResult = await db.execute(
+        sql`SELECT COUNT(*) as count FROM user_relationships 
+          WHERE follower_id = ${followerId} 
+          AND followed_id = ${followedId}`,
+      );
+
+      // Extract count, handling different return formats
+      let count = 0;
+      if (checkResult && checkResult.rows && checkResult.rows[0]) {
+        count = parseInt(String(checkResult.rows[0].count), 10);
+      } else if (
+        Array.isArray(checkResult) &&
+        checkResult[0] &&
+        checkResult[0].count
+      ) {
+        count = parseInt(String(checkResult[0].count), 10);
+      }
+
+      // If not following, return success message
+      if (count === 0) {
+        console.log(`User ${followerId} is not following user ${followedId}`);
+        return res.status(200).json({ message: "Not following this user" });
+      }
+
+      console.log(
+        `Deleting relationship: ${followerId} unfollowing ${followedId}`,
+      );
+
+      // Use a transaction to ensure all operations succeed or fail together
+      await db.transaction(async (tx) => {
+        // Delete relationship
+        await tx.execute(
+          sql`DELETE FROM user_relationships 
             WHERE follower_id = ${followerId} 
-            AND followed_id = ${followedId}`
-      );
-      
-      // Update follower count for followed user
-      await tx.execute(
-        sql`UPDATE social_profiles 
+            AND followed_id = ${followedId}`,
+        );
+
+        // Update follower count for followed user
+        await tx.execute(
+          sql`UPDATE social_profiles 
             SET follower_count = GREATEST(follower_count - 1, 0)
-            WHERE user_id = ${followedId}`
-      );
-      
-      // Update following count for follower
-      await tx.execute(
-        sql`UPDATE social_profiles 
+            WHERE user_id = ${followedId}`,
+        );
+
+        // Update following count for follower
+        await tx.execute(
+          sql`UPDATE social_profiles 
             SET following_count = GREATEST(following_count - 1, 0)
-            WHERE user_id = ${followerId}`
-      );
-    });
-    
-    return res.status(200).json({ message: "User unfollowed successfully" });
-    
-  } catch (error) {
-    console.error("Error unfollowing user:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+            WHERE user_id = ${followerId}`,
+        );
+      });
+
+      return res.status(200).json({ message: "User unfollowed successfully" });
+    } catch (error) {
+      console.error("Error unfollowing user:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  },
+);
 
 // GET /api/social/following
 // Get users that the current user follows
@@ -876,24 +947,24 @@ greenSocialsRouter.get("/following", isAuthenticated, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    
+
     const userId = req.user.id;
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = parseInt(req.query.offset as string) || 0;
-    
+
     // Get relationships with user and profile info using direct SQL
     console.log(`Fetching following list for user ${userId}`);
-    
+
     // First get relationship IDs to debug
     const relationshipIds = await db.execute(
       sql`SELECT id, follower_id, followed_id, status 
           FROM user_relationships 
           WHERE follower_id = ${userId}
-          ORDER BY created_at DESC`
+          ORDER BY created_at DESC`,
     );
-    
+
     console.log("DEBUG: Found relationships:", JSON.stringify(relationshipIds));
-    
+
     // Get relationships with user and profile info using direct SQL
     const following = await db.execute(
       sql`SELECT 
@@ -918,11 +989,13 @@ greenSocialsRouter.get("/following", isAuthenticated, async (req, res) => {
           LEFT JOIN social_profiles sp ON u.id = sp.user_id
           WHERE ur.follower_id = ${userId}
           ORDER BY ur.created_at DESC
-          LIMIT ${limit} OFFSET ${offset}`
+          LIMIT ${limit} OFFSET ${offset}`,
     );
-    
-    console.log(`DEBUG: Found ${following.length || (following.rows ? following.rows.length : 0)} following users`);
-    
+
+    console.log(
+      `DEBUG: Found ${following.length || (following.rows ? following.rows.length : 0)} following users`,
+    );
+
     // Format the response consistently
     const formattedResults = [];
     if (following && following.rows && following.rows.length > 0) {
@@ -930,9 +1003,12 @@ greenSocialsRouter.get("/following", isAuthenticated, async (req, res) => {
     } else if (Array.isArray(following) && following.length > 0) {
       formattedResults.push(...following);
     }
-    
-    console.log("DEBUG: Formatted following:", JSON.stringify(formattedResults));
-    
+
+    console.log(
+      "DEBUG: Formatted following:",
+      JSON.stringify(formattedResults),
+    );
+
     return res.json(formattedResults);
   } catch (error) {
     console.error("Error fetching following users:", error);
@@ -947,11 +1023,11 @@ greenSocialsRouter.get("/followers", isAuthenticated, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    
+
     const userId = req.user.id;
     const limit = parseInt(req.query.limit as string) || 20;
     const offset = parseInt(req.query.offset as string) || 0;
-    
+
     // Get relationships with user and profile info using direct SQL
     const followers = await db.execute(
       sql`SELECT 
@@ -974,9 +1050,9 @@ greenSocialsRouter.get("/followers", isAuthenticated, async (req, res) => {
           LEFT JOIN social_profiles sp ON u.id = sp.user_id
           WHERE ur.followed_id = ${userId}
           ORDER BY ur.created_at DESC
-          LIMIT ${limit} OFFSET ${offset}`
+          LIMIT ${limit} OFFSET ${offset}`,
     );
-    
+
     return res.json(followers);
   } catch (error) {
     console.error("Error fetching followers:", error);
@@ -991,18 +1067,18 @@ greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    
+
     const userId = req.user.id;
     const limit = parseInt(req.query.limit as string) || 10;
-    
+
     console.log(`DEBUG: Looking for users that are not user id ${userId}`);
-    
+
     // Get all followed IDs for filtering
     console.log(`Getting followed user IDs for user ${userId}`);
     const followedResult = await db.execute(
-      sql`SELECT followed_id FROM user_relationships WHERE follower_id = ${userId}`
+      sql`SELECT followed_id FROM user_relationships WHERE follower_id = ${userId}`,
     );
-    
+
     // Extract the followed IDs more carefully and convert to integers
     const followedUserIds = [userId]; // Always exclude current user
     if (followedResult && followedResult.rows) {
@@ -1018,12 +1094,12 @@ greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
         }
       });
     }
-    
+
     console.log(`User ${userId} is following these users:`, followedUserIds);
-    
+
     // Format the followed IDs for the SQL NOT IN clause
-    const followedIdsStringForSql = followedUserIds.join(',') || '0';
-    
+    const followedIdsStringForSql = followedUserIds.join(",") || "0";
+
     // Get only users that have profiles and are not already followed
     console.log(`Getting users not in: ${followedIdsStringForSql}`);
     const suggestedUsers = await db.execute(
@@ -1042,23 +1118,31 @@ greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
           FROM users u
           JOIN social_profiles sp ON u.id = sp.user_id
           WHERE u.id NOT IN (${sql.raw(followedIdsStringForSql)})
-          LIMIT ${limit}`
+          LIMIT ${limit}`,
     );
-    
+
     // Format the response consistently
     const formattedResults = [];
-    if (suggestedUsers && suggestedUsers.rows && suggestedUsers.rows.length > 0) {
+    if (
+      suggestedUsers &&
+      suggestedUsers.rows &&
+      suggestedUsers.rows.length > 0
+    ) {
       formattedResults.push(...suggestedUsers.rows);
     } else if (Array.isArray(suggestedUsers) && suggestedUsers.length > 0) {
       formattedResults.push(...suggestedUsers);
     }
-    
-    console.log(`Found ${formattedResults.length} suggested users after filtering`);
-    
+
+    console.log(
+      `Found ${formattedResults.length} suggested users after filtering`,
+    );
+
     // Return the formatted results from our direct approach
-    console.log(`DEBUG: Found ${formattedResults.length} users to suggest after filtering`);
+    console.log(
+      `DEBUG: Found ${formattedResults.length} users to suggest after filtering`,
+    );
     console.log("Formatted results:", JSON.stringify(formattedResults));
-    
+
     return res.json(formattedResults);
   } catch (error) {
     console.error("Error fetching suggested users:", error);
@@ -1073,17 +1157,17 @@ greenSocialsRouter.get("/activity", isAuthenticated, async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    
+
     const userId = req.user.id;
     const limit = parseInt(req.query.limit as string) || 10;
-    
+
     // Get users that this user follows using SQL
     const followingResult = await db.execute(
-      sql`SELECT followed_id FROM user_relationships WHERE follower_id = ${userId}`
+      sql`SELECT followed_id FROM user_relationships WHERE follower_id = ${userId}`,
     );
-    
+
     const followedIds: number[] = [];
-    
+
     // Handle results safely
     if (Array.isArray(followingResult)) {
       followingResult.forEach((row: any) => {
@@ -1092,13 +1176,13 @@ greenSocialsRouter.get("/activity", isAuthenticated, async (req, res) => {
         }
       });
     }
-    
+
     if (followedIds.length === 0) {
       return res.json([]);
     }
-    
-    const followedIdsString = followedIds.join(',');
-    
+
+    const followedIdsString = followedIds.join(",");
+
     // Get recent posts and comments in one query, ordered by date
     const activityResult = await db.execute(
       sql`(
@@ -1138,9 +1222,9 @@ greenSocialsRouter.get("/activity", isAuthenticated, async (req, res) => {
         LIMIT ${limit}
       )
       ORDER BY "createdAt" DESC
-      LIMIT ${limit}`
+      LIMIT ${limit}`,
     );
-    
+
     return res.json(activityResult);
   } catch (error) {
     console.error("Error fetching activity:", error);
@@ -1155,12 +1239,36 @@ greenSocialsRouter.get("/expertise-categories", async (req, res) => {
     // This is a simplified approach - in a real app, you'd likely
     // have a separate table for categories with standardized names
     const categories = [
-      { id: 1, name: "Crop Specialists", icon: "crop", color: "green-600", count: 64 },
-      { id: 2, name: "Organic Farming", icon: "sprout", color: "green-600", count: 38 },
-      { id: 3, name: "Climate Smart", icon: "cloud", color: "blue-500", count: 27 },
-      { id: 4, name: "Agro Dealers", icon: "shopping-bag", color: "orange-500", count: 41 }
+      {
+        id: 1,
+        name: "Crop Specialists",
+        icon: "crop",
+        color: "green-600",
+        count: 64,
+      },
+      {
+        id: 2,
+        name: "Organic Farming",
+        icon: "sprout",
+        color: "green-600",
+        count: 38,
+      },
+      {
+        id: 3,
+        name: "Climate Smart",
+        icon: "cloud",
+        color: "blue-500",
+        count: 27,
+      },
+      {
+        id: 4,
+        name: "Agro Dealers",
+        icon: "shopping-bag",
+        color: "orange-500",
+        count: 41,
+      },
     ];
-    
+
     return res.json(categories);
   } catch (error) {
     console.error("Error fetching expertise categories:", error);
@@ -1175,195 +1283,203 @@ greenSocialsRouter.get("/test", (req, res) => {
 
 // POST /api/social/posts/:postId/like
 // Like a post
-greenSocialsRouter.post("/posts/:postId/like", isAuthenticated, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const postId = parseInt(req.params.postId);
-    
-    // Check if the post exists
-    const postExists = await db
-      .select({ id: posts.id })
-      .from(posts)
-      .where(eq(posts.id, postId))
-      .limit(1);
-      
-    if (!postExists.length) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-    
-    // Check if the user already liked the post
-    const existingLike = await db
-      .select({ id: postLikes.id })
-      .from(postLikes)
-      .where(and(
-        eq(postLikes.postId, postId),
-        eq(postLikes.userId, userId)
-      ))
-      .limit(1);
-      
-    if (existingLike.length) {
-      return res.status(400).json({ message: "You already liked this post" });
-    }
-    
-    // Create the like
-    await db
-      .insert(postLikes)
-      .values({
+greenSocialsRouter.post(
+  "/posts/:postId/like",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const postId = parseInt(req.params.postId);
+
+      // Check if the post exists
+      const postExists = await db
+        .select({ id: posts.id })
+        .from(posts)
+        .where(eq(posts.id, postId))
+        .limit(1);
+
+      if (!postExists.length) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      // Check if the user already liked the post
+      const existingLike = await db
+        .select({ id: postLikes.id })
+        .from(postLikes)
+        .where(and(eq(postLikes.postId, postId), eq(postLikes.userId, userId)))
+        .limit(1);
+
+      if (existingLike.length) {
+        return res.status(400).json({ message: "You already liked this post" });
+      }
+
+      // Create the like
+      await db.insert(postLikes).values({
         postId,
-        userId
+        userId,
       });
-      
-    // Increment the post's like count
-    await db
-      .update(posts)
-      .set({
-        likeCount: sql`${posts.likeCount} + 1`,
-        updatedAt: new Date()
-      })
-      .where(eq(posts.id, postId));
-      
-    // Create a notification for the post owner
-    const postOwner = await db
-      .select({ userId: posts.userId, content: posts.content })
-      .from(posts)
-      .where(eq(posts.id, postId))
-      .limit(1);
-      
-    if (postOwner.length && postOwner[0].userId !== userId) {
-      const shortContent = postOwner[0].content.length > 50 
-        ? postOwner[0].content.substring(0, 50) + '...' 
-        : postOwner[0].content;
-        
+
+      // Increment the post's like count
       await db
-        .insert(socialNotifications)
-        .values({
+        .update(posts)
+        .set({
+          likeCount: sql`${posts.likeCount} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(eq(posts.id, postId));
+
+      // Create a notification for the post owner
+      const postOwner = await db
+        .select({ userId: posts.userId, content: posts.content })
+        .from(posts)
+        .where(eq(posts.id, postId))
+        .limit(1);
+
+      if (postOwner.length && postOwner[0].userId !== userId) {
+        const shortContent =
+          postOwner[0].content.length > 50
+            ? postOwner[0].content.substring(0, 50) + "..."
+            : postOwner[0].content;
+
+        await db.insert(socialNotifications).values({
           userId: postOwner[0].userId,
-          type: 'like',
+          type: "like",
           content: `liked your post: "${shortContent}"`,
           relatedUserId: userId,
-          relatedPostId: postId
+          relatedPostId: postId,
         });
+      }
+
+      return res.status(200).json({ message: "Post liked successfully" });
+    } catch (error) {
+      console.error("Error liking post:", error);
+      return res.status(500).json({ message: "Server error" });
     }
-    
-    return res.status(200).json({ message: "Post liked successfully" });
-  } catch (error) {
-    console.error("Error liking post:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+  },
+);
 
 // DELETE /api/social/posts/:postId/like
 // Unlike a post
-greenSocialsRouter.delete("/posts/:postId/like", isAuthenticated, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    const userId = req.user.id;
-    const postId = parseInt(req.params.postId);
-    const now = new Date().toISOString();
-    
-    // Check if the like exists using raw SQL
-    const likeCheckResult = await db.execute(sql`
+greenSocialsRouter.delete(
+  "/posts/:postId/like",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const userId = req.user.id;
+      const postId = parseInt(req.params.postId);
+      const now = new Date().toISOString();
+
+      // Check if the like exists using raw SQL
+      const likeCheckResult = await db.execute(sql`
       SELECT id FROM post_likes 
       WHERE post_id = ${postId} AND user_id = ${userId}
       LIMIT 1
     `);
-      
-    if (!likeCheckResult.rows.length) {
-      return res.status(404).json({ message: "Like not found" });
-    }
-    
-    // Delete the like using raw SQL
-    await db.execute(sql`
+
+      if (!likeCheckResult.rows.length) {
+        return res.status(404).json({ message: "Like not found" });
+      }
+
+      // Delete the like using raw SQL
+      await db.execute(sql`
       DELETE FROM post_likes
       WHERE post_id = ${postId} AND user_id = ${userId}
     `);
-      
-    // Decrement the post's like count using raw SQL
-    await db.execute(sql`
+
+      // Decrement the post's like count using raw SQL
+      await db.execute(sql`
       UPDATE posts
       SET like_count = GREATEST(like_count - 1, 0),
           updated_at = ${now}
       WHERE id = ${postId}
     `);
-      
-    return res.status(200).json({ message: "Post unliked successfully" });
-  } catch (error) {
-    console.error("Error unliking post:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+
+      return res.status(200).json({ message: "Post unliked successfully" });
+    } catch (error) {
+      console.error("Error unliking post:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  },
+);
 
 // POST /api/social/comments/:commentId/like
 // Like a comment
-greenSocialsRouter.post("/comments/:commentId/like", isAuthenticated, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    const userId = req.user.id;
-    const commentId = parseInt(req.params.commentId);
-    const now = new Date().toISOString();
-    
-    // Check if the comment exists using raw SQL
-    const commentCheckResult = await db.execute(sql`
+greenSocialsRouter.post(
+  "/comments/:commentId/like",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const userId = req.user.id;
+      const commentId = parseInt(req.params.commentId);
+      const now = new Date().toISOString();
+
+      // Check if the comment exists using raw SQL
+      const commentCheckResult = await db.execute(sql`
       SELECT id, user_id as "userId", post_id as "postId" 
       FROM comments
       WHERE id = ${commentId}
       LIMIT 1
     `);
-      
-    if (!commentCheckResult.rows.length) {
-      return res.status(404).json({ message: "Comment not found" });
-    }
-    
-    const commentData = commentCheckResult.rows[0];
-    
-    // Check if the user already liked the comment using raw SQL
-    const likeCheckResult = await db.execute(sql`
+
+      if (!commentCheckResult.rows.length) {
+        return res.status(404).json({ message: "Comment not found" });
+      }
+
+      const commentData = commentCheckResult.rows[0];
+
+      // Check if the user already liked the comment using raw SQL
+      const likeCheckResult = await db.execute(sql`
       SELECT id FROM comment_likes
       WHERE comment_id = ${commentId} AND user_id = ${userId}
       LIMIT 1
     `);
-      
-    if (likeCheckResult.rows.length) {
-      return res.status(400).json({ message: "You already liked this comment" });
-    }
-    
-    // Create the like using raw SQL
-    await db.execute(sql`
+
+      if (likeCheckResult.rows.length) {
+        return res
+          .status(400)
+          .json({ message: "You already liked this comment" });
+      }
+
+      // Create the like using raw SQL
+      await db.execute(sql`
       INSERT INTO comment_likes (comment_id, user_id, created_at)
       VALUES (${commentId}, ${userId}, ${now})
     `);
-      
-    // Increment the comment's like count using raw SQL
-    await db.execute(sql`
+
+      // Increment the comment's like count using raw SQL
+      await db.execute(sql`
       UPDATE comments
       SET like_count = like_count + 1,
           updated_at = ${now}
       WHERE id = ${commentId}
     `);
-      
-    // Create a notification for the comment owner
-    if (commentData.userId !== userId) {
-      // Get comment content for notification using raw SQL
-      const commentContentResult = await db.execute(sql`
+
+      // Create a notification for the comment owner
+      if (commentData.userId !== userId) {
+        // Get comment content for notification using raw SQL
+        const commentContentResult = await db.execute(sql`
         SELECT content FROM comments
         WHERE id = ${commentId}
         LIMIT 1
       `);
-        
-      if (commentContentResult.rows.length) {
-        const commentContent = commentContentResult.rows[0].content;
-        const shortContent = commentContent.length > 50 
-          ? commentContent.substring(0, 50) + '...' 
-          : commentContent;
-          
-        // Create notification using raw SQL
-        await db.execute(sql`
+
+        if (commentContentResult.rows.length) {
+          const commentContent = commentContentResult.rows[0].content;
+          const shortContent =
+            commentContent.length > 50
+              ? commentContent.substring(0, 50) + "..."
+              : commentContent;
+
+          // Create notification using raw SQL
+          await db.execute(sql`
           INSERT INTO social_notifications (
             user_id, type, content, related_user_id, 
             related_comment_id, related_post_id, created_at
@@ -1378,89 +1494,97 @@ greenSocialsRouter.post("/comments/:commentId/like", isAuthenticated, async (req
             ${now}
           )
         `);
+        }
       }
+
+      return res.status(200).json({ message: "Comment liked successfully" });
+    } catch (error) {
+      console.error("Error liking comment:", error);
+      return res.status(500).json({ message: "Server error" });
     }
-    
-    return res.status(200).json({ message: "Comment liked successfully" });
-  } catch (error) {
-    console.error("Error liking comment:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+  },
+);
 
 // DELETE /api/social/comments/:commentId/like
 // Unlike a comment
-greenSocialsRouter.delete("/comments/:commentId/like", isAuthenticated, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    const userId = req.user.id;
-    const commentId = parseInt(req.params.commentId);
-    const now = new Date().toISOString();
-    
-    // Check if the like exists using raw SQL
-    const likeCheckResult = await db.execute(sql`
+greenSocialsRouter.delete(
+  "/comments/:commentId/like",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const userId = req.user.id;
+      const commentId = parseInt(req.params.commentId);
+      const now = new Date().toISOString();
+
+      // Check if the like exists using raw SQL
+      const likeCheckResult = await db.execute(sql`
       SELECT id FROM comment_likes
       WHERE comment_id = ${commentId} AND user_id = ${userId}
       LIMIT 1
     `);
-      
-    if (!likeCheckResult.rows.length) {
-      return res.status(404).json({ message: "Like not found" });
-    }
-    
-    // Delete the like using raw SQL
-    await db.execute(sql`
+
+      if (!likeCheckResult.rows.length) {
+        return res.status(404).json({ message: "Like not found" });
+      }
+
+      // Delete the like using raw SQL
+      await db.execute(sql`
       DELETE FROM comment_likes
       WHERE comment_id = ${commentId} AND user_id = ${userId}
     `);
-      
-    // Decrement the comment's like count using raw SQL
-    await db.execute(sql`
+
+      // Decrement the comment's like count using raw SQL
+      await db.execute(sql`
       UPDATE comments
       SET like_count = GREATEST(like_count - 1, 0),
           updated_at = ${now}
       WHERE id = ${commentId}
     `);
-      
-    return res.status(200).json({ message: "Comment unliked successfully" });
-  } catch (error) {
-    console.error("Error unliking comment:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+
+      return res.status(200).json({ message: "Comment unliked successfully" });
+    } catch (error) {
+      console.error("Error unliking comment:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  },
+);
 
 // POST /api/social/posts/:postId/share
 // Share a post
-greenSocialsRouter.post("/posts/:postId/share", isAuthenticated, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    const userId = req.user.id;
-    const postId = parseInt(req.params.postId);
-    const { targetType, targetId, externalPlatform } = req.body;
-    const now = new Date().toISOString();
-    
-    // Check if the post exists using raw SQL
-    const postCheckResult = await db.execute(sql`
+greenSocialsRouter.post(
+  "/posts/:postId/share",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const userId = req.user.id;
+      const postId = parseInt(req.params.postId);
+      const { targetType, targetId, externalPlatform } = req.body;
+      const now = new Date().toISOString();
+
+      // Check if the post exists using raw SQL
+      const postCheckResult = await db.execute(sql`
       SELECT id, user_id as "userId", content 
       FROM posts 
       WHERE id = ${postId}
       LIMIT 1
     `);
-    
-    if (!postCheckResult.rows.length) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-    
-    const postData = postCheckResult.rows[0];
-    
-    // Create the share using raw SQL
-    const shareResult = await db.execute(sql`
+
+      if (!postCheckResult.rows.length) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      const postData = postCheckResult.rows[0];
+
+      // Create the share using raw SQL
+      const shareResult = await db.execute(sql`
       INSERT INTO post_shares (
         post_id, user_id, target_type, 
         target_id, external_platform, created_at
@@ -1473,31 +1597,30 @@ greenSocialsRouter.post("/posts/:postId/share", isAuthenticated, async (req, res
                 target_type as "targetType", target_id as "targetId", 
                 external_platform as "externalPlatform", created_at as "createdAt"
     `);
-    
-    // Increment the post's share count using raw SQL
-    await db.execute(sql`
+
+      // Increment the post's share count using raw SQL
+      await db.execute(sql`
       UPDATE posts
       SET share_count = share_count + 1,
           updated_at = ${now}
       WHERE id = ${postId}
     `);
-    
-    // Create a notification for the post owner
-    if (postData.userId !== userId) {
-      const content = postData.content || '';
-      const shortContent = content.length > 50 
-        ? content.substring(0, 50) + '...' 
-        : content;
-      
-      let shareType = 'their profile';
-      if (targetType === 'community') {
-        shareType = 'a community';
-      } else if (targetType === 'external') {
-        shareType = externalPlatform || 'an external platform';
-      }
-      
-      // Create notification using raw SQL
-      await db.execute(sql`
+
+      // Create a notification for the post owner
+      if (postData.userId !== userId) {
+        const content = postData.content || "";
+        const shortContent =
+          content.length > 50 ? content.substring(0, 50) + "..." : content;
+
+        let shareType = "their profile";
+        if (targetType === "community") {
+          shareType = "a community";
+        } else if (targetType === "external") {
+          shareType = externalPlatform || "an external platform";
+        }
+
+        // Create notification using raw SQL
+        await db.execute(sql`
         INSERT INTO social_notifications (
           user_id, type, content, related_user_id, 
           related_post_id, created_at
@@ -1511,54 +1634,60 @@ greenSocialsRouter.post("/posts/:postId/share", isAuthenticated, async (req, res
           ${now}
         )
       `);
+      }
+
+      return res.status(201).json(shareResult.rows[0]);
+    } catch (error) {
+      console.error("Error sharing post:", error);
+      return res.status(500).json({ message: "Server error" });
     }
-    
-    return res.status(201).json(shareResult.rows[0]);
-  } catch (error) {
-    console.error("Error sharing post:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+  },
+);
 
 // POST /api/social/posts/:postId/report
 // Report a post
-greenSocialsRouter.post("/posts/:postId/report", isAuthenticated, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    const reporterId = req.user.id;
-    const postId = parseInt(req.params.postId);
-    const { reason, description } = req.body;
-    const now = new Date().toISOString();
-    
-    // Check if the post exists using raw SQL
-    const postCheckResult = await db.execute(sql`
+greenSocialsRouter.post(
+  "/posts/:postId/report",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const reporterId = req.user.id;
+      const postId = parseInt(req.params.postId);
+      const { reason, description } = req.body;
+      const now = new Date().toISOString();
+
+      // Check if the post exists using raw SQL
+      const postCheckResult = await db.execute(sql`
       SELECT id FROM posts 
       WHERE id = ${postId}
       LIMIT 1
     `);
-    
-    if (!postCheckResult.rows.length) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-    
-    // Check if the user already reported this post using raw SQL
-    const reportCheckResult = await db.execute(sql`
+
+      if (!postCheckResult.rows.length) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      // Check if the user already reported this post using raw SQL
+      const reportCheckResult = await db.execute(sql`
       SELECT id FROM content_reports
       WHERE reporter_id = ${reporterId} 
         AND target_type = 'post' 
         AND target_id = ${postId}
       LIMIT 1
     `);
-    
-    if (reportCheckResult.rows.length) {
-      return res.status(400).json({ message: "You already reported this post" });
-    }
-    
-    // Create the report using raw SQL
-    const reportResult = await db.execute(sql`
+
+      if (reportCheckResult.rows.length) {
+        return res
+          .status(400)
+          .json({ message: "You already reported this post" });
+      }
+
+      // Create the report using raw SQL
+      const reportResult = await db.execute(sql`
       INSERT INTO content_reports (
         reporter_id, target_type, target_id, 
         reason, description, created_at
@@ -1569,56 +1698,62 @@ greenSocialsRouter.post("/posts/:postId/report", isAuthenticated, async (req, re
       )
       RETURNING id
     `);
-    
-    return res.status(201).json({ 
-      message: "Report submitted successfully", 
-      id: reportResult.rows[0].id 
-    });
-  } catch (error) {
-    console.error("Error reporting post:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+
+      return res.status(201).json({
+        message: "Report submitted successfully",
+        id: reportResult.rows[0].id,
+      });
+    } catch (error) {
+      console.error("Error reporting post:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  },
+);
 
 // POST /api/social/comments/:commentId/report
 // Report a comment
-greenSocialsRouter.post("/comments/:commentId/report", isAuthenticated, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    const reporterId = req.user.id;
-    const commentId = parseInt(req.params.commentId);
-    const { reason, description } = req.body;
-    const now = new Date().toISOString();
-    
-    // Check if the comment exists using raw SQL
-    const commentCheckResult = await db.execute(sql`
+greenSocialsRouter.post(
+  "/comments/:commentId/report",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const reporterId = req.user.id;
+      const commentId = parseInt(req.params.commentId);
+      const { reason, description } = req.body;
+      const now = new Date().toISOString();
+
+      // Check if the comment exists using raw SQL
+      const commentCheckResult = await db.execute(sql`
       SELECT id FROM comments 
       WHERE id = ${commentId}
       LIMIT 1
     `);
-    
-    if (!commentCheckResult.rows.length) {
-      return res.status(404).json({ message: "Comment not found" });
-    }
-    
-    // Check if the user already reported this comment using raw SQL
-    const reportCheckResult = await db.execute(sql`
+
+      if (!commentCheckResult.rows.length) {
+        return res.status(404).json({ message: "Comment not found" });
+      }
+
+      // Check if the user already reported this comment using raw SQL
+      const reportCheckResult = await db.execute(sql`
       SELECT id FROM content_reports
       WHERE reporter_id = ${reporterId} 
         AND target_type = 'comment' 
         AND target_id = ${commentId}
       LIMIT 1
     `);
-    
-    if (reportCheckResult.rows.length) {
-      return res.status(400).json({ message: "You already reported this comment" });
-    }
-    
-    // Create the report using raw SQL
-    const reportResult = await db.execute(sql`
+
+      if (reportCheckResult.rows.length) {
+        return res
+          .status(400)
+          .json({ message: "You already reported this comment" });
+      }
+
+      // Create the report using raw SQL
+      const reportResult = await db.execute(sql`
       INSERT INTO content_reports (
         reporter_id, target_type, target_id, 
         reason, description, created_at
@@ -1629,116 +1764,125 @@ greenSocialsRouter.post("/comments/:commentId/report", isAuthenticated, async (r
       )
       RETURNING id
     `);
-    
-    return res.status(201).json({ 
-      message: "Report submitted successfully", 
-      id: reportResult.rows[0].id 
-    });
-  } catch (error) {
-    console.error("Error reporting comment:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+
+      return res.status(201).json({
+        message: "Report submitted successfully",
+        id: reportResult.rows[0].id,
+      });
+    } catch (error) {
+      console.error("Error reporting comment:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  },
+);
 
 // POST /api/social/posts/:postId/save
 // Save a post (bookmark)
-greenSocialsRouter.post("/posts/:postId/save", isAuthenticated, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    const userId = req.user.id;
-    const postId = parseInt(req.params.postId);
-    const { collectionName } = req.body;
-    const collection = collectionName || 'Saved';
-    const now = new Date().toISOString();
-    
-    // Check if the post exists using raw SQL
-    const postCheckResult = await db.execute(sql`
+greenSocialsRouter.post(
+  "/posts/:postId/save",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const userId = req.user.id;
+      const postId = parseInt(req.params.postId);
+      const { collectionName } = req.body;
+      const collection = collectionName || "Saved";
+      const now = new Date().toISOString();
+
+      // Check if the post exists using raw SQL
+      const postCheckResult = await db.execute(sql`
       SELECT id FROM posts 
       WHERE id = ${postId}
       LIMIT 1
     `);
-    
-    if (!postCheckResult.rows.length) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-    
-    // Check if the user already saved this post using raw SQL
-    const saveCheckResult = await db.execute(sql`
+
+      if (!postCheckResult.rows.length) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      // Check if the user already saved this post using raw SQL
+      const saveCheckResult = await db.execute(sql`
       SELECT id FROM saved_posts
       WHERE user_id = ${userId} AND post_id = ${postId}
       LIMIT 1
     `);
-    
-    if (saveCheckResult.rows.length) {
-      return res.status(400).json({ message: "You already saved this post" });
-    }
-    
-    // Create the save using raw SQL
-    const saveResult = await db.execute(sql`
+
+      if (saveCheckResult.rows.length) {
+        return res.status(400).json({ message: "You already saved this post" });
+      }
+
+      // Create the save using raw SQL
+      const saveResult = await db.execute(sql`
       INSERT INTO saved_posts (user_id, post_id, collection_name, created_at)
       VALUES (${userId}, ${postId}, ${collection}, ${now})
       RETURNING id, user_id as "userId", post_id as "postId", collection_name as "collectionName", created_at as "createdAt"
     `);
-    
-    // Update the post's updated timestamp using raw SQL
-    // Note: saveCount field doesn't exist in the database table
-    await db.execute(sql`
+
+      // Update the post's updated timestamp using raw SQL
+      // Note: saveCount field doesn't exist in the database table
+      await db.execute(sql`
       UPDATE posts
       SET updated_at = ${now}
       WHERE id = ${postId}
     `);
-    
-    return res.status(201).json(saveResult.rows[0]);
-  } catch (error) {
-    console.error("Error saving post:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+
+      return res.status(201).json(saveResult.rows[0]);
+    } catch (error) {
+      console.error("Error saving post:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  },
+);
 
 // DELETE /api/social/posts/:postId/save
 // Unsave a post (remove bookmark)
-greenSocialsRouter.delete("/posts/:postId/save", isAuthenticated, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    const userId = req.user.id;
-    const postId = parseInt(req.params.postId);
-    const now = new Date().toISOString();
-    
-    // Check if the save exists using raw SQL
-    const saveCheckResult = await db.execute(sql`
+greenSocialsRouter.delete(
+  "/posts/:postId/save",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const userId = req.user.id;
+      const postId = parseInt(req.params.postId);
+      const now = new Date().toISOString();
+
+      // Check if the save exists using raw SQL
+      const saveCheckResult = await db.execute(sql`
       SELECT id FROM saved_posts
       WHERE user_id = ${userId} AND post_id = ${postId}
       LIMIT 1
     `);
-    
-    if (!saveCheckResult.rows.length) {
-      return res.status(404).json({ message: "Saved post not found" });
-    }
-    
-    const savedPostId = saveCheckResult.rows[0].id;
-    
-    // Delete the save using raw SQL
-    await db.execute(sql`
+
+      if (!saveCheckResult.rows.length) {
+        return res.status(404).json({ message: "Saved post not found" });
+      }
+
+      const savedPostId = saveCheckResult.rows[0].id;
+
+      // Delete the save using raw SQL
+      await db.execute(sql`
       DELETE FROM saved_posts
       WHERE id = ${savedPostId}
     `);
-    
-    // Update the post's updated timestamp using raw SQL
-    await db.execute(sql`
+
+      // Update the post's updated timestamp using raw SQL
+      await db.execute(sql`
       UPDATE posts
       SET updated_at = ${now}
       WHERE id = ${postId}
     `);
-    
-    return res.status(200).json({ message: "Post unsaved successfully" });
-  } catch (error) {
-    console.error("Error unsaving post:", error);
-    return res.status(500).json({ message: "Server error" });
-  }
-});
+
+      return res.status(200).json({ message: "Post unsaved successfully" });
+    } catch (error) {
+      console.error("Error unsaving post:", error);
+      return res.status(500).json({ message: "Server error" });
+    }
+  },
+);
