@@ -36,8 +36,47 @@ import {
   UserCheck,
   Award,
   Star,
-  Crop
+  Crop,
+  User,
+  Reply,
+  Facebook,
+  Twitter,
+  MessageSquare,
+  Flag,
+  X,
+  BookmarkX,
+  SendHorizontal
 } from "lucide-react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose
+} from "@/components/ui/dialog";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+
+import { Label } from "@/components/ui/label";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
@@ -1123,7 +1162,7 @@ const GreenSocialsPage = () => {
                                   onClick={() => handleToggleLike(post.post.id, likedPosts[post.post.id] || false)}
                                 >
                                   {likedPosts[post.post.id] ? (
-                                    <HeartFilled className="h-4 w-4 text-primary" />
+                                    <Heart className="h-4 w-4 text-primary fill-primary" />
                                   ) : (
                                     <Heart className="h-4 w-4" />
                                   )}
@@ -1203,7 +1242,7 @@ const GreenSocialsPage = () => {
                                       className={`aspect-square p-0 sm:aspect-auto sm:px-3 ${savedPosts[post.post.id] ? 'text-primary' : ''}`}
                                     >
                                       {savedPosts[post.post.id] ? (
-                                        <BookmarkFilled className="h-4 w-4 text-primary" />
+                                        <Bookmark className="h-4 w-4 text-primary fill-primary" />
                                       ) : (
                                         <Bookmark className="h-4 w-4" />
                                       )}
@@ -1297,20 +1336,286 @@ const GreenSocialsPage = () => {
                               </div>
                             </CardFooter>
                             
-                            {/* Comment section (collapsed by default) */}
-                            <div className="px-6 py-3 bg-muted/20">
+                            {/* Comment section */}
+                            <div className={`px-6 py-3 bg-muted/20`}>
                               <div className="flex gap-2">
                                 <Avatar className="w-8 h-8">
                                   <AvatarImage src={user?.profileImage || undefined} />
                                   <AvatarFallback>{getInitials(user?.username || "")}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 flex items-center gap-2">
-                                  <Input placeholder="Write a comment..." className="h-9" />
-                                  <Button size="icon" className="h-9 w-9">
+                                  <Input 
+                                    placeholder="Write a comment..." 
+                                    className="h-9"
+                                    value={newComments[post.post.id] || ''}
+                                    onChange={(e) => setNewComments({
+                                      ...newComments,
+                                      [post.post.id]: e.target.value
+                                    })}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        handleAddComment(post.post.id, newComments[post.post.id] || '');
+                                        setNewComments({
+                                          ...newComments,
+                                          [post.post.id]: ''
+                                        });
+                                      }
+                                    }}
+                                  />
+                                  <Button 
+                                    size="icon" 
+                                    className="h-9 w-9"
+                                    onClick={() => {
+                                      handleAddComment(post.post.id, newComments[post.post.id] || '');
+                                      setNewComments({
+                                        ...newComments,
+                                        [post.post.id]: ''
+                                      });
+                                    }}
+                                  >
                                     <Send className="h-4 w-4" />
                                   </Button>
                                 </div>
                               </div>
+                              
+                              {/* Display comments when visible */}
+                              {visibleComments[post.post.id] && (
+                                <div className="mt-4 space-y-4 max-h-96 overflow-y-auto pr-2">
+                                  {post.post.comments && post.post.comments.map((comment: Comment) => (
+                                    <div key={comment.comment.id} className="flex gap-2 group">
+                                      <Avatar className="w-7 h-7 mt-0.5">
+                                        <AvatarImage src={comment.author.profileImage || undefined} />
+                                        <AvatarFallback>{getInitials(comment.profile.displayName || comment.author.username)}</AvatarFallback>
+                                      </Avatar>
+                                      <div className="flex-1">
+                                        <div className="bg-muted rounded-xl p-3 relative">
+                                          <div className="flex justify-between items-start">
+                                            <h4 className="font-medium text-sm">{comment.profile.displayName || comment.author.username}</h4>
+                                            <span className="text-xs text-muted-foreground">{formatRelativeTime(new Date(comment.comment.createdAt))}</span>
+                                          </div>
+                                          <p className="text-sm mt-1">{comment.comment.content}</p>
+                                          
+                                          {/* Comment actions */}
+                                          <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
+                                            <button 
+                                              className="hover:text-primary flex items-center gap-1 transition-colors"
+                                              onClick={() => handleToggleCommentLike(comment.comment.id, false)}
+                                            >
+                                              <Heart className="h-3 w-3" />
+                                              <span>{comment.comment.likeCount}</span>
+                                            </button>
+                                            <button 
+                                              className="hover:text-primary flex items-center gap-1 transition-colors"
+                                              onClick={() => {
+                                                setSelectedComment({
+                                                  id: comment.comment.id,
+                                                  content: comment.comment.content
+                                                });
+                                              }}
+                                            >
+                                              <Reply className="h-3 w-3" />
+                                              <span>Reply</span>
+                                            </button>
+                                            <Dialog>
+                                              <DialogTrigger asChild>
+                                                <button className="hover:text-destructive flex items-center gap-1 transition-colors opacity-0 group-hover:opacity-100">
+                                                  <Flag className="h-3 w-3" />
+                                                  <span>Report</span>
+                                                </button>
+                                              </DialogTrigger>
+                                              <DialogContent>
+                                                <DialogHeader>
+                                                  <DialogTitle>Report Comment</DialogTitle>
+                                                  <DialogDescription>
+                                                    Please let us know why you want to report this comment.
+                                                  </DialogDescription>
+                                                </DialogHeader>
+                                                <div className="grid gap-4 py-4">
+                                                  <div className="space-y-2">
+                                                    <Label htmlFor="report-reason">Reason</Label>
+                                                    <Select onValueChange={(value) => setReportReason(value)}>
+                                                      <SelectTrigger>
+                                                        <SelectValue placeholder="Select a reason" />
+                                                      </SelectTrigger>
+                                                      <SelectContent>
+                                                        <SelectItem value="spam">Spam</SelectItem>
+                                                        <SelectItem value="harassment">Harassment</SelectItem>
+                                                        <SelectItem value="misinformation">Misinformation</SelectItem>
+                                                        <SelectItem value="sensitive_content">Sensitive Content</SelectItem>
+                                                        <SelectItem value="hate_speech">Hate Speech</SelectItem>
+                                                        <SelectItem value="other">Other</SelectItem>
+                                                      </SelectContent>
+                                                    </Select>
+                                                  </div>
+                                                  <div className="space-y-2">
+                                                    <Label htmlFor="report-description">Description (Optional)</Label>
+                                                    <Textarea 
+                                                      id="report-description" 
+                                                      placeholder="Add more details about your report..."
+                                                      value={reportDescription}
+                                                      onChange={(e) => setReportDescription(e.target.value)}
+                                                    />
+                                                  </div>
+                                                </div>
+                                                <DialogFooter>
+                                                  <DialogClose asChild>
+                                                    <Button variant="outline">Cancel</Button>
+                                                  </DialogClose>
+                                                  <DialogClose asChild>
+                                                    <Button onClick={() => {
+                                                      handleReportComment(comment.comment.id, reportReason, reportDescription);
+                                                      setReportReason("");
+                                                      setReportDescription("");
+                                                    }}>Submit Report</Button>
+                                                  </DialogClose>
+                                                </DialogFooter>
+                                              </DialogContent>
+                                            </Dialog>
+                                          </div>
+                                        </div>
+                                        
+                                        {/* Reply form */}
+                                        {selectedComment && selectedComment.id === comment.comment.id && (
+                                          <div className="flex gap-2 mt-2">
+                                            <Avatar className="w-6 h-6">
+                                              <AvatarImage src={user?.profileImage || undefined} />
+                                              <AvatarFallback>{getInitials(user?.username || "")}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex-1 flex items-center gap-2">
+                                              <Input 
+                                                placeholder="Write a reply..." 
+                                                className="h-7 text-xs"
+                                                value={replyContent}
+                                                onChange={(e) => setReplyContent(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                  if (e.key === 'Enter') {
+                                                    handleReplyToComment(comment.comment.id, post.post.id, replyContent);
+                                                  }
+                                                }}
+                                                autoFocus
+                                              />
+                                              <Button 
+                                                size="icon" 
+                                                variant="ghost"
+                                                className="h-7 w-7"
+                                                onClick={() => handleReplyToComment(comment.comment.id, post.post.id, replyContent)}
+                                              >
+                                                <Send className="h-3.5 w-3.5" />
+                                              </Button>
+                                              <Button 
+                                                size="icon" 
+                                                variant="ghost"
+                                                className="h-7 w-7"
+                                                onClick={() => {
+                                                  setSelectedComment(null);
+                                                  setReplyContent('');
+                                                }}
+                                              >
+                                                <X className="h-3.5 w-3.5" />
+                                              </Button>
+                                            </div>
+                                          </div>
+                                        )}
+                                        
+                                        {/* Replies to this comment */}
+                                        {comment.comment.replies && comment.comment.replies.length > 0 && (
+                                          <div className="mt-2 space-y-2 pl-4">
+                                            {comment.comment.replies.map((reply: Comment) => (
+                                              <div key={reply.comment.id} className="flex gap-2 group">
+                                                <Avatar className="w-6 h-6 mt-0.5">
+                                                  <AvatarImage src={reply.author.profileImage || undefined} />
+                                                  <AvatarFallback>{getInitials(reply.profile.displayName || reply.author.username)}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex-1">
+                                                  <div className="bg-muted/70 rounded-xl p-2 relative">
+                                                    <div className="flex justify-between items-start">
+                                                      <h4 className="font-medium text-xs">{reply.profile.displayName || reply.author.username}</h4>
+                                                      <span className="text-xs text-muted-foreground">{formatRelativeTime(new Date(reply.comment.createdAt))}</span>
+                                                    </div>
+                                                    <p className="text-xs mt-0.5">{reply.comment.content}</p>
+                                                    
+                                                    {/* Reply actions */}
+                                                    <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
+                                                      <button 
+                                                        className="hover:text-primary flex items-center gap-1 transition-colors"
+                                                        onClick={() => handleToggleCommentLike(reply.comment.id, false)}
+                                                      >
+                                                        <Heart className="h-3 w-3" />
+                                                        <span>{reply.comment.likeCount}</span>
+                                                      </button>
+                                                      <Dialog>
+                                                        <DialogTrigger asChild>
+                                                          <button className="hover:text-destructive flex items-center gap-1 transition-colors opacity-0 group-hover:opacity-100">
+                                                            <Flag className="h-3 w-3" />
+                                                            <span>Report</span>
+                                                          </button>
+                                                        </DialogTrigger>
+                                                        <DialogContent>
+                                                          <DialogHeader>
+                                                            <DialogTitle>Report Reply</DialogTitle>
+                                                            <DialogDescription>
+                                                              Please let us know why you want to report this reply.
+                                                            </DialogDescription>
+                                                          </DialogHeader>
+                                                          <div className="grid gap-4 py-4">
+                                                            <div className="space-y-2">
+                                                              <Label htmlFor="report-reason">Reason</Label>
+                                                              <Select onValueChange={(value) => setReportReason(value)}>
+                                                                <SelectTrigger>
+                                                                  <SelectValue placeholder="Select a reason" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                  <SelectItem value="spam">Spam</SelectItem>
+                                                                  <SelectItem value="harassment">Harassment</SelectItem>
+                                                                  <SelectItem value="misinformation">Misinformation</SelectItem>
+                                                                  <SelectItem value="sensitive_content">Sensitive Content</SelectItem>
+                                                                  <SelectItem value="hate_speech">Hate Speech</SelectItem>
+                                                                  <SelectItem value="other">Other</SelectItem>
+                                                                </SelectContent>
+                                                              </Select>
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                              <Label htmlFor="report-description">Description (Optional)</Label>
+                                                              <Textarea 
+                                                                id="report-description" 
+                                                                placeholder="Add more details about your report..."
+                                                                value={reportDescription}
+                                                                onChange={(e) => setReportDescription(e.target.value)}
+                                                              />
+                                                            </div>
+                                                          </div>
+                                                          <DialogFooter>
+                                                            <DialogClose asChild>
+                                                              <Button variant="outline">Cancel</Button>
+                                                            </DialogClose>
+                                                            <DialogClose asChild>
+                                                              <Button onClick={() => {
+                                                                handleReportComment(reply.comment.id, reportReason, reportDescription);
+                                                                setReportReason("");
+                                                                setReportDescription("");
+                                                              }}>Submit Report</Button>
+                                                            </DialogClose>
+                                                          </DialogFooter>
+                                                        </DialogContent>
+                                                      </Dialog>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                  
+                                  {(!post.post.comments || post.post.comments.length === 0) && (
+                                    <div className="text-center text-muted-foreground text-sm py-4">
+                                      No comments yet. Be the first to comment!
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </Card>
                         ))}
