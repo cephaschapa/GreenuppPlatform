@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -148,6 +148,8 @@ const GreenSocialsPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [newPostContent, setNewPostContent] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Query for fetching user's social profile
   const { data: profile, isLoading: isProfileLoading } = useQuery({
@@ -568,11 +570,100 @@ const GreenSocialsPage = () => {
     }
   });
 
+  // Handler for photo upload
+  const handlePhotoUpload = async (file: File) => {
+    if (!file) {
+      return;
+    }
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file (JPEG, PNG, etc.)",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: "Please select an image under 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsUploading(true);
+    setPostType("image"); // Change post type to image
+    
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await apiRequest('POST', '/api/uploads/single', formData, { isFormData: true });
+      
+      if (!response.ok) {
+        throw new Error(`Upload failed with status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Add the uploaded image to mediaUrls array
+      setMediaUrls([...mediaUrls, { 
+        url: data.fileUrl, 
+        type: 'image', 
+        caption: file.name
+      }]);
+      
+      toast({
+        title: "Image uploaded",
+        description: "Your image has been added to the post",
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
+  // Handler for removing a photo from the post
+  const handleRemovePhoto = (index: number) => {
+    setMediaUrls(mediaUrls.filter((_, i) => i !== index));
+    if (mediaUrls.length <= 1) {
+      setPostType("text"); // If no more images, set post type back to text
+    }
+  };
+  
+  // Handler for clicking the Photo button
+  const handlePhotoButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  // Handler for handling file input change
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handlePhotoUpload(e.target.files[0]);
+      // Reset the input value so the same file can be selected again if needed
+      e.target.value = '';
+    }
+  };
+
   const handleCreatePost = () => {
-    if (!newPostContent.trim()) {
+    if (!newPostContent.trim() && mediaUrls.length === 0) {
       toast({
         title: "Empty post",
-        description: "Please write something in your post",
+        description: "Please write something or add a photo to your post",
         variant: "destructive",
       });
       return;
@@ -911,12 +1002,58 @@ const GreenSocialsPage = () => {
                       onChange={(e) => setNewPostContent(e.target.value)}
                       className="min-h-24"
                     />
+                    
+                    {/* Hidden file input */}
+                    <input 
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleFileInputChange}
+                    />
+                    
+                    {/* Display uploaded images */}
+                    {mediaUrls.length > 0 && (
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        {mediaUrls.map((media, index) => (
+                          <div key={index} className="relative group rounded-md overflow-hidden">
+                            <img 
+                              src={media.url} 
+                              alt={media.caption || "Uploaded image"} 
+                              className="w-full h-32 object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Button
+                                variant="destructive"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleRemovePhoto(index)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                   <CardFooter className="flex justify-between">
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex items-center gap-1.5">
-                        <Image className="h-4 w-4" />
-                        <span className="hidden sm:inline-block">Photo</span>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex items-center gap-1.5"
+                        onClick={handlePhotoButtonClick}
+                        disabled={isUploading}
+                      >
+                        {isUploading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Image className="h-4 w-4" />
+                        )}
+                        <span className="hidden sm:inline-block">
+                          {isUploading ? "Uploading..." : "Photo"}
+                        </span>
                       </Button>
                       <Button variant="outline" size="sm" className="flex items-center gap-1.5">
                         <Tag className="h-4 w-4" />
@@ -925,7 +1062,7 @@ const GreenSocialsPage = () => {
                     </div>
                     <Button 
                       onClick={handleCreatePost}
-                      disabled={createPostMutation.isPending}
+                      disabled={createPostMutation.isPending || isUploading}
                       className="flex items-center gap-1.5"
                     >
                       {createPostMutation.isPending ? (
