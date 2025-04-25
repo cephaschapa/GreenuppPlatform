@@ -180,6 +180,72 @@ greenSocialsRouter.post("/profile", isAuthenticated, async (req, res) => {
   }
 });
 
+// GET /api/social/posts/:postId/comments
+// Get comments for a specific post
+greenSocialsRouter.get("/posts/:postId/comments", async (req, res) => {
+  try {
+    const postId = parseInt(req.params.postId);
+    
+    // Get comments for the post using Drizzle query builder
+    const result = await db
+      .select({
+        // Comment fields
+        id: comments.id,
+        userId: comments.userId,
+        postId: comments.postId,
+        parentId: comments.parentId,
+        content: comments.content,
+        media: comments.media,
+        likeCount: comments.likeCount,
+        replyCount: comments.replyCount,
+        createdAt: comments.createdAt,
+        updatedAt: comments.updatedAt,
+        
+        // Author fields
+        author_id: users.id,
+        author_username: users.username,
+        author_profileImage: users.profileImage,
+        
+        // Profile fields
+        profile_displayName: socialProfiles.displayName
+      })
+      .from(comments)
+      .leftJoin(users, eq(comments.userId, users.id))
+      .leftJoin(socialProfiles, eq(comments.userId, socialProfiles.userId))
+      .where(eq(comments.postId, postId))
+      .orderBy(asc(comments.parentId), desc(comments.createdAt));
+    
+    // Transform the results into the expected structure
+    const formattedComments = result.map(comment => ({
+      comment: {
+        id: comment.id,
+        userId: comment.userId,
+        postId: comment.postId,
+        parentId: comment.parentId,
+        content: comment.content,
+        media: comment.media,
+        likeCount: comment.likeCount,
+        replyCount: comment.replyCount,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt
+      },
+      author: {
+        id: comment.author_id,
+        username: comment.author_username,
+        profileImage: comment.author_profileImage
+      },
+      profile: {
+        displayName: comment.profile_displayName
+      }
+    }));
+    
+    return res.json(formattedComments);
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 // GET /api/social/feed
 // Get posts for the main feed
 greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
