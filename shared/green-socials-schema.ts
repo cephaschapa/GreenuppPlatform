@@ -360,6 +360,42 @@ export const socialNotifications = pgTable("social_notifications", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Report content types enum
+export const reportTargetTypeEnum = pgEnum('report_target_type', [
+  'post',       // Report a post
+  'comment',    // Report a comment
+  'user',       // Report a user
+  'community',  // Report a community
+]);
+
+// Report reasons enum
+export const reportReasonEnum = pgEnum('report_reason', [
+  'spam',                  // Spam or misleading
+  'harassment',            // Harassment or bullying
+  'hate_speech',           // Hate speech
+  'false_information',     // False information
+  'inappropriate_content', // Inappropriate content
+  'intellectual_property', // Intellectual property violation
+  'violence',              // Violence or threats
+  'other',                 // Other reason
+]);
+
+// Content reports
+export const contentReports = pgTable("content_reports", {
+  id: serial("id").primaryKey(),
+  reporterId: integer("reporter_id").notNull().references(() => users.id),
+  targetType: text("target_type").notNull(), // post, comment, user, community
+  targetId: integer("target_id").notNull(),  // ID of the reported content
+  reason: text("reason").notNull(),          // Reason for reporting
+  description: text("description"),          // Additional details
+  status: text("status").default('pending'), // pending, reviewed, actioned, dismissed
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+  reviewNotes: text("review_notes"),         // Admin notes on report
+  actionTaken: text("action_taken"),         // Action taken if any
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Create insert schemas for key tables
 export const insertSocialProfileSchema = createInsertSchema(socialProfiles).omit({
   id: true,
@@ -431,6 +467,16 @@ export const insertEventSchema = createInsertSchema(events).omit({
   id: true,
   attendeeCount: true,
   interestedCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertContentReportSchema = createInsertSchema(contentReports).omit({
+  id: true,
+  status: true,
+  reviewedBy: true,
+  reviewNotes: true,
+  actionTaken: true,
   createdAt: true,
   updatedAt: true,
 });
