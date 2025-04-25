@@ -144,6 +144,15 @@ interface Comment {
   };
 }
 
+// Type guard for media types
+const isStringMedia = (media: any): media is string => {
+  return typeof media === 'string';
+};
+
+const isMediaArray = (media: any): media is Array<any> => {
+  return Array.isArray(media);
+};
+
 const GreenSocialsPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -1203,32 +1212,84 @@ const GreenSocialsPage = () => {
                                 <CardContent>
                                   <div className="whitespace-pre-wrap">{post.post.content}</div>
                                   
-                                  {post.post.media && Array.isArray(post.post.media) && post.post.media.length > 0 && (
-                                    <div className={`mt-4 ${post.post.media.length > 1 ? 'grid grid-cols-2 gap-2' : ''}`}>
-                                      {post.post.media.map((item, idx) => (
-                                        item && typeof item === 'object' && item.type && item.type.includes('image') ? (
-                                          <div 
-                                            key={idx} 
-                                            className="rounded-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
-                                            onClick={() => item.url ? window.open(item.url, '_blank') : null}
-                                          >
-                                            <img 
-                                              src={item.url || ''} 
-                                              alt={item.caption || 'Post image'} 
-                                              className={`w-full h-auto object-cover ${post.post.media && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
-                                              onError={(e) => {
-                                                const target = e.target as HTMLImageElement;
-                                                target.src = 'https://placehold.co/600x400?text=Image+Unavailable';
-                                              }}
-                                            />
-                                            {item.caption && (
-                                              <div className="p-2 text-xs text-gray-500">
-                                                {item.caption}
-                                              </div>
-                                            )}
-                                          </div>
-                                        ) : null
-                                      ))}
+                                  {/* Post Media Display - Enhanced for different formats */}
+                                  {post.post.media && (
+                                    <div className={`mt-4 ${Array.isArray(post.post.media) && post.post.media.length > 1 ? 'grid grid-cols-2 gap-2' : ''}`}>
+                                      {(() => {
+                                        // Handle different formats of media field
+                                        if (isStringMedia(post.post.media)) {
+                                          // Case 1: media is a single URL string
+                                          const mediaUrl = post.post.media;
+                                          return (
+                                            <div 
+                                              className="rounded-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
+                                              onClick={() => window.open(mediaUrl, '_blank')}
+                                            >
+                                              <img 
+                                                src={mediaUrl} 
+                                                alt="Post image" 
+                                                className="w-full h-auto object-cover max-h-96"
+                                                onError={(e) => {
+                                                  const target = e.target as HTMLImageElement;
+                                                  target.src = 'https://placehold.co/600x400?text=Image+Unavailable';
+                                                }}
+                                              />
+                                            </div>
+                                          );
+                                        } else if (isMediaArray(post.post.media)) {
+                                          // Case 2: media is an array
+                                          return post.post.media.map((item, idx) => {
+                                            if (typeof item === 'string') {
+                                              // Case 2a: array contains URL strings
+                                              return (
+                                                <div 
+                                                  key={idx} 
+                                                  className="rounded-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
+                                                  onClick={() => window.open(item, '_blank')}
+                                                >
+                                                  <img 
+                                                    src={item} 
+                                                    alt={`Post image ${idx + 1}`} 
+                                                    className={`w-full h-auto object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
+                                                    onError={(e) => {
+                                                      const target = e.target as HTMLImageElement;
+                                                      target.src = 'https://placehold.co/600x400?text=Image+Unavailable';
+                                                    }}
+                                                  />
+                                                </div>
+                                              );
+                                            } else if (item && typeof item === 'object') {
+                                              // Case 2b: array contains media objects
+                                              if (item.url) {
+                                                return (
+                                                  <div 
+                                                    key={idx} 
+                                                    className="rounded-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
+                                                    onClick={() => window.open(item.url, '_blank')}
+                                                  >
+                                                    <img 
+                                                      src={item.url} 
+                                                      alt={item.caption || `Post image ${idx + 1}`} 
+                                                      className={`w-full h-auto object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
+                                                      onError={(e) => {
+                                                        const target = e.target as HTMLImageElement;
+                                                        target.src = 'https://placehold.co/600x400?text=Image+Unavailable';
+                                                      }}
+                                                    />
+                                                    {item.caption && (
+                                                      <div className="p-2 text-xs text-gray-500">
+                                                        {item.caption}
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                );
+                                              }
+                                            }
+                                            return null;
+                                          });
+                                        }
+                                        return null;
+                                      })()}
                                     </div>
                                   )}
                                   
@@ -1299,32 +1360,84 @@ const GreenSocialsPage = () => {
                             <CardContent>
                               <div className="whitespace-pre-wrap">{post.post.content}</div>
                               
-                              {post.post.media && Array.isArray(post.post.media) && post.post.media.length > 0 && (
-                                <div className={`mt-4 ${post.post.media.length > 1 ? 'grid grid-cols-2 gap-2' : ''}`}>
-                                  {post.post.media.map((item, idx) => (
-                                    item && typeof item === 'object' && item.type && item.type.includes('image') ? (
-                                      <div 
-                                        key={idx} 
-                                        className="rounded-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
-                                        onClick={() => item.url ? window.open(item.url, '_blank') : null}
-                                      >
-                                        <img 
-                                          src={item.url || ''} 
-                                          alt={item.caption || 'Post image'} 
-                                          className={`w-full h-auto object-cover ${post.post.media && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
-                                          onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            target.src = 'https://placehold.co/600x400?text=Image+Unavailable';
-                                          }}
-                                        />
-                                        {item.caption && (
-                                          <div className="p-2 text-xs text-gray-500">
-                                            {item.caption}
-                                          </div>
-                                        )}
-                                      </div>
-                                    ) : null
-                                  ))}
+                              {/* Post Media Display - Enhanced for different formats */}
+                              {post.post.media && (
+                                <div className={`mt-4 ${Array.isArray(post.post.media) && post.post.media.length > 1 ? 'grid grid-cols-2 gap-2' : ''}`}>
+                                  {(() => {
+                                    // Handle different formats of media field
+                                    if (isStringMedia(post.post.media)) {
+                                      // Case 1: media is a single URL string
+                                      const mediaUrl = post.post.media;
+                                      return (
+                                        <div 
+                                          className="rounded-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
+                                          onClick={() => window.open(mediaUrl, '_blank')}
+                                        >
+                                          <img 
+                                            src={mediaUrl} 
+                                            alt="Post image" 
+                                            className="w-full h-auto object-cover max-h-96"
+                                            onError={(e) => {
+                                              const target = e.target as HTMLImageElement;
+                                              target.src = 'https://placehold.co/600x400?text=Image+Unavailable';
+                                            }}
+                                          />
+                                        </div>
+                                      );
+                                    } else if (Array.isArray(post.post.media)) {
+                                      // Case 2: media is an array
+                                      return post.post.media.map((item, idx) => {
+                                        if (typeof item === 'string') {
+                                          // Case 2a: array contains URL strings
+                                          return (
+                                            <div 
+                                              key={idx} 
+                                              className="rounded-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
+                                              onClick={() => window.open(item, '_blank')}
+                                            >
+                                              <img 
+                                                src={item} 
+                                                alt={`Post image ${idx + 1}`} 
+                                                className={`w-full h-auto object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
+                                                onError={(e) => {
+                                                  const target = e.target as HTMLImageElement;
+                                                  target.src = 'https://placehold.co/600x400?text=Image+Unavailable';
+                                                }}
+                                              />
+                                            </div>
+                                          );
+                                        } else if (item && typeof item === 'object') {
+                                          // Case 2b: array contains media objects
+                                          if (item.url) {
+                                            return (
+                                              <div 
+                                                key={idx} 
+                                                className="rounded-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
+                                                onClick={() => window.open(item.url, '_blank')}
+                                              >
+                                                <img 
+                                                  src={item.url} 
+                                                  alt={item.caption || `Post image ${idx + 1}`} 
+                                                  className={`w-full h-auto object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
+                                                  onError={(e) => {
+                                                    const target = e.target as HTMLImageElement;
+                                                    target.src = 'https://placehold.co/600x400?text=Image+Unavailable';
+                                                  }}
+                                                />
+                                                {item.caption && (
+                                                  <div className="p-2 text-xs text-gray-500">
+                                                    {item.caption}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          }
+                                        }
+                                        return null;
+                                      });
+                                    }
+                                    return null;
+                                  })()}
                                 </div>
                               )}
                               
