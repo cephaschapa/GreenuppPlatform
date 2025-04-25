@@ -47,21 +47,22 @@ greenSocialsRouter.get("/profile/:userId", async (req, res) => {
   try {
     const userId = parseInt(req.params.userId);
     
-    // Get the profile with user details
-    const profile = await db.query.socialProfiles.findFirst({
-      where: eq(socialProfiles.userId, userId),
-      with: {
+    // Directly query the table to bypass drizzle naming issues
+    const profile = await db
+      .select({
+        profile: socialProfiles,
         user: {
-          columns: {
-            id: true,
-            username: true,
-            firstName: true,
-            lastName: true,
-            profileImage: true,
-          }
+          id: users.id,
+          username: users.username,
+          firstName: users.firstName,
+          lastName: users.lastName
         }
-      }
-    });
+      })
+      .from(socialProfiles)
+      .leftJoin(users, eq(socialProfiles.userId, users.id))
+      .where(eq(socialProfiles.userId, userId))
+      .limit(1)
+      .then(result => result[0]);
     
     if (!profile) {
       return res.status(404).json({ message: "Profile not found" });
