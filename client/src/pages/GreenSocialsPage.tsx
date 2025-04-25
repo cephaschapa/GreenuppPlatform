@@ -588,6 +588,12 @@ const GreenSocialsPage = () => {
     } else {
       likePostMutation.mutate(postId);
     }
+    
+    // Optimistically update UI
+    setLikedPosts({
+      ...likedPosts,
+      [postId]: !isLiked
+    });
   };
   
   // Handler for creating a comment on a post
@@ -602,6 +608,12 @@ const GreenSocialsPage = () => {
     }
     
     createCommentMutation.mutate({ postId, content });
+    
+    // Also make comments visible if they weren't already
+    setVisibleComments({
+      ...visibleComments,
+      [postId]: true
+    });
   };
   
   // Handler for replying to a comment
@@ -620,6 +632,10 @@ const GreenSocialsPage = () => {
       content, 
       parentId: commentId 
     });
+    
+    // Reset reply state
+    setReplyContent('');
+    setReplyingTo(null);
   };
   
   // Handler for toggling comment like
