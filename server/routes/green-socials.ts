@@ -183,7 +183,7 @@ greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Create post
+    // Create post - only including fields that exist in the database table
     const newPost = await db
       .insert(posts)
       .values({
@@ -202,6 +202,10 @@ greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
         hashtags: req.body.hashtags,
         mentionedUsers: req.body.mentionedUsers,
         cropsTags: req.body.cropsTags,
+        likeCount: 0,
+        commentCount: 0,
+        shareCount: 0,
+        // Don't include saveCount as it doesn't exist in the database table
       })
       .returning();
     
@@ -1369,11 +1373,11 @@ greenSocialsRouter.post("/posts/:postId/save", isAuthenticated, async (req, res)
       })
       .returning();
       
-    // Increment the post's save count
+    // Update the post's updated timestamp
+    // Note: saveCount field doesn't exist in the database table
     await db
       .update(posts)
       .set({
-        saveCount: sql`${posts.saveCount} + 1`,
         updatedAt: new Date()
       })
       .where(eq(posts.id, postId));
@@ -1411,11 +1415,11 @@ greenSocialsRouter.delete("/posts/:postId/save", isAuthenticated, async (req, re
       .delete(savedPosts)
       .where(eq(savedPosts.id, existingSave[0].id));
       
-    // Decrement the post's save count
+    // Update the post's updated timestamp
+    // Note: saveCount field doesn't exist in the database table
     await db
       .update(posts)
       .set({
-        saveCount: sql`GREATEST(${posts.saveCount} - 1, 0)`,
         updatedAt: new Date()
       })
       .where(eq(posts.id, postId));
