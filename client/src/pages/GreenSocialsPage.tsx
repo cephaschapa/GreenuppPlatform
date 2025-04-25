@@ -150,13 +150,30 @@ const GreenSocialsPage = () => {
     enabled: !!user,
   });
 
+  // State for post creation and interactions
+  const [postType, setPostType] = useState("text");
+  const [postVisibility, setPostVisibility] = useState("public");
+  const [mediaUrls, setMediaUrls] = useState<{url: string, type: string, caption?: string}[]>([]);
+  const [hashtagInput, setHashtagInput] = useState("");
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [cropsTagsInput, setCropsTagsInput] = useState("");
+  const [cropsTags, setCropsTags] = useState<string[]>([]);
+  const [showPostOptions, setShowPostOptions] = useState(false);
+  const [selectedComment, setSelectedComment] = useState<{id: number, content: string} | null>(null);
+  const [replyContent, setReplyContent] = useState("");
+  const [reportReason, setReportReason] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
+  
   // Mutation for creating a new post
   const createPostMutation = useMutation({
     mutationFn: async (content: string) => {
       const res = await apiRequest("POST", "/posts", {
         content,
-        postType: "text",
-        visibility: "public"
+        postType,
+        visibility: postVisibility,
+        media: mediaUrls.length > 0 ? mediaUrls : undefined,
+        hashtags: hashtags.length > 0 ? hashtags : undefined,
+        cropsTags: cropsTags.length > 0 ? cropsTags : undefined
       });
       return res.json();
     },
@@ -166,6 +183,12 @@ const GreenSocialsPage = () => {
         description: "Your post has been published successfully!",
       });
       setNewPostContent("");
+      setMediaUrls([]);
+      setHashtags([]);
+      setCropsTags([]);
+      setPostType("text");
+      setPostVisibility("public");
+      setShowPostOptions(false);
       queryClient.invalidateQueries({ queryKey: ["/feed"] });
     },
     onError: (error: any) => {
@@ -228,6 +251,273 @@ const GreenSocialsPage = () => {
       });
     }
   });
+  
+  // Mutation for liking a post
+  const likePostMutation = useMutation({
+    mutationFn: async (postId: number) => {
+      const res = await apiRequest("POST", `/api/social/posts/${postId}/like`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Post liked",
+        description: "You liked this post",
+      });
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to like post",
+        description: error.message || "There was an error liking this post",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutation for unliking a post
+  const unlikePostMutation = useMutation({
+    mutationFn: async (postId: number) => {
+      const res = await apiRequest("DELETE", `/api/social/posts/${postId}/like`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Post unliked",
+        description: "You unliked this post",
+      });
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to unlike post",
+        description: error.message || "There was an error unliking this post",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutation for creating a comment
+  const createCommentMutation = useMutation({
+    mutationFn: async ({ postId, content, parentId }: { postId: number, content: string, parentId?: number }) => {
+      const res = await apiRequest("POST", `/api/social/comments`, {
+        postId,
+        content,
+        parentId
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Comment added",
+        description: "Your comment has been added successfully",
+      });
+      
+      // Reset selected comment and reply content
+      setSelectedComment(null);
+      setReplyContent("");
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to add comment",
+        description: error.message || "There was an error adding your comment",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutation for liking a comment
+  const likeCommentMutation = useMutation({
+    mutationFn: async (commentId: number) => {
+      const res = await apiRequest("POST", `/api/social/comments/${commentId}/like`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Comment liked",
+        description: "You liked this comment",
+      });
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to like comment",
+        description: error.message || "There was an error liking this comment",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutation for unliking a comment
+  const unlikeCommentMutation = useMutation({
+    mutationFn: async (commentId: number) => {
+      const res = await apiRequest("DELETE", `/api/social/comments/${commentId}/like`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Comment unliked",
+        description: "You unliked this comment",
+      });
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to unlike comment",
+        description: error.message || "There was an error unliking this comment",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutation for sharing a post
+  const sharePostMutation = useMutation({
+    mutationFn: async ({ postId, targetType, targetId, externalPlatform }: { 
+      postId: number, 
+      targetType: string, 
+      targetId?: number, 
+      externalPlatform?: string 
+    }) => {
+      const res = await apiRequest("POST", `/api/social/posts/${postId}/share`, {
+        targetType,
+        targetId,
+        externalPlatform
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Post shared",
+        description: "The post has been shared successfully",
+      });
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to share post",
+        description: error.message || "There was an error sharing this post",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutation for saving a post
+  const savePostMutation = useMutation({
+    mutationFn: async ({ postId, collectionName }: { postId: number, collectionName?: string }) => {
+      const res = await apiRequest("POST", `/api/social/posts/${postId}/save`, {
+        collectionName
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Post saved",
+        description: "The post has been saved to your collection",
+      });
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to save post",
+        description: error.message || "There was an error saving this post",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutation for unsaving a post
+  const unsavePostMutation = useMutation({
+    mutationFn: async (postId: number) => {
+      const res = await apiRequest("DELETE", `/api/social/posts/${postId}/save`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Post removed",
+        description: "The post has been removed from your saved collection",
+      });
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ["/feed"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to remove post",
+        description: error.message || "There was an error removing this post from your collection",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutation for reporting a post
+  const reportPostMutation = useMutation({
+    mutationFn: async ({ postId, reason, description }: { postId: number, reason: string, description?: string }) => {
+      const res = await apiRequest("POST", `/api/social/posts/${postId}/report`, {
+        reason,
+        description
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Report submitted",
+        description: "Thank you for helping keep our community safe. Your report has been submitted.",
+      });
+      
+      // Reset report form
+      setReportReason("");
+      setReportDescription("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to submit report",
+        description: error.message || "There was an error submitting your report",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutation for reporting a comment
+  const reportCommentMutation = useMutation({
+    mutationFn: async ({ commentId, reason, description }: { commentId: number, reason: string, description?: string }) => {
+      const res = await apiRequest("POST", `/api/social/comments/${commentId}/report`, {
+        reason,
+        description
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Report submitted",
+        description: "Thank you for helping keep our community safe. Your report has been submitted.",
+      });
+      
+      // Reset report form
+      setReportReason("");
+      setReportDescription("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to submit report",
+        description: error.message || "There was an error submitting your report",
+        variant: "destructive",
+      });
+    }
+  });
 
   const handleCreatePost = () => {
     if (!newPostContent.trim()) {
@@ -240,6 +530,104 @@ const GreenSocialsPage = () => {
     }
     
     createPostMutation.mutate(newPostContent);
+  };
+  
+  // Handler for toggling post like
+  const handleToggleLike = (postId: number, isLiked: boolean) => {
+    if (isLiked) {
+      unlikePostMutation.mutate(postId);
+    } else {
+      likePostMutation.mutate(postId);
+    }
+  };
+  
+  // Handler for creating a comment on a post
+  const handleAddComment = (postId: number, content: string) => {
+    if (!content.trim()) {
+      toast({
+        title: "Empty comment",
+        description: "Please write something in your comment",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    createCommentMutation.mutate({ postId, content });
+  };
+  
+  // Handler for replying to a comment
+  const handleReplyToComment = (commentId: number, postId: number, content: string) => {
+    if (!content.trim()) {
+      toast({
+        title: "Empty reply",
+        description: "Please write something in your reply",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    createCommentMutation.mutate({ 
+      postId, 
+      content, 
+      parentId: commentId 
+    });
+  };
+  
+  // Handler for toggling comment like
+  const handleToggleCommentLike = (commentId: number, isLiked: boolean) => {
+    if (isLiked) {
+      unlikeCommentMutation.mutate(commentId);
+    } else {
+      likeCommentMutation.mutate(commentId);
+    }
+  };
+  
+  // Handler for sharing a post
+  const handleSharePost = (postId: number, targetType: string, targetId?: number, externalPlatform?: string) => {
+    sharePostMutation.mutate({ 
+      postId, 
+      targetType, 
+      targetId, 
+      externalPlatform 
+    });
+  };
+  
+  // Handler for saving a post
+  const handleSavePost = (postId: number, collectionName?: string) => {
+    savePostMutation.mutate({ postId, collectionName });
+  };
+  
+  // Handler for unsaving a post
+  const handleUnsavePost = (postId: number) => {
+    unsavePostMutation.mutate(postId);
+  };
+  
+  // Handler for reporting a post
+  const handleReportPost = (postId: number, reason: string, description?: string) => {
+    if (!reason) {
+      toast({
+        title: "Missing reason",
+        description: "Please select a reason for your report",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    reportPostMutation.mutate({ postId, reason, description });
+  };
+  
+  // Handler for reporting a comment
+  const handleReportComment = (commentId: number, reason: string, description?: string) => {
+    if (!reason) {
+      toast({
+        title: "Missing reason",
+        description: "Please select a reason for your report",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    reportCommentMutation.mutate({ commentId, reason, description });
   };
 
   // Get initials for avatar fallback
