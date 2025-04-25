@@ -43,6 +43,8 @@ async function comparePasswords(supplied: string, stored: string) {
 // Setup authentication middleware and routes
 export function setupAuth(app: Express) {
   // Configure session settings
+  console.log("Setting up authentication with session store:", !!storage.sessionStore);
+  
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "greenupp-secret-key",
     resave: false,
