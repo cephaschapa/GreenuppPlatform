@@ -21,7 +21,12 @@ export const notificationTypes = [
   'market_price_alert',
   'message',
   'system_notification',
-  'crop_update'
+  'crop_update',
+  'social_like',
+  'social_comment',
+  'social_follow',
+  'social_mention',
+  'social_save'
 ] as const;
 
 export type NotificationType = typeof notificationTypes[number];
@@ -191,6 +196,12 @@ export async function createDefaultNotificationSettings(userId: number) {
       marketPriceAlerts: false,
       systemNotifications: true,
       messageNotifications: true,
+      // Social notifications - default all to enabled
+      socialLikes: true,
+      socialComments: true,
+      socialFollows: true,
+      socialMentions: true,
+      socialSaves: true,
       emailFrequency: 'instant'
     })
     .returning();
@@ -309,6 +320,17 @@ function isNotificationTypeEnabled(
       return settings.systemNotifications;
     case 'crop_update':
       return true; // Default to enabled for crop updates
+    // Social notifications
+    case 'social_like':
+      return settings.socialLikes;
+    case 'social_comment':
+      return settings.socialComments;
+    case 'social_follow':
+      return settings.socialFollows;
+    case 'social_mention':
+      return settings.socialMentions;
+    case 'social_save':
+      return settings.socialSaves;
     default:
       return true; // Default to enabled for unknown types
   }
@@ -367,6 +389,8 @@ async function sendNotificationEmail(
       fromName = 'Greenupp Crop Updates';
     } else if (notification.type === 'message') {
       fromName = 'Greenupp Messages';
+    } else if (notification.type.startsWith('social_')) {
+      fromName = 'Greenupp Social';
     }
     
     // Generate email footer text

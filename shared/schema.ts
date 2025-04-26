@@ -636,6 +636,13 @@ export const notificationSettings = pgTable("notification_settings", {
   marketPriceAlerts: boolean("market_price_alerts").default(false),
   systemNotifications: boolean("system_notifications").default(true),
   messageNotifications: boolean("message_notifications").default(true),
+  // Social notifications
+  socialLikes: boolean("social_likes").default(true),
+  socialComments: boolean("social_comments").default(true),
+  socialFollows: boolean("social_follows").default(true),
+  socialMentions: boolean("social_mentions").default(true),
+  socialSaves: boolean("social_saves").default(true),
+  // Email settings
   emailFrequency: text("email_frequency").default('instant'), // instant, daily, weekly
   emailDigestDay: integer("email_digest_day"), // day of week for weekly digests (0-6)
   emailDigestTime: integer("email_digest_time"), // hour of day for digests (0-23)
