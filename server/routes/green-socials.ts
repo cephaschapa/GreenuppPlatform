@@ -986,6 +986,35 @@ greenSocialsRouter.post(
             WHERE user_id = ${followerId}`,
         );
       });
+      
+      // Get follower and followed usernames for notification
+      const [follower] = await db
+        .select({ username: users.username })
+        .from(users)
+        .where(eq(users.id, followerId))
+        .limit(1);
+      
+      try {
+        // Import the createNotification function
+        const { createNotification } = await import('../services/notifications');
+        
+        // Create a notification for the followed user
+        await createNotification({
+          userId: followedId,
+          type: 'social_follow',
+          title: 'New Follower',
+          message: `${follower.username} started following you`,
+          data: {
+            followerId,
+            followerUsername: follower.username
+          },
+          actionUrl: `/social/profile/${followerId}`,
+          sendEmail: false // Set to true if you want email notifications for follows
+        });
+      } catch (error) {
+        // Just log the error, don't fail the follow operation
+        console.error("Failed to create notification for new follower:", error);
+      }
 
       return res.status(201).json({ message: "User followed successfully" });
     } catch (error: any) {
@@ -1459,25 +1488,54 @@ greenSocialsRouter.post(
         .where(eq(posts.id, postId));
 
       // Create a notification for the post owner
-      const postOwner = await db
-        .select({ userId: posts.userId, content: posts.content })
+      const postOwnerResult = await db
+        .select({ 
+          userId: posts.userId, 
+          content: posts.content,
+          postType: posts.postType
+        })
         .from(posts)
         .where(eq(posts.id, postId))
         .limit(1);
 
-      if (postOwner.length && postOwner[0].userId !== userId) {
-        const shortContent =
-          postOwner[0].content.length > 50
-            ? postOwner[0].content.substring(0, 50) + "..."
-            : postOwner[0].content;
+      if (postOwnerResult.length && postOwnerResult[0].userId !== userId) {
+        // Get the liker's username
+        const [liker] = await db
+          .select({ username: users.username })
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
 
-        await db.insert(socialNotifications).values({
-          userId: postOwner[0].userId,
-          type: "like",
-          content: `liked your post: "${shortContent}"`,
-          relatedUserId: userId,
-          relatedPostId: postId,
-        });
+        const postOwner = postOwnerResult[0];
+        const shortContent =
+          postOwner.content.length > 50
+            ? postOwner.content.substring(0, 50) + "..."
+            : postOwner.content;
+            
+        const postType = postOwner.postType || 'post';
+
+        // Import the createNotification function
+        const { createNotification } = await import('../services/notifications');
+        
+        try {
+          // Create a notification using the notification service
+          await createNotification({
+            userId: postOwner.userId,
+            type: 'social_like',
+            title: 'New Like on Your Post',
+            message: `${liker.username} liked your ${postType}: "${shortContent}"`,
+            data: {
+              postId,
+              likedBy: userId,
+              postContent: shortContent
+            },
+            actionUrl: `/social/posts/${postId}`,
+            sendEmail: false // Set to true if you want email notifications for likes
+          });
+        } catch (error) {
+          // Just log the error, don't fail the like operation
+          console.error("Failed to create notification for post like:", error);
+        }
       }
 
       return res.status(200).json({ message: "Post liked successfully" });
@@ -1602,28 +1660,42 @@ greenSocialsRouter.post(
       `);
 
         if (commentContentResult.rows.length) {
+          // Get the liker's username
+          const [liker] = await db
+            .select({ username: users.username })
+            .from(users)
+            .where(eq(users.id, userId))
+            .limit(1);
+            
           const commentContent = commentContentResult.rows[0].content;
           const shortContent =
             commentContent.length > 50
               ? commentContent.substring(0, 50) + "..."
               : commentContent;
 
-          // Create notification using raw SQL
-          await db.execute(sql`
-          INSERT INTO social_notifications (
-            user_id, type, content, related_user_id, 
-            related_comment_id, related_post_id, created_at
-          )
-          VALUES (
-            ${commentData.userId},
-            'comment_like',
-            ${`liked your comment: "${shortContent}"`},
-            ${userId},
-            ${commentId},
-            ${commentData.postId},
-            ${now}
-          )
-        `);
+          // Import the createNotification function
+          const { createNotification } = await import('../services/notifications');
+          
+          try {
+            // Create a notification using the notification service
+            await createNotification({
+              userId: commentData.userId,
+              type: 'social_like',
+              title: 'New Like on Your Comment',
+              message: `${liker.username} liked your comment: "${shortContent}"`,
+              data: {
+                commentId,
+                postId: commentData.postId,
+                likedBy: userId,
+                commentContent: shortContent
+              },
+              actionUrl: `/social/posts/${commentData.postId}?comment=${commentId}`,
+              sendEmail: false // Set to true if you want email notifications for comment likes
+            });
+          } catch (error) {
+            // Just log the error, don't fail the like operation
+            console.error("Failed to create notification for comment like:", error);
+          }
         }
       }
 
@@ -1701,11 +1773,11 @@ greenSocialsRouter.post(
 
       // Check if the post exists using raw SQL
       const postCheckResult = await db.execute(sql`
-      SELECT id, user_id as "userId", content 
-      FROM posts 
-      WHERE id = ${postId}
-      LIMIT 1
-    `);
+        SELECT id, user_id as "userId", content 
+        FROM posts 
+        WHERE id = ${postId}
+        LIMIT 1
+      `);
 
       if (!postCheckResult.rows.length) {
         return res.status(404).json({ message: "Post not found" });
@@ -1715,32 +1787,40 @@ greenSocialsRouter.post(
 
       // Create the share using raw SQL
       const shareResult = await db.execute(sql`
-      INSERT INTO post_shares (
-        post_id, user_id, target_type, 
-        target_id, external_platform, created_at
-      )
-      VALUES (
-        ${postId}, ${userId}, ${targetType || null}, 
-        ${targetId || null}, ${externalPlatform || null}, ${now}
-      )
-      RETURNING id, post_id as "postId", user_id as "userId", 
-                target_type as "targetType", target_id as "targetId", 
-                external_platform as "externalPlatform", created_at as "createdAt"
-    `);
+        INSERT INTO post_shares (
+          post_id, user_id, target_type, 
+          target_id, external_platform, created_at
+        )
+        VALUES (
+          ${postId}, ${userId}, ${targetType || null}, 
+          ${targetId || null}, ${externalPlatform || null}, ${now}
+        )
+        RETURNING id, post_id as "postId", user_id as "userId", 
+                  target_type as "targetType", target_id as "targetId", 
+                  external_platform as "externalPlatform", created_at as "createdAt"
+      `);
 
       // Increment the post's share count using raw SQL
       await db.execute(sql`
-      UPDATE posts
-      SET share_count = share_count + 1,
-          updated_at = ${now}
-      WHERE id = ${postId}
-    `);
+        UPDATE posts
+        SET share_count = share_count + 1,
+            updated_at = ${now}
+        WHERE id = ${postId}
+      `);
 
       // Create a notification for the post owner
       if (postData.userId !== userId) {
+        // Get the sharer's username
+        const [sharer] = await db
+          .select({ username: users.username })
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
+            
         const content = postData.content || "";
-        const shortContent =
-          content.length > 50 ? content.substring(0, 50) + "..." : content;
+        const shortContent = typeof content === 'string' && content.length > 50 
+          ? content.substring(0, 50) + "..." 
+          : String(content);
 
         let shareType = "their profile";
         if (targetType === "community") {
@@ -1749,21 +1829,31 @@ greenSocialsRouter.post(
           shareType = externalPlatform || "an external platform";
         }
 
-        // Create notification using raw SQL
-        await db.execute(sql`
-        INSERT INTO social_notifications (
-          user_id, type, content, related_user_id, 
-          related_post_id, created_at
-        )
-        VALUES (
-          ${postData.userId},
-          'share',
-          ${`shared your post to ${shareType}: "${shortContent}"`},
-          ${userId},
-          ${postId},
-          ${now}
-        )
-      `);
+        try {
+          // Import the createNotification function
+          const { createNotification } = await import('../services/notifications');
+          
+          // Create a notification using the notification service
+          await createNotification({
+            userId: postData.userId,
+            type: 'social_like', // You can create a separate 'social_share' type if needed
+            title: 'Your Post Was Shared',
+            message: `${sharer.username} shared your post to ${shareType}: "${shortContent}"`,
+            data: {
+              postId,
+              sharedBy: userId,
+              targetType,
+              targetId,
+              externalPlatform,
+              postContent: shortContent
+            },
+            actionUrl: `/social/posts/${postId}`,
+            sendEmail: false // Set to true if you want email notifications for shares
+          });
+        } catch (error) {
+          // Just log the error, don't fail the share operation
+          console.error("Failed to create notification for post share:", error);
+        }
       }
 
       return res.status(201).json(shareResult.rows[0]);
@@ -1771,7 +1861,7 @@ greenSocialsRouter.post(
       console.error("Error sharing post:", error);
       return res.status(500).json({ message: "Server error" });
     }
-  },
+  }
 );
 
 // POST /api/social/posts/:postId/report
