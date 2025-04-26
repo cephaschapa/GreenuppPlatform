@@ -89,8 +89,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async () => {
       await apiRequest("POST", "/api/logout");
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Clear user data in client cache
       queryClient.setQueryData(["/api/user"], null);
+      
+      // Force refetch to ensure session state is updated
+      await refetchUser();
+      
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",

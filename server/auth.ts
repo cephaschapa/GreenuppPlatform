@@ -131,14 +131,19 @@ export function setupAuth(app: Express) {
   // Deserialize user from session
   passport.deserializeUser(async (id: number, done) => {
     try {
+      console.log(`Deserializing user with ID: ${id}`);
       const user = await storage.getUser(id);
+      
       if (user) {
+        console.log(`User found during deserialization: ${user.username} (${user.id})`);
         // Ensure we're using the proper User type with valid UserRoleType
         done(null, user as unknown as Express.User);
       } else {
+        console.log(`⚠️ User with ID ${id} not found during deserialization`);
         done(null, null);
       }
-    } catch (error) {
+    } catch (error: any) { // Use any to avoid TypeScript errors
+      console.error(`❌ Error deserializing user: ${error?.message || 'Unknown error'}`);
       done(error);
     }
   });
@@ -232,10 +237,29 @@ export function setupAuth(app: Express) {
 
   // User logout route
   app.post("/api/logout", (req, res) => {
+    console.log('Logout attempt:');
+    console.log('- Session ID:', req.sessionID);
+    console.log('- Is authenticated:', req.isAuthenticated());
+    
+    if (req.user) {
+      console.log('- User being logged out:', { 
+        id: (req.user as User).id, 
+        username: (req.user as User).username 
+      });
+    } else {
+      console.log('- No user found in session');
+    }
+    
     req.logout((err) => {
       if (err) {
+        console.log('❌ Logout error:', err);
         return res.status(500).json({ message: "Logout failed" });
       }
+      
+      console.log('✅ User successfully logged out');
+      console.log('- Session after logout, isAuthenticated:', req.isAuthenticated());
+      console.log('- Session user after logout:', (req.session as any)?.passport?.user);
+      
       res.status(200).json({ message: "Logged out successfully" });
     });
   });

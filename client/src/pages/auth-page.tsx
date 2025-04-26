@@ -204,7 +204,7 @@ function LoginForm() {
 }
 
 function RegisterForm() {
-  const { registerMutation } = useAuth();
+  const { registerMutation, refetchUser } = useAuth();
   const registerForm = useForm<z.infer<typeof registerUserSchema>>({
     resolver: zodResolver(registerUserSchema),
     defaultValues: {
@@ -220,7 +220,13 @@ function RegisterForm() {
   });
 
   function onSubmit(values: z.infer<typeof registerUserSchema>) {
-    registerMutation.mutate(values);
+    registerMutation.mutate(values, {
+      onSuccess: async () => {
+        console.log("Registration successful, explicitly refetching user data");
+        // Force refetch user data after registration to ensure session is properly recognized
+        await refetchUser();
+      }
+    });
   }
 
   return (
