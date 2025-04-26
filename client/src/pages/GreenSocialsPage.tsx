@@ -153,6 +153,25 @@ const isMediaArray = (media: any): media is Array<any> => {
   return Array.isArray(media);
 };
 
+// Utility function to ensure media URLs are properly formed
+const getFullUrl = (url: string): string => {
+  if (!url) return '';
+  
+  // If URL already includes http/https, return as is
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // If URL is relative path starting with /, ensure it uses the base URL
+  if (url.startsWith('/')) {
+    // For relative URLs, use the origin (protocol + hostname + port)
+    return `${window.location.origin}${url}`;
+  }
+  
+  // Otherwise, return as is
+  return url;
+};
+
 const GreenSocialsPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -1027,7 +1046,7 @@ const GreenSocialsPage = () => {
                         {mediaUrls.map((media, index) => (
                           <div key={index} className="relative group rounded-md overflow-hidden">
                             <img 
-                              src={media.url} 
+                              src={getFullUrl(media.url)} 
                               alt={media.caption || "Uploaded image"} 
                               className="w-full h-32 object-cover"
                             />
@@ -1226,7 +1245,7 @@ const GreenSocialsPage = () => {
                                               onClick={() => window.open(mediaUrl, '_blank')}
                                             >
                                               <img 
-                                                src={mediaUrl} 
+                                                src={getFullUrl(mediaUrl)} 
                                                 alt="Post image" 
                                                 className="w-full h-auto object-cover max-h-96"
                                                 onError={(e) => {
