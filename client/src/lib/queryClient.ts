@@ -31,14 +31,20 @@ export async function apiRequest(
   console.log(`Making ${method} request to: ${url}`);
   
   try {
+    // Add credentials to the request to ensure cookies are sent
     const res = await fetch(url, {
       method,
       headers,
       body,
-      credentials: "include",
+      credentials: "include", // Always include credentials for cross-domain requests
     });
 
+    // Log response status, cookies, and important headers
     console.log(`Response status: ${res.status}`);
+    console.log(`Response cookies present: ${!!document.cookie}`);
+    if (document.cookie) {
+      console.log(`Cookie length: ${document.cookie.length}`);
+    }
     
     if (!res.ok) {
       const text = await res.text();
@@ -60,6 +66,7 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     console.log(`Executing query for: ${queryKey[0]}`);
+    console.log(`Cookies present: ${!!document.cookie}`);
     
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
@@ -67,6 +74,13 @@ export const getQueryFn: <T>(options: {
         'Accept': 'application/json',
       }
     });
+    
+    console.log(`Query response status: ${res.status}`);
+    if (res.status === 401) {
+      console.log("Authentication failed for request");
+    } else {
+      console.log("Request authenticated successfully");
+    }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;

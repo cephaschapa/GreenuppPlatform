@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useEffect } from "react";
 import {
   useQuery,
   useMutation,
@@ -7,6 +7,7 @@ import {
 import { User, LoginUser, RegisterUser } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 type AuthContextType = {
   user: User | null;
@@ -22,6 +23,8 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const [location] = useLocation();
+  
   const {
     data: user,
     error,
@@ -31,9 +34,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
-    staleTime: 60000, // 1 minute
+    staleTime: 30000, // 30 seconds
     refetchOnWindowFocus: true, // Refetch when window gains focus
   });
+  
+  // Refetch user data when the route changes
+  useEffect(() => {
+    console.log('Location changed, refetching user data');
+    refetchUser();
+  }, [location, refetchUser]);
+  
+  // Check for authentication cookies on component mount
+  useEffect(() => {
+    // Check if we have cookies but no user data yet
+    if (document.cookie && document.cookie.includes('connect.sid') && !user) {
+      console.log('Authentication cookie detected, but no user data - refetching');
+      refetchUser();
+    }
+  }, [user, refetchUser]);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginUser) => {
