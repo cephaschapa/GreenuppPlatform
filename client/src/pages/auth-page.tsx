@@ -13,12 +13,22 @@ import { z } from "zod";
 import { Redirect } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function AuthPage() {
   const { user, isLoading } = useAuth();
+  const [checked, setChecked] = useState(false);
 
-  // If the user is already logged in, redirect based on their role
-  if (user && !isLoading) {
+  useEffect(() => {
+    // Only set checked to true after initial auth check is complete
+    if (!isLoading) {
+      setChecked(true);
+    }
+  }, [isLoading]);
+
+  // If the user is already logged in and we've completed initial loading, redirect based on their role
+  if (checked && user && !isLoading) {
+    console.log('Auth page: User is logged in, redirecting to dashboard');
     if (user.role === 'buyer') {
       return <Redirect to="/dashboard/marketplace" />;
     } else if (user.role === 'supplier') {

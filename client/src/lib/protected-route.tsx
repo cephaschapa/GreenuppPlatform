@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
-import { useEffect, useState } from "react";
+import { useEffect, useState, createElement } from "react";
 
 type ProtectedRouteProps = {
   path: string;
@@ -21,7 +21,11 @@ export function ProtectedRoute({ path, component: Component }: ProtectedRoutePro
       const doRetry = async () => {
         setIsRetrying(true);
         console.log('Protected route: No user found, attempting to refetch...');
-        await refetchUser();
+        try {
+          await refetchUser();
+        } catch (error) {
+          console.error('Error refetching user data:', error);
+        }
         setIsRetrying(false);
         setRetryCount(prev => prev + 1);
       };
@@ -42,18 +46,24 @@ export function ProtectedRoute({ path, component: Component }: ProtectedRoutePro
 
   return (
     <Route path={path}>
-      {isCurrentlyLoading ? (
-        <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground text-sm">
-            {isRetrying ? 'Verifying your session...' : 'Loading...'}
-          </p>
-        </div>
-      ) : user ? (
-        <Component />
-      ) : (
-        <Redirect to="/auth" />
-      )}
+      {() => {
+        if (isCurrentlyLoading) {
+          return (
+            <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground text-sm">
+                {isRetrying ? 'Verifying your session...' : 'Loading...'}
+              </p>
+            </div>
+          );
+        }
+        
+        if (user) {
+          return createElement(Component);
+        }
+        
+        return <Redirect to="/auth" />;
+      }}
     </Route>
   );
 }
