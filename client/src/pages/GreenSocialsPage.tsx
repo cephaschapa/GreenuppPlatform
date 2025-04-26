@@ -1393,7 +1393,7 @@ const GreenSocialsPage = () => {
                                           onClick={() => window.open(mediaUrl, '_blank')}
                                         >
                                           <img 
-                                            src={mediaUrl} 
+                                            src={getFullUrl(mediaUrl)} 
                                             alt="Post image" 
                                             className="w-full h-auto object-cover max-h-96"
                                             onError={(e) => {
@@ -1415,7 +1415,7 @@ const GreenSocialsPage = () => {
                                               onClick={() => window.open(item, '_blank')}
                                             >
                                               <img 
-                                                src={item} 
+                                                src={getFullUrl(item)} 
                                                 alt={`Post image ${idx + 1}`} 
                                                 className={`w-full h-auto object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
                                                 onError={(e) => {
@@ -1435,7 +1435,7 @@ const GreenSocialsPage = () => {
                                                 onClick={() => window.open(item.url, '_blank')}
                                               >
                                                 <img 
-                                                  src={item.url} 
+                                                  src={getFullUrl(item.url)} 
                                                   alt={item.caption || `Post image ${idx + 1}`} 
                                                   className={`w-full h-auto object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
                                                   onError={(e) => {
