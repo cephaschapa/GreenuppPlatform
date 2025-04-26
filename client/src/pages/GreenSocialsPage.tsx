@@ -165,7 +165,17 @@ const getFullUrl = (url: string): string => {
   // If URL is relative path starting with /, ensure it uses the base URL
   if (url.startsWith('/')) {
     // For relative URLs, use the origin (protocol + hostname + port)
-    return `${window.location.origin}${url}`;
+    // Add a console log to debug URL construction
+    const fullUrl = `${window.location.origin}${url}`;
+    console.log('Constructed URL:', fullUrl, 'from original:', url);
+    return fullUrl;
+  }
+  
+  // Add leading slash if missing to ensure URL is properly formed
+  if (!url.startsWith('/')) {
+    const fullUrl = `${window.location.origin}/${url}`;
+    console.log('Added leading slash to URL:', fullUrl, 'from original:', url);
+    return fullUrl;
   }
   
   // Otherwise, return as is
@@ -1267,7 +1277,7 @@ const GreenSocialsPage = () => {
                                                   onClick={() => window.open(item, '_blank')}
                                                 >
                                                   <img 
-                                                    src={item} 
+                                                    src={getFullUrl(item)} 
                                                     alt={`Post image ${idx + 1}`} 
                                                     className={`w-full h-auto object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
                                                     onError={(e) => {
@@ -1287,7 +1297,7 @@ const GreenSocialsPage = () => {
                                                     onClick={() => window.open(item.url, '_blank')}
                                                   >
                                                     <img 
-                                                      src={item.url} 
+                                                      src={getFullUrl(item.url || '')} 
                                                       alt={item.caption || `Post image ${idx + 1}`} 
                                                       className={`w-full h-auto object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
                                                       onError={(e) => {
@@ -1435,7 +1445,7 @@ const GreenSocialsPage = () => {
                                                 onClick={() => window.open(item.url, '_blank')}
                                               >
                                                 <img 
-                                                  src={getFullUrl(item.url)} 
+                                                  src={getFullUrl(item.url || '')} 
                                                   alt={item.caption || `Post image ${idx + 1}`} 
                                                   className={`w-full h-auto object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? 'max-h-96' : 'h-60'}`}
                                                   onError={(e) => {
