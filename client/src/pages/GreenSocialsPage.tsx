@@ -157,29 +157,41 @@ const isMediaArray = (media: any): media is Array<any> => {
 const getFullUrl = (url: string): string => {
   if (!url) return '';
   
+  // If URL is a data URL (base64 encoded image), return as is
+  if (url.startsWith('data:')) {
+    return url;
+  }
+  
   // If URL already includes http/https, return as is
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
   
-  // If URL is relative path starting with /, ensure it uses the base URL
-  if (url.startsWith('/')) {
-    // For relative URLs, use the origin (protocol + hostname + port)
-    // Add a console log to debug URL construction
+  // If URL is relative path starting with /uploads, ensure it uses the base URL
+  if (url.startsWith('/uploads/')) {
     const fullUrl = `${window.location.origin}${url}`;
-    console.log('Constructed URL:', fullUrl, 'from original:', url);
+    console.log('Image URL constructed:', fullUrl);
+    return fullUrl;
+  }
+  
+  // If URL starts with uploads/ (without leading slash), add the leading slash
+  if (url.startsWith('uploads/')) {
+    const fullUrl = `${window.location.origin}/${url}`;
+    console.log('Fixed uploads URL:', fullUrl);
+    return fullUrl;
+  }
+  
+  // If URL is a relative path starting with /, ensure it uses the base URL
+  if (url.startsWith('/')) {
+    const fullUrl = `${window.location.origin}${url}`;
+    console.log('Constructed URL:', fullUrl);
     return fullUrl;
   }
   
   // Add leading slash if missing to ensure URL is properly formed
-  if (!url.startsWith('/')) {
-    const fullUrl = `${window.location.origin}/${url}`;
-    console.log('Added leading slash to URL:', fullUrl, 'from original:', url);
-    return fullUrl;
-  }
-  
-  // Otherwise, return as is
-  return url;
+  const fullUrl = `${window.location.origin}/${url}`;
+  console.log('Added leading slash to URL:', fullUrl);
+  return fullUrl;
 };
 
 const GreenSocialsPage = () => {
