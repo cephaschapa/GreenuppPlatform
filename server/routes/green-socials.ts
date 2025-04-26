@@ -746,6 +746,84 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
         displayName: commentRow.profile_displayName
       }
     };
+    
+    // Get post owner to send notification
+    const [postOwner] = await db
+      .select({ 
+        userId: posts.userId,
+        postType: posts.postType
+      })
+      .from(posts)
+      .where(eq(posts.id, req.body.postId))
+      .limit(1);
+      
+    // Check if parent comment exists (for reply notification)
+    let parentCommentOwner = null;
+    if (req.body.parentId) {
+      const [parent] = await db
+        .select({ userId: comments.userId })
+        .from(comments)
+        .where(eq(comments.id, req.body.parentId))
+        .limit(1);
+        
+      if (parent) {
+        parentCommentOwner = parent.userId;
+      }
+    }
+    
+    try {
+      // Import the createNotification function
+      const { createNotification } = await import('../services/notifications');
+      
+      // Send notification to post owner if they're not the commenter
+      if (postOwner && postOwner.userId !== userId) {
+        const postType = postOwner.postType || 'post';
+        const shortContent = commentRow.content.length > 50 
+          ? commentRow.content.substring(0, 50) + "..." 
+          : commentRow.content;
+          
+        await createNotification({
+          userId: postOwner.userId,
+          type: 'social_comment',
+          title: 'New Comment on Your Post',
+          message: `${commentRow.author_username} commented on your ${postType}: "${shortContent}"`,
+          data: {
+            postId: req.body.postId,
+            commentId: commentId,
+            commentedBy: userId,
+            commentContent: shortContent
+          },
+          actionUrl: `/social/posts/${req.body.postId}?comment=${commentId}`,
+          sendEmail: false // Set to true if you want email notifications for comments
+        });
+      }
+      
+      // Send notification to parent comment owner if this is a reply
+      if (parentCommentOwner && parentCommentOwner !== userId) {
+        const shortContent = commentRow.content.length > 50 
+          ? commentRow.content.substring(0, 50) + "..." 
+          : commentRow.content;
+          
+        await createNotification({
+          userId: parentCommentOwner,
+          type: 'social_reply',
+          title: 'New Reply to Your Comment',
+          message: `${commentRow.author_username} replied to your comment: "${shortContent}"`,
+          data: {
+            postId: req.body.postId,
+            commentId: commentId,
+            parentCommentId: req.body.parentId,
+            repliedBy: userId,
+            replyContent: shortContent
+          },
+          actionUrl: `/social/posts/${req.body.postId}?comment=${commentId}`,
+          sendEmail: false // Set to true if you want email notifications for replies
+        });
+      }
+    } catch (error) {
+      // Just log the error, don't fail the comment creation
+      console.error("Failed to create notification for comment/reply:", error);
+    }
 
     return res.status(201).json(comment);
   } catch (error) {
@@ -2015,7 +2093,8 @@ greenSocialsRouter.post(
 
       // Check if the post exists using raw SQL
       const postCheckResult = await db.execute(sql`
-      SELECT id FROM posts 
+      SELECT id, user_id as "userId", content, post_type as "postType"
+      FROM posts 
       WHERE id = ${postId}
       LIMIT 1
     `);
@@ -2023,6 +2102,8 @@ greenSocialsRouter.post(
       if (!postCheckResult.rows.length) {
         return res.status(404).json({ message: "Post not found" });
       }
+      
+      const postData = postCheckResult.rows[0];
 
       // Check if the user already saved this post using raw SQL
       const saveCheckResult = await db.execute(sql`
@@ -2049,6 +2130,47 @@ greenSocialsRouter.post(
       SET updated_at = ${now}
       WHERE id = ${postId}
     `);
+      
+      // Send notification to post owner if they're different than the saver
+      if (postData.userId !== userId) {
+        // Get the user who is saving the post
+        const [saver] = await db
+          .select({ username: users.username })
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
+            
+        const content = postData.content || "";
+        const shortContent = typeof content === 'string' && content.length > 50 
+          ? content.substring(0, 50) + "..." 
+          : String(content);
+          
+        const postType = postData.postType || 'post';
+
+        try {
+          // Import the createNotification function
+          const { createNotification } = await import('../services/notifications');
+          
+          // Create a notification using the notification service
+          await createNotification({
+            userId: postData.userId,
+            type: 'social_save',
+            title: 'Your Post Was Saved',
+            message: `${saver.username} saved your ${postType}: "${shortContent}"`,
+            data: {
+              postId,
+              savedBy: userId,
+              collection,
+              postContent: shortContent
+            },
+            actionUrl: `/social/posts/${postId}`,
+            sendEmail: false // Set to true if you want email notifications for saved posts
+          });
+        } catch (error) {
+          // Just log the error, don't fail the save operation
+          console.error("Failed to create notification for post save:", error);
+        }
+      }
 
       return res.status(201).json(saveResult.rows[0]);
     } catch (error) {
