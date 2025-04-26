@@ -52,8 +52,10 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      secure: false, // Setting to false for both development and production
-      sameSite: 'lax'
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/'
     }
   };
 
@@ -61,9 +63,26 @@ export function setupAuth(app: Express) {
   app.set('trust proxy', 1);
   
   // Setup session middleware
+  console.log("Initializing session middleware with the following settings:");
+  console.log("- Secret length:", (process.env.SESSION_SECRET || "greenupp-secret-key").length);
+  console.log("- Cookie secure:", sessionSettings.cookie?.secure);
+  console.log("- Cookie sameSite:", sessionSettings.cookie?.sameSite);
+  
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
+  
+  // Debug middleware to log session info on each request
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/')) {
+      console.log(`Authentication status for ${req.method} ${req.path}:`, {
+        hasSession: !!req.session,
+        isAuthenticated: req.isAuthenticated?.() || false,
+        sessionID: req.sessionID,
+      });
+    }
+    next();
+  });
 
   // Configure local strategy for username/password login
   passport.use(
