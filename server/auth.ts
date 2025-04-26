@@ -56,12 +56,12 @@ export function setupAuth(app: Express) {
   
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "greenupp-secret-key",
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // Changed to true to ensure the session is always saved
+    saveUninitialized: true, // Changed to true to ensure new sessions are saved
     store: storage.sessionStore,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // Set to false for development environment even if NODE_ENV=production
       httpOnly: true,
       sameSite: 'lax',
       path: '/'

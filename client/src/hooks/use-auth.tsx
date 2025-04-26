@@ -15,6 +15,7 @@ type AuthContextType = {
   loginMutation: UseMutationResult<Omit<User, "password">, Error, LoginUser>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<Omit<User, "password">, Error, RegisterUser>;
+  refetchUser: () => Promise<any>;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -25,9 +26,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     data: user,
     error,
     isLoading,
+    refetch: refetchUser
   } = useQuery<User | undefined, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    retry: false,
+    staleTime: 60000, // 1 minute
+    refetchOnWindowFocus: true, // Refetch when window gains focus
   });
 
   const loginMutation = useMutation({
@@ -35,8 +40,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await apiRequest("POST", "/api/login", credentials);
       return await res.json();
     },
-    onSuccess: (user: Omit<User, "password">) => {
+    onSuccess: async (user: Omit<User, "password">) => {
       queryClient.setQueryData(["/api/user"], user);
+      
+      // Force refetch to ensure session is properly recognized
+      await refetchUser();
+      
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.firstName || user.username}!`,
@@ -56,8 +65,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await apiRequest("POST", "/api/register", credentials);
       return await res.json();
     },
-    onSuccess: (user: Omit<User, "password">) => {
+    onSuccess: async (user: Omit<User, "password">) => {
       queryClient.setQueryData(["/api/user"], user);
+      
+      // Force refetch to ensure session is properly recognized
+      await refetchUser();
+      
       toast({
         title: "Registration successful",
         description: `Welcome to Greenupp, ${user.firstName || user.username}!`,
@@ -101,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        refetchUser,
       }}
     >
       {children}

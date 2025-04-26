@@ -100,7 +100,7 @@ export default function AuthPage() {
 }
 
 function LoginForm() {
-  const { loginMutation } = useAuth();
+  const { loginMutation, refetchUser } = useAuth();
   const loginForm = useForm<z.infer<typeof loginUserSchema>>({
     resolver: zodResolver(loginUserSchema),
     defaultValues: {
@@ -111,7 +111,13 @@ function LoginForm() {
   });
 
   function onSubmit(values: z.infer<typeof loginUserSchema>) {
-    loginMutation.mutate(values);
+    loginMutation.mutate(values, {
+      onSuccess: async () => {
+        console.log("Login successful, explicitly refetching user data");
+        // Force refetch user data after login to ensure session is properly recognized
+        await refetchUser();
+      }
+    });
   }
 
   return (
