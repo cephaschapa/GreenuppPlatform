@@ -7,6 +7,15 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User, UserRoleType } from "@shared/schema";
 
+// Add passport session type
+declare module 'express-session' {
+  interface SessionData {
+    passport: {
+      user: number; // User ID stored in session
+    };
+  }
+}
+
 // Define a specific interface for Express User to avoid circular reference
 interface ExpressUser {
   id: number;
@@ -179,43 +188,43 @@ export function setupAuth(app: Express) {
 
   // User login route
   app.post("/api/login", (req, res, next) => {
-    if (process.env.DEBUG_AUTH) {
-      console.log('Login attempt:', { email: req.body.email });
-    }
+    console.log('Login attempt:', { email: req.body.email });
+    console.log('- Session ID (pre-auth):', req.sessionID);
     
     passport.authenticate("local", (err: Error | null, user: User | false, info: { message: string } | undefined) => {
       if (err) {
-        if (process.env.DEBUG_AUTH) {
-          console.log('Login error:', err);
-        }
+        console.log('Login error:', err);
         return next(err);
       }
       
       if (!user) {
-        if (process.env.DEBUG_AUTH) {
-          console.log('Login failed:', info);
-        }
+        console.log('Login failed:', info);
         return res.status(401).json({ message: info?.message || "Login failed" });
       }
       
-      if (process.env.DEBUG_AUTH) {
-        console.log('User authenticated successfully:', { id: user.id, username: user.username });
-      }
+      console.log('User authenticated successfully:', { id: user.id, username: user.username });
       
       req.login(user as unknown as Express.User, (loginErr) => {
         if (loginErr) {
-          if (process.env.DEBUG_AUTH) {
-            console.log('Login session error:', loginErr);
-          }
+          console.log('Login session error:', loginErr);
           return next(loginErr);
         }
         
-        if (process.env.DEBUG_AUTH) {
-          console.log('Session established, ID:', req.sessionID);
-        }
+        console.log('Session established:');
+        console.log('- Session ID:', req.sessionID);
+        console.log('- Session cookie:', req.headers.cookie);
+        console.log('- Session user:', (req.session as any)?.passport?.user);
         
         // Remove password from response
         const { password, ...userWithoutPassword } = user;
+        
+        // Set a special cookie to track session issues
+        res.cookie('greenupp_auth_check', 'true', { 
+          maxAge: 30 * 24 * 60 * 60 * 1000,
+          httpOnly: false  // Allow JavaScript to read this cookie for debugging
+        });
+        
+        console.log('Login successful, returning user data');
         res.json(userWithoutPassword);
       });
     })(req, res, next);
@@ -233,23 +242,30 @@ export function setupAuth(app: Express) {
 
   // Get current authenticated user
   app.get("/api/user", (req, res) => {
-    // Debugging can be enabled with environment variable
-    if (process.env.DEBUG_AUTH) {
-      console.log('Session ID:', req.sessionID);
-      console.log('Is authenticated:', req.isAuthenticated());
-      console.log('Session:', req.session);
+    // Enhanced debugging always enabled for now
+    console.log('GET /api/user - Debug info:');
+    console.log('- Session ID:', req.sessionID);
+    console.log('- Is authenticated:', req.isAuthenticated());
+    console.log('- Session cookie:', req.headers.cookie);
+    
+    if (req.session) {
+      console.log('- Session exists:', true);
+      console.log('- Session user:', (req.session as any)?.passport?.user);
+      console.log('- Session cookie maxAge:', req.session.cookie?.maxAge);
+    } else {
+      console.log('- Session exists:', false);
     }
     
     if (!req.isAuthenticated()) {
+      console.log('- Authentication status: FAILED');
       return res.status(401).json({ message: "Not authenticated" });
     }
     
     // Remove password from response
     const { password, ...userWithoutPassword } = req.user as User;
     
-    if (process.env.DEBUG_AUTH) {
-      console.log('User found:', userWithoutPassword);
-    }
+    console.log('- Authentication status: SUCCESS');
+    console.log('- User found:', { id: userWithoutPassword.id, username: userWithoutPassword.username });
     
     res.json(userWithoutPassword);
   });
