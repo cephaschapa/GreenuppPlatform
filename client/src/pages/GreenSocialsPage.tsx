@@ -1344,38 +1344,186 @@ const GreenSocialsPage = () => {
                                 </CardContent>
                                 <CardFooter className="border-t px-6 py-3">
                                   <div className="flex justify-between w-full">
-                                    <Button variant="ghost" size="sm" className="gap-1">
-                                      <Heart className="h-4 w-4" />
-                                      <span className="text-xs">{post.post.likeCount}</span>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className={`gap-1 ${likedPosts[post.post.id] ? 'text-primary' : ''}`}
+                                      onClick={() => handleToggleLike(post.post.id, likedPosts[post.post.id] || false)}
+                                    >
+                                      {likedPosts[post.post.id] ? (
+                                        <Heart className="h-4 w-4 text-primary fill-primary" />
+                                      ) : (
+                                        <Heart className="h-4 w-4" />
+                                      )}
+                                      <span className="text-xs">{post.post.likeCount + (likedPosts[post.post.id] ? 1 : 0)}</span>
                                     </Button>
-                                    <Button variant="ghost" size="sm" className="gap-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="gap-1"
+                                      onClick={() => {
+                                        setVisibleComments({
+                                          ...visibleComments,
+                                          [post.post.id]: !visibleComments[post.post.id]
+                                        });
+                                      }}
+                                    >
                                       <MessageCircle className="h-4 w-4" />
                                       <span className="text-xs">{post.post.commentCount}</span>
                                     </Button>
-                                    <Button variant="ghost" size="sm" className="aspect-square p-0 sm:aspect-auto sm:px-3">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="aspect-square p-0 sm:aspect-auto sm:px-3"
+                                      onClick={() => {
+                                        setSharePostId(post.post.id);
+                                        setShareTarget(null);
+                                      }}
+                                    >
                                       <Share2 className="h-4 w-4" />
                                     </Button>
-                                    <Button variant="ghost" size="sm" className="aspect-square p-0 sm:aspect-auto sm:px-3">
-                                      <Bookmark className="h-4 w-4" />
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className={`aspect-square p-0 sm:aspect-auto sm:px-3 ${savedPosts[post.post.id] ? 'text-primary' : ''}`}
+                                      onClick={() => {
+                                        if (savedPosts[post.post.id]) {
+                                          // If already saved, unsave it
+                                          apiRequest("DELETE", `/api/social/posts/${post.post.id}/save`)
+                                            .then(() => {
+                                              // Optimistic UI update
+                                              setSavedPosts({
+                                                ...savedPosts,
+                                                [post.post.id]: false
+                                              });
+                                              toast({
+                                                title: "Post removed from saved items",
+                                                description: "The post has been removed from your saved collection",
+                                              });
+                                            })
+                                            .catch(() => {
+                                              toast({
+                                                title: "Failed to remove post",
+                                                description: "There was an error removing this post from your saved collection",
+                                                variant: "destructive",
+                                              });
+                                            });
+                                        } else {
+                                          // If not saved, save it
+                                          savePostMutation.mutate({ 
+                                            postId: post.post.id 
+                                          });
+                                          // Optimistic UI update
+                                          setSavedPosts({
+                                            ...savedPosts,
+                                            [post.post.id]: true
+                                          });
+                                        }
+                                      }}
+                                    >
+                                      {savedPosts[post.post.id] ? (
+                                        <Bookmark className="h-4 w-4 text-primary fill-primary" />
+                                      ) : (
+                                        <Bookmark className="h-4 w-4" />
+                                      )}
                                     </Button>
                                   </div>
                                 </CardFooter>
                                 
                                 {/* Comment section (collapsed by default) */}
-                                <div className="px-6 py-3 bg-muted/20">
-                                  <div className="flex gap-2">
-                                    <Avatar className="w-8 h-8">
-                                      <AvatarImage src={user?.profileImage || undefined} />
-                                      <AvatarFallback>{getInitials(user?.username || "")}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 flex items-center gap-2">
-                                      <Input placeholder="Write a comment..." className="h-9" />
-                                      <Button size="icon" className="h-9 w-9">
-                                        <Send className="h-4 w-4" />
-                                      </Button>
+                                {visibleComments[post.post.id] && (
+                                  <div className="px-6 py-3 bg-muted/20">
+                                    {/* Comment input field */}
+                                    <div className="flex gap-2 mb-4">
+                                      <Avatar className="w-8 h-8">
+                                        <AvatarImage src={user?.profileImage || undefined} />
+                                        <AvatarFallback>{getInitials(user?.username || "")}</AvatarFallback>
+                                      </Avatar>
+                                      <div className="flex-1 flex items-center gap-2">
+                                        <Input 
+                                          placeholder="Write a comment..." 
+                                          className="h-9"
+                                          value={newComments[post.post.id] || ''}
+                                          onChange={(e) => {
+                                            setNewComments({
+                                              ...newComments,
+                                              [post.post.id]: e.target.value
+                                            });
+                                          }}
+                                        />
+                                        <Button 
+                                          size="icon" 
+                                          className="h-9 w-9"
+                                          onClick={() => {
+                                            if (!newComments[post.post.id]?.trim()) return;
+                                            
+                                            createCommentMutation.mutate({
+                                              postId: post.post.id,
+                                              content: newComments[post.post.id]
+                                            });
+                                            
+                                            // Clear the input field
+                                            setNewComments({
+                                              ...newComments,
+                                              [post.post.id]: ''
+                                            });
+                                          }}
+                                          disabled={!newComments[post.post.id]?.trim()}
+                                        >
+                                          <Send className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                    
+                                    {/* Comments list */}
+                                    <div className="space-y-4 mt-2">
+                                      {post.post.comments?.map((comment) => (
+                                        <div key={comment.comment.id} className="flex gap-2">
+                                          <Avatar className="w-6 h-6">
+                                            <AvatarImage src={comment.author.profileImage || undefined} />
+                                            <AvatarFallback>{getInitials(comment.profile.displayName || comment.author.username)}</AvatarFallback>
+                                          </Avatar>
+                                          <div className="flex-1">
+                                            <div className="bg-muted rounded-lg p-2">
+                                              <div className="font-medium text-xs">{comment.profile.displayName || comment.author.username}</div>
+                                              <div className="text-sm">{comment.comment.content}</div>
+                                            </div>
+                                            <div className="flex gap-3 mt-1 ml-1">
+                                              <button 
+                                                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                                                onClick={() => {
+                                                  // Set this comment for reply
+                                                  setSelectedComment({
+                                                    id: comment.comment.id,
+                                                    content: comment.comment.content
+                                                  });
+                                                  // Focus on the reply input
+                                                  setTimeout(() => {
+                                                    const replyInput = document.getElementById(`reply-input-${comment.comment.id}`);
+                                                    if (replyInput) {
+                                                      replyInput.focus();
+                                                    }
+                                                  }, 100);
+                                                }}
+                                              >
+                                                Reply
+                                              </button>
+                                              <button 
+                                                className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                                                onClick={() => likeCommentMutation.mutate(comment.comment.id)}
+                                              >
+                                                Like ({comment.comment.likeCount})
+                                              </button>
+                                              <span className="text-xs text-muted-foreground">
+                                                {formatDate(comment.comment.createdAt)}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
                                     </div>
                                   </div>
-                                </div>
+                                )}
                               </Card>
                             );
                           })
