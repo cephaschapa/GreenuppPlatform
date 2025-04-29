@@ -2,8 +2,8 @@ import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
-import { sendEmail, generateHtmlEmail } from '../services/email';
-import { sendSocialActivityEmail } from '../services/social-notifications';
+import { sendEmail, generateHtmlEmail, EmailResult } from '../services/email';
+import { sendSocialNotificationEmail } from '../services/social-notifications';
 
 export const testEmailRouter = Router();
 
@@ -78,15 +78,27 @@ testEmailRouter.post('/test-social-notification', async (req: Request, res: Resp
       return res.status(400).json({ message: 'User email not found' });
     }
 
-    // Send a test social activity notification
-    const sent = await sendSocialActivityEmail({
-      recipientId: req.user.id,
-      activityType: activityType,
-      actorUsername: 'testuser',
-      actorDisplayName: 'Test User',
-      contentPreview: 'This is a test notification to verify that social notifications are working properly.',
-      resourceId: 123,
-      resourceUrl: 'https://greenupp.app/green-socials/posts/123'
+    // Send a test social activity notification using the new notification system
+    const result = await sendSocialNotificationEmail({
+      type: activityType,
+      recipient: {
+        id: req.user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined
+      },
+      actor: {
+        id: 99999,
+        username: 'testuser',
+        email: 'test@greenupp.com',
+        firstName: 'Test',
+        lastName: 'User'
+      },
+      entityId: 12345,
+      entityContent: 'This is a test notification to verify that social notifications are working properly.',
+      postId: 12345,
+      commentId: activityType.includes('comment') ? 54321 : null
     });
 
     if (sent) {

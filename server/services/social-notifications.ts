@@ -1,204 +1,250 @@
-import { db } from "../db";
-import { users } from "@shared/schema";
-import { eq } from "drizzle-orm";
-import { sendEmail, generateHtmlEmail } from "./email";
+import { sendEmail, generateHtmlEmail } from './email';
 
-// Social activity types that can trigger email notifications
-export type SocialActivityType = 
-  'post_comment' | 
-  'comment_reply' | 
-  'post_like' | 
-  'comment_like' | 
-  'new_follower' | 
-  'post_share' | 
-  'post_save' | 
-  'post_mention' | 
-  'comment_mention';
+// Define interface for notification types
+export interface SocialNotification {
+  type: string;
+  recipient: {
+    id: number;
+    username: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    profileImageUrl?: string;
+  };
+  actor: {
+    id: number;
+    username: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    profileImageUrl?: string;
+  };
+  entityId: number;
+  entityContent: string;
+  postId?: number;
+  commentId?: number | null;
+  overrideEmail?: string; // Optional parameter to override recipient's email (for testing)
+}
 
-// Interface for sending social notification emails
-export interface SocialEmailOptions {
-  recipientId: number;        // User ID of the recipient
-  activityType: SocialActivityType;
-  actorUsername: string;      // Username of the person who performed the action
-  actorDisplayName?: string;  // Display name of the person who performed the action
-  contentPreview?: string;    // A snippet of the relevant content (post/comment)
-  resourceId?: number;        // ID of the related resource (post/comment)
-  resourceUrl?: string;       // URL to view the content in the app
+// Response interface
+export interface EmailResult {
+  success: boolean;
+  error?: string;
 }
 
 /**
- * Send an email notification for a social activity
+ * Send notification email for social activities
  */
-export async function sendSocialActivityEmail(options: SocialEmailOptions): Promise<boolean> {
+export async function sendSocialNotificationEmail(
+  notification: SocialNotification
+): Promise<EmailResult> {
   try {
-    // Get the recipient's email
-    const [recipient] = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        username: users.username
-      })
-      .from(users)
-      .where(eq(users.id, options.recipientId));
-
-    if (!recipient || !recipient.email) {
-      console.warn(`Cannot send email: User ${options.recipientId} not found or has no email`);
-      return false;
+    console.log(`[SOCIAL NOTIFICATION] Sending ${notification.type} notification`);
+    
+    // Use the override email if provided (useful for testing)
+    const recipientEmail = notification.overrideEmail || notification.recipient.email;
+    
+    if (!recipientEmail) {
+      return {
+        success: false,
+        error: 'Recipient email is required'
+      };
     }
+    
+    const recipientName = notification.recipient.firstName || notification.recipient.username;
+    const actorName = notification.actor.firstName || notification.actor.username;
+    const actorUsername = notification.actor.username;
+    
+    // Determine notification details based on type
+    let title = '';
+    let message = '';
+    let actionUrl = '';
+    let actionText = '';
 
-    // Create friendly names and messages for different activity types
-    const { subject, message, actionText } = createEmailContent(
-      options.activityType,
-      options.actorUsername,
-      options.actorDisplayName,
-      options.contentPreview
-    );
-
-    // Create a URL for the content if not provided
-    const actionUrl = options.resourceUrl || createResourceUrl(options.activityType, options.resourceId);
-
-    // Generate the HTML email
+    // Social activity dashboard base URL
+    const socialBaseUrl = 'https://greenupp.app/dashboard/social';
+    
+    switch (notification.type) {
+      case 'post_comment':
+        title = `${actorName} commented on your post`;
+        message = `
+          <p>Hi ${recipientName},</p>
+          <p><strong>${actorUsername}</strong> commented on your post:</p>
+          <div style="margin: 15px 0; padding: 15px; background-color: #f1f5f9; border-left: 4px solid #10b981; border-radius: 4px;">
+            <p style="font-style: italic; margin: 0;">"${notification.entityContent}"</p>
+          </div>
+          <p>Join the conversation and reply to their comment.</p>
+        `;
+        actionUrl = `${socialBaseUrl}/posts/${notification.postId}?comment=${notification.commentId}`;
+        actionText = 'View Comment';
+        break;
+        
+      case 'comment_reply':
+        title = `${actorName} replied to your comment`;
+        message = `
+          <p>Hi ${recipientName},</p>
+          <p><strong>${actorUsername}</strong> replied to your comment:</p>
+          <div style="margin: 15px 0; padding: 15px; background-color: #f1f5f9; border-left: 4px solid #10b981; border-radius: 4px;">
+            <p style="font-style: italic; margin: 0;">"${notification.entityContent}"</p>
+          </div>
+          <p>Continue the conversation by replying back.</p>
+        `;
+        actionUrl = `${socialBaseUrl}/posts/${notification.postId}?comment=${notification.commentId}`;
+        actionText = 'View Reply';
+        break;
+        
+      case 'post_like':
+        title = `${actorName} liked your post`;
+        message = `
+          <p>Hi ${recipientName},</p>
+          <p><strong>${actorUsername}</strong> liked your post.</p>
+          <div style="margin: 15px 0; padding: 15px; background-color: #f1f5f9; border-left: 4px solid #10b981; border-radius: 4px;">
+            <p style="font-style: italic; margin: 0;">"${notification.entityContent.substring(0, 100)}${notification.entityContent.length > 100 ? '...' : ''}"</p>
+          </div>
+        `;
+        actionUrl = `${socialBaseUrl}/posts/${notification.postId}`;
+        actionText = 'View Post';
+        break;
+        
+      case 'comment_like':
+        title = `${actorName} liked your comment`;
+        message = `
+          <p>Hi ${recipientName},</p>
+          <p><strong>${actorUsername}</strong> liked your comment:</p>
+          <div style="margin: 15px 0; padding: 15px; background-color: #f1f5f9; border-left: 4px solid #10b981; border-radius: 4px;">
+            <p style="font-style: italic; margin: 0;">"${notification.entityContent}"</p>
+          </div>
+        `;
+        actionUrl = `${socialBaseUrl}/posts/${notification.postId}?comment=${notification.commentId}`;
+        actionText = 'View Comment';
+        break;
+        
+      case 'new_follower':
+        title = `${actorName} is now following you`;
+        message = `
+          <p>Hi ${recipientName},</p>
+          <p><strong>${actorUsername}</strong> is now following you on Greenupp!</p>
+          <p>Check out their profile and consider following them back.</p>
+        `;
+        actionUrl = `${socialBaseUrl}/profile/${notification.actor.id}`;
+        actionText = 'View Profile';
+        break;
+        
+      case 'post_share':
+        title = `${actorName} shared your post`;
+        message = `
+          <p>Hi ${recipientName},</p>
+          <p><strong>${actorUsername}</strong> shared your post:</p>
+          <div style="margin: 15px 0; padding: 15px; background-color: #f1f5f9; border-left: 4px solid #10b981; border-radius: 4px;">
+            <p style="font-style: italic; margin: 0;">"${notification.entityContent.substring(0, 100)}${notification.entityContent.length > 100 ? '...' : ''}"</p>
+          </div>
+          <p>Your content is reaching more farmers in the Greenupp community!</p>
+        `;
+        actionUrl = `${socialBaseUrl}/posts/${notification.postId}`;
+        actionText = 'View Post';
+        break;
+        
+      case 'post_save':
+        title = `${actorName} saved your post`;
+        message = `
+          <p>Hi ${recipientName},</p>
+          <p><strong>${actorUsername}</strong> saved your post to their collection:</p>
+          <div style="margin: 15px 0; padding: 15px; background-color: #f1f5f9; border-left: 4px solid #10b981; border-radius: 4px;">
+            <p style="font-style: italic; margin: 0;">"${notification.entityContent.substring(0, 100)}${notification.entityContent.length > 100 ? '...' : ''}"</p>
+          </div>
+          <p>Your content is being valued by the Greenupp community!</p>
+        `;
+        actionUrl = `${socialBaseUrl}/posts/${notification.postId}`;
+        actionText = 'View Post';
+        break;
+        
+      case 'post_mention':
+        title = `${actorName} mentioned you in a post`;
+        message = `
+          <p>Hi ${recipientName},</p>
+          <p><strong>${actorUsername}</strong> mentioned you in a post:</p>
+          <div style="margin: 15px 0; padding: 15px; background-color: #f1f5f9; border-left: 4px solid #10b981; border-radius: 4px;">
+            <p style="font-style: italic; margin: 0;">"${notification.entityContent.substring(0, 100)}${notification.entityContent.length > 100 ? '...' : ''}"</p>
+          </div>
+        `;
+        actionUrl = `${socialBaseUrl}/posts/${notification.postId}`;
+        actionText = 'View Post';
+        break;
+        
+      case 'comment_mention':
+        title = `${actorName} mentioned you in a comment`;
+        message = `
+          <p>Hi ${recipientName},</p>
+          <p><strong>${actorUsername}</strong> mentioned you in a comment:</p>
+          <div style="margin: 15px 0; padding: 15px; background-color: #f1f5f9; border-left: 4px solid #10b981; border-radius: 4px;">
+            <p style="font-style: italic; margin: 0;">"${notification.entityContent}"</p>
+          </div>
+        `;
+        actionUrl = `${socialBaseUrl}/posts/${notification.postId}?comment=${notification.commentId}`;
+        actionText = 'View Comment';
+        break;
+        
+      default:
+        title = 'New Activity on Greenupp';
+        message = `
+          <p>Hi ${recipientName},</p>
+          <p>There's been new activity related to your content on Greenupp.</p>
+        `;
+        actionUrl = `${socialBaseUrl}`;
+        actionText = 'Go to Greenupp';
+    }
+    
+    // Generate HTML email content
     const html = generateHtmlEmail(
-      subject,
+      title,
       message,
       actionUrl,
       actionText,
-      `You received this email because you have email notifications enabled for Green Socials.
-      You can change your notification preferences in Settings > Notifications.`
+      'You received this notification because you have email notifications enabled for social activities.'
     );
-
+    
+    // Plain text alternative
+    const text = `
+      ${title}
+      
+      Hi ${recipientName},
+      
+      ${notification.type.includes('comment') ? `${actorUsername} commented: "${notification.entityContent}"` : 
+        notification.type.includes('mention') ? `${actorUsername} mentioned you: "${notification.entityContent}"` :
+        notification.type.includes('like') ? `${actorUsername} liked your content` :
+        notification.type.includes('follow') ? `${actorUsername} is now following you` :
+        `${actorUsername} interacted with your content on Greenupp`}
+      
+      Visit ${actionUrl} to see the activity.
+      
+      - Greenupp Team
+    `;
+    
     // Send the email
-    return await sendEmail({
-      to: recipient.email,
-      from: 'Greenupp Social <social@greenupp.app>',
-      subject,
-      text: message + (actionUrl ? `\n\n${actionText}: ${actionUrl}` : ''),
-      html
+    const emailSent = await sendEmail({
+      to: recipientEmail,
+      from: 'greenupp.notifier@gmail.com',
+      subject: title,
+      html,
+      text
     });
-  } catch (error) {
-    console.error("Failed to send social activity email:", error);
-    return false;
-  }
-}
-
-/**
- * Create email content based on activity type
- */
-function createEmailContent(
-  activityType: SocialActivityType, 
-  actorUsername: string,
-  actorDisplayName?: string,
-  contentPreview?: string
-): { subject: string; message: string; actionText: string } {
-  // Use display name if available, otherwise username
-  const actorName = actorDisplayName || actorUsername;
-  
-  // Truncate content preview if needed
-  const preview = contentPreview 
-    ? (contentPreview.length > 100 ? contentPreview.substring(0, 97) + '...' : contentPreview)
-    : '';
-
-  switch (activityType) {
-    case 'post_comment':
+    
+    // Log the result
+    if (emailSent) {
+      console.log(`[SOCIAL NOTIFICATION] Email sent to ${recipientEmail}`);
+      return { success: true };
+    } else {
+      console.error(`[SOCIAL NOTIFICATION] Failed to send email to ${recipientEmail}`);
       return {
-        subject: `${actorName} commented on your post`,
-        message: `${actorName} commented on your post: "${preview}"`,
-        actionText: 'View Comment'
+        success: false,
+        error: 'Failed to send notification email'
       };
-    
-    case 'comment_reply':
-      return {
-        subject: `${actorName} replied to your comment`,
-        message: `${actorName} replied to your comment: "${preview}"`,
-        actionText: 'View Reply'
-      };
-    
-    case 'post_like':
-      return {
-        subject: `${actorName} liked your post`,
-        message: `${actorName} liked your post. Keep sharing great content!`,
-        actionText: 'View Post'
-      };
-    
-    case 'comment_like':
-      return {
-        subject: `${actorName} liked your comment`,
-        message: `${actorName} liked your comment: "${preview}"`,
-        actionText: 'View Comment'
-      };
-    
-    case 'new_follower':
-      return {
-        subject: `${actorName} is now following you on Greenupp`,
-        message: `${actorName} (@${actorUsername}) started following you on Greenupp. Check out their profile!`,
-        actionText: 'View Profile'
-      };
-    
-    case 'post_share':
-      return {
-        subject: `${actorName} shared your post`,
-        message: `${actorName} shared your post with their followers. Your content is reaching more people!`,
-        actionText: 'View Original Post'
-      };
-    
-    case 'post_save':
-      return {
-        subject: `${actorName} saved your post`,
-        message: `${actorName} saved your post to their collection. Your content resonated with them!`,
-        actionText: 'View Post'
-      };
-    
-    case 'post_mention':
-      return {
-        subject: `${actorName} mentioned you in a post`,
-        message: `${actorName} mentioned you in a post: "${preview}"`,
-        actionText: 'View Post'
-      };
-    
-    case 'comment_mention':
-      return {
-        subject: `${actorName} mentioned you in a comment`,
-        message: `${actorName} mentioned you in a comment: "${preview}"`,
-        actionText: 'View Comment'
-      };
-    
-    default:
-      return {
-        subject: 'New activity on Greenupp',
-        message: `There's new activity related to your content on Greenupp.`,
-        actionText: 'View Activity'
-      };
-  }
-}
-
-/**
- * Create a URL to the resource in the app
- */
-function createResourceUrl(activityType: SocialActivityType, resourceId?: number): string {
-  // Base URL for the app - you might want to move this to an environment variable
-  const baseUrl = 'https://greenupp.app';
-  
-  if (!resourceId) {
-    return `${baseUrl}/green-socials`;
-  }
-  
-  switch (activityType) {
-    case 'post_comment':
-    case 'post_like':
-    case 'post_share':
-    case 'post_save':
-    case 'post_mention':
-      return `${baseUrl}/green-socials/posts/${resourceId}`;
-    
-    case 'comment_reply':
-    case 'comment_like':
-    case 'comment_mention':
-      return `${baseUrl}/green-socials/comments/${resourceId}`;
-    
-    case 'new_follower':
-      return `${baseUrl}/green-socials/profile/${resourceId}`;
-    
-    default:
-      return `${baseUrl}/green-socials`;
+    }
+  } catch (error: any) {
+    console.error('[SOCIAL NOTIFICATION] Error sending notification email:', error);
+    return {
+      success: false,
+      error: error.message || 'Unknown error sending notification email'
+    };
   }
 }

@@ -38,13 +38,20 @@ function logEmailToDev(options: EmailOptions): boolean {
   return true;
 }
 
+// Interface for email result
+export interface EmailResult {
+  success: boolean;
+  error?: string;
+}
+
 /**
  * Send an email using SendGrid or log to console in development
  */
-export async function sendEmail(options: EmailOptions): Promise<boolean> {
+export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
   // If SendGrid is not available, log the email to console
   if (!SENDGRID_AVAILABLE) {
-    return logEmailToDev(options);
+    logEmailToDev(options);
+    return { success: true };
   }
   
   try {
@@ -56,14 +63,19 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       html: options.html,
     });
     
-    return true;
+    return { success: true };
   } catch (err) {
     const error = err as any;
     console.error('Failed to send email via SendGrid:', error);
     
     // If we hit domain verification issues, fall back to development mode
     console.log('Falling back to development mode email logging');
-    return logEmailToDev(options);
+    logEmailToDev(options);
+    
+    return { 
+      success: true, 
+      error: 'SendGrid error, but logged to console in development mode' 
+    };
   }
 }
 
@@ -109,7 +121,7 @@ export function generateHtmlEmail(
 /**
  * Test email functionality
  */
-export async function testEmail(to: string): Promise<boolean> {
+export async function testEmail(to: string): Promise<EmailResult> {
   const html = generateHtmlEmail(
     'Test Email from Greenupp',
     'This is a test email sent from the Greenupp platform to verify that email functionality is working correctly.',
