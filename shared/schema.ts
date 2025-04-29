@@ -671,3 +671,74 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotificationSettings = z.infer<typeof insertNotificationSettingsSchema>;
 export type NotificationSettings = typeof notificationSettings.$inferSelect;
+
+// Chat related enums
+export const chatMessageStatusEnum = pgEnum('chat_message_status', ['sent', 'delivered', 'read']);
+export const chatRoomTypeEnum = pgEnum('chat_room_type', ['direct', 'group']);
+
+// Chat rooms table
+export const chatRooms = pgTable("chat_rooms", {
+  id: serial("id").primaryKey(),
+  name: text("name"),
+  type: chatRoomTypeEnum("type").notNull().default('direct'),
+  createdById: integer("created_by_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  lastMessageAt: timestamp("last_message_at").notNull().defaultNow(),
+  isActive: boolean("is_active").notNull().default(true),
+});
+
+// Chat room members junction table
+export const chatRoomMembers = pgTable("chat_room_members", {
+  id: serial("id").primaryKey(),
+  roomId: integer("room_id").notNull().references(() => chatRooms.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  joinedAt: timestamp("joined_at").notNull().defaultNow(),
+  lastReadAt: timestamp("last_read_at").notNull().defaultNow(),
+  isAdmin: boolean("is_admin").notNull().default(false),
+  nickname: text("nickname"),
+  isMuted: boolean("is_muted").notNull().default(false),
+});
+
+// Chat messages table
+export const chatMessages = pgTable("chat_messages", {
+  id: serial("id").primaryKey(),
+  roomId: integer("room_id").notNull().references(() => chatRooms.id),
+  senderId: integer("sender_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  status: chatMessageStatusEnum("status").notNull().default('sent'),
+  sentAt: timestamp("sent_at").notNull().defaultNow(),
+  media: jsonb("media"),
+  replyToId: integer("reply_to_id").references(() => chatMessages.id),
+  isEdited: boolean("is_edited").notNull().default(false),
+  isDeleted: boolean("is_deleted").notNull().default(false),
+});
+
+// Create insert schemas
+export const insertChatRoomSchema = createInsertSchema(chatRooms).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastMessageAt: true,
+});
+
+export const insertChatRoomMemberSchema = createInsertSchema(chatRoomMembers).omit({
+  id: true,
+  joinedAt: true,
+  lastReadAt: true,
+});
+
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
+  id: true,
+  sentAt: true,
+  isEdited: true,
+  isDeleted: true,
+});
+
+// Chat types
+export type InsertChatRoom = z.infer<typeof insertChatRoomSchema>;
+export type ChatRoom = typeof chatRooms.$inferSelect;
+export type InsertChatRoomMember = z.infer<typeof insertChatRoomMemberSchema>;
+export type ChatRoomMember = typeof chatRoomMembers.$inferSelect;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+export type ChatMessage = typeof chatMessages.$inferSelect;
