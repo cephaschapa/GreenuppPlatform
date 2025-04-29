@@ -1940,8 +1940,12 @@ const GreenSocialsPage = () => {
                                           <img
                                             src={getFullUrl(mediaUrl)}
                                             alt="Post image"
-                                            className="w-full h-auto object-cover max-h-96"
+                                            className="w-full h-full object-cover max-h-96"
+                                            onLoad={(e) => {
+                                              console.log("Mobile view image loaded successfully:", (e.target as HTMLImageElement).src);
+                                            }}
                                             onError={(e) => {
+                                              console.error("Mobile view image load error for URL:", mediaUrl);
                                               const target =
                                                 e.target as HTMLImageElement;
                                               target.src =
@@ -1967,8 +1971,12 @@ const GreenSocialsPage = () => {
                                                 <img
                                                   src={getFullUrl(item)}
                                                   alt={`Post image ${idx + 1}`}
-                                                  className={`w-full h-auto object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? "max-h-96" : "h-60"}`}
+                                                  className={`w-full h-full object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? "max-h-96" : "h-60"}`}
+                                                  onLoad={(e) => {
+                                                    console.log("Mobile array image loaded successfully:", (e.target as HTMLImageElement).src);
+                                                  }}
                                                   onError={(e) => {
+                                                    console.error("Mobile array image load error for URL:", item);
                                                     const target =
                                                       e.target as HTMLImageElement;
                                                     target.src =
@@ -2002,8 +2010,12 @@ const GreenSocialsPage = () => {
                                                       item.caption ||
                                                       `Post image ${idx + 1}`
                                                     }
-                                                    className={`w-full h-auto object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? "max-h-96" : "h-60"}`}
+                                                    className={`w-full h-full object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? "max-h-96" : "h-60"}`}
+                                                    onLoad={(e) => {
+                                                      console.log("Mobile media object image loaded successfully:", (e.target as HTMLImageElement).src);
+                                                    }}
                                                     onError={(e) => {
+                                                      console.error("Mobile media object image load error for URL:", item.url);
                                                       const target =
                                                         e.target as HTMLImageElement;
                                                       target.src =
