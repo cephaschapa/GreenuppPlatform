@@ -2772,6 +2772,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             clients.get(userId)?.add(ws);
             console.log(`WebSocket authenticated for user ${userId}`);
             
+            // Register this client with the chat service
+            import('./services/chat-websocket-service').then(({ chatWebSocketService }) => {
+              chatWebSocketService.registerClient(userId as number, ws);
+            }).catch(err => {
+              console.error('Error importing chat WebSocket service:', err);
+            });
+            
             // Send confirmation
             ws.send(JSON.stringify({ 
               type: 'auth_success',

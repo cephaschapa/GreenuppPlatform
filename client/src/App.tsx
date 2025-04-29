@@ -14,10 +14,12 @@ import PublicSellerProfilePage from "@/pages/PublicSellerProfilePage";
 import PublicTraceVerificationPage from "@/pages/PublicTraceVerificationPage";
 import AiKnowledgeBasePage from "@/pages/AiKnowledgeBasePage";
 import GreenSocialsPage from "@/pages/GreenSocialsPage";
+import ChatPage from "@/pages/ChatPage";
 import UploadTestPage from "@/pages/UploadTestPage";
 import EmailNotificationTestPage from "@/pages/EmailNotificationTestPage";
 import PublicEmailTestPage from "@/pages/PublicEmailTestPage";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { ChatProvider } from "@/hooks/use-chat";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import InstallPWA from "@/components/ui/InstallPWA";
@@ -90,6 +92,9 @@ function Router() {
       {/* Green Socials routes */}
       <ProtectedRoute path="/dashboard/social" component={GreenSocialsPage} />
       
+      {/* Chat routes */}
+      <ProtectedRoute path="/dashboard/chat" component={ChatPage} />
+      
       {/* Role-specific dashboard redirects */}
       <ProtectedRoute path="/buyer" component={() => <Redirect to="/dashboard/marketplace" />} />
       <ProtectedRoute path="/supplier" component={() => <Redirect to="/dashboard/marketplace" />} />
@@ -106,15 +111,17 @@ function App() {
         <AuthProvider>
           <WebSocketProvider>
             <NotificationProvider>
-              <CartProvider>
-                <HelmetProvider>
-                  <Router />
-                  <Toaster />
-                  {/* PWA Components */}
-                  <InstallPWA />
-                  <OfflineIndicator />
-                </HelmetProvider>
-              </CartProvider>
+              <ChatProvider>
+                <CartProvider>
+                  <HelmetProvider>
+                    <Router />
+                    <Toaster />
+                    {/* PWA Components */}
+                    <InstallPWA />
+                    <OfflineIndicator />
+                  </HelmetProvider>
+                </CartProvider>
+              </ChatProvider>
             </NotificationProvider>
           </WebSocketProvider>
         </AuthProvider>
