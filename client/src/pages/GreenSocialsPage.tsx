@@ -333,15 +333,32 @@ const GreenSocialsPage = () => {
   // Mutation for creating a new post
   const createPostMutation = useMutation({
     mutationFn: async (content: string) => {
-      const res = await apiRequest("POST", "/api/social/posts", {
+      console.log("Creating post with the following payload:");
+      const payload = {
         content,
         postType,
         visibility: postVisibility,
         media: mediaUrls.length > 0 ? mediaUrls : undefined,
         hashtags: hashtags.length > 0 ? hashtags : undefined,
         cropsTags: cropsTags.length > 0 ? cropsTags : undefined,
-      });
-      return res.json();
+      };
+      console.log(JSON.stringify(payload, null, 2));
+      
+      const res = await apiRequest("POST", "/api/social/posts", payload);
+      
+      // Log the response status
+      console.log("Post creation response status:", res.status);
+      
+      // If there was an error, try to get more details
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Post creation error details:", errorText);
+        throw new Error(`Failed to create post: ${errorText}`);
+      }
+      
+      const responseData = await res.json();
+      console.log("Post creation response:", responseData);
+      return responseData;
     },
     onSuccess: () => {
       toast({
@@ -952,6 +969,14 @@ const GreenSocialsPage = () => {
       });
       return;
     }
+
+    console.log("Creating post with the following content:");
+    console.log("- Content:", newPostContent);
+    console.log("- Post type:", postType);
+    console.log("- Visibility:", postVisibility);
+    console.log("- Media URLs:", mediaUrls);
+    console.log("- Hashtags:", hashtags);
+    console.log("- Crops Tags:", cropsTags);
 
     createPostMutation.mutate(newPostContent);
   };
