@@ -331,17 +331,19 @@ const GreenSocialsPage = () => {
   >(null);
 
   // Mutation for creating a new post
+  // Define a type for the create post payload
+  interface CreatePostPayload {
+    content: string;
+    postType?: string;
+    visibility?: string;
+    media?: Array<{url: string; type: string; caption?: string}>;
+    hashtags?: string[];
+    cropsTags?: string[];
+  }
+
   const createPostMutation = useMutation({
-    mutationFn: async (content: string) => {
-      console.log("Creating post with the following payload:");
-      const payload = {
-        content,
-        postType,
-        visibility: postVisibility,
-        media: mediaUrls.length > 0 ? mediaUrls : undefined,
-        hashtags: hashtags.length > 0 ? hashtags : undefined,
-        cropsTags: cropsTags.length > 0 ? cropsTags : undefined,
-      };
+    mutationFn: async (payload: CreatePostPayload) => {
+      console.log("Creating post with the provided payload:");
       console.log(JSON.stringify(payload, null, 2));
       
       const res = await apiRequest("POST", "/api/social/posts", payload);
@@ -974,11 +976,37 @@ const GreenSocialsPage = () => {
     console.log("- Content:", newPostContent);
     console.log("- Post type:", postType);
     console.log("- Visibility:", postVisibility);
-    console.log("- Media URLs:", mediaUrls);
+    console.log("- Media items count:", mediaUrls.length);
+    
+    // Log each media item structure
+    if (mediaUrls.length > 0) {
+      console.log("Media items details:");
+      mediaUrls.forEach((media, index) => {
+        console.log(`Media ${index + 1}:`, {
+          url: media.url,
+          type: media.type,
+          caption: media.caption
+        });
+      });
+    }
+    
     console.log("- Hashtags:", hashtags);
     console.log("- Crops Tags:", cropsTags);
+    
+    // Prepare and log the actual payload that will be sent
+    const payload = {
+      content: newPostContent,
+      postType,
+      visibility: postVisibility,
+      media: mediaUrls.length > 0 ? mediaUrls : undefined,
+      hashtags: hashtags.length > 0 ? hashtags : undefined,
+      cropsTags: cropsTags.length > 0 ? cropsTags : undefined,
+    };
+    
+    console.log("Full post payload:", JSON.stringify(payload, null, 2));
 
-    createPostMutation.mutate(newPostContent);
+    // Pass the whole payload to the mutation instead of just the content
+    createPostMutation.mutate(payload);
   };
 
   // Handler for toggling post like

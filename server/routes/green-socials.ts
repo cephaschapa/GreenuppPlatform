@@ -410,10 +410,43 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
 // Create a new post
 greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
   try {
+    console.log("Creating new social post");
     const userId = req.user.id;
+    
+    // Log the received payload for debugging
+    console.log("Received post payload:", {
+      content: req.body.content,
+      postType: req.body.postType,
+      visibility: req.body.visibility,
+      communityId: req.body.communityId,
+      media: req.body.media ? JSON.stringify(req.body.media).substring(0, 100) + '...' : null,
+      locationName: req.body.locationName,
+      hashtags: req.body.hashtags,
+      cropsTags: req.body.cropsTags,
+      userId
+    });
+
+    // Special handling for media array
+    if (req.body.media) {
+      console.log(`Post contains ${Array.isArray(req.body.media) ? req.body.media.length : 1} media items`);
+      
+      if (Array.isArray(req.body.media)) {
+        // Log the first media item structure
+        if (req.body.media.length > 0) {
+          console.log("First media item structure:", req.body.media[0]);
+        }
+      } else {
+        console.log("Media is not an array:", typeof req.body.media);
+      }
+    }
 
     // Create post using raw SQL - only including fields that exist in the database table
     const now = new Date().toISOString();
+    
+    // Prepare the media for JSONB storage
+    const mediaForStorage = req.body.media ? sql.json(JSON.stringify(req.body.media)) : null;
+    console.log("Media prepared for SQL storage");
+    
     const insertResult = await db.execute(sql`
       INSERT INTO posts (
         user_id, content, post_type, visibility, community_id, media,
@@ -426,7 +459,7 @@ greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
         ${req.body.postType || "text"}, 
         ${req.body.visibility || "public"}, 
         ${req.body.communityId || null}, 
-        ${req.body.media ? sql.json(JSON.stringify(req.body.media)) : null},
+        ${mediaForStorage},
         ${req.body.locationName || null}, 
         ${req.body.latitude || null}, 
         ${req.body.longitude || null}, 
