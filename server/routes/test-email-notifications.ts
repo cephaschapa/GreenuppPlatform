@@ -55,7 +55,7 @@ testEmailRouter.post('/test-email', async (req: Request, res: Response) => {
     return res.status(500).json({ 
       success: false, 
       message: 'Server error sending test email', 
-      error: error.message 
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -105,7 +105,7 @@ testEmailRouter.post('/test-social-notification', async (req: Request, res: Resp
     return res.status(500).json({ 
       success: false, 
       message: 'Server error sending test notification email', 
-      error: error.message 
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });

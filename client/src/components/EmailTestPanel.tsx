@@ -26,8 +26,11 @@ export default function EmailTestPanel() {
   const handleBasicEmailTest = async () => {
     setIsTestingSendgrid(true);
     try {
+      console.log('Sending basic test email request');
       const response = await apiRequest('POST', '/api/test/test-email');
+      console.log('Test email response:', response);
       const data = await response.json();
+      console.log('Test email data:', data);
       if (data.success) {
         toast({
           title: 'Email Test Successful',
