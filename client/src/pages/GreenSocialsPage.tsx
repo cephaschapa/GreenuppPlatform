@@ -784,11 +784,11 @@ const GreenSocialsPage = () => {
 
     try {
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("file", file);
 
       const response = await apiRequest(
         "POST",
-        "/api/uploads/single",
+        "/api/test/upload-single",
         formData,
         { isFormData: true },
       );
@@ -801,7 +801,7 @@ const GreenSocialsPage = () => {
       console.log("Upload response:", data);
 
       // Process the URL to ensure it's correctly formatted
-      const processedUrl = getFullUrl(data.fileUrl);
+      const processedUrl = getFullUrl(data.file.url);
       console.log("Processed URL for upload:", processedUrl);
 
       // Add the uploaded image to mediaUrls array with processed URL
@@ -893,14 +893,14 @@ const GreenSocialsPage = () => {
           throw new Error(`File "${file.name}" exceeds 5MB size limit`);
         }
         
-        formData.append("images", file);
+        formData.append("files", file);
       });
       
       console.log(`Uploading ${files.length} files as batch`);
       
       const response = await apiRequest(
         "POST",
-        "/api/uploads/multiple",
+        "/api/test/upload-multiple",
         formData,
         { isFormData: true },
       );
