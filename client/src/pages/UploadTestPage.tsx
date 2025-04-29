@@ -100,7 +100,7 @@ const UploadTestPage = () => {
           throw new Error(`File "${file.name}" exceeds 5MB size limit`);
         }
         
-        formData.append("images", file);
+        formData.append("files", file);
       });
       
       console.log(`Uploading ${e.target.files.length} files as batch`);
