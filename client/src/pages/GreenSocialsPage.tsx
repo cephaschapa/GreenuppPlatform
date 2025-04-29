@@ -2061,12 +2061,14 @@ const GreenSocialsPage = () => {
                                   variant="ghost"
                                   size="sm"
                                   className={`gap-1 ${likedPosts[post.post.id] ? "text-primary" : ""}`}
-                                  onClick={() =>
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent event bubbling
                                     handleToggleLike(
                                       post.post.id,
                                       likedPosts[post.post.id] || false,
-                                    )
-                                  }
+                                    );
+                                    console.log("Like button clicked for post:", post.post.id);
+                                  }}
                                 >
                                   {likedPosts[post.post.id] ? (
                                     <Heart className="h-4 w-4 text-primary fill-primary" />
@@ -2082,12 +2084,14 @@ const GreenSocialsPage = () => {
                                   variant="ghost"
                                   size="sm"
                                   className="gap-1"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent event bubbling
                                     setVisibleComments({
                                       ...visibleComments,
                                       [post.post.id]:
                                         !visibleComments[post.post.id],
                                     });
+                                    console.log("Comment button clicked for post:", post.post.id);
                                   }}
                                 >
                                   <MessageCircle className="h-4 w-4" />
@@ -2206,12 +2210,14 @@ const GreenSocialsPage = () => {
                                     {!savedPosts[post.post.id] ? (
                                       <>
                                         <DropdownMenuItem
-                                          onClick={() => {
+                                          onClick={(e) => {
+                                            e.stopPropagation(); // Prevent event bubbling
                                             handleSavePost(post.post.id);
                                             setSavedPosts({
                                               ...savedPosts,
                                               [post.post.id]: true,
                                             });
+                                            console.log("Save post clicked for post:", post.post.id);
                                           }}
                                         >
                                           <Bookmark className="mr-2 h-4 w-4" />
