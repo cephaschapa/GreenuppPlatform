@@ -15,6 +15,7 @@ import PublicTraceVerificationPage from "@/pages/PublicTraceVerificationPage";
 import AiKnowledgeBasePage from "@/pages/AiKnowledgeBasePage";
 import GreenSocialsPage from "@/pages/GreenSocialsPage";
 import UploadTestPage from "@/pages/UploadTestPage";
+import EmailNotificationTestPage from "@/pages/EmailNotificationTestPage";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -55,6 +56,7 @@ function Router() {
       <Route path="/trace" component={PublicTraceVerificationPage} />
       <Route path="/ai-knowledge-base" component={AiKnowledgeBasePage} />
       <Route path="/upload-test" component={UploadTestPage} />
+      <ProtectedRoute path="/test-email-notifications" component={EmailNotificationTestPage} />
       
       {/* Dashboard routes */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />

@@ -15,6 +15,7 @@ import { uploadRouter } from './routes/upload-routes';
 import { testUploadRouter } from './routes/test-upload';
 import { testUploadPostRouter } from './routes/test-upload-to-post';
 import { testRouter } from './routes/test-routes';
+import { testEmailRouter } from './routes/test-email-notifications';
 
 import { 
   contactFormSchema, 
@@ -96,6 +97,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up comprehensive test routes
   app.use("/api/test", testRouter);
+  
+  // Set up test email notification routes
+  app.use("/api/test", testEmailRouter);
 
   // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();
