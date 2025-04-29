@@ -39,7 +39,7 @@ const UploadTestPage = () => {
       
       // Create form data
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("file", file);
       
       console.log("Uploading single file:", file.name);
       

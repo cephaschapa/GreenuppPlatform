@@ -426,7 +426,7 @@ greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
         ${req.body.postType || "text"}, 
         ${req.body.visibility || "public"}, 
         ${req.body.communityId || null}, 
-        ${req.body.media || null},
+        ${req.body.media ? sql.json(JSON.stringify(req.body.media)) : null},
         ${req.body.locationName || null}, 
         ${req.body.latitude || null}, 
         ${req.body.longitude || null}, 
