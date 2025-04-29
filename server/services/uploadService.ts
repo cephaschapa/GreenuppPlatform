@@ -68,6 +68,10 @@ export function extractHashtags(content: string): string[] {
 
 // Function to process file upload and return public URL
 export function getFileUrl(filename: string): string {
-  // In production, this might be a CDN URL
-  return `/uploads/${filename}`;
+  // Clean the filename to ensure no directory traversal
+  const sanitizedFilename = path.basename(filename);
+  
+  // Always return the direct path with a leading slash for consistency
+  // This standardizes the URL format for frontend consumption
+  return `/uploads/${sanitizedFilename}`;
 }
