@@ -59,8 +59,11 @@ export default function EmailTestPanel() {
   const handleSocialNotificationTest = async () => {
     setIsTestingSocial(true);
     try {
+      console.log('Sending social notification test request:', { activityType });
       const response = await apiRequest('POST', '/api/test/test-social-notification', { activityType });
+      console.log('Social notification test response:', response);
       const data = await response.json();
+      console.log('Social notification test data:', data);
       if (data.success) {
         toast({
           title: 'Notification Email Test Successful',
