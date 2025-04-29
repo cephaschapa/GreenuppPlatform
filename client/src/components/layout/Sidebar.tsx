@@ -154,6 +154,14 @@ export function Sidebar() {
       active: location === "/dashboard/social",
       showInMobileNav: true,
     },
+    {
+      title: "Chat",
+      href: "/dashboard/chat",
+      icon: <MessageSquare className="h-5 w-5" />,
+      mobileIcon: <MessageSquare className="h-6 w-6" />,
+      active: location === "/dashboard/chat",
+      showInMobileNav: true,
+    },
   ];
 
   const supplierNavItems = [
@@ -195,6 +203,14 @@ export function Sidebar() {
       icon: <Users className="h-5 w-5" />,
       mobileIcon: <Users className="h-6 w-6" />,
       active: location === "/dashboard/social",
+      showInMobileNav: true,
+    },
+    {
+      title: "Chat",
+      href: "/dashboard/chat",
+      icon: <MessageSquare className="h-5 w-5" />,
+      mobileIcon: <MessageSquare className="h-6 w-6" />,
+      active: location === "/dashboard/chat",
       showInMobileNav: true,
     },
     // Add more supplier-specific navigation items here
@@ -239,6 +255,14 @@ export function Sidebar() {
       icon: <Users className="h-5 w-5" />,
       mobileIcon: <Users className="h-6 w-6" />,
       active: location === "/dashboard/social",
+      showInMobileNav: true,
+    },
+    {
+      title: "Chat",
+      href: "/dashboard/chat",
+      icon: <MessageSquare className="h-5 w-5" />,
+      mobileIcon: <MessageSquare className="h-6 w-6" />,
+      active: location === "/dashboard/chat",
       showInMobileNav: true,
     },
     // Add more buyer-specific navigation items here
