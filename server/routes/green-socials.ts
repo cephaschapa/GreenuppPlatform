@@ -411,6 +411,13 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
 greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
   try {
     console.log("Creating new social post");
+    
+    // Check for authenticated user
+    if (!req.user) {
+      console.error("User not authenticated in post creation");
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const userId = req.user.id;
     
     // Log the received payload for debugging
@@ -444,8 +451,17 @@ greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
     const now = new Date().toISOString();
     
     // Prepare the media for JSONB storage
-    const mediaForStorage = req.body.media ? sql.json(JSON.stringify(req.body.media)) : null;
-    console.log("Media prepared for SQL storage");
+    let mediaForStorage = null;
+    if (req.body.media) {
+      try {
+        mediaForStorage = sql`${JSON.stringify(req.body.media)}::jsonb`;
+        console.log("Media prepared for SQL storage as JSONB");
+      } catch (error) {
+        console.error("Error preparing media for storage:", error);
+        // Fallback to basic storage if JSON conversion fails
+        mediaForStorage = null;
+      }
+    }
     
     const insertResult = await db.execute(sql`
       INSERT INTO posts (
@@ -672,6 +688,12 @@ greenSocialsRouter.get("/posts/:postId", async (req, res) => {
 // Create a comment
 greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
   try {
+    // Check for authenticated user
+    if (!req.user) {
+      console.error("User not authenticated in comment creation");
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    
     const userId = req.user.id;
     console.log("Creating comment using Drizzle query builder");
     console.log("Comment data:", {
@@ -680,6 +702,15 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
       parentId: req.body.parentId || null,
       content: req.body.content
     });
+
+    // Validate that we have a post ID and content
+    if (!req.body.postId) {
+      return res.status(400).json({ message: "Post ID is required" });
+    }
+    
+    if (!req.body.content || !req.body.content.trim()) {
+      return res.status(400).json({ message: "Comment content is required" });
+    }
 
     // Create comment using Drizzle query builder
     const now = new Date();

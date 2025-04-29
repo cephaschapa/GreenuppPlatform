@@ -13,6 +13,7 @@ import { greenSocialsRouter, setIsAuthenticatedMiddleware } from "./routes/green
 import { setWebSocketNotifier } from './services/websocket-notifier';
 import { uploadRouter } from './routes/upload-routes';
 import { testUploadRouter } from './routes/test-upload';
+import { testUploadPostRouter } from './routes/test-upload-to-post';
 import { testRouter } from './routes/test-routes';
 
 import { 
@@ -89,6 +90,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up test upload route
   app.use(testUploadRouter);
+  
+  // Set up test upload-to-post integration route
+  app.use("/api/test/upload-post", testUploadPostRouter);
   
   // Set up comprehensive test routes
   app.use("/api/test", testRouter);
