@@ -847,7 +847,7 @@ const GreenSocialsPage = () => {
   };
 
   // Handler for handling file input change
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       // Check if the number of files to be added exceeds the limit of 5 total
       if (mediaUrls.length + e.target.files.length > 5) {
@@ -860,13 +860,86 @@ const GreenSocialsPage = () => {
         return;
       }
       
-      // Upload each file one by one
-      Array.from(e.target.files).forEach(file => {
-        handlePhotoUpload(file);
-      });
+      // If uploading multiple files at once, use the batch upload endpoint
+      if (e.target.files.length > 1) {
+        await handleMultiplePhotosUpload(e.target.files);
+      } else {
+        // Single file - use existing single file upload
+        handlePhotoUpload(e.target.files[0]);
+      }
       
       // Reset the input value so the same files can be selected again if needed
       e.target.value = "";
+    }
+  };
+  
+  // Handle multiple files upload in a single request
+  const handleMultiplePhotosUpload = async (files: FileList) => {
+    setIsUploading(true);
+    setPostType("image"); // Change post type to image
+    
+    try {
+      const formData = new FormData();
+      
+      // Add all files to the form data
+      Array.from(files).forEach(file => {
+        // Validate each file
+        if (!file.type.startsWith("image/")) {
+          throw new Error(`File "${file.name}" is not an image`);
+        }
+        
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (file.size > maxSize) {
+          throw new Error(`File "${file.name}" exceeds 5MB size limit`);
+        }
+        
+        formData.append("images", file);
+      });
+      
+      console.log(`Uploading ${files.length} files as batch`);
+      
+      const response = await apiRequest(
+        "POST",
+        "/api/uploads/multiple",
+        formData,
+        { isFormData: true },
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Upload failed with status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("Multiple upload response:", data);
+      
+      // Add each uploaded file to the mediaUrls array
+      const newMediaItems = data.files.map((file: { 
+        url: string; 
+        originalName: string; 
+        filename: string;
+        mimetype: string;
+        size: number;
+      }) => ({
+        url: getFullUrl(file.url),
+        type: "image",
+        caption: file.originalName,
+      }));
+      
+      setMediaUrls([...mediaUrls, ...newMediaItems]);
+      
+      toast({
+        title: "Images uploaded",
+        description: `${files.length} images have been added to the post`,
+      });
+    } catch (error) {
+      console.error("Multiple upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
 
