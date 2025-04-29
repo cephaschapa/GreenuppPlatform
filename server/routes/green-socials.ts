@@ -858,7 +858,7 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
             commentContent: shortContent
           },
           actionUrl: `/social/posts/${req.body.postId}?comment=${commentId}`,
-          sendEmail: false // Set to true if you want email notifications for comments
+          sendEmail: true // Email notifications enabled for comments
         });
       }
       
@@ -881,7 +881,7 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
             replyContent: shortContent
           },
           actionUrl: `/social/posts/${req.body.postId}?comment=${commentId}`,
-          sendEmail: false // Set to true if you want email notifications for replies
+          sendEmail: true // Email notifications enabled for replies
         });
       }
     } catch (error) {
@@ -1151,7 +1151,7 @@ greenSocialsRouter.post(
             followerUsername: follower.username
           },
           actionUrl: `/social/profile/${followerId}`,
-          sendEmail: false // Set to true if you want email notifications for follows
+          sendEmail: true // Email notifications enabled for follows
         });
       } catch (error) {
         // Just log the error, don't fail the follow operation
@@ -1672,7 +1672,7 @@ greenSocialsRouter.post(
               postContent: shortContent
             },
             actionUrl: `/social/posts/${postId}`,
-            sendEmail: false // Set to true if you want email notifications for likes
+            sendEmail: true // Email notifications enabled for likes
           });
         } catch (error) {
           // Just log the error, don't fail the like operation
@@ -1832,7 +1832,7 @@ greenSocialsRouter.post(
                 commentContent: shortContent
               },
               actionUrl: `/social/posts/${commentData.postId}?comment=${commentId}`,
-              sendEmail: false // Set to true if you want email notifications for comment likes
+              sendEmail: true // Email notifications enabled for comment likes
             });
           } catch (error) {
             // Just log the error, don't fail the like operation
@@ -1990,7 +1990,7 @@ greenSocialsRouter.post(
               postContent: shortContent
             },
             actionUrl: `/social/posts/${postId}`,
-            sendEmail: false // Set to true if you want email notifications for shares
+            sendEmail: true // Email notifications enabled for shares
           });
         } catch (error) {
           // Just log the error, don't fail the share operation
@@ -2228,7 +2228,7 @@ greenSocialsRouter.post(
               postContent: shortContent
             },
             actionUrl: `/social/posts/${postId}`,
-            sendEmail: false // Set to true if you want email notifications for saved posts
+            sendEmail: true // Email notifications enabled for saved posts
           });
         } catch (error) {
           // Just log the error, don't fail the save operation
