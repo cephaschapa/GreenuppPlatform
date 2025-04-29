@@ -1611,6 +1611,39 @@ const GreenSocialsPage = () => {
                                               />
                                             </div>
                                           );
+                                        } else if (isMediaObject(post.post.media)) {
+                                          // Case 1b: media is a media object with url, type, caption
+                                          console.log("Mobile card - found media object:", post.post.media);
+                                          const mediaUrl = post.post.media.url;
+                                          return (
+                                            <div
+                                              className="rounded-md overflow-hidden cursor-pointer h-[200px] w-auto transition-transform hover:scale-[1.02]"
+                                              onClick={() =>
+                                                window.open(mediaUrl, "_blank")
+                                              }
+                                            >
+                                              <img
+                                                src={getFullUrl(mediaUrl)}
+                                                alt={post.post.media.caption || "Post image"}
+                                                className="w-full h-full object-cover max-h-96"
+                                                onLoad={(e) => {
+                                                  console.log("Mobile card - media object image loaded successfully:", (e.target as HTMLImageElement).src);
+                                                }}
+                                                onError={(e) => {
+                                                  console.error("Mobile card - media object image load error for URL:", mediaUrl);
+                                                  const target =
+                                                    e.target as HTMLImageElement;
+                                                  target.src =
+                                                    "https://placehold.co/600x400?text=Image+Unavailable";
+                                                }}
+                                              />
+                                              {post.post.media.caption && (
+                                                <div className="p-2 text-xs text-gray-500">
+                                                  {post.post.media.caption}
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
                                         } else if (
                                           isMediaArray(post.post.media)
                                         ) {
