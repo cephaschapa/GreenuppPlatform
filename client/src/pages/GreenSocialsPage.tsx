@@ -164,6 +164,9 @@ const isMediaArray = (media: any): media is Array<any> => {
 const getFullUrl = (url: string): string => {
   if (!url) return "";
 
+  // Log the original URL to help with debugging
+  console.log("Processing URL:", url);
+
   // If URL is a data URL (base64 encoded image), return as is
   if (url.startsWith("data:")) {
     return url;
@@ -186,6 +189,18 @@ const getFullUrl = (url: string): string => {
     const fullUrl = `${window.location.origin}/${url}`;
     console.log("Fixed uploads URL:", fullUrl);
     return fullUrl;
+  }
+
+  // Handle URLs that might start with "/api/uploads/" or "api/uploads/"
+  if (url.includes("api/uploads/") || url.includes("/api/uploads/")) {
+    // Extract the filename from the path
+    const parts = url.split("uploads/");
+    if (parts.length > 1) {
+      const filename = parts[1];
+      const fullUrl = `${window.location.origin}/uploads/${filename}`;
+      console.log("Corrected API uploads URL:", fullUrl);
+      return fullUrl;
+    }
   }
 
   // If URL is a relative path starting with /, ensure it uses the base URL
@@ -761,12 +776,17 @@ const GreenSocialsPage = () => {
       }
 
       const data = await response.json();
+      console.log("Upload response:", data);
 
-      // Add the uploaded image to mediaUrls array
+      // Process the URL to ensure it's correctly formatted
+      const processedUrl = getFullUrl(data.fileUrl);
+      console.log("Processed URL for upload:", processedUrl);
+
+      // Add the uploaded image to mediaUrls array with processed URL
       setMediaUrls([
         ...mediaUrls,
         {
-          url: data.fileUrl,
+          url: processedUrl,
           type: "image",
           caption: file.name,
         },
