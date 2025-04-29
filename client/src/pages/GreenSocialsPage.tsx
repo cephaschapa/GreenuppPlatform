@@ -160,6 +160,28 @@ const isMediaArray = (media: any): media is Array<any> => {
   return Array.isArray(media);
 };
 
+// Type guard for media object format
+const isMediaObject = (media: any): media is { url: string; type?: string; caption?: string } => {
+  return media && typeof media === "object" && typeof media.url === "string";
+};
+
+// Helper to get URL from different media formats
+const getMediaUrl = (media: any): string => {
+  if (isStringMedia(media)) {
+    return media;
+  } else if (isMediaObject(media)) {
+    return media.url;
+  } else if (isMediaArray(media) && media.length > 0) {
+    if (typeof media[0] === "string") {
+      return media[0];
+    } else if (media[0] && typeof media[0] === "object" && media[0].url) {
+      return media[0].url;
+    }
+  }
+  console.log("Could not extract media URL from:", media);
+  return "";
+};
+
 // Utility function to ensure media URLs are properly formed
 const getFullUrl = (url: string): string => {
   if (!url) return "";
@@ -1930,6 +1952,34 @@ const GreenSocialsPage = () => {
                                     if (isStringMedia(post.post.media)) {
                                       // Case 1: media is a single URL string
                                       const mediaUrl = post.post.media;
+                                      return (
+                                        <div
+                                          className="rounded-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
+                                          onClick={() =>
+                                            window.open(mediaUrl, "_blank")
+                                          }
+                                        >
+                                          <img
+                                            src={getFullUrl(mediaUrl)}
+                                            alt="Post image"
+                                            className="w-full h-full object-cover max-h-96"
+                                            onLoad={(e) => {
+                                              console.log("String media image loaded successfully:", (e.target as HTMLImageElement).src);
+                                            }}
+                                            onError={(e) => {
+                                              console.error("String media image load error for URL:", mediaUrl);
+                                              const target =
+                                                e.target as HTMLImageElement;
+                                              target.src =
+                                                "https://placehold.co/600x400?text=Image+Unavailable";
+                                            }}
+                                          />
+                                        </div>
+                                      );
+                                    } else if (isMediaObject(post.post.media)) {
+                                      // Case 1b: media is a media object with url, type, caption
+                                      console.log("Found media object:", post.post.media);
+                                      const mediaUrl = post.post.media.url;
                                       return (
                                         <div
                                           className="rounded-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
