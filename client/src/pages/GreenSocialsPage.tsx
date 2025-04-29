@@ -998,6 +998,59 @@ const GreenSocialsPage = () => {
 
     reportCommentMutation.mutate({ commentId, reason, description });
   };
+  
+  // Type guard to check if media is a string URL
+  const isStringMedia = (media: any): media is string => {
+    return typeof media === 'string';
+  };
+
+  // Type guard to check if media is a media object (with url, type, caption properties)
+  const isMediaObject = (media: any): media is { url: string; type: string; caption?: string } => {
+    return media !== null && 
+           typeof media === 'object' && 
+           !Array.isArray(media) &&
+           typeof media.url === 'string';
+  };
+
+  // Type guard to check if media is an array
+  const isMediaArray = (media: any): media is Array<any> => {
+    return Array.isArray(media);
+  };
+
+  // Get media URL from different media formats
+  const getMediaUrl = (media: any): string => {
+    if (isStringMedia(media)) {
+      return media;
+    } else if (isMediaObject(media)) {
+      return media.url;
+    } else if (isMediaArray(media) && media.length > 0) {
+      const firstItem = media[0];
+      if (typeof firstItem === 'string') {
+        return firstItem;
+      } else if (firstItem && typeof firstItem === 'object' && firstItem.url) {
+        return firstItem.url;
+      }
+    }
+    return '';
+  };
+
+  // Helper function to get the full URL for an image
+  const getFullUrl = (url: string) => {
+    if (!url) return "";
+    
+    // Already a full URL
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    
+    // Relative URL - prefix with API base URL
+    if (url.startsWith("/")) {
+      return `${window.location.origin}${url}`;
+    }
+    
+    // Just the filename - prefix with uploads path
+    return `${window.location.origin}/uploads/${url}`;
+  };
 
   // Get initials for avatar fallback
   const getInitials = (name: string) => {
