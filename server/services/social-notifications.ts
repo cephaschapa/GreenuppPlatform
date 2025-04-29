@@ -221,7 +221,7 @@ export async function sendSocialNotificationEmail(
     `;
     
     // Send the email
-    const emailSent = await sendEmail({
+    const emailResult = await sendEmail({
       to: recipientEmail,
       from: 'greenupp.notifier@gmail.com',
       subject: title,
@@ -230,14 +230,14 @@ export async function sendSocialNotificationEmail(
     });
     
     // Log the result
-    if (emailSent) {
+    if (emailResult.success) {
       console.log(`[SOCIAL NOTIFICATION] Email sent to ${recipientEmail}`);
       return { success: true };
     } else {
-      console.error(`[SOCIAL NOTIFICATION] Failed to send email to ${recipientEmail}`);
+      console.error(`[SOCIAL NOTIFICATION] Failed to send email to ${recipientEmail}: ${emailResult.error || 'Unknown error'}`);
       return {
         success: false,
-        error: 'Failed to send notification email'
+        error: emailResult.error || 'Failed to send notification email'
       };
     }
   } catch (error: any) {

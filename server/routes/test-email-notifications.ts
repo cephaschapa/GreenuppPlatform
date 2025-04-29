@@ -31,15 +31,15 @@ testEmailRouter.post('/test-email', async (req: Request, res: Response) => {
       'This is a test email. You can safely ignore it.'
     );
 
-    const sent = await sendEmail({
+    const emailResult = await sendEmail({
       to: user.email,
-      from: 'Greenupp <notifications@greenupp.app>',
+      from: 'greenupp.notifier@gmail.com',
       subject: 'Test Email from Greenupp',
       text: 'This is a test email from Greenupp to verify that email notifications are working correctly.',
       html
     });
 
-    if (sent) {
+    if (emailResult.success) {
       return res.json({ 
         success: true, 
         message: `Test email sent to ${user.email}` 
@@ -47,7 +47,8 @@ testEmailRouter.post('/test-email', async (req: Request, res: Response) => {
     } else {
       return res.status(500).json({ 
         success: false, 
-        message: 'Failed to send test email' 
+        message: 'Failed to send test email',
+        error: emailResult.error
       });
     }
   } catch (error) {
@@ -101,7 +102,7 @@ testEmailRouter.post('/test-social-notification', async (req: Request, res: Resp
       commentId: activityType.includes('comment') ? 54321 : null
     });
 
-    if (sent) {
+    if (result.success) {
       return res.json({ 
         success: true, 
         message: `Test ${activityType} notification email sent to ${user.email}` 
@@ -109,7 +110,8 @@ testEmailRouter.post('/test-social-notification', async (req: Request, res: Resp
     } else {
       return res.status(500).json({ 
         success: false, 
-        message: 'Failed to send test notification email' 
+        message: 'Failed to send test notification email',
+        error: result.error
       });
     }
   } catch (error) {
