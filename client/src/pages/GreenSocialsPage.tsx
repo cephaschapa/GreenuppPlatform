@@ -848,9 +848,24 @@ const GreenSocialsPage = () => {
 
   // Handler for handling file input change
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handlePhotoUpload(e.target.files[0]);
-      // Reset the input value so the same file can be selected again if needed
+    if (e.target.files && e.target.files.length > 0) {
+      // Check if the number of files to be added exceeds the limit of 5 total
+      if (mediaUrls.length + e.target.files.length > 5) {
+        toast({
+          title: "Too many files",
+          description: "You can only add up to 5 images in total",
+          variant: "destructive",
+        });
+        e.target.value = "";
+        return;
+      }
+      
+      // Upload each file one by one
+      Array.from(e.target.files).forEach(file => {
+        handlePhotoUpload(file);
+      });
+      
+      // Reset the input value so the same files can be selected again if needed
       e.target.value = "";
     }
   };
