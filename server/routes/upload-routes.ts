@@ -12,15 +12,19 @@ function isAuthenticated(req: Request, res: Response, next: NextFunction) {
 export const uploadRouter = Router();
 
 // Single file upload endpoint
-uploadRouter.post('/single', isAuthenticated, upload.single('image'), (req, res) => {
+uploadRouter.post('/single', isAuthenticated, upload.single('file'), (req, res) => {
   try {
+    console.log('Single file upload request received');
+    
     // Check if file was uploaded
     if (!req.file) {
+      console.warn('No file was provided in the request');
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
     // Get URL for the uploaded file
     const fileUrl = getFileUrl(req.file.filename);
+    console.log(`Processed file: ${req.file.originalname} -> ${fileUrl}`);
 
     // Return the file URL
     return res.status(200).json({
@@ -36,12 +40,15 @@ uploadRouter.post('/single', isAuthenticated, upload.single('image'), (req, res)
     });
   } catch (error) {
     console.error('Error uploading file:', error);
-    return res.status(500).json({ message: 'Error uploading file' });
+    return res.status(500).json({ 
+      message: 'Error uploading file',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
 // Multiple files upload endpoint
-uploadRouter.post('/multiple', isAuthenticated, upload.array('images', 5), (req, res) => {
+uploadRouter.post('/multiple', isAuthenticated, upload.array('files', 5), (req, res) => {
   try {
     console.log('Multiple files upload request received');
     
