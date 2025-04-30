@@ -80,8 +80,12 @@ router.get('/rooms/:roomId/messages', async (req: Request, res: Response) => {
     const before = req.query.before as string || undefined;
     const limit = parseInt(req.query.limit as string || '50');
     
+    console.log(`Fetching messages for room ${roomId}, user ${req.user.id}, limit ${limit}, before ${before || 'none'}`);
+    
     // Get messages
     const messages = await redisChatService.getRoomMessages(roomId, req.user.id, limit, before);
+    
+    console.log(`Retrieved ${messages ? messages.length : 0} messages for room ${roomId}`);
     
     // Mark messages as read as a side effect
     await redisChatService.markMessagesAsRead(req.user.id, roomId);

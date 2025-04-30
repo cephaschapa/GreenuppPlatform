@@ -626,7 +626,7 @@ export class RedisChatService {
       let conditions = eq(chatMessages.roomId, roomId);
       
       if (before) {
-        conditions = and(conditions, sql`${chatMessages.sentAt} < ${before}`);
+        conditions = and(conditions, lt(chatMessages.sentAt, before));
       }
       
       // Get messages from database
