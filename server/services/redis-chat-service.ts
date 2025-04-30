@@ -2,7 +2,7 @@ import { WebSocket } from 'ws';
 import { redisService, REDIS_CHANNELS } from './redis-service';
 import { logger } from '../utils/logger';
 import { db } from '../db';
-import { eq, and, desc, sql, or, inArray } from 'drizzle-orm';
+import { eq, and, desc, sql, or, inArray, lt } from 'drizzle-orm';
 import {
   chatRooms,
   chatRoomMembers,
@@ -62,7 +62,9 @@ export class RedisChatService {
       
       if (!redisInitialized) {
         logger.warn('Redis service not available - chat will use standard database operations');
-        return false;
+        // We consider the service initialized even without Redis, just with reduced functionality
+        this.initialized = true;
+        return true;
       }
       
       // Subscribe to Redis channels
@@ -74,8 +76,9 @@ export class RedisChatService {
     } catch (error) {
       logger.error('Failed to initialize Redis Chat Service:', error);
       logger.warn('Chat service will use standard database operations');
-      this.initialized = false;
-      return false;
+      // We consider the service initialized even with errors, just with reduced functionality
+      this.initialized = true;
+      return true;
     }
   }
 
@@ -629,6 +632,9 @@ export class RedisChatService {
         conditions = and(conditions, lt(chatMessages.sentAt, before));
       }
       
+      // Add extra logging to debug the query
+      logger.info(`Getting messages for room ${roomId}, limit ${limit}, before ${before || 'none'}`);
+      
       // Get messages from database
       const messages = await db
         .select({
@@ -652,6 +658,8 @@ export class RedisChatService {
         .where(conditions)
         .orderBy(desc(chatMessages.sentAt))
         .limit(limit);
+      
+      logger.info(`Retrieved ${messages.length} messages for room ${roomId}`);
       
       return messages.reverse();
     } catch (error) {
