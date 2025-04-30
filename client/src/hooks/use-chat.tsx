@@ -53,6 +53,16 @@ export type TypingUser = {
   timestamp: Date;
 };
 
+export type PotentialChatUser = {
+  id: number;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  profileImage?: string;
+  email?: string;
+  relationship: 'following' | 'suggested';
+};
+
 type WebSocketStatus = 'connecting' | 'open' | 'closed' | 'error';
 
 interface ChatContextType {
@@ -73,6 +83,7 @@ interface ChatContextType {
   createDirectChat: (userId: number) => Promise<ChatRoom | null>;
   setTyping: (isTyping: boolean) => void;
   leaveRoom: () => void;
+  fetchPotentialChatUsers: () => Promise<PotentialChatUser[]>;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);

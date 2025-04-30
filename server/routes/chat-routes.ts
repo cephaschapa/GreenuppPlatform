@@ -292,4 +292,21 @@ router.get('/unread/count', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * Get potential users to start a chat with (followed users)
+ */
+router.get('/potential-users', async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Not authenticated' });
+  }
+
+  try {
+    const potentialUsers = await chatService.getPotentialChatUsers(req.user.id);
+    res.json(potentialUsers);
+  } catch (error) {
+    console.error('Error getting potential chat users:', error);
+    res.status(500).json({ message: 'Failed to get potential chat users' });
+  }
+});
+
 export default router;
