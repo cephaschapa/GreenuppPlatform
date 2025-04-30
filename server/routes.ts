@@ -2755,6 +2755,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   wss.on('connection', (ws) => {
     console.log('WebSocket client connected');
     let userId: number | null = null;
+    
+    // Set a timeout to close connection if not authenticated within 10 seconds
+    const authTimeout = setTimeout(() => {
+      if (!userId) {
+        console.log('WebSocket authentication timeout, closing connection');
+        ws.send(JSON.stringify({
+          type: 'error',
+          data: { message: 'Authentication timeout: Connection closed' }
+        }));
+        ws.close();
+      }
+    }, 10000);
 
     // Handle authentication message
     ws.on('message', (message) => {
@@ -2763,64 +2775,135 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Handle authentication
         if (data.type === 'auth') {
-          userId = parseInt(data.userId);
-          if (!isNaN(userId)) {
-            // Add this connection to the user's set
-            if (!clients.has(userId)) {
-              clients.set(userId, new Set());
-            }
-            clients.get(userId)?.add(ws);
-            console.log(`WebSocket authenticated for user ${userId}`);
-            
-            // Register this client with the chat service
-            import('./services/chat-websocket-service').then(({ chatWebSocketService }) => {
-              chatWebSocketService.registerClient(userId as number, ws);
-            }).catch(err => {
-              console.error('Error importing chat WebSocket service:', err);
-            });
-            
-            // Send confirmation
-            ws.send(JSON.stringify({ 
-              type: 'auth_success',
-              message: 'Successfully authenticated'
+          const parsedUserId = parseInt(data.userId);
+          
+          if (isNaN(parsedUserId)) {
+            ws.send(JSON.stringify({
+              type: 'error',
+              data: { message: 'Authentication failed: Invalid user ID' }
             }));
+            return;
           }
+          
+          // Clear the authentication timeout
+          clearTimeout(authTimeout);
+          
+          // Store the authenticated user ID
+          userId = parsedUserId;
+          
+          // Add this connection to the user's set
+          if (!clients.has(userId)) {
+            clients.set(userId, new Set());
+          }
+          clients.get(userId)?.add(ws);
+          console.log(`WebSocket authenticated for user ${userId}`);
+          
+          // Register this client with the chat service
+          import('./services/chat-websocket-service').then(({ chatWebSocketService }) => {
+            chatWebSocketService.registerClient(userId as number, ws);
+          }).catch(err => {
+            console.error('Error importing chat WebSocket service:', err);
+          });
+          
+          // Send confirmation
+          ws.send(JSON.stringify({ 
+            type: 'auth_success',
+            message: 'Successfully authenticated'
+          }));
+        } else if (!userId) {
+          // Reject non-auth messages from unauthenticated clients
+          ws.send(JSON.stringify({
+            type: 'error',
+            data: { message: 'Not authenticated' }
+          }));
         }
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
+        ws.send(JSON.stringify({
+          type: 'error',
+          data: { message: 'Invalid message format' }
+        }));
       }
     });
 
     // Handle disconnection
     ws.on('close', () => {
       console.log('WebSocket client disconnected');
+      
+      // Clear any pending timeout
+      clearTimeout(authTimeout);
+      
+      // Clean up resources if user was authenticated
       if (userId) {
         const userClients = clients.get(userId);
         if (userClients) {
           userClients.delete(ws);
+          
+          // Remove user entry if no more connections
           if (userClients.size === 0) {
             clients.delete(userId);
           }
+          
+          // Also unregister from chat service
+          import('./services/chat-websocket-service').then(({ chatWebSocketService }) => {
+            chatWebSocketService.unregisterClient(userId as number, ws);
+          }).catch(() => {
+            // Ignore errors on cleanup
+          });
         }
       }
+    });
+    
+    // Handle connection errors
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+      clearTimeout(authTimeout);
+      ws.close();
     });
   });
 
   // Create a function to send notifications to users via WebSockets
   // We'll export it to be used by other modules
   const sendWebSocketNotification = (userId: number, notification: any) => {
+    if (!userId || typeof userId !== 'number') {
+      console.error('Invalid user ID for WebSocket notification:', userId);
+      return;
+    }
+    
     const userClients = clients.get(userId);
-    if (userClients) {
-      const message = JSON.stringify({
+    if (!userClients || userClients.size === 0) {
+      // User has no active connections, silently ignore
+      return;
+    }
+    
+    // Prepare the notification message
+    let message: string;
+    try {
+      message = JSON.stringify({
         type: 'notification',
-        data: notification
+        data: notification,
+        timestamp: new Date().toISOString()
       });
-      
-      userClients.forEach(client => {
+    } catch (error) {
+      console.error('Error serializing notification:', error);
+      return;
+    }
+    
+    // Send to all open connections for this user
+    let sentCount = 0;
+    userClients.forEach(client => {
+      try {
         if (client.readyState === WebSocket.OPEN) {
           client.send(message);
+          sentCount++;
         }
-      });
+      } catch (error) {
+        console.error('Error sending WebSocket notification:', error);
+      }
+    });
+    
+    if (sentCount > 0) {
+      console.log(`Sent notification to user ${userId} on ${sentCount} connection(s)`);
     }
   };
   

@@ -90,7 +90,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   // Initialize WebSocket connection
   useEffect(() => {
-    if (!user) {
+    // Don't attempt to connect if not authenticated
+    if (!user || !user.id) {
       if (socket) {
         socket.close();
         setSocket(null);
@@ -122,9 +123,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         console.log('WebSocket connection closed');
         setWsStatus('closed');
         
-        // Try to reconnect after a delay
+        // Try to reconnect after a delay, but only if user is still authenticated
         setTimeout(() => {
-          if (user) {
+          if (user && user.id) {
             connectWebSocket();
           }
         }, 3000);
@@ -288,8 +289,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   
   // Fetch all chat rooms
   const fetchRooms = async () => {
+    // Don't try to fetch rooms if user is not authenticated
+    if (!user || !user.id) {
+      return;
+    }
+    
     try {
       const response = await fetch('/api/chat/rooms');
+      
+      // Handle unauthenticated response quietly
+      if (response.status === 401) {
+        console.log('Not authenticated for chat rooms');
+        return;
+      }
+      
       if (!response.ok) {
         throw new Error('Failed to fetch chat rooms');
       }
@@ -308,8 +321,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   
   // Fetch total unread message count
   const fetchTotalUnreadCount = async () => {
+    // Don't try to fetch if user is not authenticated
+    if (!user || !user.id) {
+      return;
+    }
+    
     try {
       const response = await fetch('/api/chat/unread/count');
+      
+      // Handle unauthenticated response quietly
+      if (response.status === 401) {
+        console.log('Not authenticated for unread count');
+        return;
+      }
+      
       if (!response.ok) {
         throw new Error('Failed to fetch unread count');
       }

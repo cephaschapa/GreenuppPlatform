@@ -53,6 +53,30 @@ export class ChatWebSocketService {
     // Set up message handling
     this.setupMessageHandling(ws);
   }
+  
+  /**
+   * Unregister a client from the chat service
+   */
+  unregisterClient(userId: number, ws: WebSocketWithUser): void {
+    // Remove the client from our tracking
+    const userClients = this.clients.get(userId);
+    if (userClients) {
+      userClients.delete(ws);
+      if (userClients.size === 0) {
+        this.clients.delete(userId);
+        
+        // Also remove any room subscriptions for this user
+        this.roomSubscriptions.forEach((subscribers, roomId) => {
+          subscribers.delete(userId);
+          if (subscribers.size === 0) {
+            this.roomSubscriptions.delete(roomId);
+          }
+        });
+      }
+    }
+    
+    console.log(`Chat client unregistered for user ${userId}`);
+  }
 
   /**
    * Set up message event handling for a WebSocket
