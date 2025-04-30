@@ -18,6 +18,7 @@ import { testRouter } from './routes/test-routes';
 import { testEmailRouter } from './routes/test-email-notifications';
 import publicEmailTestRouter from './routes/test-public-email-notifications';
 import chatRoutes from './routes/chat-routes';
+import { chatWebSocketService } from './services/chat-websocket-service';
 
 import { 
   contactFormSchema, 
@@ -2800,9 +2801,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Register this client with the chat service
           try {
-            const { chatWebSocketService } = require('./services/chat-websocket-service');
-            chatWebSocketService.registerClient(userId as number, ws);
-            console.log(`Successfully registered client for user ${userId} with chat service`);
+            // Import is already handled at the top of the file
+            // The service should be available globally
+            if (chatWebSocketService) {
+              chatWebSocketService.registerClient(userId as number, ws);
+              console.log(`Successfully registered client for user ${userId} with chat service`);
+            } else {
+              console.log('Chat WebSocket service not available');
+            }
           } catch (err) {
             console.error('Error registering client with chat WebSocket service:', err);
           }
@@ -2848,9 +2854,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Also unregister from chat service
           try {
-            const { chatWebSocketService } = require('./services/chat-websocket-service');
-            chatWebSocketService.unregisterClient(userId as number, ws);
-            console.log(`Successfully unregistered client for user ${userId} from chat service`);
+            // Use the imported chat service
+            if (chatWebSocketService) {
+              chatWebSocketService.unregisterClient(userId as number, ws);
+              console.log(`Successfully unregistered client for user ${userId} from chat service`);
+            } else {
+              console.log('Chat WebSocket service not available for unregistering client');
+            }
           } catch (err) {
             console.error('Error unregistering client from chat service:', err);
           }

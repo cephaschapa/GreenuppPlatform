@@ -646,6 +646,33 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setMessages([]);
     setTypingUsers(new Map());
   };
+  
+  // Fetch potential chat users (users the current user follows)
+  const fetchPotentialChatUsers = async (): Promise<PotentialChatUser[]> => {
+    try {
+      const response = await fetch('/api/chat/potential-users');
+      
+      if (response.status === 401) {
+        console.log('Not authenticated for fetching potential chat users');
+        return [];
+      }
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch potential chat users');
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching potential chat users:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load potential chat users',
+        variant: 'destructive',
+      });
+      return [];
+    }
+  };
 
   return (
     <ChatContext.Provider
@@ -665,6 +692,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         createDirectChat,
         setTyping,
         leaveRoom,
+        fetchPotentialChatUsers,
       }}
     >
       {children}
