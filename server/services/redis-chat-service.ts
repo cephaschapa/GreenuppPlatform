@@ -2,7 +2,7 @@ import { WebSocket } from 'ws';
 import { redisService, REDIS_CHANNELS } from './redis-service';
 import { logger } from '../utils/logger';
 import { db } from '../db';
-import { eq, and, desc, sql, or } from 'drizzle-orm';
+import { eq, and, desc, sql, or, inArray } from 'drizzle-orm';
 import {
   chatRooms,
   chatRoomMembers,
@@ -417,7 +417,7 @@ export class RedisChatService {
           lastMessageAt: chatRooms.lastMessageAt
         })
         .from(chatRooms)
-        .where(sql`${chatRooms.id} IN (${roomIds.join(',')})`);
+        .where(inArray(chatRooms.id, roomIds));
       
       // If there are rooms, enhance them with member info and unread counts
       if (rooms.length > 0) {
