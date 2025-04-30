@@ -724,17 +724,7 @@ export class RedisChatService {
       }
       
       // Build query conditions
-      let conditions = eq(chatMessages.roomId, roomId);
-      
-      if (before) {
-        conditions = and(conditions, lt(chatMessages.sentAt, before));
-      }
-      
-      // Add extra logging to debug the query
-      logger.info(`Getting messages for room ${roomId}, limit ${limit}, before ${before || 'none'}`);
-      
-      // Get messages from database
-      const messages = await db
+      let query = db
         .select({
           id: chatMessages.id,
           roomId: chatMessages.roomId,
@@ -753,12 +743,24 @@ export class RedisChatService {
         })
         .from(chatMessages)
         .leftJoin(users, eq(chatMessages.senderId, users.id))
-        .where(conditions)
-        .orderBy(desc(chatMessages.sentAt))
-        .limit(limit);
+        .where(eq(chatMessages.roomId, roomId));
+      
+      // Apply date filter if before parameter is provided
+      if (before) {
+        logger.info(`Filtering messages sent before ${before}`);
+        query = query.where(lt(chatMessages.sentAt, before));
+      }
+      
+      // Add sorting and limit
+      query = query.orderBy(desc(chatMessages.sentAt)).limit(limit);
+      
+      // Execute the query
+      logger.info(`Getting messages for room ${roomId}, limit ${limit}, before ${before || 'none'}`);
+      const messages = await query;
       
       logger.info(`Retrieved ${messages.length} messages for room ${roomId}`);
       
+      // Return messages in chronological order (oldest first)
       return messages.reverse();
     } catch (error) {
       logger.error(`Error getting messages for room ${roomId}:`, error);
