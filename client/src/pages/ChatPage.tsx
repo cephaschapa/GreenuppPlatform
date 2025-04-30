@@ -19,6 +19,7 @@ import {
   Clock, 
   Loader2,
   MoreVertical,
+  X,
   Menu as MenuIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -157,7 +158,11 @@ export default function ChatPage() {
     <div className="w-full md:w-80 border-r border-border">
       <div className="p-4 flex items-center justify-between border-b border-border">
         <h2 className="text-lg font-semibold">Messages</h2>
-        <Dialog>
+        <Dialog onOpenChange={(open) => {
+          if (open) {
+            loadPotentialChatUsers();
+          }
+        }}>
           <DialogTrigger asChild>
             <Button size="icon" variant="outline">
               <Plus className="h-4 w-4" />
@@ -166,19 +171,30 @@ export default function ChatPage() {
           <DialogContent className="create-chat-dialog">
             <DialogHeader>
               <DialogTitle>Create New Chat</DialogTitle>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="absolute right-4 top-4 create-chat-dialog-close rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  const dialogContainer = e.currentTarget.closest('div[role="dialog"]');
+                  if (dialogContainer) {
+                    const closeButton = dialogContainer.querySelector('[data-radix-collection-item]');
+                    if (closeButton && 'click' in closeButton) {
+                      // @ts-ignore
+                      closeButton.click();
+                    }
+                  }
+                }}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </Button>
             </DialogHeader>
             <div className="py-4">
               <p className="text-sm text-muted-foreground mb-4">
                 Who would you like to chat with?
               </p>
-              {/* Trigger loading of potential chat users when dialog opens */}
-              <DialogTrigger asChild className="hidden">
-                <div 
-                  ref={(el) => {
-                    if (el) loadPotentialChatUsers();
-                  }}
-                />
-              </DialogTrigger>
               
               {isLoadingUsers ? (
                 <div className="py-8 flex justify-center">
@@ -245,28 +261,43 @@ export default function ChatPage() {
       {rooms.length === 0 ? (
         <div className="p-4 text-center">
           <p className="text-sm text-muted-foreground">No conversations yet</p>
-          <Dialog>
+          <Dialog onOpenChange={(open) => {
+            if (open) {
+              loadPotentialChatUsers();
+            }
+          }}>
             <DialogTrigger asChild>
               <Button className="mt-4" variant="outline">
                 <Plus className="h-4 w-4 mr-2" /> New Conversation
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="create-chat-dialog">
               <DialogHeader>
                 <DialogTitle>Create New Chat</DialogTitle>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute right-4 top-4 create-chat-dialog-close rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const dialogContainer = e.currentTarget.closest('div[role="dialog"]');
+                    if (dialogContainer) {
+                      const closeButton = dialogContainer.querySelector('[data-radix-collection-item]');
+                      if (closeButton && 'click' in closeButton) {
+                        // @ts-ignore
+                        closeButton.click();
+                      }
+                    }
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Close</span>
+                </Button>
               </DialogHeader>
               <div className="py-4">
                 <p className="text-sm text-muted-foreground mb-4">
                   Who would you like to chat with?
                 </p>
-                {/* Trigger loading of potential chat users when dialog opens */}
-                <DialogTrigger asChild className="hidden">
-                  <div 
-                    ref={(el) => {
-                      if (el) loadPotentialChatUsers();
-                    }}
-                  />
-                </DialogTrigger>
                 
                 {isLoadingUsers ? (
                   <div className="py-8 flex justify-center">
