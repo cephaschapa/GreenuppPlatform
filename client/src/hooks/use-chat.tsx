@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { useAuth } from './use-auth';
 import { useToast } from './use-toast';
 
@@ -100,6 +100,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Set up polling with adaptive frequency based on WebSocket status
+    let intervalId: NodeJS.Timeout | null = null;
+    
     // Connect to WebSocket server
     const connectWebSocket = () => {
       try {
@@ -164,13 +167,35 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     
     connectWebSocket();
     
-    // Cleanup on unmount
+    // Set up adaptive polling based on WebSocket status
+    // Use a longer interval when WebSocket is connected, shorter when it's not
+    const pollingInterval = wsStatus === 'open' ? 10000 : 3000; // 10s when connected, 3s when not
+    
+    console.log(`Setting up chat polling with interval: ${pollingInterval}ms (WebSocket status: ${wsStatus})`);
+    
+    // Clear any existing intervals before setting a new one
+    if (intervalId) clearInterval(intervalId);
+    
+    // Start new interval for polling
+    intervalId = setInterval(() => {
+      console.log(`Polling chat data (WebSocket status: ${wsStatus})`);
+      
+      // Force fetch only when WebSocket is in error state or closed
+      const forceFetch = wsStatus === 'error' || wsStatus === 'closed';
+      fetchRooms(forceFetch);
+    }, pollingInterval);
+    
+    // Cleanup on unmount or when dependencies change
     return () => {
       if (socket) {
         socket.close();
       }
+      if (intervalId) {
+        console.log('Clearing chat polling interval');
+        clearInterval(intervalId);
+      }
     };
-  }, [user]);
+  }, [user, wsStatus]); // Add wsStatus as dependency
   
   // Handle incoming WebSocket messages
   const handleWebSocketMessage = (data: any) => {
@@ -301,14 +326,27 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   };
   
-  // Fetch all chat rooms
-  const fetchRooms = async () => {
+  // Track last room fetch timestamp to avoid frequent polling
+  const lastRoomFetchRef = useRef<number>(0);
+  
+  // Fetch all chat rooms with caching
+  const fetchRooms = async (forceFetch: boolean = false) => {
     // Don't try to fetch rooms if user is not authenticated
     if (!user || !user.id) {
       return;
     }
     
+    // Only fetch every 5 seconds unless forced to reduce API calls
+    const now = Date.now();
+    if (!forceFetch && now - lastRoomFetchRef.current < 5000) {
+      console.log('Skipping room fetch due to recent fetch');
+      return;
+    }
+    
     try {
+      lastRoomFetchRef.current = now;
+      console.log('Fetching chat rooms from server');
+      
       const response = await fetch('/api/chat/rooms');
       
       // Handle unauthenticated response quietly
@@ -321,8 +359,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         throw new Error('Failed to fetch chat rooms');
       }
       
-      const data = await response.json();
-      setRooms(data);
+      // Only update state if response has changed (uses HTTP 304 for caching)
+      if (response.status !== 304) {
+        const data = await response.json();
+        setRooms(data);
+      }
     } catch (error) {
       console.error('Error fetching chat rooms:', error);
       toast({

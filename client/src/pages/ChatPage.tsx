@@ -51,10 +51,8 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Load chat rooms when component mounts
-  useEffect(() => {
-    fetchRooms();
-  }, [fetchRooms]);
+  // No need to call fetchRooms on component mount anymore
+  // The ChatProvider handles polling with adaptive frequency based on WebSocket status
   
   // Scroll to latest messages when they change
   useEffect(() => {
