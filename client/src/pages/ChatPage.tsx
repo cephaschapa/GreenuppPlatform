@@ -43,7 +43,9 @@ export default function ChatPage() {
     setActiveRoom, 
     sendMessage, 
     leaveRoom, 
-    setTyping 
+    setTyping,
+    createRoom,
+    createDirectChat
   } = useChat();
   const [messageInput, setMessageInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -155,7 +157,7 @@ export default function ChatPage() {
         <Dialog>
           <DialogTrigger asChild>
             <Button size="icon" variant="outline">
-              <Edit className="h-4 w-4" />
+              <Plus className="h-4 w-4" />
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -164,8 +166,11 @@ export default function ChatPage() {
             </DialogHeader>
             <div className="py-4">
               <p className="text-sm text-muted-foreground mb-4">
-                This feature is coming soon! You'll be able to start new chats here.
+                Who would you like to chat with?
               </p>
+              <Button className="w-full" onClick={() => createDirectChat(2)}>
+                Chat with Demo User
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -178,9 +183,26 @@ export default function ChatPage() {
       {rooms.length === 0 ? (
         <div className="p-4 text-center">
           <p className="text-sm text-muted-foreground">No conversations yet</p>
-          <Button className="mt-4" variant="outline">
-            <Plus className="h-4 w-4 mr-2" /> New Conversation
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="mt-4" variant="outline">
+                <Plus className="h-4 w-4 mr-2" /> New Conversation
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Chat</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Who would you like to chat with?
+                </p>
+                <Button className="w-full" onClick={() => createDirectChat(2)}>
+                  Chat with Demo User
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       ) : (
         <ScrollArea className="h-[calc(100vh-11rem)]">
