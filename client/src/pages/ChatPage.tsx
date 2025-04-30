@@ -133,19 +133,7 @@ export default function ChatPage() {
     }
   };
 
-  // Render the connection status
-  const renderConnectionStatus = () => {
-    switch (wsStatus) {
-      case 'connecting':
-        return <Badge variant="outline" className="animate-pulse">Connecting...</Badge>;
-      case 'closed':
-        return <Badge variant="outline" className="bg-red-100 text-red-800">Disconnected</Badge>;
-      case 'error':
-        return <Badge variant="destructive">Connection Error</Badge>;
-      default:
-        return null;
-    }
-  };
+  // Connection status indicator has been removed as requested
 
   // Sidebar with chat rooms list
   const renderChatSidebar = () => (
@@ -174,9 +162,7 @@ export default function ChatPage() {
         </Dialog>
       </div>
       
-      <div className="px-4 py-2">
-        {renderConnectionStatus()}
-      </div>
+      {/* Connection status indicator has been removed */}
       
       {rooms.length === 0 ? (
         <div className="p-4 text-center">
