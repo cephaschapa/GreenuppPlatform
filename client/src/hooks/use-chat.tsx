@@ -102,22 +102,31 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     // Connect to WebSocket server
     const connectWebSocket = () => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
-      
-      const newSocket = new WebSocket(wsUrl);
-      setWsStatus('connecting');
-      
-      newSocket.onopen = () => {
-        console.log('WebSocket connection established');
-        setWsStatus('open');
+      try {
+        console.log('Attempting to connect to WebSocket...');
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        console.log('WebSocket URL:', wsUrl);
         
-        // Send authentication message
-        newSocket.send(JSON.stringify({
-          type: 'auth',
-          userId: user.id
-        }));
-      };
+        const newSocket = new WebSocket(wsUrl);
+        setWsStatus('connecting');
+        
+        newSocket.onopen = () => {
+          console.log('WebSocket connection established successfully');
+          setWsStatus('open');
+          
+          // Send authentication message
+          const authMessage = JSON.stringify({
+            type: 'auth',
+            userId: user.id
+          });
+          console.log('Sending WebSocket auth message:', authMessage);
+          newSocket.send(authMessage);
+        };
+      } catch (error) {
+        console.error('Error creating WebSocket connection:', error);
+        setWsStatus('error');
+      }
       
       newSocket.onclose = () => {
         console.log('WebSocket connection closed');
