@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { useChat, ChatMessage, ChatRoom } from '@/hooks/use-chat';
+import { useChat, ChatMessage, ChatRoom, PotentialChatUser } from '@/hooks/use-chat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import {
   Plus, 
   Check, 
   Clock, 
+  Loader2,
   MoreVertical,
   Menu as MenuIcon
 } from 'lucide-react';
@@ -45,7 +46,8 @@ export default function ChatPage() {
     leaveRoom, 
     setTyping,
     createRoom,
-    createDirectChat
+    createDirectChat,
+    fetchPotentialChatUsers
   } = useChat();
   const [messageInput, setMessageInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -161,7 +163,7 @@ export default function ChatPage() {
               <Plus className="h-4 w-4" />
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="create-chat-dialog">
             <DialogHeader>
               <DialogTitle>Create New Chat</DialogTitle>
             </DialogHeader>
@@ -169,9 +171,70 @@ export default function ChatPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Who would you like to chat with?
               </p>
-              <Button className="w-full" onClick={() => createDirectChat(2)}>
-                Chat with Demo User
-              </Button>
+              {/* Trigger loading of potential chat users when dialog opens */}
+              <DialogTrigger asChild className="hidden">
+                <div 
+                  ref={(el) => {
+                    if (el) loadPotentialChatUsers();
+                  }}
+                />
+              </DialogTrigger>
+              
+              {isLoadingUsers ? (
+                <div className="py-8 flex justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : potentialUsers.length > 0 ? (
+                <div className="space-y-3 max-h-64 overflow-auto pr-1">
+                  {potentialUsers.map(user => (
+                    <div key={user.id} className="flex items-center justify-between border rounded-md p-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={user.profileImage} />
+                          <AvatarFallback>
+                            {user.firstName 
+                              ? `${user.firstName[0]}${user.lastName ? user.lastName[0] : ''}`
+                              : user.username[0].toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">
+                            {user.firstName && user.lastName 
+                              ? `${user.firstName} ${user.lastName}`
+                              : user.username}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {user.relationship === 'following' ? 'You follow this user' : 'Suggested'}
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        onClick={async () => {
+                          const room = await createDirectChat(user.id);
+                          if (room) {
+                            setActiveRoom(room.id);
+                            const dialogClose = document.querySelector('.create-chat-dialog-close');
+                            if (dialogClose && 'click' in dialogClose) {
+                              // @ts-ignore
+                              dialogClose.click();
+                            }
+                          }
+                        }}
+                      >
+                        Chat
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="mb-3">Follow users in GreenSocials to chat with them</p>
+                  <Button className="w-full" onClick={() => createDirectChat(2)}>
+                    Chat with Demo User
+                  </Button>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
@@ -196,9 +259,70 @@ export default function ChatPage() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Who would you like to chat with?
                 </p>
-                <Button className="w-full" onClick={() => createDirectChat(2)}>
-                  Chat with Demo User
-                </Button>
+                {/* Trigger loading of potential chat users when dialog opens */}
+                <DialogTrigger asChild className="hidden">
+                  <div 
+                    ref={(el) => {
+                      if (el) loadPotentialChatUsers();
+                    }}
+                  />
+                </DialogTrigger>
+                
+                {isLoadingUsers ? (
+                  <div className="py-8 flex justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : potentialUsers.length > 0 ? (
+                  <div className="space-y-3 max-h-64 overflow-auto pr-1">
+                    {potentialUsers.map(user => (
+                      <div key={user.id} className="flex items-center justify-between border rounded-md p-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarImage src={user.profileImage} />
+                            <AvatarFallback>
+                              {user.firstName 
+                                ? `${user.firstName[0]}${user.lastName ? user.lastName[0] : ''}`
+                                : user.username[0].toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">
+                              {user.firstName && user.lastName 
+                                ? `${user.firstName} ${user.lastName}`
+                                : user.username}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {user.relationship === 'following' ? 'You follow this user' : 'Suggested'}
+                            </p>
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          onClick={async () => {
+                            const room = await createDirectChat(user.id);
+                            if (room) {
+                              setActiveRoom(room.id);
+                              const dialogClose = document.querySelector('.create-chat-dialog-close');
+                              if (dialogClose && 'click' in dialogClose) {
+                                // @ts-ignore
+                                dialogClose.click();
+                              }
+                            }
+                          }}
+                        >
+                          Chat
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="mb-3">Follow users in GreenSocials to chat with them</p>
+                    <Button className="w-full" onClick={() => createDirectChat(2)}>
+                      Chat with Demo User
+                    </Button>
+                  </div>
+                )}
               </div>
             </DialogContent>
           </Dialog>
