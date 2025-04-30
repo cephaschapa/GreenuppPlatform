@@ -9,10 +9,10 @@ export class RedisChatWebSocketService {
   private clientCleanupInterval: NodeJS.Timeout | null = null;
   
   constructor(httpServer: HTTPServer) {
-    // Initialize WebSocket server with specific path to avoid conflicts with Vite HMR
+    // Initialize WebSocket server with specific path to avoid conflicts with other WebSocket servers
     this.wss = new WebSocketServer({ 
       server: httpServer, 
-      path: '/ws',
+      path: '/ws/chat', // Use a specific path for chat WebSockets
       clientTracking: true
     });
     

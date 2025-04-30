@@ -40,16 +40,20 @@ class RedisService {
 
   // Initialize the service
   async initialize() {
-    if (this.initialized) return;
+    if (this.initialized) return true;
     
     try {
       // Test the connection
       await this.client.ping();
       this.initialized = true;
       logger.info('Redis service initialized successfully');
+      return true;
     } catch (error) {
       logger.error('Failed to initialize Redis service:', error);
-      throw new Error('Redis connection failed');
+      logger.warn('Continuing without Redis functionality - fallback to database-only operations');
+      // Don't throw error, just return false to indicate failure
+      this.initialized = false;
+      return false;
     }
   }
 
@@ -98,51 +102,84 @@ class RedisService {
 
   // Subscribe to a channel
   async subscribe(channel: string, callback: (message: any) => void) {
-    if (!this.subscribers.has(channel)) {
-      await this.subscriber.subscribe(channel);
-      this.subscribers.set(channel, new Set());
+    if (!this.initialized) {
+      logger.warn(`Cannot subscribe to Redis channel ${channel}: Service not initialized`);
+      return false;
     }
     
-    this.subscribers.get(channel)?.add(callback);
-    logger.info(`Subscribed to Redis channel: ${channel}`);
+    try {
+      if (!this.subscribers.has(channel)) {
+        await this.subscriber.subscribe(channel);
+        this.subscribers.set(channel, new Set());
+      }
+      
+      this.subscribers.get(channel)?.add(callback);
+      logger.info(`Subscribed to Redis channel: ${channel}`);
+      return true;
+    } catch (error) {
+      logger.error(`Error subscribing to Redis channel ${channel}:`, error);
+      return false;
+    }
   }
 
   // Unsubscribe from a channel
   async unsubscribe(channel: string, callback?: (message: any) => void) {
-    if (!this.subscribers.has(channel)) return;
+    if (!this.initialized) {
+      logger.warn(`Cannot unsubscribe from Redis channel ${channel}: Service not initialized`);
+      return false;
+    }
     
-    if (callback) {
-      // Remove specific callback
-      this.subscribers.get(channel)?.delete(callback);
-      
-      // If no callbacks left, unsubscribe from channel
-      if (this.subscribers.get(channel)?.size === 0) {
+    if (!this.subscribers.has(channel)) return false;
+    
+    try {
+      if (callback) {
+        // Remove specific callback
+        this.subscribers.get(channel)?.delete(callback);
+        
+        // If no callbacks left, unsubscribe from channel
+        if (this.subscribers.get(channel)?.size === 0) {
+          await this.subscriber.unsubscribe(channel);
+          this.subscribers.delete(channel);
+          logger.info(`Unsubscribed from Redis channel: ${channel}`);
+        }
+      } else {
+        // Remove all callbacks
         await this.subscriber.unsubscribe(channel);
         this.subscribers.delete(channel);
         logger.info(`Unsubscribed from Redis channel: ${channel}`);
       }
-    } else {
-      // Remove all callbacks
-      await this.subscriber.unsubscribe(channel);
-      this.subscribers.delete(channel);
-      logger.info(`Unsubscribed from Redis channel: ${channel}`);
+      return true;
+    } catch (error) {
+      logger.error(`Error unsubscribing from Redis channel ${channel}:`, error);
+      return false;
     }
   }
 
   // Publish a message to a channel
   async publish(channel: string, message: any) {
+    if (!this.initialized) {
+      logger.warn(`Cannot publish to Redis channel ${channel}: Service not initialized`);
+      return false;
+    }
+    
     try {
       const messageString = typeof message === 'string' ? message : JSON.stringify(message);
       await this.publisher.publish(channel, messageString);
       logger.debug(`Published message to Redis channel: ${channel}`);
+      return true;
     } catch (error) {
       logger.error(`Error publishing to Redis channel ${channel}:`, error);
-      throw error;
+      return false;
     }
   }
 
   // Redis key-value operations
   async set(key: string, value: any, expireSeconds?: number) {
+    if (!this.initialized) {
+      logger.warn(`Cannot set Redis key ${key}: Service not initialized`);
+      return false;
+    }
+    
     try {
       const valueString = typeof value === 'string' ? value : JSON.stringify(value);
       
@@ -151,13 +188,19 @@ class RedisService {
       } else {
         await this.client.set(key, valueString);
       }
+      return true;
     } catch (error) {
       logger.error(`Error setting Redis key ${key}:`, error);
-      throw error;
+      return false;
     }
   }
 
   async get(key: string) {
+    if (!this.initialized) {
+      logger.warn(`Cannot get Redis key ${key}: Service not initialized`);
+      return null;
+    }
+    
     try {
       const value = await this.client.get(key);
       
@@ -171,41 +214,63 @@ class RedisService {
       }
     } catch (error) {
       logger.error(`Error getting Redis key ${key}:`, error);
-      throw error;
+      return null;
     }
   }
 
   async delete(key: string) {
+    if (!this.initialized) {
+      logger.warn(`Cannot delete Redis key ${key}: Service not initialized`);
+      return false;
+    }
+    
     try {
       await this.client.del(key);
+      return true;
     } catch (error) {
       logger.error(`Error deleting Redis key ${key}:`, error);
-      throw error;
+      return false;
     }
   }
 
   async exists(key: string): Promise<boolean> {
+    if (!this.initialized) {
+      logger.warn(`Cannot check existence of Redis key ${key}: Service not initialized`);
+      return false;
+    }
+    
     try {
       const result = await this.client.exists(key);
       return result === 1;
     } catch (error) {
       logger.error(`Error checking existence of Redis key ${key}:`, error);
-      throw error;
+      return false;
     }
   }
 
   // List operations
   async listPush(key: string, value: any) {
+    if (!this.initialized) {
+      logger.warn(`Cannot push to Redis list ${key}: Service not initialized`);
+      return false;
+    }
+    
     try {
       const valueString = typeof value === 'string' ? value : JSON.stringify(value);
       await this.client.rpush(key, valueString);
+      return true;
     } catch (error) {
       logger.error(`Error pushing to Redis list ${key}:`, error);
-      throw error;
+      return false;
     }
   }
 
   async listRange(key: string, start: number, end: number) {
+    if (!this.initialized) {
+      logger.warn(`Cannot get range from Redis list ${key}: Service not initialized`);
+      return [];
+    }
+    
     try {
       const items = await this.client.lrange(key, start, end);
       return items.map(item => {
@@ -217,7 +282,7 @@ class RedisService {
       });
     } catch (error) {
       logger.error(`Error getting range from Redis list ${key}:`, error);
-      throw error;
+      return [];
     }
   }
 

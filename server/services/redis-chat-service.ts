@@ -7,9 +7,9 @@ import {
   chatRooms,
   chatRoomMembers,
   chatMessages,
-  users,
-  userRelationships
+  users
 } from '@shared/schema';
+import { userRelationships } from '@shared/green-socials-schema';
 
 // Maps user IDs to active WebSocket clients
 const userClients: Map<number, Set<WebSocket>> = new Map();
@@ -54,20 +54,28 @@ export class RedisChatService {
 
   // Initialize the service
   async initialize() {
-    if (this.initialized) return;
+    if (this.initialized) return true;
     
     try {
-      // Initialize Redis service
-      await redisService.initialize();
+      // Initialize Redis service first
+      const redisInitialized = await redisService.initialize();
+      
+      if (!redisInitialized) {
+        logger.warn('Redis service not available - chat will use standard database operations');
+        return false;
+      }
       
       // Subscribe to Redis channels
       await this.setupSubscriptions();
       
       this.initialized = true;
       logger.info('Redis Chat Service initialized successfully');
+      return true;
     } catch (error) {
       logger.error('Failed to initialize Redis Chat Service:', error);
-      throw new Error('Redis Chat Service initialization failed');
+      logger.warn('Chat service will use standard database operations');
+      this.initialized = false;
+      return false;
     }
   }
 

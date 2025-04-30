@@ -18,7 +18,10 @@ import { testRouter } from './routes/test-routes';
 import { testEmailRouter } from './routes/test-email-notifications';
 import publicEmailTestRouter from './routes/test-public-email-notifications';
 import chatRoutes from './routes/chat-routes';
+import redisChatRoutes from './routes/redis-chat-routes';
 import { chatWebSocketService } from './services/chat-websocket-service';
+import { RedisChatWebSocketService } from './services/redis-chat-websocket-service';
+import { redisChatService } from './services/redis-chat-service';
 
 import { 
   contactFormSchema, 
@@ -108,7 +111,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/test", publicEmailTestRouter);
   
   // Set up chat routes
-  app.use("/api/chat", chatRoutes);
+  // Use Redis chat routes if enabled, fall back to regular chat routes
+  try {
+    // Initialize Redis chat service first to see if it's available
+    await redisChatService.initialize();
+    app.use("/api/chat", redisChatRoutes);
+    console.log("Using Redis-based chat routes");
+  } catch (error) {
+    console.warn("Redis chat service failed to initialize, falling back to standard chat implementation", error);
+    app.use("/api/chat", chatRoutes);
+  }
 
   // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();
@@ -2747,10 +2759,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create and return the HTTP server
   const httpServer = createServer(app);
   
-  // Set up WebSocket server for real-time notifications
+  // Initialize Redis Chat Service
+  try {
+    console.log("Initializing Redis Chat Service...");
+    // This is asynchronous but we'll continue server startup in parallel
+    redisChatService.initialize().then(() => {
+      console.log("Redis Chat Service initialized successfully");
+    }).catch(error => {
+      console.error("Failed to initialize Redis Chat Service:", error);
+      console.log("Falling back to memory-based chat service");
+    });
+  } catch (error) {
+    console.error("Error during Redis Chat Service initialization:", error);
+    console.log("Falling back to memory-based chat service");
+  }
+  
+  // Set up new Redis-based WebSocket server for chat
+  const redisChatWebSocketService = new RedisChatWebSocketService(httpServer);
+  
+  // Set up WebSocket server for general notifications
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
-  // Store client connections by userId
+  // Store client connections by userId for general notifications
   const clients = new Map<number, Set<WebSocket>>();
   
   wss.on('connection', (ws) => {
