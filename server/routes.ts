@@ -2799,11 +2799,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`WebSocket authenticated for user ${userId}`);
           
           // Register this client with the chat service
-          import('./services/chat-websocket-service').then(({ chatWebSocketService }) => {
+          try {
+            const { chatWebSocketService } = require('./services/chat-websocket-service');
             chatWebSocketService.registerClient(userId as number, ws);
-          }).catch(err => {
-            console.error('Error importing chat WebSocket service:', err);
-          });
+            console.log(`Successfully registered client for user ${userId} with chat service`);
+          } catch (err) {
+            console.error('Error registering client with chat WebSocket service:', err);
+          }
           
           // Send confirmation
           ws.send(JSON.stringify({ 
@@ -2845,11 +2847,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Also unregister from chat service
-          import('./services/chat-websocket-service').then(({ chatWebSocketService }) => {
+          try {
+            const { chatWebSocketService } = require('./services/chat-websocket-service');
             chatWebSocketService.unregisterClient(userId as number, ws);
-          }).catch(() => {
-            // Ignore errors on cleanup
-          });
+            console.log(`Successfully unregistered client for user ${userId} from chat service`);
+          } catch (err) {
+            console.error('Error unregistering client from chat service:', err);
+          }
         }
       }
     });

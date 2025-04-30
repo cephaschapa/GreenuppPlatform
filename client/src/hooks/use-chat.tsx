@@ -108,9 +108,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         const wsUrl = `${protocol}//${window.location.host}/ws`;
         console.log('WebSocket URL:', wsUrl);
         
+        // Create a new WebSocket connection
         const newSocket = new WebSocket(wsUrl);
         setWsStatus('connecting');
         
+        // Set up event handlers
         newSocket.onopen = () => {
           console.log('WebSocket connection established successfully');
           setWsStatus('open');
@@ -123,38 +125,41 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           console.log('Sending WebSocket auth message:', authMessage);
           newSocket.send(authMessage);
         };
+        
+        newSocket.onclose = () => {
+          console.log('WebSocket connection closed');
+          setWsStatus('closed');
+          
+          // Try to reconnect after a delay, but only if user is still authenticated
+          setTimeout(() => {
+            if (user && user.id) {
+              connectWebSocket();
+            }
+          }, 3000);
+        };
+        
+        newSocket.onerror = (err) => {
+          console.error('WebSocket error:', err);
+          setWsStatus('error');
+        };
+        
+        newSocket.onmessage = (evt) => {
+          try {
+            console.log('WebSocket message received:', evt.data);
+            const data = JSON.parse(evt.data);
+            handleWebSocketMessage(data);
+          } catch (err) {
+            console.error('Error parsing WebSocket message:', err);
+          }
+        };
+        
+        // Store the socket in state
+        setSocket(newSocket);
+        
       } catch (error) {
         console.error('Error creating WebSocket connection:', error);
         setWsStatus('error');
       }
-      
-      newSocket.onclose = () => {
-        console.log('WebSocket connection closed');
-        setWsStatus('closed');
-        
-        // Try to reconnect after a delay, but only if user is still authenticated
-        setTimeout(() => {
-          if (user && user.id) {
-            connectWebSocket();
-          }
-        }, 3000);
-      };
-      
-      newSocket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setWsStatus('error');
-      };
-      
-      newSocket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          handleWebSocketMessage(data);
-        } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
-        }
-      };
-      
-      setSocket(newSocket);
     };
     
     connectWebSocket();
