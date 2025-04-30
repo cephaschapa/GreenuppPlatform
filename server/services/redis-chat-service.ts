@@ -129,6 +129,12 @@ export class RedisChatService {
   // Update user's online status
   async updateUserStatus(userId: number, isOnline: boolean) {
     try {
+      // If Redis is not available, just log the status - no need to make calls that will fail
+      if (!redisService.isReady()) {
+        logger.debug(`User ${userId} status updated: ${isOnline ? 'online' : 'offline'} (Redis not available, status not persisted)`);
+        return;
+      }
+      
       const status = {
         userId,
         isOnline,
@@ -144,6 +150,7 @@ export class RedisChatService {
       logger.debug(`User ${userId} status updated: ${isOnline ? 'online' : 'offline'}`);
     } catch (error) {
       logger.error(`Error updating user status for user ${userId}:`, error);
+      // Non-critical function, silently continue without rethrowing error
     }
   }
 
@@ -296,16 +303,41 @@ export class RedisChatService {
         senderProfileImage: user[0].profileImage || null
       };
       
-      // Publish message to Redis
-      await redisService.publish(REDIS_CHANNELS.CHAT_MESSAGE, fullMessage);
-      
-      // Store message in Redis for quick access
-      const messageKey = `chat:message:${message.id}`;
-      await redisService.set(messageKey, fullMessage, 86400); // Cache for 24 hours
-      
-      // Add to room's recent messages list
-      const roomMessagesKey = `chat:room:${roomId}:messages`;
-      await redisService.listPush(roomMessagesKey, message.id);
+      // If Redis is available, use it for real-time updates and caching
+      if (redisService.isReady()) {
+        try {
+          // Publish message to Redis
+          await redisService.publish(REDIS_CHANNELS.CHAT_MESSAGE, fullMessage);
+          
+          // Store message in Redis for quick access
+          const messageKey = `chat:message:${message.id}`;
+          await redisService.set(messageKey, fullMessage, 86400); // Cache for 24 hours
+          
+          // Add to room's recent messages list
+          const roomMessagesKey = `chat:room:${roomId}:messages`;
+          await redisService.listPush(roomMessagesKey, message.id);
+        } catch (redisError) {
+          // Log Redis errors, but don't fail the message send operation
+          logger.error(`Redis operations failed when sending message:`, redisError);
+        }
+      } else {
+        logger.debug(`Redis not available, skipping real-time updates and caching for message ${message.id}`);
+        
+        // Even without Redis, we can still broadcast to connected WebSocket clients
+        try {
+          // Get room members to send the message to
+          const members = await this.getRoomMembers(roomId);
+          members.forEach(memberId => {
+            this.sendToUser(memberId, {
+              type: 'chatMessage',
+              data: fullMessage
+            });
+          });
+        } catch (broadcastError) {
+          logger.error(`Error broadcasting message:`, broadcastError);
+          // Still don't fail the operation, as the message is persisted in the database
+        }
+      }
       
       return fullMessage;
     } catch (error) {
@@ -331,21 +363,51 @@ export class RedisChatService {
         isTyping
       };
       
-      // Publish typing indicator to Redis
-      await redisService.publish(REDIS_CHANNELS.CHAT_TYPING, typingData);
-      
-      // Store in Redis with short expiration (10 seconds)
-      const typingKey = `chat:typing:${roomId}:${userId}`;
-      if (isTyping) {
-        await redisService.set(typingKey, { timestamp: new Date().toISOString() }, 10);
+      // If Redis is available, use it for real-time updates
+      if (redisService.isReady()) {
+        try {
+          // Publish typing indicator to Redis
+          await redisService.publish(REDIS_CHANNELS.CHAT_TYPING, typingData);
+          
+          // Store in Redis with short expiration (10 seconds)
+          const typingKey = `chat:typing:${roomId}:${userId}`;
+          if (isTyping) {
+            await redisService.set(typingKey, { timestamp: new Date().toISOString() }, 10);
+          } else {
+            await redisService.delete(typingKey);
+          }
+        } catch (redisError) {
+          logger.error(`Redis operations failed when setting typing indicator:`, redisError);
+          // Don't fail the operation
+        }
       } else {
-        await redisService.delete(typingKey);
+        logger.debug(`Redis not available, using direct WebSocket broadcasting for typing indicator`);
+        
+        // Even without Redis, we can still broadcast to connected WebSocket clients
+        try {
+          // Get room members
+          const members = await this.getRoomMembers(roomId);
+          
+          // Send typing indicator to all connected clients (except the typer)
+          members.forEach(memberId => {
+            if (memberId !== userId) {
+              this.sendToUser(memberId, {
+                type: 'typing',
+                data: typingData
+              });
+            }
+          });
+        } catch (broadcastError) {
+          logger.error(`Error broadcasting typing indicator:`, broadcastError);
+        }
       }
       
+      // Typing indicators are not critical for chat functionality, so always return success
       return true;
     } catch (error) {
+      // Log but don't throw - typing indicators are not critical
       logger.error(`Error setting typing indicator for user ${userId} in room ${roomId}:`, error);
-      throw error;
+      return false;
     }
   }
 
@@ -354,7 +416,7 @@ export class RedisChatService {
     try {
       const timestamp = new Date().toISOString();
       
-      // Update read status in database
+      // Update read status in database - this is the critical part
       await db
         .update(chatRoomMembers)
         .set({ lastReadAt: timestamp })
@@ -363,17 +425,46 @@ export class RedisChatService {
           eq(chatRoomMembers.userId, userId)
         ));
       
-      // Publish read receipt to Redis
+      // Create read receipt data
       const readData: RoomReadStatus = {
         roomId,
         userId,
         timestamp
       };
       
-      await redisService.publish(REDIS_CHANNELS.CHAT_READ, readData);
-      
-      // Update Redis cache for unread counts
-      await this.updateUnreadCountCache(userId);
+      // If Redis is available, use it for real-time updates and caching
+      if (redisService.isReady()) {
+        try {
+          // Publish read receipt to Redis
+          await redisService.publish(REDIS_CHANNELS.CHAT_READ, readData);
+          
+          // Update Redis cache for unread counts
+          await this.updateUnreadCountCache(userId);
+        } catch (redisError) {
+          // Log but don't fail the operation
+          logger.error(`Redis operations failed when marking messages as read:`, redisError);
+        }
+      } else {
+        logger.debug(`Redis not available, using direct WebSocket broadcasting for read receipts`);
+        
+        // Even without Redis, we can still broadcast to connected WebSocket clients
+        try {
+          // Get room members
+          const members = await this.getRoomMembers(roomId);
+          
+          // Send read receipt to all connected clients (except the reader)
+          members.forEach(memberId => {
+            if (memberId !== userId) {
+              this.sendToUser(memberId, {
+                type: 'messageRead',
+                data: readData
+              });
+            }
+          });
+        } catch (broadcastError) {
+          logger.error(`Error broadcasting read receipt:`, broadcastError);
+        }
+      }
       
       return true;
     } catch (error) {
@@ -582,6 +673,12 @@ export class RedisChatService {
 
   // Update the unread count cache for a user
   async updateUnreadCountCache(userId: number): Promise<void> {
+    // Check if Redis is available first
+    if (!redisService.isReady()) {
+      logger.debug(`Redis not available, skipping unread count cache update for user ${userId}`);
+      return;
+    }
+    
     try {
       // Clear user's room cache
       const roomsCacheKey = `chat:user:${userId}:rooms`;
@@ -605,6 +702,7 @@ export class RedisChatService {
         await redisService.delete(roomUnreadCacheKey);
       }
     } catch (error) {
+      // Log but don't throw - caching is not critical for functionality
       logger.error(`Error updating unread count cache for user ${userId}:`, error);
     }
   }
@@ -850,6 +948,12 @@ export class RedisChatService {
 
   // Clear room cache
   private async clearRoomCache(roomId: number) {
+    // Skip if Redis is not available
+    if (!redisService.isReady()) {
+      logger.debug(`Redis not available, skipping room cache clearing for room ${roomId}`);
+      return;
+    }
+    
     try {
       // Clear room members cache
       const membersKey = `chat:room:${roomId}:members`;
@@ -866,12 +970,19 @@ export class RedisChatService {
         await this.clearUserRoomCache(member.userId);
       }
     } catch (error) {
+      // Non-critical operation, just log the error
       logger.error(`Error clearing cache for room ${roomId}:`, error);
     }
   }
 
   // Clear user room cache
   private async clearUserRoomCache(userId: number) {
+    // Skip if Redis is not available
+    if (!redisService.isReady()) {
+      logger.debug(`Redis not available, skipping user room cache clearing for user ${userId}`);
+      return;
+    }
+    
     try {
       // Clear user's rooms cache
       const roomsKey = `chat:user:${userId}:rooms`;
@@ -892,6 +1003,7 @@ export class RedisChatService {
         await redisService.delete(roomUnreadKey);
       }
     } catch (error) {
+      // Non-critical operation, just log the error
       logger.error(`Error clearing cache for user ${userId}:`, error);
     }
   }

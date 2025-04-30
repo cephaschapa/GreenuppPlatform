@@ -286,6 +286,11 @@ class RedisService {
     }
   }
 
+  // Check if the Redis service is ready
+  isReady(): boolean {
+    return this.initialized;
+  }
+  
   // Close all Redis connections
   async close() {
     try {
