@@ -21,6 +21,8 @@ export type ChatRoomMember = {
   lastReadAt: string;
   isAdmin: boolean;
   isMuted: boolean;
+  isOnline?: boolean;
+  lastActivity?: string;
   nickname?: string;
   username?: string;
   firstName?: string;
@@ -232,10 +234,31 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         handleTypingIndicator(data.data);
         break;
         
+      case 'user_online_status':
+        handleUserOnlineStatus(data.data);
+        break;
+        
+      case 'user_joined':
+        handleUserJoined(data.data);
+        break;
+        
+      case 'user_left':
+        handleUserLeft(data.data);
+        break;
+        
       case 'room_joined':
         console.log('Joined room:', data.data.room);
         if (data.data.messages) {
           setMessages(data.data.messages);
+        }
+        if (data.data.members) {
+          // Update room with member information
+          if (activeRoom && activeRoom.id === data.data.room.id) {
+            setActiveRoom({
+              ...activeRoom,
+              members: data.data.members
+            });
+          }
         }
         break;
         
@@ -332,6 +355,77 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           const newMap = new Map(prev);
           newMap.delete(data.userId);
           return newMap;
+        });
+      }
+    }
+  };
+  
+  // Handle user online status updates
+  const handleUserOnlineStatus = (data: { userId: number, isOnline: boolean, timestamp: string }) => {
+    // Update online status in all rooms where this user is a member
+    setRooms(prev => prev.map(room => {
+      if (room.members) {
+        const updatedMembers = room.members.map(member => {
+          if (member.userId === data.userId) {
+            return {
+              ...member,
+              isOnline: data.isOnline,
+              lastActivity: data.timestamp
+            };
+          }
+          return member;
+        });
+        
+        return {
+          ...room,
+          members: updatedMembers
+        };
+      }
+      return room;
+    }));
+    
+    // Also update in active room if applicable
+    if (activeRoom && activeRoom.members) {
+      const updatedMembers = activeRoom.members.map(member => {
+        if (member.userId === data.userId) {
+          return {
+            ...member,
+            isOnline: data.isOnline,
+            lastActivity: data.timestamp
+          };
+        }
+        return member;
+      });
+      
+      setActiveRoom({
+        ...activeRoom,
+        members: updatedMembers
+      });
+    }
+  };
+  
+  // Handle user joining room
+  const handleUserJoined = (data: { roomId: number, userId: number, timestamp: string }) => {
+    console.log('User joined room:', data);
+    
+    // Update room members if this is the active room
+    if (activeRoom && activeRoom.id === data.roomId) {
+      // We'll need to refresh room data to get the new member info
+      fetchRooms(true);
+    }
+  };
+  
+  // Handle user leaving room
+  const handleUserLeft = (data: { roomId: number, userId: number, timestamp: string }) => {
+    console.log('User left room:', data);
+    
+    // Update room members if this is the active room
+    if (activeRoom && activeRoom.id === data.roomId) {
+      // Update the members list immediately, full refresh will happen on next poll
+      if (activeRoom.members) {
+        setActiveRoom({
+          ...activeRoom,
+          members: activeRoom.members.filter(m => m.userId !== data.userId)
         });
       }
     }

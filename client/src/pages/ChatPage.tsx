@@ -372,20 +372,28 @@ export default function ChatPage() {
                 setMobileMenuOpen(false);
               }}
             >
-              <Avatar>
-                {room.type === 'direct' ? (
-                  <>
-                    <AvatarImage src={getRoomAvatar(room)} />
-                    <AvatarFallback>{getRoomInitials(room)}</AvatarFallback>
-                  </>
-                ) : (
-                  <>
-                    <AvatarFallback>
-                      <Users className="h-4 w-4" />
-                    </AvatarFallback>
-                  </>
+              <div className="relative">
+                <Avatar>
+                  {room.type === 'direct' ? (
+                    <>
+                      <AvatarImage src={getRoomAvatar(room)} />
+                      <AvatarFallback>{getRoomInitials(room)}</AvatarFallback>
+                    </>
+                  ) : (
+                    <>
+                      <AvatarFallback>
+                        <Users className="h-4 w-4" />
+                      </AvatarFallback>
+                    </>
+                  )}
+                </Avatar>
+                {room.type === 'direct' && room.members && (
+                  <div className={cn(
+                    "absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-background",
+                    isUserOnline(room) ? "bg-green-500" : "bg-gray-400"
+                  )}></div>
                 )}
-              </Avatar>
+              </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium truncate">{getRoomName(room)}</h3>
@@ -396,7 +404,11 @@ export default function ChatPage() {
                 <div className="flex items-center justify-between mt-1">
                   <p className="text-sm text-muted-foreground truncate w-40">
                     {/* Here you would show last message preview */}
-                    {room.type === 'direct' ? 'Direct message' : 'Group chat'}
+                    {isUserTypingInRoom(room) ? (
+                      <span className="text-primary">typing...</span>
+                    ) : (
+                      room.type === 'direct' ? 'Direct message' : 'Group chat'
+                    )}
                   </p>
                   {room.unreadCount && room.unreadCount > 0 ? (
                     <Badge className="ml-2">{room.unreadCount}</Badge>
@@ -445,6 +457,34 @@ export default function ChatPage() {
     return room.name || 'Unnamed Chat';
   };
   
+  // Check if a user is online in a room
+  const isUserOnline = (room: ChatRoom): boolean => {
+    if (room.type === 'direct' && room.members) {
+      const otherMember = room.members.find(m => m.userId !== user?.id);
+      return !!otherMember?.isOnline;
+    }
+    return false;
+  };
+  
+  // Check if a user is typing in a room
+  const isUserTypingInRoom = (room: ChatRoom): boolean => {
+    if (room.id === activeRoom?.id) {
+      // If this is the active room, we already show typing indicator there
+      return false;
+    }
+    
+    // Check if any user is typing in this room
+    if (room.members) {
+      for (const member of room.members) {
+        if (member.userId !== user?.id && typingUsers.has(member.userId)) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  };
+  
   // Render the main chat area with messages
   const renderChatArea = () => (
     <div className="flex-1 flex flex-col h-full">
@@ -471,25 +511,47 @@ export default function ChatPage() {
                 <ChevronLeft className="h-5 w-5" />
               </Button>
               
-              <Avatar>
-                {activeRoom.type === 'direct' ? (
-                  <>
-                    <AvatarImage src={getRoomAvatar(activeRoom)} />
-                    <AvatarFallback>{getRoomInitials(activeRoom)}</AvatarFallback>
-                  </>
-                ) : (
-                  <>
-                    <AvatarFallback>
-                      <Users className="h-4 w-4" />
-                    </AvatarFallback>
-                  </>
+              <div className="relative">
+                <Avatar>
+                  {activeRoom.type === 'direct' ? (
+                    <>
+                      <AvatarImage src={getRoomAvatar(activeRoom)} />
+                      <AvatarFallback>{getRoomInitials(activeRoom)}</AvatarFallback>
+                    </>
+                  ) : (
+                    <>
+                      <AvatarFallback>
+                        <Users className="h-4 w-4" />
+                      </AvatarFallback>
+                    </>
+                  )}
+                </Avatar>
+                {activeRoom.type === 'direct' && activeRoom.members && (
+                  <div className={cn(
+                    "absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-background",
+                    isUserOnline(activeRoom) ? "bg-green-500" : "bg-gray-400"
+                  )}></div>
                 )}
-              </Avatar>
+              </div>
               <div>
                 <h2 className="font-medium">{getRoomName(activeRoom)}</h2>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground flex items-center">
                   {activeRoom.type === 'direct' 
-                    ? 'Direct Message' 
+                    ? (
+                      <>
+                        {isUserOnline(activeRoom) ? (
+                          <span className="flex items-center">
+                            <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                            Online
+                          </span>
+                        ) : (
+                          <span className="flex items-center">
+                            <span className="w-2 h-2 bg-gray-400 rounded-full mr-1"></span>
+                            Offline
+                          </span>
+                        )}
+                      </>
+                    )
                     : `${activeRoom.members?.length || 0} members`}
                 </p>
               </div>
