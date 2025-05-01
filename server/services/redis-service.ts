@@ -28,21 +28,57 @@ class RedisService {
   private client: Redis;
   private subscribers: Map<string, Set<(message: any) => void>> = new Map();
   private initialized = false;
+  private initializing = false;
+  private lastInitAttempt = 0;
+  private readonly INIT_RETRY_INTERVAL = 10000; // 10 seconds
 
   constructor() {
-    this.publisher = new Redis(REDIS_OPTIONS);
-    this.subscriber = new Redis(REDIS_OPTIONS);
-    this.client = new Redis(REDIS_OPTIONS);
-
-    this.setupSubscriber();
-    this.setupErrorHandling();
+    // Create Redis clients with error handling
+    try {
+      this.publisher = new Redis(REDIS_OPTIONS);
+      this.subscriber = new Redis(REDIS_OPTIONS);
+      this.client = new Redis(REDIS_OPTIONS);
+      
+      this.setupSubscriber();
+      this.setupErrorHandling();
+      
+      // Try to initialize on startup
+      this.initialize().catch(err => {
+        logger.error('Initial Redis initialization failed:', err);
+      });
+    } catch (error) {
+      logger.error('Error creating Redis clients:', error);
+      // Set default values in case of constructor error
+      this.publisher = null as any;
+      this.subscriber = null as any; 
+      this.client = null as any;
+    }
   }
 
-  // Initialize the service
+  // Initialize the service with throttling to prevent frequent initialization attempts
   async initialize() {
+    // Skip if already initialized or in progress
     if (this.initialized) return true;
+    if (this.initializing) return false;
+    
+    // Throttle initialization attempts
+    const now = Date.now();
+    if (now - this.lastInitAttempt < this.INIT_RETRY_INTERVAL) {
+      return false;
+    }
+    
+    this.initializing = true;
+    this.lastInitAttempt = now;
     
     try {
+      // Make sure Redis clients exist
+      if (!this.client || !this.publisher || !this.subscriber) {
+        logger.error('Redis clients not created, cannot initialize');
+        this.initialized = false;
+        this.initializing = false;
+        return false;
+      }
+      
       // Test the connection
       await this.client.ping();
       this.initialized = true;
@@ -54,6 +90,8 @@ class RedisService {
       // Don't throw error, just return false to indicate failure
       this.initialized = false;
       return false;
+    } finally {
+      this.initializing = false;
     }
   }
 
