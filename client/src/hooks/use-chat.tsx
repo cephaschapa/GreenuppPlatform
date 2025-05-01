@@ -487,19 +487,40 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (!activeRoom) return;
     
     try {
+      // First try WebSocket method
+      let messageSent = false;
+      
       // Try to send via WebSocket for real-time delivery
       if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-          type: 'send_message',
-          data: {
+        try {
+          console.log('Sending message via WebSocket', {
             roomId: activeRoom.id,
             content,
-            media,
             replyToId
-          }
-        }));
-      } else {
-        // Fallback to REST API
+          });
+          
+          socket.send(JSON.stringify({
+            type: 'send_message',
+            roomId: activeRoom.id,
+            content,
+            replyToId
+          }));
+          
+          // We'll assume success for now - WebSocket errors are handled elsewhere
+          messageSent = true;
+        } catch (wsError) {
+          console.error('WebSocket send error, falling back to API:', wsError);
+          messageSent = false;
+        }
+      }
+      
+      // Fallback to REST API if WebSocket didn't work
+      if (!messageSent) {
+        console.log('Sending message via REST API', {
+          roomId: activeRoom.id,
+          content
+        });
+        
         const response = await fetch(`/api/chat/rooms/${activeRoom.id}/messages`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -507,17 +528,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         });
         
         if (!response.ok) {
-          throw new Error('Failed to send message');
+          const errorText = await response.text();
+          console.error('API error response:', errorText);
+          throw new Error(`Failed to send message: ${response.status} ${response.statusText}`);
         }
         
         const message = await response.json();
+        console.log('Message sent successfully via API', message);
         handleNewMessage(message);
       }
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
         title: 'Error',
-        description: 'Failed to send message',
+        description: `Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive',
       });
     }

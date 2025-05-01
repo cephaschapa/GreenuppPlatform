@@ -163,6 +163,53 @@ router.post('/rooms/:roomId/read', async (req: Request, res: Response) => {
 });
 
 /**
+ * Send a message to a chat room
+ */
+router.post('/rooms/:roomId/messages', async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Not authenticated' });
+  }
+
+  try {
+    const roomId = parseInt(req.params.roomId);
+    if (isNaN(roomId)) {
+      return res.status(400).json({ message: 'Invalid room ID' });
+    }
+    
+    const { content, replyToId } = req.body;
+    
+    if (!content || typeof content !== 'string') {
+      return res.status(400).json({ message: 'Message content is required' });
+    }
+    
+    logger.info(`Sending message via REST API to room ${roomId} from user ${req.user.id}`);
+    
+    try {
+      // Call Redis chat service to send the message
+      const message = await redisChatService.sendMessage(
+        req.user.id,
+        roomId,
+        content,
+        replyToId
+      );
+      
+      logger.info(`Message sent successfully to room ${roomId}`);
+      return res.status(201).json(message);
+    } catch (messageError) {
+      logger.error(`Error sending message with Redis service:`, messageError);
+      return res.status(500).json({ 
+        message: 'Failed to send message', 
+        error: messageError instanceof Error ? messageError.message : 'Unknown error' 
+      });
+    }
+  } catch (error) {
+    logger.error(`Error processing send message request:`, error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ message: 'Failed to process request', error: errorMessage });
+  }
+});
+
+/**
  * Get total unread message count across all rooms
  */
 router.get('/unread/count', async (req: Request, res: Response) => {

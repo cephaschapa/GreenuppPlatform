@@ -252,6 +252,8 @@ export class RedisChatService {
   // Send a chat message
   async sendMessage(userId: number, roomId: number, content: string, replyToId?: number) {
     try {
+      logger.info(`Attempting to send message from user ${userId} to room ${roomId}`);
+      
       // Verify user is a member of the room
       const member = await db
         .select()
@@ -262,17 +264,23 @@ export class RedisChatService {
         )).limit(1);
       
       if (member.length === 0) {
+        logger.error(`User ${userId} is not a member of room ${roomId}`);
         throw new Error('User is not a member of this room');
       }
+      
+      logger.info(`User ${userId} is a member of room ${roomId}, proceeding with message send`);
       
       // Get user info
       const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
       
       if (user.length === 0) {
+        logger.error(`User ${userId} not found in database`);
         throw new Error('User not found');
       }
       
       // Insert message into database
+      logger.info(`Inserting message into database for room ${roomId}`);
+      
       const [message] = await db
         .insert(chatMessages)
         .values({
@@ -284,6 +292,8 @@ export class RedisChatService {
           replyToId: replyToId || null
         })
         .returning();
+      
+      logger.info(`Message inserted successfully with ID ${message.id}`);
       
       // Update room's last activity
       await db
@@ -306,6 +316,7 @@ export class RedisChatService {
       // If Redis is available, use it for real-time updates and caching
       if (redisService.isReady()) {
         try {
+          logger.info(`Redis is available, publishing message to Redis`);
           // Publish message to Redis
           await redisService.publish(REDIS_CHANNELS.CHAT_MESSAGE, fullMessage);
           
@@ -321,12 +332,14 @@ export class RedisChatService {
           logger.error(`Redis operations failed when sending message:`, redisError);
         }
       } else {
-        logger.debug(`Redis not available, skipping real-time updates and caching for message ${message.id}`);
+        logger.info(`Redis not available, using websocket broadcast for message ${message.id}`);
         
         // Even without Redis, we can still broadcast to connected WebSocket clients
         try {
           // Get room members to send the message to
           const members = await this.getRoomMembers(roomId);
+          logger.info(`Broadcasting message to ${members.length} room members`);
+          
           members.forEach(memberId => {
             this.sendToUser(memberId, {
               type: 'chatMessage',
@@ -339,6 +352,7 @@ export class RedisChatService {
         }
       }
       
+      logger.info(`Message send operation completed successfully`);
       return fullMessage;
     } catch (error) {
       logger.error(`Error sending message from user ${userId} to room ${roomId}:`, error);
