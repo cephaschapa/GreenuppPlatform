@@ -710,57 +710,90 @@ export class RedisChatService {
   // Get room messages
   async getRoomMessages(roomId: number, userId: number, limit = 50, before?: string) {
     try {
-      // Verify user is a member of the room
-      const member = await db
-        .select()
-        .from(chatRoomMembers)
-        .where(and(
-          eq(chatRoomMembers.roomId, roomId),
-          eq(chatRoomMembers.userId, userId)
-        )).limit(1);
+      logger.info(`Beginning message retrieval for room ${roomId}, user ${userId}, limit ${limit}, before ${before || 'none'}`);
       
-      if (member.length === 0) {
-        throw new Error('User is not a member of this room');
+      // Verify user is a member of the room
+      try {
+        const member = await db
+          .select()
+          .from(chatRoomMembers)
+          .where(and(
+            eq(chatRoomMembers.roomId, roomId),
+            eq(chatRoomMembers.userId, userId)
+          )).limit(1);
+        
+        logger.info(`Room membership check result: ${JSON.stringify(member)}`);
+        
+        if (member.length === 0) {
+          throw new Error('User is not a member of this room');
+        }
+      } catch (memberError) {
+        logger.error(`Error checking room membership:`, memberError);
+        throw new Error(`Failed to verify room membership: ${memberError.message}`);
       }
       
-      // Build query conditions
-      let query = db
-        .select({
-          id: chatMessages.id,
-          roomId: chatMessages.roomId,
-          senderId: chatMessages.senderId,
-          content: chatMessages.content,
-          status: chatMessages.status,
-          sentAt: chatMessages.sentAt,
-          media: chatMessages.media,
-          replyToId: chatMessages.replyToId,
-          isEdited: chatMessages.isEdited,
-          isDeleted: chatMessages.isDeleted,
-          senderUsername: users.username,
-          senderFirstName: users.firstName,
-          senderLastName: users.lastName,
-          senderProfileImage: users.profileImage
-        })
-        .from(chatMessages)
-        .leftJoin(users, eq(chatMessages.senderId, users.id))
-        .where(eq(chatMessages.roomId, roomId));
+      // Build query conditions - need to handle the date filter properly
+      logger.info(`Building query for room ${roomId}`);
+      
+      // Define where conditions
+      let whereConditions = eq(chatMessages.roomId, roomId);
       
       // Apply date filter if before parameter is provided
       if (before) {
-        logger.info(`Filtering messages sent before ${before}`);
-        query = query.where(lt(chatMessages.sentAt, before));
+        try {
+          logger.info(`Applying filter for messages before ${before}`);
+          const dateObj = new Date(before);
+          if (!isNaN(dateObj.getTime())) {
+            // Valid date format, combine conditions with the date filter
+            logger.info(`Using lt operator with date: ${before}`);
+            whereConditions = and(
+              whereConditions,
+              lt(chatMessages.sentAt, before)
+            );
+          } else {
+            logger.warn(`Invalid date format: ${before}, skipping date filter`);
+          }
+        } catch (dateError) {
+          logger.error(`Error applying date filter:`, dateError);
+          // Continue with just the roomId filter
+        }
       }
       
-      // Add sorting and limit
-      query = query.orderBy(desc(chatMessages.sentAt)).limit(limit);
-      
-      // Execute the query
-      logger.info(`Getting messages for room ${roomId}, limit ${limit}, before ${before || 'none'}`);
-      const messages = await query;
-      
-      logger.info(`Retrieved ${messages.length} messages for room ${roomId}`);
+      // Build the complete query
+      logger.info(`Executing full query with all conditions for room ${roomId}`);
+      let messages;
+      try {
+        messages = await db
+          .select({
+            id: chatMessages.id,
+            roomId: chatMessages.roomId,
+            senderId: chatMessages.senderId,
+            content: chatMessages.content,
+            status: chatMessages.status,
+            sentAt: chatMessages.sentAt,
+            media: chatMessages.media,
+            replyToId: chatMessages.replyToId,
+            isEdited: chatMessages.isEdited,
+            isDeleted: chatMessages.isDeleted,
+            senderUsername: users.username,
+            senderFirstName: users.firstName,
+            senderLastName: users.lastName,
+            senderProfileImage: users.profileImage
+          })
+          .from(chatMessages)
+          .leftJoin(users, eq(chatMessages.senderId, users.id))
+          .where(whereConditions)
+          .orderBy(desc(chatMessages.sentAt))
+          .limit(limit);
+        
+        logger.info(`Retrieved ${messages.length} messages for room ${roomId}`);
+      } catch (queryError) {
+        logger.error(`Error executing query:`, queryError);
+        throw new Error(`Failed to execute query: ${queryError instanceof Error ? queryError.message : 'Unknown error'}`);
+      }
       
       // Return messages in chronological order (oldest first)
+      logger.info(`Returning ${messages.length} messages in reverse order`);
       return messages.reverse();
     } catch (error) {
       logger.error(`Error getting messages for room ${roomId}:`, error);

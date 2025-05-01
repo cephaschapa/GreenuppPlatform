@@ -80,20 +80,34 @@ router.get('/rooms/:roomId/messages', async (req: Request, res: Response) => {
     const before = req.query.before as string || undefined;
     const limit = parseInt(req.query.limit as string || '50');
     
-    console.log(`Fetching messages for room ${roomId}, user ${req.user.id}, limit ${limit}, before ${before || 'none'}`);
+    logger.info(`Fetching messages for room ${roomId}, user ${req.user.id}, limit ${limit}, before ${before || 'none'}`);
     
-    // Get messages
-    const messages = await redisChatService.getRoomMessages(roomId, req.user.id, limit, before);
-    
-    console.log(`Retrieved ${messages ? messages.length : 0} messages for room ${roomId}`);
-    
-    // Mark messages as read as a side effect
-    await redisChatService.markMessagesAsRead(req.user.id, roomId);
-    
-    res.json(messages);
+    try {
+      // Get messages
+      const messages = await redisChatService.getRoomMessages(roomId, req.user.id, limit, before);
+      
+      logger.info(`Retrieved ${messages ? messages.length : 0} messages for room ${roomId}`);
+      
+      try {
+        // Mark messages as read as a side effect - don't let this block message retrieval
+        await redisChatService.markMessagesAsRead(req.user.id, roomId);
+      } catch (markError) {
+        // Just log the error but don't fail the request
+        logger.error(`Error marking messages as read:`, markError);
+      }
+      
+      return res.json(messages || []);
+    } catch (messageError) {
+      logger.error(`Error fetching messages with Redis service:`, messageError);
+      
+      // If we can't get messages from the Redis service, send an empty array
+      // instead of failing the request - the client can retry
+      return res.json([]);
+    }
   } catch (error) {
-    logger.error(`Error fetching chat messages:`, error);
-    res.status(500).json({ message: 'Failed to fetch chat messages' });
+    logger.error(`Error processing chat messages request:`, error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ message: 'Failed to process request', error: errorMessage });
   }
 });
 
