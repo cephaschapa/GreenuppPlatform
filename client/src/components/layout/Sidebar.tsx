@@ -49,6 +49,8 @@ export function Sidebar() {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { itemCount } = useCart();
+  const { unreadCount: notificationCount } = useNotifications();
+  const { totalUnreadCount: chatUnreadCount } = useChat();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const farmerNavItems = [
@@ -368,10 +370,20 @@ export function Sidebar() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 w-full h-full px-1",
+              "flex flex-col items-center justify-center gap-1 w-full h-full px-1 relative",
               item.active ? "text-primary" : "text-muted-foreground",
             )}
           >
+            {item.title === "Chat" && chatUnreadCount > 0 && (
+              <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full">
+                {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
+              </Badge>
+            )}
+            {item.title === "Socials" && notificationCount > 0 && (
+              <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full">
+                {notificationCount > 9 ? "9+" : notificationCount}
+              </Badge>
+            )}
             {item.mobileIcon}
             <span className="text-xs line-clamp-1 text-center max-w-[70px]">
               {item.title}
@@ -409,7 +421,7 @@ export function Sidebar() {
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-2.5 px-2 py-2 rounded-md transition-colors animate-scale-in",
+                        "flex items-center justify-between px-2 py-2 rounded-md transition-colors animate-scale-in",
                         item.active
                           ? "bg-primary/20 text-primary"
                           : "text-foreground hover:bg-primary/10",
@@ -417,8 +429,20 @@ export function Sidebar() {
                       style={{ animationDelay: `${index * 0.05}s` }}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      {item.icon}
-                      <span>{item.title}</span>
+                      <div className="flex items-center gap-2.5">
+                        {item.icon}
+                        <span>{item.title}</span>
+                      </div>
+                      {item.title === "Chat" && chatUnreadCount > 0 && (
+                        <Badge variant="destructive" className="h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full">
+                          {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
+                        </Badge>
+                      )}
+                      {item.title === "Socials" && notificationCount > 0 && (
+                        <Badge variant="destructive" className="h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full">
+                          {notificationCount > 9 ? "9+" : notificationCount}
+                        </Badge>
+                      )}
                     </Link>
                   ))}
                 </div>
@@ -479,12 +503,24 @@ export function Sidebar() {
                   {item.icon}
                   <span>{item.title}</span>
                 </div>
-                <ChevronRight
-                  className={cn(
-                    "h-4 w-4 opacity-0 transition-opacity",
-                    item.active && "opacity-100",
+                <div className="flex items-center">
+                  {item.title === "Chat" && chatUnreadCount > 0 && (
+                    <Badge variant="destructive" className="h-5 w-5 mr-1 flex items-center justify-center p-0 text-[10px] rounded-full">
+                      {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
+                    </Badge>
                   )}
-                />
+                  {item.title === "Socials" && notificationCount > 0 && (
+                    <Badge variant="destructive" className="h-5 w-5 mr-1 flex items-center justify-center p-0 text-[10px] rounded-full">
+                      {notificationCount > 9 ? "9+" : notificationCount}
+                    </Badge>
+                  )}
+                  <ChevronRight
+                    className={cn(
+                      "h-4 w-4 opacity-0 transition-opacity",
+                      item.active && "opacity-100",
+                    )}
+                  />
+                </div>
               </Link>
             ))}
           </nav>
