@@ -111,16 +111,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/test", publicEmailTestRouter);
   
   // Set up chat routes
-  // Use Redis chat routes if enabled, fall back to regular chat routes
-  try {
-    // Initialize Redis chat service first to see if it's available
-    await redisChatService.initialize();
-    app.use("/api/chat", redisChatRoutes);
-    console.log("Using Redis-based chat routes");
-  } catch (error) {
-    console.warn("Redis chat service failed to initialize, falling back to standard chat implementation", error);
-    app.use("/api/chat", chatRoutes);
-  }
+  // Always use standard chat routes instead of Redis
+  console.log("Using standard database-only chat implementation (Redis disabled)");
+  app.use("/api/chat", chatRoutes);
 
   // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();
