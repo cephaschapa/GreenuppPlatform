@@ -98,6 +98,7 @@ export class RedisChatWebSocketService {
         case 'send_message':
           // Send a message to a chat room
           if (!message.roomId || !message.content) {
+            logger.warn(`Missing roomId or content in message from user ${userId}:`, message);
             ws.send(JSON.stringify({ 
               type: 'error', 
               message: 'Missing roomId or content'
@@ -105,17 +106,29 @@ export class RedisChatWebSocketService {
             return;
           }
           
-          const sentMessage = await redisChatService.sendMessage(
-            userId,
-            message.roomId,
-            message.content,
-            message.replyToId
-          );
+          logger.info(`WebSocket: Sending message from user ${userId} to room ${message.roomId}`);
           
-          ws.send(JSON.stringify({
-            type: 'message_sent',
-            data: sentMessage
-          }));
+          try {
+            const sentMessage = await redisChatService.sendMessage(
+              userId,
+              message.roomId,
+              message.content,
+              message.replyToId
+            );
+            
+            logger.info(`WebSocket: Message sent successfully, sending confirmation to client`);
+            
+            ws.send(JSON.stringify({
+              type: 'message_sent',
+              data: sentMessage
+            }));
+          } catch (sendError) {
+            logger.error(`WebSocket: Error sending message:`, sendError);
+            ws.send(JSON.stringify({
+              type: 'error',
+              message: sendError instanceof Error ? sendError.message : 'Failed to send message'
+            }));
+          }
           break;
           
         case 'typing':
