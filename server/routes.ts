@@ -2752,23 +2752,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create and return the HTTP server
   const httpServer = createServer(app);
   
-  // Initialize Redis Chat Service
-  try {
-    console.log("Initializing Redis Chat Service...");
-    // This is asynchronous but we'll continue server startup in parallel
-    redisChatService.initialize().then(() => {
-      console.log("Redis Chat Service initialized successfully");
-    }).catch(error => {
-      console.error("Failed to initialize Redis Chat Service:", error);
-      console.log("Falling back to memory-based chat service");
-    });
-  } catch (error) {
-    console.error("Error during Redis Chat Service initialization:", error);
-    console.log("Falling back to memory-based chat service");
-  }
+  // Skip Redis Chat Service initialization - using database-only mode
+  console.log("Using database-only chat service - Redis completely disabled");
   
-  // Set up new Redis-based WebSocket server for chat
-  const redisChatWebSocketService = new RedisChatWebSocketService(httpServer);
+  // Set up standard WebSocket server for chat
+  const chatWsService = chatWebSocketService;
   
   // Set up WebSocket server for general notifications
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
