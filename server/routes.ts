@@ -1,6 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import { Server as SocketIOServer } from "socket.io";
 import { storage } from "./storage";
 import setupMarketplaceRoutes from "./routes/marketplace";
 import cartRoutes from "./routes/cart";
@@ -22,6 +23,7 @@ import redisChatRoutes from './routes/redis-chat-routes';
 import { chatWebSocketService } from './services/chat-websocket-service';
 import { RedisChatWebSocketService } from './services/redis-chat-websocket-service';
 import { redisChatService } from './services/redis-chat-service';
+import { SocketIOChatService } from './services/socketio-chat-service';
 
 import { 
   contactFormSchema, 
@@ -2755,7 +2757,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Skip Redis Chat Service initialization - using database-only mode
   console.log("Using database-only chat service - Redis completely disabled");
   
-  // Set up standard WebSocket server for chat
+  // Set up Socket.IO server for chat (replaces ws implementation)
+  console.log("Initializing Socket.IO Chat Service");
+  const socketIoChatService = new SocketIOChatService(httpServer);
+  
+  // Keep backward compatibility with existing WebSocket server for now
+  // This will be completely replaced by Socket.IO in the future
   const chatWsService = chatWebSocketService;
   
   // Set up WebSocket server for general notifications
