@@ -20,6 +20,8 @@ import EmailNotificationTestPage from "@/pages/EmailNotificationTestPage";
 import PublicEmailTestPage from "@/pages/PublicEmailTestPage";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ChatProvider } from "@/hooks/use-chat";
+import { SocketIOProvider } from "@/hooks/use-socketio";
+import { SocketIOChatProvider } from "@/hooks/use-socketio-chat";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import InstallPWA from "@/components/ui/InstallPWA";
@@ -109,19 +111,25 @@ function App() {
     <ThemeProvider defaultTheme="system">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          {/* Keep legacy WebSocket provider for backward compatibility */}
           <WebSocketProvider>
             <NotificationProvider>
-              <ChatProvider>
-                <CartProvider>
-                  <HelmetProvider>
-                    <Router />
-                    <Toaster />
-                    {/* PWA Components */}
-                    <InstallPWA />
-                    <OfflineIndicator />
-                  </HelmetProvider>
-                </CartProvider>
-              </ChatProvider>
+              {/* Use legacy ChatProvider for now, but start integrating SocketIO */}
+              <SocketIOProvider>
+                <SocketIOChatProvider>
+                  <ChatProvider>
+                    <CartProvider>
+                      <HelmetProvider>
+                        <Router />
+                        <Toaster />
+                        {/* PWA Components */}
+                        <InstallPWA />
+                        <OfflineIndicator />
+                      </HelmetProvider>
+                    </CartProvider>
+                  </ChatProvider>
+                </SocketIOChatProvider>
+              </SocketIOProvider>
             </NotificationProvider>
           </WebSocketProvider>
         </AuthProvider>

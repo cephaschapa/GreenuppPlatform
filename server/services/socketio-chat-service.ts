@@ -122,9 +122,10 @@ export class SocketIOChatService {
   private async fetchAndSetUserInfo(socket: UserSocket, userId: number): Promise<void> {
     try {
       // Get user details from database
-      const [userInfo] = await chatService.getUserInfo(userId);
+      const userInfoArray = await chatService.getUserInfo(userId);
       
-      if (userInfo) {
+      if (userInfoArray && userInfoArray.length > 0) {
+        const userInfo = userInfoArray[0];
         socket.userInfo = {
           firstName: userInfo.firstName,
           lastName: userInfo.lastName,
@@ -230,14 +231,14 @@ export class SocketIOChatService {
       }
       
       // Save message to database
-      const messageData: InsertChatMessage = {
+      const messageData = {
         roomId,
         senderId: userId,
         content,
         status: 'sent',
         media,
         replyToId,
-      };
+      } as unknown as InsertChatMessage;
       
       const message = await chatService.sendMessage(messageData);
       
@@ -369,10 +370,10 @@ export class SocketIOChatService {
     const socketIds = this.userSockets.get(userId);
     if (!socketIds || socketIds.size === 0) return;
     
-    // Send to all user's sockets
-    for (const socketId of socketIds) {
+    // Send to all user's sockets - convert Set to Array to avoid iteration issues
+    Array.from(socketIds).forEach(socketId => {
       this.io.to(socketId).emit(eventName, data);
-    }
+    });
   }
   
   /**

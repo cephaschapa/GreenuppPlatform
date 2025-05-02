@@ -152,6 +152,40 @@ export function SocketIOChatProvider({ children }: { children: ReactNode }) {
     }
   }, [user, messages.length, toast]);
   
+  // Mark messages in a room as read
+  const markAsRead = useCallback(async (roomId: number) => {
+    if (!user || !socket || !isConnected) return;
+    
+    try {
+      // Mark as read via Socket.IO
+      socket.emit('mark_read', { roomId });
+      
+      // Update total unread count
+      fetchRooms();
+      
+    } catch (error) {
+      console.error(`Error marking messages as read in room ${roomId}:`, error);
+      
+      // Fallback to REST API
+      try {
+        await apiRequest('POST', `/api/chat/rooms/${roomId}/read`);
+        fetchRooms();
+      } catch (apiError) {
+        console.error('Error marking messages as read via API fallback:', apiError);
+      }
+    }
+  }, [user, socket, isConnected, fetchRooms]);
+  
+  // Update typing status
+  const setTyping = useCallback((isTyping: boolean) => {
+    if (!user || !activeRoom || !socket || !isConnected) return;
+    
+    socket.emit('typing_status', {
+      roomId: activeRoom.id,
+      isTyping
+    });
+  }, [user, activeRoom, socket, isConnected]);
+  
   // Set the active chat room
   const setActiveChatRoom = useCallback(async (roomId: number) => {
     if (!user) return;
@@ -244,30 +278,6 @@ export function SocketIOChatProvider({ children }: { children: ReactNode }) {
     }
   }, [user, activeRoom, socket, isConnected, setTyping, fetchMessages, toast]);
   
-  // Mark messages in a room as read
-  const markAsRead = useCallback(async (roomId: number) => {
-    if (!user || !socket || !isConnected) return;
-    
-    try {
-      // Mark as read via Socket.IO
-      socket.emit('mark_read', { roomId });
-      
-      // Update total unread count
-      fetchRooms();
-      
-    } catch (error) {
-      console.error(`Error marking messages as read in room ${roomId}:`, error);
-      
-      // Fallback to REST API
-      try {
-        await apiRequest('POST', `/api/chat/rooms/${roomId}/read`);
-        fetchRooms();
-      } catch (apiError) {
-        console.error('Error marking messages as read via API fallback:', apiError);
-      }
-    }
-  }, [user, socket, isConnected, fetchRooms]);
-  
   // Create a new chat room
   const createRoom = useCallback(async (name: string, memberIds: number[]): Promise<ChatRoom | null> => {
     if (!user) return null;
@@ -321,16 +331,6 @@ export function SocketIOChatProvider({ children }: { children: ReactNode }) {
       return null;
     }
   }, [user, fetchRooms, toast]);
-  
-  // Update typing status
-  const setTyping = useCallback((isTyping: boolean) => {
-    if (!user || !activeRoom || !socket || !isConnected) return;
-    
-    socket.emit('typing_status', {
-      roomId: activeRoom.id,
-      isTyping
-    });
-  }, [user, activeRoom, socket, isConnected]);
   
   // Leave the current active chat room
   const leaveRoom = useCallback(() => {

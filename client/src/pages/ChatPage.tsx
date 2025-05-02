@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  useChat,
+  useSocketIOChat,
   ChatMessage,
   ChatRoom,
   PotentialChatUser,
-} from "@/hooks/use-chat";
+} from "@/hooks/use-socketio-chat";
+import { useSocketIO } from "@/hooks/use-socketio";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,17 +43,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { ChatTopbar } from "@/components/chat/ChatTopbar";
+import ChatTopbar from "@/components/chat/ChatTopbar";
 
 export default function ChatPage() {
   const { user } = useAuth();
+  const { status: socketStatus } = useSocketIO();
   const {
     rooms,
     activeRoom,
     messages,
     typingUsers,
+    userStatuses,
     totalUnreadCount,
-    wsStatus,
     fetchRooms,
     setActiveRoom,
     sendMessage,
@@ -61,7 +63,7 @@ export default function ChatPage() {
     createRoom,
     createDirectChat,
     fetchPotentialChatUsers,
-  } = useChat();
+  } = useSocketIOChat();
   const [messageInput, setMessageInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
