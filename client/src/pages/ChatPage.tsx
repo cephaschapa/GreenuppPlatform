@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { ChatTopbar } from "@/components/chat/ChatTopbar";
 
 export default function ChatPage() {
   const { user } = useAuth();
