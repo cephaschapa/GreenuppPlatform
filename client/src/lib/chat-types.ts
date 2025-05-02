@@ -11,7 +11,7 @@ export interface ExtendedChatRoom {
   updatedAt: Date;
   createdById: number;
   lastMessageAt: Date | null;
-  isActive: boolean;
+  isActive?: boolean;  // Make this optional
   unreadCount?: number;
   members?: ChatRoomMemberWithUser[];
 }
@@ -31,7 +31,17 @@ export interface ChatRoomMemberWithUser {
   isOnline?: boolean;
 }
 
-export interface ExtendedChatMessage extends BaseChatMessage {
+export interface ExtendedChatMessage {
+  id: number;
+  roomId: number;
+  senderId: number;
+  content: string;
+  status: "sent" | "delivered" | "read";
+  sentAt: Date;
+  media: unknown;
+  replyToId: number | null;
+  isEdited: boolean;
+  isDeleted: boolean;
   senderUsername?: string;
   senderFirstName?: string | null;
   senderLastName?: string | null;
@@ -42,8 +52,8 @@ export interface TypingUser {
   userId: number;
   roomId: number;
   username?: string;
-  firstName?: string;
-  lastName?: string;
+  firstName?: string | null;
+  lastName?: string | null;
 }
 
 // For casting in the component
