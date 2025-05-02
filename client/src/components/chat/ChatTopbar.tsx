@@ -16,7 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
 import { useCart } from "@/hooks/use-cart";
-import { CartIcon } from "@/components/CartIcon";
+import { CartIcon } from "@/components/cart/CartIcon";
 import { NotificationBell } from "@/components/NotificationBell";
 import { 
   Home, 

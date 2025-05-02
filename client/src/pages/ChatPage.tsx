@@ -790,15 +790,20 @@ export default function ChatPage() {
   );
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex">
-      {/* Desktop sidebar */}
-      <div className="hidden md:block">{renderChatSidebar()}</div>
+    <div className="h-screen flex flex-col">
+      {/* New Topbar */}
+      <ChatTopbar />
+      
+      <div className="flex-1 flex">
+        {/* Desktop sidebar */}
+        <div className="hidden md:block">{renderChatSidebar()}</div>
 
-      {/* Mobile view uses a drawer for the sidebar */}
-      <div className="flex-1 md:hidden">{renderMobileView()}</div>
+        {/* Mobile view uses a drawer for the sidebar */}
+        <div className="flex-1 md:hidden">{renderMobileView()}</div>
 
-      {/* Desktop chat area */}
-      <div className="hidden md:flex flex-1">{renderChatArea()}</div>
+        {/* Desktop chat area */}
+        <div className="hidden md:flex flex-1">{renderChatArea()}</div>
+      </div>
     </div>
   );
 }
