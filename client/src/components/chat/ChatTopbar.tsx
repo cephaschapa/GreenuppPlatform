@@ -214,7 +214,7 @@ export function ChatTopbar() {
       </div>
 
       <div className="flex items-center gap-2">
-        <CartIcon variant="topbar" />
+        <CartIcon variant="default" />
         <NotificationBell />
 
         <DropdownMenu>
