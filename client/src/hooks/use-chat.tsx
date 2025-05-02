@@ -121,7 +121,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       try {
         console.log('Attempting to connect to WebSocket...');
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws/chat`;
+        // Use the /ws path which is what's configured on the server
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
         console.log('WebSocket URL:', wsUrl);
         
         // Create a new WebSocket connection
