@@ -2,11 +2,11 @@ import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
   useSocketIOChat,
-  ChatMessage,
-  ChatRoom,
   PotentialChatUser,
 } from "@/hooks/use-socketio-chat";
 import { useSocketIO } from "@/hooks/use-socketio";
+import { ChatMessage } from "@shared/schema";
+import { ExtendedChatRoom, TypingUser } from "@/lib/chat-types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -155,7 +155,7 @@ export default function ChatPage() {
   };
 
   // Get user display name
-  const getUserDisplayName = (message: ChatMessage) => {
+  const getUserDisplayName = (message: ExtendedChatMessage) => {
     if (message.senderFirstName && message.senderLastName) {
       return `${message.senderFirstName} ${message.senderLastName}`;
     } else if (message.senderFirstName) {
@@ -468,7 +468,7 @@ export default function ChatPage() {
   );
 
   // Get avatar for a room (for direct chats, show the other user's avatar)
-  const getRoomAvatar = (room: ChatRoom) => {
+  const getRoomAvatar = (room: ExtendedChatRoom) => {
     // In Socket.IO implementation, we don't store members directly in the room
     // This is a simplified implementation
     if (room.type === "direct") {
@@ -479,20 +479,20 @@ export default function ChatPage() {
   };
 
   // Get initials for a room avatar
-  const getRoomInitials = (room: ChatRoom) => {
+  const getRoomInitials = (room: ExtendedChatRoom) => {
     // For direct chats, display the room name's first letter
     // In a real implementation, we would extract this from user info
     return room.name ? room.name[0].toUpperCase() : "?";
   };
 
   // Get name for a room
-  const getRoomName = (room: ChatRoom) => {
+  const getRoomName = (room: ExtendedChatRoom) => {
     // Return the room name
     return room.name || "Unnamed Chat";
   };
 
   // Check if a user is online in a room
-  const isUserOnline = (room: ChatRoom): boolean => {
+  const isUserOnline = (room: ExtendedChatRoom): boolean => {
     if (room.type === "direct") {
       // Check user statuses from the userStatuses map
       // This would require knowing the other user's ID in a direct chat
@@ -502,7 +502,7 @@ export default function ChatPage() {
   };
 
   // Check if a user is typing in a room
-  const isUserTypingInRoom = (room: ChatRoom): boolean => {
+  const isUserTypingInRoom = (room: ExtendedChatRoom): boolean => {
     if (room.id === activeRoom?.id) {
       // If this is the active room, we already show typing indicator there
       return false;
@@ -513,7 +513,8 @@ export default function ChatPage() {
     const typingUsersArray = Array.from(typingUsers.values());
     return typingUsersArray.some(typingUser => 
       // We need to check if the typing user is in this room and not the current user
-      typingUser.userId !== user?.id
+      typingUser.userId !== user?.id && 
+      typingUser.roomId === room.id
     );
   };
 

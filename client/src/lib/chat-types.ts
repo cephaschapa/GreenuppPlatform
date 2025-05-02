@@ -1,8 +1,17 @@
-import { ChatRoom, ChatMessage } from '@shared/schema';
+import { ChatRoom as BaseChatRoom, ChatMessage as BaseChatMessage } from '@shared/schema';
 
 // Extended SocketIO chat types
 
-export interface ExtendedChatRoom extends ChatRoom {
+// Create a new interface instead of extending to avoid type conflicts
+export interface ExtendedChatRoom {
+  id: number;
+  name: string | null;
+  type: "direct" | "group";
+  createdAt: Date;
+  updatedAt: Date;
+  createdById: number;
+  lastMessageAt: Date | null;
+  isActive: boolean;
   unreadCount?: number;
   members?: ChatRoomMemberWithUser[];
 }
@@ -22,10 +31,25 @@ export interface ChatRoomMemberWithUser {
   isOnline?: boolean;
 }
 
+export interface ExtendedChatMessage extends BaseChatMessage {
+  senderUsername?: string;
+  senderFirstName?: string | null;
+  senderLastName?: string | null;
+  senderProfileImage?: string | null;
+}
+
 export interface TypingUser {
   userId: number;
   roomId: number;
   username?: string;
   firstName?: string;
   lastName?: string;
+}
+
+// For casting in the component
+export function asExtendedChatRoom(room: BaseChatRoom): ExtendedChatRoom {
+  return {
+    ...room,
+    lastMessageAt: room.lastMessageAt || null
+  } as ExtendedChatRoom;
 }
