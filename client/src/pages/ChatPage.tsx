@@ -126,9 +126,9 @@ export default function ChatPage() {
   };
 
   // Format time for messages
-  const formatMessageTime = (dateString: string) => {
+  const formatMessageTime = (sentAt: Date | string) => {
     try {
-      const date = new Date(dateString);
+      const date = sentAt instanceof Date ? sentAt : new Date(sentAt);
       const now = new Date();
       const yesterday = new Date(now);
       yesterday.setDate(now.getDate() - 1);
@@ -512,7 +512,8 @@ export default function ChatPage() {
     // Convert Map to array to loop through it
     const typingUsersArray = Array.from(typingUsers.values());
     return typingUsersArray.some(typingUser => 
-      room.id === typingUser.roomId && typingUser.userId !== user?.id
+      // We need to check if the typing user is in this room and not the current user
+      typingUser.userId !== user?.id
     );
   };
 

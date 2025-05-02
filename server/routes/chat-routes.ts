@@ -293,9 +293,46 @@ router.get('/unread/count', async (req: Request, res: Response) => {
 });
 
 /**
+ * Get unread message counts per room
+ * This is the endpoint used by the Socket.IO chat hook
+ */
+router.get('/unread', async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Not authenticated' });
+  }
+
+  try {
+    const unreadCounts = await chatService.getUnreadMessageCounts(req.user.id);    
+    res.json(unreadCounts);
+  } catch (error) {
+    console.error('Error fetching unread message counts:', error);
+    res.status(500).json({ message: 'Failed to fetch unread message counts' });
+  }
+});
+
+/**
  * Get potential users to start a chat with (followed users)
+ * Legacy endpoint - retained for backward compatibility
  */
 router.get('/potential-users', async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Not authenticated' });
+  }
+
+  try {
+    const potentialUsers = await chatService.getPotentialChatUsers(req.user.id);
+    res.json(potentialUsers);
+  } catch (error) {
+    console.error('Error getting potential chat users:', error);
+    res.status(500).json({ message: 'Failed to get potential chat users' });
+  }
+});
+
+/**
+ * Get potential users to start a chat with (followed users)
+ * New endpoint for Socket.IO implementation
+ */
+router.get('/users', async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ message: 'Not authenticated' });
   }
