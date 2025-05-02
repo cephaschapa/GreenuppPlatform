@@ -6,7 +6,7 @@ import {
 } from "@/hooks/use-socketio-chat";
 import { useSocketIO } from "@/hooks/use-socketio";
 import { ChatMessage } from "@shared/schema";
-import { ExtendedChatRoom, TypingUser } from "@/lib/chat-types";
+import { ExtendedChatRoom, ExtendedChatMessage, TypingUser, asExtendedChatRoom } from "@/lib/chat-types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -423,8 +423,8 @@ export default function ChatPage() {
                 <Avatar>
                   {room.type === "direct" ? (
                     <>
-                      <AvatarImage src={getRoomAvatar(room)} />
-                      <AvatarFallback>{getRoomInitials(room)}</AvatarFallback>
+                      <AvatarImage src={getRoomAvatar(asExtendedChatRoom(room))} />
+                      <AvatarFallback>{getRoomInitials(asExtendedChatRoom(room))}</AvatarFallback>
                     </>
                   ) : (
                     <>
@@ -437,7 +437,7 @@ export default function ChatPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium truncate">{getRoomName(room)}</h3>
+                  <h3 className="font-medium truncate">{getRoomName(asExtendedChatRoom(room))}</h3>
                   <span className="text-xs text-muted-foreground whitespace-nowrap">
                     {room.lastMessageAt
                       ? formatMessageTime(room.lastMessageAt)
@@ -447,7 +447,7 @@ export default function ChatPage() {
                 <div className="flex items-center justify-between mt-1">
                   <p className="text-sm text-muted-foreground truncate w-40">
                     {/* Here you would show last message preview */}
-                    {isUserTypingInRoom(room) ? (
+                    {isUserTypingInRoom(asExtendedChatRoom(room)) ? (
                       <span className="text-primary">typing...</span>
                     ) : room.type === "direct" ? (
                       "Direct message"
@@ -455,8 +455,8 @@ export default function ChatPage() {
                       "Group chat"
                     )}
                   </p>
-                  {room.unreadCount && room.unreadCount > 0 ? (
-                    <Badge className="ml-2">{room.unreadCount}</Badge>
+                  {asExtendedChatRoom(room).unreadCount && asExtendedChatRoom(room).unreadCount > 0 ? (
+                    <Badge className="ml-2">{asExtendedChatRoom(room).unreadCount}</Badge>
                   ) : null}
                 </div>
               </div>
@@ -548,9 +548,9 @@ export default function ChatPage() {
                 <Avatar>
                   {activeRoom.type === "direct" ? (
                     <>
-                      <AvatarImage src={getRoomAvatar(activeRoom)} />
+                      <AvatarImage src={getRoomAvatar(asExtendedChatRoom(activeRoom))} />
                       <AvatarFallback>
-                        {getRoomInitials(activeRoom)}
+                        {getRoomInitials(asExtendedChatRoom(activeRoom))}
                       </AvatarFallback>
                     </>
                   ) : (
@@ -563,11 +563,11 @@ export default function ChatPage() {
                 </Avatar>
               </div>
               <div>
-                <h2 className="font-medium">{getRoomName(activeRoom)}</h2>
+                <h2 className="font-medium">{getRoomName(asExtendedChatRoom(activeRoom))}</h2>
                 <p className="text-xs text-muted-foreground flex items-center">
                   {activeRoom.type === "direct" ? (
                     <>
-                      {isUserOnline(activeRoom) ? (
+                      {isUserOnline(asExtendedChatRoom(activeRoom)) ? (
                         <span className="flex items-center">
                           <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
                           Online
@@ -580,7 +580,7 @@ export default function ChatPage() {
                       )}
                     </>
                   ) : (
-                    `${activeRoom.members?.length || 0} members`
+                    `${asExtendedChatRoom(activeRoom).members?.length || 0} members`
                   )}
                 </p>
               </div>
@@ -655,7 +655,7 @@ export default function ChatPage() {
                               </AvatarFallback>
                             </Avatar>
                             <span className="text-sm font-medium">
-                              {getUserDisplayName(message)}
+                              {getUserDisplayName(asExtendedChatMessage(message))}
                             </span>
                           </div>
                         )}

@@ -50,6 +50,12 @@ export interface TypingUser {
 export function asExtendedChatRoom(room: BaseChatRoom): ExtendedChatRoom {
   return {
     ...room,
-    lastMessageAt: room.lastMessageAt || null
+    lastMessageAt: room.lastMessageAt || null,
+    isActive: true // Default to true if not provided
   } as ExtendedChatRoom;
+}
+
+// Helper function to cast a ChatMessage to ExtendedChatMessage
+export function asExtendedChatMessage(message: BaseChatMessage): ExtendedChatMessage {
+  return message as unknown as ExtendedChatMessage;
 }
