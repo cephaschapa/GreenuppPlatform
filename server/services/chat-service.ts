@@ -12,6 +12,29 @@ import { userRelationships } from "@shared/green-socials-schema";
  */
 export class ChatService {
   /**
+   * Get user information by ID
+   */
+  async getUserInfo(userId: number): Promise<any[]> {
+    try {
+      const user = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImage: users.profileImage,
+          email: users.email,
+        })
+        .from(users)
+        .where(eq(users.id, userId));
+      
+      return user;
+    } catch (error) {
+      console.error(`Error fetching user info for user ${userId}:`, error);
+      return [];
+    }
+  }
+  /**
    * Create a new chat room
    */
   async createChatRoom(data: InsertChatRoom): Promise<ChatRoom> {

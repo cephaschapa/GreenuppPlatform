@@ -204,7 +204,6 @@ export default function ChatPage() {
                   }
                 }}
               >
-                <X className="h-4 w-4" />
                 <span className="sr-only">Close</span>
               </Button>
             </DialogHeader>
@@ -404,7 +403,7 @@ export default function ChatPage() {
           </Dialog>
         </div>
       ) : (
-        <ScrollArea className="h-[calc(100vh-11rem)]">
+        <ScrollArea className="h-[100vh] overflow-scroll">
           {rooms.map((room) => (
             <div
               key={room.id}
@@ -572,14 +571,6 @@ export default function ChatPage() {
                     </>
                   )}
                 </Avatar>
-                {/* {activeRoom.type === "direct" && activeRoom.members && (
-                  <div
-                    className={cn(
-                      "absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-background",
-                      isUserOnline(activeRoom) ? "bg-green-500" : "bg-gray-400",
-                    )}
-                  ></div>
-                )} */}
               </div>
               <div>
                 <h2 className="font-medium">{getRoomName(activeRoom)}</h2>
@@ -793,7 +784,7 @@ export default function ChatPage() {
     <div className="h-screen flex flex-col">
       {/* New Topbar */}
       <ChatTopbar />
-      
+
       <div className="flex-1 flex">
         {/* Desktop sidebar */}
         <div className="hidden md:block">{renderChatSidebar()}</div>
