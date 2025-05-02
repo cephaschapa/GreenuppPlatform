@@ -1,64 +1,75 @@
-import { useEffect, useState, useRef } from 'react';
-import { useAuth } from '@/hooks/use-auth';
-import { useChat, ChatMessage, ChatRoom, PotentialChatUser } from '@/hooks/use-chat';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { 
-  ChevronLeft, 
-  Edit, 
-  Send, 
-  Users, 
-  Plus, 
-  Check, 
-  Clock, 
+import { useEffect, useState, useRef } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  useChat,
+  ChatMessage,
+  ChatRoom,
+  PotentialChatUser,
+} from "@/hooks/use-chat";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  ChevronLeft,
+  Edit,
+  Send,
+  Users,
+  Plus,
+  Check,
+  Clock,
   Loader2,
   MoreVertical,
   X,
-  Menu as MenuIcon
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { 
+  Menu as MenuIcon,
+} from "lucide-react";
+import { format } from "date-fns";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { cn } from '@/lib/utils';
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 export default function ChatPage() {
   const { user } = useAuth();
-  const { 
-    rooms, 
-    activeRoom, 
-    messages, 
-    typingUsers, 
-    totalUnreadCount, 
+  const {
+    rooms,
+    activeRoom,
+    messages,
+    typingUsers,
+    totalUnreadCount,
     wsStatus,
-    fetchRooms, 
-    setActiveRoom, 
-    sendMessage, 
-    leaveRoom, 
+    fetchRooms,
+    setActiveRoom,
+    sendMessage,
+    leaveRoom,
     setTyping,
     createRoom,
     createDirectChat,
-    fetchPotentialChatUsers
+    fetchPotentialChatUsers,
   } = useChat();
-  const [messageInput, setMessageInput] = useState('');
+  const [messageInput, setMessageInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [potentialUsers, setPotentialUsers] = useState<PotentialChatUser[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
-  
+
   // No need to call fetchRooms on component mount anymore
   // The ChatProvider handles polling with adaptive frequency based on WebSocket status
-  
+
   // Fetch potential chat users (users you follow)
   const loadPotentialChatUsers = async () => {
     setIsLoadingUsers(true);
@@ -66,51 +77,51 @@ export default function ChatPage() {
       const users = await fetchPotentialChatUsers();
       setPotentialUsers(users);
     } catch (error) {
-      console.error('Error loading potential chat users:', error);
+      console.error("Error loading potential chat users:", error);
     } finally {
       setIsLoadingUsers(false);
     }
   };
-  
+
   // Scroll to latest messages when they change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-  
+
   // Handle typing indications
   const debouncedTypingTimeout = useRef<NodeJS.Timeout | null>(null);
-  
+
   const handleMessageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMessageInput(e.target.value);
-    
+
     // Send typing indicator (with debounce)
     if (debouncedTypingTimeout.current) {
       clearTimeout(debouncedTypingTimeout.current);
     }
-    
+
     setTyping(true);
-    
+
     debouncedTypingTimeout.current = setTimeout(() => {
       setTyping(false);
     }, 2000);
   };
-  
+
   // Handle sending a message
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!messageInput.trim()) return;
-    
+
     sendMessage(messageInput.trim());
-    setMessageInput('');
-    
+    setMessageInput("");
+
     // Clear typing indicator
     if (debouncedTypingTimeout.current) {
       clearTimeout(debouncedTypingTimeout.current);
     }
     setTyping(false);
   };
-  
+
   // Format time for messages
   const formatMessageTime = (dateString: string) => {
     try {
@@ -118,28 +129,28 @@ export default function ChatPage() {
       const now = new Date();
       const yesterday = new Date(now);
       yesterday.setDate(now.getDate() - 1);
-      
+
       // Today, show time only
       if (date.toDateString() === now.toDateString()) {
-        return format(date, 'HH:mm');
+        return format(date, "HH:mm");
       }
       // Yesterday, show "Yesterday"
       else if (date.toDateString() === yesterday.toDateString()) {
-        return `Yesterday ${format(date, 'HH:mm')}`;
+        return `Yesterday ${format(date, "HH:mm")}`;
       }
       // This week, show day name
       else if (now.getTime() - date.getTime() < 7 * 24 * 60 * 60 * 1000) {
-        return format(date, 'EEEE HH:mm');
+        return format(date, "EEEE HH:mm");
       }
       // Older, show date
       else {
-        return format(date, 'dd MMM yyyy');
+        return format(date, "dd MMM yyyy");
       }
     } catch (error) {
-      return 'Invalid date';
+      return "Invalid date";
     }
   };
-  
+
   // Get user display name
   const getUserDisplayName = (message: ChatMessage) => {
     if (message.senderFirstName && message.senderLastName) {
@@ -147,7 +158,7 @@ export default function ChatPage() {
     } else if (message.senderFirstName) {
       return message.senderFirstName;
     } else {
-      return message.senderUsername || 'Unknown User';
+      return message.senderUsername || "Unknown User";
     }
   };
 
@@ -158,11 +169,13 @@ export default function ChatPage() {
     <div className="w-full md:w-80 border-r border-border">
       <div className="p-4 flex items-center justify-between border-b border-border">
         <h2 className="text-lg font-semibold">Messages</h2>
-        <Dialog onOpenChange={(open) => {
-          if (open) {
-            loadPotentialChatUsers();
-          }
-        }}>
+        <Dialog
+          onOpenChange={(open) => {
+            if (open) {
+              loadPotentialChatUsers();
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button size="icon" variant="outline">
               <Plus className="h-4 w-4" />
@@ -171,16 +184,19 @@ export default function ChatPage() {
           <DialogContent className="create-chat-dialog">
             <DialogHeader>
               <DialogTitle>Create New Chat</DialogTitle>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="absolute right-4 top-4 create-chat-dialog-close rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground" 
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-4 top-4 create-chat-dialog-close rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
                 onClick={(e) => {
                   e.preventDefault();
-                  const dialogContainer = e.currentTarget.closest('div[role="dialog"]');
+                  const dialogContainer =
+                    e.currentTarget.closest('div[role="dialog"]');
                   if (dialogContainer) {
-                    const closeButton = dialogContainer.querySelector('[data-radix-collection-item]');
-                    if (closeButton && 'click' in closeButton) {
+                    const closeButton = dialogContainer.querySelector(
+                      "[data-radix-collection-item]",
+                    );
+                    if (closeButton && "click" in closeButton) {
                       // @ts-ignore
                       closeButton.click();
                     }
@@ -195,43 +211,50 @@ export default function ChatPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Who would you like to chat with?
               </p>
-              
+
               {isLoadingUsers ? (
                 <div className="py-8 flex justify-center">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : potentialUsers.length > 0 ? (
                 <div className="space-y-3 max-h-64 overflow-auto pr-1">
-                  {potentialUsers.map(user => (
-                    <div key={user.id} className="flex items-center justify-between border rounded-md p-3">
+                  {potentialUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center justify-between border rounded-md p-3"
+                    >
                       <div className="flex items-center gap-3">
                         <Avatar>
                           <AvatarImage src={user.profileImage} />
                           <AvatarFallback>
-                            {user.firstName 
-                              ? `${user.firstName[0]}${user.lastName ? user.lastName[0] : ''}`
+                            {user.firstName
+                              ? `${user.firstName[0]}${user.lastName ? user.lastName[0] : ""}`
                               : user.username[0].toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="font-medium">
-                            {user.firstName && user.lastName 
+                            {user.firstName && user.lastName
                               ? `${user.firstName} ${user.lastName}`
                               : user.username}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {user.relationship === 'following' ? 'You follow this user' : 'Suggested'}
+                            {user.relationship === "following"
+                              ? "You follow this user"
+                              : "Suggested"}
                           </p>
                         </div>
                       </div>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         onClick={async () => {
                           const room = await createDirectChat(user.id);
                           if (room) {
                             setActiveRoom(room.id);
-                            const dialogClose = document.querySelector('.create-chat-dialog-close');
-                            if (dialogClose && 'click' in dialogClose) {
+                            const dialogClose = document.querySelector(
+                              ".create-chat-dialog-close",
+                            );
+                            if (dialogClose && "click" in dialogClose) {
                               // @ts-ignore
                               dialogClose.click();
                             }
@@ -245,8 +268,13 @@ export default function ChatPage() {
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <p className="mb-3">Follow users in GreenSocials to chat with them</p>
-                  <Button className="w-full" onClick={() => createDirectChat(2)}>
+                  <p className="mb-3">
+                    Follow users in GreenSocials to chat with them
+                  </p>
+                  <Button
+                    className="w-full"
+                    onClick={() => createDirectChat(2)}
+                  >
                     Chat with Demo User
                   </Button>
                 </div>
@@ -255,17 +283,19 @@ export default function ChatPage() {
           </DialogContent>
         </Dialog>
       </div>
-      
+
       {/* Connection status indicator has been removed */}
-      
+
       {rooms.length === 0 ? (
         <div className="p-4 text-center">
           <p className="text-sm text-muted-foreground">No conversations yet</p>
-          <Dialog onOpenChange={(open) => {
-            if (open) {
-              loadPotentialChatUsers();
-            }
-          }}>
+          <Dialog
+            onOpenChange={(open) => {
+              if (open) {
+                loadPotentialChatUsers();
+              }
+            }}
+          >
             <DialogTrigger asChild>
               <Button className="mt-4" variant="outline">
                 <Plus className="h-4 w-4 mr-2" /> New Conversation
@@ -274,23 +304,25 @@ export default function ChatPage() {
             <DialogContent className="create-chat-dialog">
               <DialogHeader>
                 <DialogTitle>Create New Chat</DialogTitle>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="absolute right-4 top-4 create-chat-dialog-close rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground" 
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-4 top-4 create-chat-dialog-close rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
                   onClick={(e) => {
                     e.preventDefault();
-                    const dialogContainer = e.currentTarget.closest('div[role="dialog"]');
+                    const dialogContainer =
+                      e.currentTarget.closest('div[role="dialog"]');
                     if (dialogContainer) {
-                      const closeButton = dialogContainer.querySelector('[data-radix-collection-item]');
-                      if (closeButton && 'click' in closeButton) {
+                      const closeButton = dialogContainer.querySelector(
+                        "[data-radix-collection-item]",
+                      );
+                      if (closeButton && "click" in closeButton) {
                         // @ts-ignore
                         closeButton.click();
                       }
                     }
                   }}
                 >
-                  <X className="h-4 w-4" />
                   <span className="sr-only">Close</span>
                 </Button>
               </DialogHeader>
@@ -298,43 +330,50 @@ export default function ChatPage() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Who would you like to chat with?
                 </p>
-                
+
                 {isLoadingUsers ? (
                   <div className="py-8 flex justify-center">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
                 ) : potentialUsers.length > 0 ? (
                   <div className="space-y-3 max-h-64 overflow-auto pr-1">
-                    {potentialUsers.map(user => (
-                      <div key={user.id} className="flex items-center justify-between border rounded-md p-3">
+                    {potentialUsers.map((user) => (
+                      <div
+                        key={user.id}
+                        className="flex items-center justify-between border rounded-md p-3"
+                      >
                         <div className="flex items-center gap-3">
                           <Avatar>
                             <AvatarImage src={user.profileImage} />
                             <AvatarFallback>
-                              {user.firstName 
-                                ? `${user.firstName[0]}${user.lastName ? user.lastName[0] : ''}`
+                              {user.firstName
+                                ? `${user.firstName[0]}${user.lastName ? user.lastName[0] : ""}`
                                 : user.username[0].toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <div>
                             <p className="font-medium">
-                              {user.firstName && user.lastName 
+                              {user.firstName && user.lastName
                                 ? `${user.firstName} ${user.lastName}`
                                 : user.username}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {user.relationship === 'following' ? 'You follow this user' : 'Suggested'}
+                              {user.relationship === "following"
+                                ? "You follow this user"
+                                : "Suggested"}
                             </p>
                           </div>
                         </div>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={async () => {
                             const room = await createDirectChat(user.id);
                             if (room) {
                               setActiveRoom(room.id);
-                              const dialogClose = document.querySelector('.create-chat-dialog-close');
-                              if (dialogClose && 'click' in dialogClose) {
+                              const dialogClose = document.querySelector(
+                                ".create-chat-dialog-close",
+                              );
+                              if (dialogClose && "click" in dialogClose) {
                                 // @ts-ignore
                                 dialogClose.click();
                               }
@@ -348,8 +387,13 @@ export default function ChatPage() {
                   </div>
                 ) : (
                   <div className="text-center py-4">
-                    <p className="mb-3">Follow users in GreenSocials to chat with them</p>
-                    <Button className="w-full" onClick={() => createDirectChat(2)}>
+                    <p className="mb-3">
+                      Follow users in GreenSocials to chat with them
+                    </p>
+                    <Button
+                      className="w-full"
+                      onClick={() => createDirectChat(2)}
+                    >
                       Chat with Demo User
                     </Button>
                   </div>
@@ -365,7 +409,8 @@ export default function ChatPage() {
               key={room.id}
               className={cn(
                 "p-4 cursor-pointer hover:bg-accent hover:text-accent-foreground flex items-start gap-3 border-l-2 border-transparent",
-                activeRoom?.id === room.id && "bg-accent text-accent-foreground border-l-2 border-primary"
+                activeRoom?.id === room.id &&
+                  "bg-accent text-accent-foreground border-l-2 border-primary",
               )}
               onClick={() => {
                 setActiveRoom(room.id);
@@ -374,7 +419,7 @@ export default function ChatPage() {
             >
               <div className="relative">
                 <Avatar>
-                  {room.type === 'direct' ? (
+                  {room.type === "direct" ? (
                     <>
                       <AvatarImage src={getRoomAvatar(room)} />
                       <AvatarFallback>{getRoomInitials(room)}</AvatarFallback>
@@ -387,18 +432,14 @@ export default function ChatPage() {
                     </>
                   )}
                 </Avatar>
-                {room.type === 'direct' && room.members && (
-                  <div className={cn(
-                    "absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-background",
-                    isUserOnline(room) ? "bg-green-500" : "bg-gray-400"
-                  )}></div>
-                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium truncate">{getRoomName(room)}</h3>
                   <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {room.lastMessageAt ? formatMessageTime(room.lastMessageAt) : ''}
+                    {room.lastMessageAt
+                      ? formatMessageTime(room.lastMessageAt)
+                      : ""}
                   </span>
                 </div>
                 <div className="flex items-center justify-between mt-1">
@@ -406,8 +447,10 @@ export default function ChatPage() {
                     {/* Here you would show last message preview */}
                     {isUserTypingInRoom(room) ? (
                       <span className="text-primary">typing...</span>
+                    ) : room.type === "direct" ? (
+                      "Direct message"
                     ) : (
-                      room.type === 'direct' ? 'Direct message' : 'Group chat'
+                      "Group chat"
                     )}
                   </p>
                   {room.unreadCount && room.unreadCount > 0 ? (
@@ -421,58 +464,58 @@ export default function ChatPage() {
       )}
     </div>
   );
-  
+
   // Get avatar for a room (for direct chats, show the other user's avatar)
   const getRoomAvatar = (room: ChatRoom) => {
-    if (room.type === 'direct' && room.members) {
-      const otherMember = room.members.find(m => m.userId !== user?.id);
-      return otherMember?.profileImage || '';
+    if (room.type === "direct" && room.members) {
+      const otherMember = room.members.find((m) => m.userId !== user?.id);
+      return otherMember?.profileImage || "";
     }
-    return '';
+    return "";
   };
-  
+
   // Get initials for a room avatar
   const getRoomInitials = (room: ChatRoom) => {
-    if (room.type === 'direct' && room.members) {
-      const otherMember = room.members.find(m => m.userId !== user?.id);
+    if (room.type === "direct" && room.members) {
+      const otherMember = room.members.find((m) => m.userId !== user?.id);
       if (otherMember?.firstName && otherMember?.lastName) {
         return `${otherMember.firstName[0]}${otherMember.lastName[0]}`;
       } else if (otherMember?.username) {
         return otherMember.username[0].toUpperCase();
       }
     }
-    return room.name ? room.name[0].toUpperCase() : '?';
+    return room.name ? room.name[0].toUpperCase() : "?";
   };
-  
+
   // Get name for a room
   const getRoomName = (room: ChatRoom) => {
-    if (room.type === 'direct' && room.members) {
-      const otherMember = room.members.find(m => m.userId !== user?.id);
+    if (room.type === "direct" && room.members) {
+      const otherMember = room.members.find((m) => m.userId !== user?.id);
       if (otherMember?.firstName && otherMember?.lastName) {
         return `${otherMember.firstName} ${otherMember.lastName}`;
       } else if (otherMember?.username) {
         return otherMember.username;
       }
     }
-    return room.name || 'Unnamed Chat';
+    return room.name || "Unnamed Chat";
   };
-  
+
   // Check if a user is online in a room
   const isUserOnline = (room: ChatRoom): boolean => {
-    if (room.type === 'direct' && room.members) {
-      const otherMember = room.members.find(m => m.userId !== user?.id);
+    if (room.type === "direct" && room.members) {
+      const otherMember = room.members.find((m) => m.userId !== user?.id);
       return !!otherMember?.isOnline;
     }
     return false;
   };
-  
+
   // Check if a user is typing in a room
   const isUserTypingInRoom = (room: ChatRoom): boolean => {
     if (room.id === activeRoom?.id) {
       // If this is the active room, we already show typing indicator there
       return false;
     }
-    
+
     // Check if any user is typing in this room
     if (room.members) {
       for (const member of room.members) {
@@ -481,10 +524,10 @@ export default function ChatPage() {
         }
       }
     }
-    
+
     return false;
   };
-  
+
   // Render the main chat area with messages
   const renderChatArea = () => (
     <div className="flex-1 flex flex-col h-full">
@@ -493,30 +536,32 @@ export default function ChatPage() {
         {activeRoom ? (
           <>
             <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="md:hidden mr-2"
                 onClick={() => setMobileMenuOpen(true)}
               >
                 <MenuIcon className="h-5 w-5" />
               </Button>
-              
-              <Button 
-                variant="ghost" 
-                size="icon" 
+
+              <Button
+                variant="ghost"
+                size="icon"
                 className="md:hidden mr-2"
                 onClick={() => leaveRoom()}
               >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
-              
+
               <div className="relative">
                 <Avatar>
-                  {activeRoom.type === 'direct' ? (
+                  {activeRoom.type === "direct" ? (
                     <>
                       <AvatarImage src={getRoomAvatar(activeRoom)} />
-                      <AvatarFallback>{getRoomInitials(activeRoom)}</AvatarFallback>
+                      <AvatarFallback>
+                        {getRoomInitials(activeRoom)}
+                      </AvatarFallback>
                     </>
                   ) : (
                     <>
@@ -526,37 +571,39 @@ export default function ChatPage() {
                     </>
                   )}
                 </Avatar>
-                {activeRoom.type === 'direct' && activeRoom.members && (
-                  <div className={cn(
-                    "absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-background",
-                    isUserOnline(activeRoom) ? "bg-green-500" : "bg-gray-400"
-                  )}></div>
-                )}
+                {/* {activeRoom.type === "direct" && activeRoom.members && (
+                  <div
+                    className={cn(
+                      "absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-background",
+                      isUserOnline(activeRoom) ? "bg-green-500" : "bg-gray-400",
+                    )}
+                  ></div>
+                )} */}
               </div>
               <div>
                 <h2 className="font-medium">{getRoomName(activeRoom)}</h2>
                 <p className="text-xs text-muted-foreground flex items-center">
-                  {activeRoom.type === 'direct' 
-                    ? (
-                      <>
-                        {isUserOnline(activeRoom) ? (
-                          <span className="flex items-center">
-                            <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                            Online
-                          </span>
-                        ) : (
-                          <span className="flex items-center">
-                            <span className="w-2 h-2 bg-gray-400 rounded-full mr-1"></span>
-                            Offline
-                          </span>
-                        )}
-                      </>
-                    )
-                    : `${activeRoom.members?.length || 0} members`}
+                  {activeRoom.type === "direct" ? (
+                    <>
+                      {isUserOnline(activeRoom) ? (
+                        <span className="flex items-center">
+                          <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                          Online
+                        </span>
+                      ) : (
+                        <span className="flex items-center">
+                          <span className="w-2 h-2 bg-gray-400 rounded-full mr-1"></span>
+                          Offline
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    `${activeRoom.members?.length || 0} members`
+                  )}
                 </p>
               </div>
             </div>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -566,15 +613,17 @@ export default function ChatPage() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem>View Details</DropdownMenuItem>
                 <DropdownMenuItem>Mute Notifications</DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">Leave Chat</DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive">
+                  Leave Chat
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </>
         ) : (
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="md:hidden mr-2"
               onClick={() => setMobileMenuOpen(true)}
             >
@@ -584,7 +633,7 @@ export default function ChatPage() {
           </div>
         )}
       </div>
-      
+
       {/* Messages area */}
       {activeRoom ? (
         <>
@@ -601,21 +650,26 @@ export default function ChatPage() {
               <>
                 {messages.map((message, index) => {
                   const isOwn = message.senderId === user?.id;
-                  const showSender = index === 0 || 
+                  const showSender =
+                    index === 0 ||
                     messages[index - 1].senderId !== message.senderId;
-                  
+
                   return (
-                    <div 
-                      key={message.id} 
-                      className={`mb-4 flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                    <div
+                      key={message.id}
+                      className={`mb-4 flex ${isOwn ? "justify-end" : "justify-start"}`}
                     >
-                      <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
+                      <div
+                        className={`max-w-[70%] ${isOwn ? "order-2" : "order-1"}`}
+                      >
                         {!isOwn && showSender && (
                           <div className="flex items-center mb-1 gap-2">
                             <Avatar className="h-6 w-6">
                               <AvatarImage src={message.senderProfileImage} />
                               <AvatarFallback>
-                                {message.senderUsername ? message.senderUsername[0].toUpperCase() : '?'}
+                                {message.senderUsername
+                                  ? message.senderUsername[0].toUpperCase()
+                                  : "?"}
                               </AvatarFallback>
                             </Avatar>
                             <span className="text-sm font-medium">
@@ -623,54 +677,74 @@ export default function ChatPage() {
                             </span>
                           </div>
                         )}
-                        
-                        <div className={cn(
-                          "px-4 py-2 rounded-xl break-words",
-                          isOwn 
-                            ? "bg-primary text-primary-foreground rounded-tr-none" 
-                            : "bg-muted rounded-tl-none"
-                        )}>
+
+                        <div
+                          className={cn(
+                            "px-4 py-2 rounded-xl break-words",
+                            isOwn
+                              ? "bg-primary text-primary-foreground rounded-tr-none"
+                              : "bg-muted rounded-tl-none",
+                          )}
+                        >
                           {message.content}
-                          <div className={cn(
-                            "text-xs mt-1 flex items-center justify-end gap-1",
-                            isOwn ? "text-primary-foreground/70" : "text-muted-foreground"
-                          )}>
-                            <span>{formatMessageTime(message.sentAt)}</span>
-                            {isOwn && (
-                              message.status === 'read' 
-                                ? <Check className="h-3 w-3" /> 
-                                : <Clock className="h-3 w-3" />
+                          <div
+                            className={cn(
+                              "text-xs mt-1 flex items-center justify-end gap-1",
+                              isOwn
+                                ? "text-primary-foreground/70"
+                                : "text-muted-foreground",
                             )}
+                          >
+                            <span>{formatMessageTime(message.sentAt)}</span>
+                            {isOwn &&
+                              (message.status === "read" ? (
+                                <Check className="h-3 w-3" />
+                              ) : (
+                                <Clock className="h-3 w-3" />
+                              ))}
                           </div>
                         </div>
                       </div>
                     </div>
                   );
                 })}
-                
+
                 {/* Typing indicators */}
                 {typingUsers.size > 0 && (
                   <div className="flex items-center gap-2 mb-4">
                     <div className="bg-muted px-3 py-2 rounded-lg">
                       <div className="flex items-center gap-1">
-                        <div className="h-2 w-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="h-2 w-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="h-2 w-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        <div
+                          className="h-2 w-2 bg-primary rounded-full animate-bounce"
+                          style={{ animationDelay: "0ms" }}
+                        />
+                        <div
+                          className="h-2 w-2 bg-primary rounded-full animate-bounce"
+                          style={{ animationDelay: "150ms" }}
+                        />
+                        <div
+                          className="h-2 w-2 bg-primary rounded-full animate-bounce"
+                          style={{ animationDelay: "300ms" }}
+                        />
                       </div>
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      {Array.from(typingUsers.values()).map(user => 
-                        user.firstName || user.username || 'Someone'
-                      ).join(', ')} is typing...
+                      {Array.from(typingUsers.values())
+                        .map(
+                          (user) =>
+                            user.firstName || user.username || "Someone",
+                        )
+                        .join(", ")}{" "}
+                      is typing...
                     </span>
                   </div>
                 )}
-                
+
                 <div ref={messagesEndRef} />
               </>
             )}
           </ScrollArea>
-          
+
           {/* Message input */}
           <div className="p-4 border-t border-border">
             <form onSubmit={handleSendMessage} className="flex gap-2">
@@ -700,7 +774,7 @@ export default function ChatPage() {
       )}
     </div>
   );
-  
+
   // Mobile view
   const renderMobileView = () => (
     <>
@@ -709,27 +783,21 @@ export default function ChatPage() {
           {renderChatSidebar()}
         </SheetContent>
       </Sheet>
-    
+
       {renderChatArea()}
     </>
   );
-  
+
   return (
     <div className="h-[calc(100vh-4rem)] flex">
       {/* Desktop sidebar */}
-      <div className="hidden md:block">
-        {renderChatSidebar()}
-      </div>
-      
+      <div className="hidden md:block">{renderChatSidebar()}</div>
+
       {/* Mobile view uses a drawer for the sidebar */}
-      <div className="flex-1 md:hidden">
-        {renderMobileView()}
-      </div>
-      
+      <div className="flex-1 md:hidden">{renderMobileView()}</div>
+
       {/* Desktop chat area */}
-      <div className="hidden md:flex flex-1">
-        {renderChatArea()}
-      </div>
+      <div className="hidden md:flex flex-1">{renderChatArea()}</div>
     </div>
   );
 }
