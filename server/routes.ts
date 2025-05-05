@@ -1,7 +1,5 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
-import { WebSocketServer, WebSocket } from "ws";
-import { Server as SocketIOServer } from "socket.io";
 import { storage } from "./storage";
 import setupMarketplaceRoutes from "./routes/marketplace";
 import cartRoutes from "./routes/cart";
@@ -11,7 +9,6 @@ import notificationRoutes from "./routes/notifications";
 import testNotificationRouter from "./routes/test-notification";
 import emailRoutes from "./routes/email";
 import { greenSocialsRouter, setIsAuthenticatedMiddleware } from "./routes/green-socials";
-import { setWebSocketNotifier } from './services/websocket-notifier';
 import { uploadRouter } from './routes/upload-routes';
 import { testUploadRouter } from './routes/test-upload';
 import { testUploadPostRouter } from './routes/test-upload-to-post';
@@ -19,12 +16,8 @@ import { testRouter } from './routes/test-routes';
 import { testEmailRouter } from './routes/test-email-notifications';
 import publicEmailTestRouter from './routes/test-public-email-notifications';
 import chatRoutes from './routes/chat-routes';
-import redisChatRoutes from './routes/redis-chat-routes';
 import streamChatRoutes from './routes/stream-chat-routes';
-import { chatWebSocketService } from './services/chat-websocket-service';
-import { RedisChatWebSocketService } from './services/redis-chat-websocket-service';
-import { redisChatService } from './services/redis-chat-service';
-import { SocketIOChatService } from './services/socketio-chat-service';
+import { setWebSocketNotifier } from './services/websocket-notifier';
 
 import { 
   contactFormSchema, 
@@ -2759,193 +2752,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create and return the HTTP server
   const httpServer = createServer(app);
   
-  // Skip Redis Chat Service initialization - using database-only mode
-  console.log("Using database-only chat service - Redis completely disabled");
+  console.log("WebSocket functionality completely disabled as requested");
   
-  // Set up Socket.IO server for chat (replaces ws implementation)
-  console.log("Initializing Socket.IO Chat Service");
-  const socketIoChatService = new SocketIOChatService(httpServer);
-  
-  // Keep backward compatibility with existing WebSocket server for now
-  // This will be completely replaced by Socket.IO in the future
-  const chatWsService = chatWebSocketService;
-  
-  // Set up WebSocket server for general notifications
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
-  
-  // Store client connections by userId for general notifications
-  const clients = new Map<number, Set<WebSocket>>();
-  
-  wss.on('connection', (ws) => {
-    console.log('WebSocket client connected');
-    let userId: number | null = null;
-    
-    // Set a timeout to close connection if not authenticated within 10 seconds
-    const authTimeout = setTimeout(() => {
-      if (!userId) {
-        console.log('WebSocket authentication timeout, closing connection');
-        ws.send(JSON.stringify({
-          type: 'error',
-          data: { message: 'Authentication timeout: Connection closed' }
-        }));
-        ws.close();
-      }
-    }, 10000);
-
-    // Handle authentication message
-    ws.on('message', (message) => {
-      try {
-        const data = JSON.parse(message.toString());
-        
-        // Handle authentication
-        if (data.type === 'auth') {
-          const parsedUserId = parseInt(data.userId);
-          
-          if (isNaN(parsedUserId)) {
-            ws.send(JSON.stringify({
-              type: 'error',
-              data: { message: 'Authentication failed: Invalid user ID' }
-            }));
-            return;
-          }
-          
-          // Clear the authentication timeout
-          clearTimeout(authTimeout);
-          
-          // Store the authenticated user ID
-          userId = parsedUserId;
-          
-          // Add this connection to the user's set
-          if (!clients.has(userId)) {
-            clients.set(userId, new Set());
-          }
-          clients.get(userId)?.add(ws);
-          console.log(`WebSocket authenticated for user ${userId}`);
-          
-          // Register this client with the chat service
-          try {
-            // Import is already handled at the top of the file
-            // The service should be available globally
-            if (chatWebSocketService) {
-              chatWebSocketService.registerClient(userId as number, ws);
-              console.log(`Successfully registered client for user ${userId} with chat service`);
-            } else {
-              console.log('Chat WebSocket service not available');
-            }
-          } catch (err) {
-            console.error('Error registering client with chat WebSocket service:', err);
-          }
-          
-          // Send confirmation
-          ws.send(JSON.stringify({ 
-            type: 'auth_success',
-            message: 'Successfully authenticated'
-          }));
-        } else if (!userId) {
-          // Reject non-auth messages from unauthenticated clients
-          ws.send(JSON.stringify({
-            type: 'error',
-            data: { message: 'Not authenticated' }
-          }));
-        }
-      } catch (error) {
-        console.error('Error processing WebSocket message:', error);
-        ws.send(JSON.stringify({
-          type: 'error',
-          data: { message: 'Invalid message format' }
-        }));
-      }
-    });
-
-    // Handle disconnection
-    ws.on('close', () => {
-      console.log('WebSocket client disconnected');
-      
-      // Clear any pending timeout
-      clearTimeout(authTimeout);
-      
-      // Clean up resources if user was authenticated
-      if (userId) {
-        const userClients = clients.get(userId);
-        if (userClients) {
-          userClients.delete(ws);
-          
-          // Remove user entry if no more connections
-          if (userClients.size === 0) {
-            clients.delete(userId);
-          }
-          
-          // Also unregister from chat service
-          try {
-            // Use the imported chat service
-            if (chatWebSocketService) {
-              chatWebSocketService.unregisterClient(userId as number, ws);
-              console.log(`Successfully unregistered client for user ${userId} from chat service`);
-            } else {
-              console.log('Chat WebSocket service not available for unregistering client');
-            }
-          } catch (err) {
-            console.error('Error unregistering client from chat service:', err);
-          }
-        }
-      }
-    });
-    
-    // Handle connection errors
-    ws.on('error', (error) => {
-      console.error('WebSocket error:', error);
-      clearTimeout(authTimeout);
-      ws.close();
-    });
+  // Provide a no-op implementation for the WebSocket notifier
+  // to prevent errors in code that calls this function
+  setWebSocketNotifier(() => {
+    // No-op implementation - websockets are disabled
+    console.log("WebSocket notification attempted but WebSockets are disabled");
   });
-
-  // Create a function to send notifications to users via WebSockets
-  // We'll export it to be used by other modules
-  const sendWebSocketNotification = (userId: number, notification: any) => {
-    if (!userId || typeof userId !== 'number') {
-      console.error('Invalid user ID for WebSocket notification:', userId);
-      return;
-    }
-    
-    const userClients = clients.get(userId);
-    if (!userClients || userClients.size === 0) {
-      // User has no active connections, silently ignore
-      return;
-    }
-    
-    // Prepare the notification message
-    let message: string;
-    try {
-      message = JSON.stringify({
-        type: 'notification',
-        data: notification,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('Error serializing notification:', error);
-      return;
-    }
-    
-    // Send to all open connections for this user
-    let sentCount = 0;
-    userClients.forEach(client => {
-      try {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(message);
-          sentCount++;
-        }
-      } catch (error) {
-        console.error('Error sending WebSocket notification:', error);
-      }
-    });
-    
-    if (sentCount > 0) {
-      console.log(`Sent notification to user ${userId} on ${sentCount} connection(s)`);
-    }
-  };
-  
-  // Make it available via a specific module to avoid global namespace pollution
-  setWebSocketNotifier(sendWebSocketNotification);
   
   return httpServer;
 }
