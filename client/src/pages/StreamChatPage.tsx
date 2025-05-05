@@ -118,8 +118,8 @@ function DiagnosticPanel() {
   );
 }
 
-// Create a component for selecting users
-function NewChatDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+// Create a component for selecting users within the StreamChatProvider context
+function NewChatDialogContent({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { toast } = useToast();
   const { createDirectChannel } = useStreamChat();
   const [newChatUserId, setNewChatUserId] = useState('');
@@ -318,7 +318,11 @@ export default function StreamChatPage() {
             <DialogTrigger asChild>
               <Button>New Chat</Button>
             </DialogTrigger>
-            <NewChatDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
+            {isCreateDialogOpen && (
+              <StreamChatProvider apiKey={STREAM_API_KEY}>
+                <NewChatDialogContent open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
+              </StreamChatProvider>
+            )}
           </Dialog>
         </div>
       </div>
