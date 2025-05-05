@@ -65,6 +65,7 @@ export type PotentialChatUser = {
   relationship: 'following' | 'suggested';
 };
 
+// Keep the WebSocketStatus type for API compatibility
 type WebSocketStatus = 'connecting' | 'open' | 'closed' | 'error';
 
 interface ChatContextType {
@@ -93,7 +94,9 @@ const ChatContext = createContext<ChatContextType | null>(null);
 export function ChatProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+  // Keep socket state but never actually connect (for compatibility)
+  const [socket, setSocket] = useState<null>(null);
+  // Always show as closed since WebSockets are disabled 
   const [wsStatus, setWsStatus] = useState<WebSocketStatus>('closed');
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [activeRoom, setActiveRoom] = useState<ChatRoom | null>(null);
@@ -101,115 +104,42 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [typingUsers, setTypingUsers] = useState<Map<number, TypingUser>>(new Map());
   const [totalUnreadCount, setTotalUnreadCount] = useState<number>(0);
 
-  // Initialize WebSocket connection
+  // Initialize regular polling instead of WebSocket connection
   useEffect(() => {
-    // Don't attempt to connect if not authenticated
+    // Don't attempt to fetch if not authenticated
     if (!user || !user.id) {
-      if (socket) {
-        socket.close();
-        setSocket(null);
-        setWsStatus('closed');
-      }
       return;
     }
 
-    // Set up polling with adaptive frequency based on WebSocket status
+    // Set up polling at a regular interval since WebSockets are disabled
     let intervalId: NodeJS.Timeout | null = null;
     
-    // Connect to WebSocket server
-    const connectWebSocket = () => {
-      try {
-        console.log('Attempting to connect to WebSocket...');
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        // Use the /ws path which is what's configured on the server
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
-        console.log('WebSocket URL:', wsUrl);
-        
-        // Create a new WebSocket connection
-        const newSocket = new WebSocket(wsUrl);
-        setWsStatus('connecting');
-        
-        // Set up event handlers
-        newSocket.onopen = () => {
-          console.log('WebSocket connection established successfully');
-          setWsStatus('open');
-          
-          // Send authentication message
-          const authMessage = JSON.stringify({
-            type: 'auth',
-            userId: user.id
-          });
-          console.log('Sending WebSocket auth message:', authMessage);
-          newSocket.send(authMessage);
-        };
-        
-        newSocket.onclose = () => {
-          console.log('WebSocket connection closed');
-          setWsStatus('closed');
-          
-          // Try to reconnect after a delay, but only if user is still authenticated
-          setTimeout(() => {
-            if (user && user.id) {
-              connectWebSocket();
-            }
-          }, 3000);
-        };
-        
-        newSocket.onerror = (err) => {
-          console.error('WebSocket error:', err);
-          setWsStatus('error');
-        };
-        
-        newSocket.onmessage = (evt) => {
-          try {
-            console.log('WebSocket message received:', evt.data);
-            const data = JSON.parse(evt.data);
-            handleWebSocketMessage(data);
-          } catch (err) {
-            console.error('Error parsing WebSocket message:', err);
-          }
-        };
-        
-        // Store the socket in state
-        setSocket(newSocket);
-        
-      } catch (error) {
-        console.error('Error creating WebSocket connection:', error);
-        setWsStatus('error');
-      }
-    };
+    console.log('WebSocket functionality disabled as requested. Using polling instead.');
     
-    connectWebSocket();
+    // Set up regular polling interval (5 seconds)
+    const pollingInterval = 5000; // 5s
     
-    // Set up adaptive polling based on WebSocket status
-    // Use a longer interval when WebSocket is connected, shorter when it's not
-    const pollingInterval = wsStatus === 'open' ? 10000 : 3000; // 10s when connected, 3s when not
-    
-    console.log(`Setting up chat polling with interval: ${pollingInterval}ms (WebSocket status: ${wsStatus})`);
+    console.log(`Setting up chat polling with interval: ${pollingInterval}ms`);
     
     // Clear any existing intervals before setting a new one
     if (intervalId) clearInterval(intervalId);
     
     // Start new interval for polling
     intervalId = setInterval(() => {
-      console.log(`Polling chat data (WebSocket status: ${wsStatus})`);
+      console.log('Polling chat data');
       
-      // Force fetch only when WebSocket is in error state or closed
-      const forceFetch = wsStatus === 'error' || wsStatus === 'closed';
-      fetchRooms(forceFetch);
+      // Always force fetch since WebSockets are disabled
+      fetchRooms(true);
     }, pollingInterval);
     
     // Cleanup on unmount or when dependencies change
     return () => {
-      if (socket) {
-        socket.close();
-      }
       if (intervalId) {
         console.log('Clearing chat polling interval');
         clearInterval(intervalId);
       }
     };
-  }, [user, wsStatus]); // Add wsStatus as dependency
+  }, [user]); // Only depend on user changes
   
   // Handle incoming WebSocket messages
   const handleWebSocketMessage = (data: any) => {
