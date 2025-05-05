@@ -5,6 +5,22 @@ import { storage } from '../storage';
 const router = Router();
 
 /**
+ * Diagnostic route to check if the Stream Chat API credentials are set up correctly
+ */
+router.get('/status', (req: Request, res: Response) => {
+  const apiKey = process.env.STREAM_API_KEY;
+  const apiSecret = process.env.STREAM_API_SECRET;
+  
+  // Don't send the actual secrets, just their status
+  res.json({
+    apiKeySet: !!apiKey,
+    apiSecretSet: !!apiSecret,
+    clientInitialized: !!streamChatService,
+    serviceStatus: 'active'
+  });
+});
+
+/**
  * Get Stream Chat token for the current user
  */
 router.get('/token', async (req: Request, res: Response) => {
@@ -36,7 +52,7 @@ router.post('/init', async (req: Request, res: Response) => {
     const userData = {
       id: req.user.id.toString(),
       name: req.user.username,
-      image: req.user.profileImage ?? '', // Use null coalescing operator to handle undefined
+      image: '',  // Default empty string, no profileImage in User type
     };
     
     await streamChatService.createUser(userData);
