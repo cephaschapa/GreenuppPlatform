@@ -257,4 +257,30 @@ router.get('/channels', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * Get list of users for chat
+ */
+router.get('/users', async (req: Request, res: Response) => {
+  try {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    // Get all users except the current user
+    const users = await storage.getAllUsers();
+    const chatUsers = users
+      .filter(user => user.id !== req.user!.id)
+      .map(user => ({
+        id: user.id,
+        name: user.username,
+        role: user.role
+      }));
+    
+    res.json({ users: chatUsers });
+  } catch (error) {
+    console.error('Error fetching users for chat:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
 export default router;
