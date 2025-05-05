@@ -481,13 +481,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const roomData = await response.json();
       setActiveRoom(roomData);
       
-      // Join the room via WebSocket
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-          type: 'join_room',
-          data: { roomId }
-        }));
-      }
+      // WebSockets are disabled, no need to join via WebSocket
+      console.log('WebSocket room joining functionality is disabled');
       
       // Fetch messages
       await fetchMessages(roomId);
@@ -512,56 +507,27 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (!activeRoom) return;
     
     try {
-      // First try WebSocket method
-      let messageSent = false;
+      // Use REST API (WebSockets are disabled)
+      console.log('Sending message via REST API', {
+        roomId: activeRoom.id,
+        content
+      });
       
-      // Try to send via WebSocket for real-time delivery
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        try {
-          console.log('Sending message via WebSocket', {
-            roomId: activeRoom.id,
-            content,
-            replyToId
-          });
-          
-          socket.send(JSON.stringify({
-            type: 'send_message',
-            roomId: activeRoom.id,
-            content,
-            replyToId
-          }));
-          
-          // We'll assume success for now - WebSocket errors are handled elsewhere
-          messageSent = true;
-        } catch (wsError) {
-          console.error('WebSocket send error, falling back to API:', wsError);
-          messageSent = false;
-        }
+      const response = await fetch(`/api/chat/rooms/${activeRoom.id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, media, replyToId })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API error response:', errorText);
+        throw new Error(`Failed to send message: ${response.status} ${response.statusText}`);
       }
       
-      // Fallback to REST API if WebSocket didn't work
-      if (!messageSent) {
-        console.log('Sending message via REST API', {
-          roomId: activeRoom.id,
-          content
-        });
-        
-        const response = await fetch(`/api/chat/rooms/${activeRoom.id}/messages`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content, media, replyToId })
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API error response:', errorText);
-          throw new Error(`Failed to send message: ${response.status} ${response.statusText}`);
-        }
-        
-        const message = await response.json();
-        console.log('Message sent successfully via API', message);
-        handleNewMessage(message);
-      }
+      const message = await response.json();
+      console.log('Message sent successfully via API', message);
+      handleNewMessage(message);
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
@@ -575,15 +541,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   // Mark messages as read
   const markAsRead = async (roomId: number) => {
     try {
-      // Send via WebSocket for real-time updates
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-          type: 'mark_read',
-          data: { roomId }
-        }));
-      }
-      
-      // Also send via REST API for persistence
+      // Use REST API (WebSockets are disabled)
       const response = await fetch(`/api/chat/rooms/${roomId}/read`, {
         method: 'POST',
       });
@@ -667,29 +625,21 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }
   };
   
-  // Send typing indicator
+  // Send typing indicator - no-op since WebSockets are disabled
   const setTyping = (isTyping: boolean) => {
-    if (!activeRoom || !socket || socket.readyState !== WebSocket.OPEN) return;
-    
-    socket.send(JSON.stringify({
-      type: 'typing',
-      data: {
-        roomId: activeRoom.id,
-        isTyping
-      }
-    }));
+    // No WebSocket functionality available
+    console.log('Typing indicator functionality disabled (no WebSockets)');
+    // Could add HTTP endpoint later if needed 
   };
   
   // Leave current room
   const leaveRoom = () => {
-    if (!activeRoom || !socket || socket.readyState !== WebSocket.OPEN) return;
+    if (!activeRoom) return;
     
-    socket.send(JSON.stringify({
-      type: 'leave_room',
-      data: {
-        roomId: activeRoom.id
-      }
-    }));
+    // WebSockets are disabled, just update UI state
+    console.log('Leaving room via state update only (no WebSockets)');
+    
+    // Could add HTTP endpoint later if needed
     
     setActiveRoom(null);
     setMessages([]);
