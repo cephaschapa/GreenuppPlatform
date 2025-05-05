@@ -77,7 +77,7 @@ export class StreamChatService {
       if (!serverClient) {
         throw new Error('Stream Chat client is not initialized. Please check API credentials.');
       }
-      return serverClient.createToken(userId.toString());
+      return serverClient!.createToken(userId.toString());
     } catch (error) {
       logger.error('Error generating Stream Chat token:', error);
       throw error;
@@ -101,7 +101,7 @@ export class StreamChatService {
       const members = [user1Id.toString(), user2Id.toString()].sort();
       const channelId = `messaging-${members.join('-')}`;
       
-      const channel = serverClient.channel('messaging', channelId, {
+      const channel = serverClient!.channel('messaging', channelId, {
         name: channelName || `Direct Chat ${user1Id}-${user2Id}`,
         members,
         created_by_id: user1Id.toString(),
@@ -142,7 +142,7 @@ export class StreamChatService {
       // Create a unique channel ID
       const channelId = `group-${new Date().getTime()}`;
       
-      const channel = serverClient.channel('messaging', channelId, {
+      const channel = serverClient!.channel('messaging', channelId, {
         name,
         members,
         created_by_id: creatorId.toString(),
@@ -168,7 +168,7 @@ export class StreamChatService {
         throw new Error('Stream Chat client is not initialized. Please check API credentials.');
       }
       
-      const channel = serverClient.channel(channelType, channelId);
+      const channel = serverClient!.channel(channelType, channelId);
       await channel.delete();
       logger.info(`Channel deleted: ${channelId}`);
     } catch (error) {
@@ -190,7 +190,7 @@ export class StreamChatService {
         throw new Error('Stream Chat client is not initialized. Please check API credentials.');
       }
       
-      const channel = serverClient.channel(channelType, channelId);
+      const channel = serverClient!.channel(channelType, channelId);
       
       // Convert all member IDs to strings
       const members = memberIds.map(id => id.toString());
@@ -216,7 +216,7 @@ export class StreamChatService {
         throw new Error('Stream Chat client is not initialized. Please check API credentials.');
       }
       
-      const channel = serverClient.channel(channelType, channelId);
+      const channel = serverClient!.channel(channelType, channelId);
       
       // Convert all member IDs to strings
       const members = memberIds.map(id => id.toString());
@@ -243,7 +243,7 @@ export class StreamChatService {
       // Use the correct sort format for Stream Chat API
       const sort = [{ field: 'last_message_at', direction: -1 }];
       
-      const result = await serverClient.queryChannels(filter, sort as any, {
+      const result = await serverClient!.queryChannels(filter, sort as any, {
         watch: false,
         state: true,
       });

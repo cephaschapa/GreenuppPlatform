@@ -11,14 +11,37 @@ router.get('/status', (req: Request, res: Response) => {
   const apiKey = process.env.STREAM_API_KEY;
   const apiSecret = process.env.STREAM_API_SECRET;
   
+  // Get the module state from the service
+  let isInitialized = false;
+  let errorMessage = '';
+  
+  try {
+    // Test API Key validity by attempting to generate a token
+    // This will throw an error if the serverClient is not properly initialized
+    if (streamChatService) {
+      try {
+        const testToken = streamChatService.generateToken(999999); // Use a dummy ID
+        isInitialized = true;
+      } catch (error: any) {
+        errorMessage = error.message || 'Unknown error generating token';
+      }
+    }
+  } catch (error: any) {
+    errorMessage = error.message || 'Unknown error accessing streamChatService';
+  }
+  
   // Don't send the actual secrets, just their status
   res.json({
     apiKeySet: !!apiKey,
     apiKeyLength: apiKey ? apiKey.length : 0,
+    apiKeyFirstChars: apiKey ? apiKey.substring(0, 3) + '...' : 'none',
     apiSecretSet: !!apiSecret,
     apiSecretLength: apiSecret ? apiSecret.length : 0,
-    clientInitialized: !!streamChatService,
-    serviceStatus: 'active'
+    apiSecretFirstChars: apiSecret ? apiSecret.substring(0, 3) + '...' : 'none',
+    serviceInitialized: !!streamChatService,
+    clientInitialized: isInitialized,
+    error: errorMessage || undefined,
+    serviceStatus: isInitialized ? 'active' : 'error'
   });
 });
 
