@@ -32,18 +32,20 @@ router.post('/init', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     
-    // Create/update user in Stream Chat
-    await streamChatService.createUser(req.user);
+    // Create/update user in Stream Chat with proper user data
+    const userData = {
+      id: req.user.id.toString(),
+      name: req.user.username,
+      image: req.user.profileImage ?? '', // Use null coalescing operator to handle undefined
+    };
+    
+    await streamChatService.createUser(userData);
     
     // Generate a token for the user
     const token = streamChatService.generateToken(req.user.id);
     
     res.json({
-      user: {
-        id: req.user.id.toString(),
-        name: req.user.username,
-        image: req.user.profileImage || '',
-      },
+      user: userData,
       token,
     });
   } catch (error) {
@@ -72,9 +74,21 @@ router.post('/direct', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Create/update both users in Stream Chat
-    await streamChatService.createUser(req.user);
-    await streamChatService.createUser(targetUser);
+    // Create/update both users in Stream Chat with properly formatted data
+    const currentUserData = {
+      id: req.user.id.toString(),
+      name: req.user.username,
+      image: req.user.profileImage ?? '',
+    };
+    
+    const targetUserData = {
+      id: targetUser.id.toString(),
+      name: targetUser.username,
+      image: targetUser.profileImage ?? '',
+    };
+    
+    await streamChatService.createUser(currentUserData);
+    await streamChatService.createUser(targetUserData);
     
     // Create a direct channel between the users
     const channel = await streamChatService.createDirectChannel(

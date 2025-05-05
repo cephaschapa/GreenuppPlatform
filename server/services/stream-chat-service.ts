@@ -1,4 +1,4 @@
-import { StreamChat, Channel as StreamChannel, UserResponse } from 'stream-chat';
+import { StreamChat, Channel as StreamChannel, UserResponse, DefaultGenerics } from 'stream-chat';
 import { User } from '@shared/schema';
 
 // Initialize Stream Chat client
@@ -15,18 +15,21 @@ export class StreamChatService {
   /**
    * Create a user in Stream Chat
    */
-  async createUser(user: User): Promise<UserResponse> {
+  async createUser(user: User): Promise<any> {
     try {
       // Create the user
-      const response = await serverClient.upsertUser({
+      const userData = {
         id: user.id.toString(), // Stream user IDs must be strings
         name: user.username,
         role: 'user',
-        image: user.profileImage || '',
-      });
+        image: user.profileImage ?? '',
+      };
+      
+      // Upsert the user to Stream Chat
+      const response = await serverClient.upsertUser(userData);
       
       console.log(`User created in Stream Chat: ${user.id}`);
-      return response;
+      return userData; // Return the formatted user data
     } catch (error) {
       console.error('Error creating user in Stream Chat:', error);
       throw error;
@@ -176,14 +179,16 @@ export class StreamChatService {
   async getUserChannels(userId: number): Promise<StreamChannel[]> {
     try {
       const filter = { type: 'messaging', members: { $in: [userId.toString()] } };
-      const sort = [{ last_message_at: -1 }];
       
-      const { channels } = await serverClient.queryChannels(filter, sort, {
+      // Fix the sort parameter to use the proper type
+      const sort = { last_message_at: -1 };
+      
+      const result = await serverClient.queryChannels(filter, sort, {
         watch: false,
         state: true,
       });
       
-      return channels;
+      return result;
     } catch (error) {
       console.error('Error fetching user channels:', error);
       throw error;

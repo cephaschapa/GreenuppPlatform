@@ -20,6 +20,7 @@ import { testEmailRouter } from './routes/test-email-notifications';
 import publicEmailTestRouter from './routes/test-public-email-notifications';
 import chatRoutes from './routes/chat-routes';
 import redisChatRoutes from './routes/redis-chat-routes';
+import streamChatRoutes from './routes/stream-chat-routes';
 import { chatWebSocketService } from './services/chat-websocket-service';
 import { RedisChatWebSocketService } from './services/redis-chat-websocket-service';
 import { redisChatService } from './services/redis-chat-service';
@@ -116,6 +117,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Always use standard chat routes instead of Redis
   console.log("Using standard database-only chat implementation (Redis disabled)");
   app.use("/api/chat", chatRoutes);
+  
+  // Set up Stream Chat routes
+  console.log("Setting up Stream Chat routes");
+  app.use("/api/stream-chat", streamChatRoutes);
 
   // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();
