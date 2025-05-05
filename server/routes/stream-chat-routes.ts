@@ -94,13 +94,13 @@ router.post('/direct', async (req: Request, res: Response) => {
     const currentUserData = {
       id: req.user.id.toString(),
       name: req.user.username,
-      image: req.user.profileImage ?? '',
+      image: '',  // Default empty string, no profileImage in User type
     };
     
     const targetUserData = {
       id: targetUser.id.toString(),
       name: targetUser.username,
-      image: targetUser.profileImage ?? '',
+      image: '',  // Default empty string, no profileImage in User type
     };
     
     await streamChatService.createUser(currentUserData);
@@ -144,7 +144,7 @@ router.post('/group', async (req: Request, res: Response) => {
     const creatorData = {
       id: req.user.id.toString(),
       name: req.user.username,
-      image: req.user.profileImage ?? '',
+      image: '',  // Default empty string, no profileImage in User type
     };
     await streamChatService.createUser(creatorData);
     
@@ -155,7 +155,7 @@ router.post('/group', async (req: Request, res: Response) => {
         const memberData = {
           id: member.id.toString(),
           name: member.username,
-          image: member.profileImage ?? '',
+          image: '',  // Default empty string, no profileImage in User type
         };
         await streamChatService.createUser(memberData);
       }

@@ -23,7 +23,7 @@ export class StreamChatService {
           id: user.id.toString(), // Stream user IDs must be strings
           name: user.username,
           role: 'user',
-          image: user.profileImage ?? '',
+          image: '', // Default empty string, no profileImage in User type
         };
         
         // Upsert the user to Stream Chat
