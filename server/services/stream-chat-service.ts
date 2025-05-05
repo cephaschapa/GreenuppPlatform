@@ -240,14 +240,19 @@ export class StreamChatService {
       
       const filter = { type: 'messaging', members: { $in: [userId.toString()] } };
       
-      // Use the correct sort format for Stream Chat API
-      const sort = [{ field: 'last_message_at', direction: -1 }];
+      // Fixed sort format - direction must be -1 or 1, not negative number object
+      // Stream Chat API expects string values for sort direction
+      const sort = [{ last_message_at: -1 }];
+      
+      logger.debug('Querying channels with filter:', filter);
+      logger.debug('Sort parameters:', sort);
       
       const result = await serverClient!.queryChannels(filter, sort as any, {
         watch: false,
         state: true,
       });
       
+      logger.info(`Found ${result.length} channels for user ${userId}`);
       return result;
     } catch (error) {
       logger.error('Error fetching user channels:', error);
