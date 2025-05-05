@@ -13,7 +13,7 @@ import {
 import { useStreamChat } from '@/hooks/use-stream-chat';
 
 // Import Stream Chat CSS
-import 'stream-chat-css';
+import 'stream-chat-css/dist/css/index.css';
 
 interface StreamChatComponentProps {
   activeChannelId?: string;

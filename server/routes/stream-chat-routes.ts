@@ -14,10 +14,38 @@ router.get('/status', (req: Request, res: Response) => {
   // Don't send the actual secrets, just their status
   res.json({
     apiKeySet: !!apiKey,
+    apiKeyLength: apiKey ? apiKey.length : 0,
     apiSecretSet: !!apiSecret,
+    apiSecretLength: apiSecret ? apiSecret.length : 0,
     clientInitialized: !!streamChatService,
     serviceStatus: 'active'
   });
+});
+
+/**
+ * Test the Stream Chat API connection
+ */
+router.get('/test-connection', async (req: Request, res: Response) => {
+  try {
+    // Create a test user to verify API connection
+    await streamChatService.createUser({
+      id: 'test-user',
+      name: 'Test User',
+      image: '',
+    });
+    
+    res.json({
+      success: true,
+      message: 'Successfully connected to Stream Chat API and created test user'
+    });
+  } catch (error) {
+    console.error('Error testing Stream Chat connection:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Unknown error',
+      details: error.toString()
+    });
+  }
 });
 
 /**
