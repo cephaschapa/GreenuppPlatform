@@ -11,9 +11,11 @@ import {
   ChannelList,
 } from 'stream-chat-react';
 import { useStreamChat } from '@/hooks/use-stream-chat';
+import { Loader2, MessageSquare, AlertTriangle, Users } from 'lucide-react';
 
 // Import Stream Chat CSS
 import 'stream-chat-css/dist/css/index.css';
+import './stream-chat-custom.css';
 
 interface StreamChatComponentProps {
   activeChannelId?: string;
@@ -43,8 +45,9 @@ export const StreamChatComponent = ({
   // If not connected, show loading
   if (isConnecting) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground font-space">Connecting to chat...</p>
       </div>
     );
   }
@@ -52,9 +55,11 @@ export const StreamChatComponent = ({
   // If error, show error message
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-4 text-center text-red-500">
-        <p className="text-lg font-semibold">Error connecting to chat</p>
-        <p className="text-sm mt-2">{error.message}</p>
+      <div className="flex flex-col items-center justify-center h-full p-6 text-center bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/30">
+        <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+        <p className="text-xl font-semibold font-space text-destructive">Connection Error</p>
+        <p className="text-sm mt-2 max-w-md text-destructive/80">{error.message}</p>
+        <p className="text-xs mt-4 text-muted-foreground">Try refreshing the page or check your internet connection</p>
       </div>
     );
   }
@@ -62,8 +67,10 @@ export const StreamChatComponent = ({
   // If not initialized or no client, show message
   if (!client) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted">Chat not available</p>
+      <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
+        <p className="text-muted-foreground font-space">Chat service not available</p>
+        <p className="text-xs mt-2 text-muted-foreground">Please try again later</p>
       </div>
     );
   }
@@ -101,25 +108,82 @@ export const StreamChatComponent = ({
                 
                 // Safe message access
                 let lastMessage = 'No messages yet';
+                let lastMessageTime = '';
                 try {
                   if (channel.state?.messages && channel.state.messages.length > 0) {
                     const message = channel.state.messages[channel.state.messages.length - 1];
                     lastMessage = message?.text || 'No message content';
+                    
+                    // Format date nicely
+                    if (message?.created_at) {
+                      const date = new Date(message.created_at);
+                      const now = new Date();
+                      const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+                      
+                      if (diffHours < 24) {
+                        lastMessageTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                      } else if (diffHours < 48) {
+                        lastMessageTime = 'Yesterday';
+                      } else {
+                        lastMessageTime = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                      }
+                    }
                   }
                 } catch (err) {
                   console.error('Error accessing channel messages:', err);
                   lastMessage = 'Error loading messages';
                 }
                 
+                // Get other member's data for direct channels
+                let otherUser = 'User';
+                let isOnline = false;
+                try {
+                  if (channel.data?.name === 'Direct Message' && client) {
+                    const members = Object.values(channel.state?.members || {});
+                    const otherMember = members.find(m => m.user?.id !== client.userID);
+                    if (otherMember?.user) {
+                      otherUser = otherMember.user.name || otherMember.user.id;
+                      isOnline = otherMember.user.online || false;
+                    }
+                  }
+                } catch (err) {
+                  console.error('Error accessing channel members:', err);
+                }
+                
+                const isActive = activeChannel?.id === channel.id;
+                
                 return (
                   <div
-                    className={`p-3 cursor-pointer hover:bg-accent ${
-                      activeChannel?.id === channel.id ? 'bg-accent' : ''
-                    }`}
+                    className={`greenupp-channel-preview ${isActive ? 'active' : ''}`}
                     onClick={handleClick}
                   >
-                    <div className="font-semibold">{channel.data?.name || 'Direct Message'}</div>
-                    <div className="text-sm text-muted-foreground truncate">
+                    <div className="flex justify-between items-center mb-1">
+                      <div className="greenupp-channel-preview-title">
+                        <div className="flex items-center">
+                          {channel.data?.name === 'Direct Message' ? (
+                            <div className="relative">
+                              <div className="w-7 h-7 bg-accent rounded-full flex items-center justify-center text-muted-foreground">
+                                <Users size={14} />
+                              </div>
+                              {isOnline && (
+                                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background"></div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="w-7 h-7 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                              <MessageSquare size={14} />
+                            </div>
+                          )}
+                        </div>
+                        <span className="ml-2 truncate">{channel.data?.name === 'Direct Message' ? otherUser : channel.data?.name || 'Channel'}</span>
+                      </div>
+                      {lastMessageTime && (
+                        <div className="text-xs text-muted-foreground">
+                          {lastMessageTime}
+                        </div>
+                      )}
+                    </div>
+                    <div className="greenupp-channel-preview-message pl-9">
                       {lastMessage}
                     </div>
                   </div>

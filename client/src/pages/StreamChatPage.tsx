@@ -309,14 +309,30 @@ export default function StreamChatPage() {
   return (
     <div className="container mx-auto p-4 h-[calc(100vh-5rem)]">
       <div className="mb-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Stream Chat</h1>
+        <div className="flex items-center">
+          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary mr-3">
+            <MessageSquare size={20} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold font-space tracking-tight">Chat</h1>
+            <p className="text-sm text-muted-foreground">Connect with other farmers in real-time</p>
+          </div>
+        </div>
         <div className="flex gap-2">
-          <Button onClick={() => setShowDiagnostics(!showDiagnostics)} variant="outline" size="sm">
-            {showDiagnostics ? 'Hide Diagnostics' : 'Show Diagnostics'}
+          <Button 
+            onClick={() => setShowDiagnostics(!showDiagnostics)} 
+            variant="outline" 
+            size="sm"
+            className="hidden md:flex"
+          >
+            {showDiagnostics ? 'Hide Diagnostics' : 'Advanced Settings'}
           </Button>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button>New Chat</Button>
+              <Button className="gap-2">
+                <Users size={16} />
+                <span>New Chat</span>
+              </Button>
             </DialogTrigger>
             {/* We need to wrap the dialog content in the Stream Chat Provider */}
             {isCreateDialogOpen && (
@@ -330,10 +346,14 @@ export default function StreamChatPage() {
 
       {showDiagnostics && <DiagnosticPanel />}
 
-      <div className={`${showDiagnostics ? 'h-[calc(100%-12rem)]' : 'h-[calc(100%-3rem)]'} border rounded-md overflow-hidden`}>
+      <div className={`${showDiagnostics ? 'h-[calc(100%-12rem)]' : 'h-[calc(100%-4.5rem)]'} border rounded-lg shadow-sm overflow-hidden bg-white dark:bg-gray-950`}>
         <StreamChatProvider apiKey={STREAM_API_KEY}>
           <StreamChatComponent />
         </StreamChatProvider>
+      </div>
+      
+      <div className="mt-4 text-xs text-muted-foreground text-center">
+        <p>Powered by Stream Chat</p>
       </div>
     </div>
   );

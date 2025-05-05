@@ -1,0 +1,180 @@
+/* Greenupp Chat UI Customization */
+
+/* Primary color customization */
+:root {
+  --primary-color: #00C853; /* Greenupp primary green */
+  --accent-color: #f3f3f3;
+  --border-radius: 0.5rem;
+  --font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+}
+
+/* Main container styling */
+.str-chat {
+  --str-chat__primary-color: var(--primary-color);
+  --str-chat__active-primary-color: var(--primary-color);
+  --str-chat__primary-text-color: #111827;
+  --str-chat__secondary-text-color: #64748b;
+  height: 100%;
+  font-family: var(--font-family);
+}
+
+/* Channel header styling */
+.str-chat__header {
+  background-color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  padding: 0.75rem 1rem;
+}
+
+.str-chat__header-title {
+  font-weight: 600;
+  font-family: var(--font-family);
+}
+
+/* Message list styling */
+.str-chat__list {
+  padding: 1rem;
+  background-color: #f9fafb;
+}
+
+/* Message styling */
+.str-chat__message-simple {
+  margin-bottom: 0.75rem;
+}
+
+.str-chat__message-simple-text {
+  background-color: white;
+  border-radius: var(--border-radius);
+  padding: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.str-chat__message-simple--mine .str-chat__message-simple-text {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Input styling */
+.str-chat__input {
+  border-top: 1px solid #e5e7eb;
+  background-color: white;
+  padding: 0.75rem;
+}
+
+.str-chat__textarea {
+  border: 1px solid #e5e7eb;
+  border-radius: var(--border-radius);
+  padding: 0.5rem;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.str-chat__textarea:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 200, 83, 0.2);
+}
+
+.str-chat__send-button {
+  background-color: var(--primary-color);
+  border-radius: var(--border-radius);
+  color: white;
+}
+
+.str-chat__send-button:hover {
+  background-color: #00b046;
+}
+
+/* Channel list styling */
+.str-chat__channel-list {
+  background-color: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+}
+
+.str-chat__channel-preview-messenger {
+  border-radius: var(--border-radius);
+  margin: 0.25rem 0.5rem;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.str-chat__channel-preview-messenger:hover {
+  background-color: #f3f4f6;
+}
+
+.str-chat__channel-preview-messenger--active {
+  background-color: rgba(0, 200, 83, 0.1);
+}
+
+/* Thread styling */
+.str-chat__thread {
+  background-color: white;
+  border-left: 1px solid #e5e7eb;
+}
+
+.str-chat__thread-header {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  padding: 0.75rem 1rem;
+}
+
+/* Avatar styling */
+.str-chat__avatar {
+  border-radius: 50%;
+}
+
+/* Loading states */
+.str-chat__loading-indicator {
+  color: var(--primary-color);
+}
+
+/* Typing indicator */
+.str-chat__typing-indicator {
+  color: var(--primary-color);
+}
+
+/* Date separators */
+.str-chat__date-separator {
+  margin: 1rem 0;
+}
+
+.str-chat__date-separator-date {
+  background-color: #f9fafb;
+  color: #64748b;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+}
+
+/* Special styling for our custom preview component */
+.greenupp-channel-preview {
+  padding: 0.75rem;
+  border-radius: var(--border-radius);
+  margin: 0.25rem 0.5rem;
+  background-color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease-in-out;
+}
+
+.greenupp-channel-preview:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.greenupp-channel-preview.active {
+  background-color: rgba(0, 200, 83, 0.1);
+  border-left: 3px solid var(--primary-color);
+}
+
+.greenupp-channel-preview-title {
+  font-weight: 600;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.greenupp-channel-preview-message {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
