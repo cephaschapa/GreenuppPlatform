@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 
 // Define mock users for demo
 const mockUsers = [
@@ -138,7 +138,7 @@ function DiagnosticPanel() {
 
 export default function StreamChatPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newChatUserId, setNewChatUserId] = useState('');
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -155,6 +155,34 @@ export default function StreamChatPage() {
     }
   }, [toast]);
 
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4 flex flex-col items-center justify-center min-h-[calc(100vh-5rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Loading chat...</p>
+      </div>
+    );
+  }
+
+  // Check if user is authenticated
+  if (!user) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="bg-destructive/20 border border-destructive text-destructive p-4 rounded-md">
+          <h2 className="font-bold">Authentication Required</h2>
+          <p>
+            You need to be logged in to use the chat feature. Please log in or register to continue.
+          </p>
+        </div>
+        <Button onClick={() => window.location.href = '/auth'} className="mt-4">
+          Go to Login
+        </Button>
+      </div>
+    );
+  }
+
+  // Check if API key is available
   if (!STREAM_API_KEY) {
     return (
       <div className="container mx-auto p-4">

@@ -12,7 +12,7 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
-  options?: { isFormData?: boolean }
+  options?: { isFormData?: boolean, credentials?: RequestCredentials }
 ): Promise<Response> {
   const headers: Record<string, string> = {};
   let body: any = undefined;

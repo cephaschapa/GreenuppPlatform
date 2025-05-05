@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { StreamChat, Channel, ChannelFilters, ChannelOptions, ChannelSort, DefaultGenerics, ConnectAPIResponse } from 'stream-chat';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 interface StreamChatContextType {
   client: StreamChat | null;
@@ -30,10 +31,11 @@ export function StreamChatProvider({ children, apiKey }: StreamChatProviderProps
   const { toast } = useToast();
 
   // Initialize Stream Chat
+  const { user } = useAuth();
+
   useEffect(() => {
-    // Check if we already have an authenticated user from the auth hook
-    const auth = localStorage.getItem('auth_session');
-    if (!auth) {
+    // Check if we have an authenticated user from the auth hook
+    if (!user) {
       setError(new Error('You must be logged in to use chat'));
       return;
     }
@@ -47,6 +49,8 @@ export function StreamChatProvider({ children, apiKey }: StreamChatProviderProps
       try {
         setIsConnecting(true);
         setError(null);
+
+        console.log('Initializing Stream Chat with authenticated user:', user.id);
 
         // Include credentials to ensure the cookie is sent
         const response = await apiRequest('POST', '/api/stream-chat/init', undefined, {
@@ -117,7 +121,7 @@ export function StreamChatProvider({ children, apiKey }: StreamChatProviderProps
         });
       }
     };
-  }, [apiKey, toast]);
+  }, [apiKey, toast, user]);
 
   // Create a direct channel with another user
   const createDirectChannel = async (userId: number, username: string): Promise<Channel | null> => {
