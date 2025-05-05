@@ -31,6 +31,13 @@ export function StreamChatProvider({ children, apiKey }: StreamChatProviderProps
 
   // Initialize Stream Chat
   useEffect(() => {
+    // Check if we already have an authenticated user from the auth hook
+    const auth = localStorage.getItem('auth_session');
+    if (!auth) {
+      setError(new Error('You must be logged in to use chat'));
+      return;
+    }
+
     // Create a new client instance
     const chatClient = StreamChat.getInstance(apiKey);
     setClient(chatClient);
@@ -41,8 +48,20 @@ export function StreamChatProvider({ children, apiKey }: StreamChatProviderProps
         setIsConnecting(true);
         setError(null);
 
-        // Get token from our backend
-        const response = await apiRequest('POST', '/api/stream-chat/init');
+        // Include credentials to ensure the cookie is sent
+        const response = await apiRequest('POST', '/api/stream-chat/init', undefined, {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          // If we get an unauthorized response, try to refresh the auth session
+          if (response.status === 401) {
+            // Show a more user-friendly error message
+            throw new Error('Your session has expired. Please log in again.');
+          }
+          throw new Error(`Server error: ${response.status}`);
+        }
+
         const data = await response.json();
 
         if (!data.token || !data.user) {
@@ -54,7 +73,7 @@ export function StreamChatProvider({ children, apiKey }: StreamChatProviderProps
           {
             id: data.user.id,
             name: data.user.name,
-            image: data.user.image,
+            image: data.user.image || '',
           },
           data.token
         );
