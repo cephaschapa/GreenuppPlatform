@@ -5,11 +5,31 @@ import { User } from '@shared/schema';
 const apiKey = process.env.STREAM_API_KEY;
 const apiSecret = process.env.STREAM_API_SECRET;
 
-if (!apiKey || !apiSecret) {
-  throw new Error('Stream Chat API credentials are missing. Please set STREAM_API_KEY and STREAM_API_SECRET environment variables.');
-}
+// Create a logger to help with debugging
+const logger = {
+  info: (message: string, ...args: any[]) => console.log(`[StreamChat] INFO: ${message}`, ...args),
+  error: (message: string, ...args: any[]) => console.error(`[StreamChat] ERROR: ${message}`, ...args),
+  warn: (message: string, ...args: any[]) => console.warn(`[StreamChat] WARN: ${message}`, ...args),
+  debug: (message: string, ...args: any[]) => console.debug(`[StreamChat] DEBUG: ${message}`, ...args)
+};
 
-const serverClient = StreamChat.getInstance(apiKey, apiSecret);
+// Log API key and secret status (not the actual values)
+logger.info(`Stream Chat API Key status: ${apiKey ? 'Set (length: ' + apiKey.length + ')' : 'NOT SET'}`);
+logger.info(`Stream Chat API Secret status: ${apiSecret ? 'Set (length: ' + apiSecret.length + ')' : 'NOT SET'}`);
+
+let serverClient: StreamChat | null = null;
+
+try {
+  if (!apiKey || !apiSecret) {
+    logger.error('Stream Chat API credentials are missing. Please set STREAM_API_KEY and STREAM_API_SECRET environment variables.');
+  } else {
+    serverClient = StreamChat.getInstance(apiKey, apiSecret);
+    logger.info('Stream Chat client initialized successfully');
+  }
+} catch (error) {
+  logger.error('Failed to initialize Stream Chat client:', error);
+  serverClient = null;
+}
 
 export class StreamChatService {
   /**
@@ -17,6 +37,10 @@ export class StreamChatService {
    */
   async createUser(user: any): Promise<any> {
     try {
+      if (!serverClient) {
+        throw new Error('Stream Chat client is not initialized. Please check API credentials.');
+      }
+      
       // If it's a User object from our database
       if (typeof user.username === 'string') {
         const userData = {
@@ -27,20 +51,20 @@ export class StreamChatService {
         };
         
         // Upsert the user to Stream Chat
-        await serverClient.upsertUser(userData);
-        console.log(`User created in Stream Chat: ${user.id}`);
+        await serverClient!.upsertUser(userData);
+        logger.info(`User created in Stream Chat: ${user.id}`);
         return userData;
       } 
       // If it's already a formatted user object 
       else if (typeof user.name === 'string') {
-        await serverClient.upsertUser(user);
-        console.log(`Pre-formatted user created in Stream Chat: ${user.id}`);
+        await serverClient!.upsertUser(user);
+        logger.info(`Pre-formatted user created in Stream Chat: ${user.id}`);
         return user;
       }
       
       throw new Error('Invalid user format');
     } catch (error) {
-      console.error('Error creating user in Stream Chat:', error);
+      logger.error('Error creating user in Stream Chat:', error);
       throw error;
     }
   }
@@ -50,9 +74,12 @@ export class StreamChatService {
    */
   generateToken(userId: number): string {
     try {
+      if (!serverClient) {
+        throw new Error('Stream Chat client is not initialized. Please check API credentials.');
+      }
       return serverClient.createToken(userId.toString());
     } catch (error) {
-      console.error('Error generating Stream Chat token:', error);
+      logger.error('Error generating Stream Chat token:', error);
       throw error;
     }
   }
@@ -66,6 +93,10 @@ export class StreamChatService {
     channelName?: string
   ): Promise<StreamChannel> {
     try {
+      if (!serverClient) {
+        throw new Error('Stream Chat client is not initialized. Please check API credentials.');
+      }
+      
       // Sort the user IDs to ensure consistency for channel IDs
       const members = [user1Id.toString(), user2Id.toString()].sort();
       const channelId = `messaging-${members.join('-')}`;
@@ -78,11 +109,11 @@ export class StreamChatService {
       
       // Create the channel
       await channel.create();
-      console.log(`Direct channel created: ${channelId}`);
+      logger.info(`Direct channel created: ${channelId}`);
       
       return channel;
     } catch (error) {
-      console.error('Error creating direct channel:', error);
+      logger.error('Error creating direct channel:', error);
       throw error;
     }
   }
@@ -96,6 +127,10 @@ export class StreamChatService {
     memberIds: number[]
   ): Promise<StreamChannel> {
     try {
+      if (!serverClient) {
+        throw new Error('Stream Chat client is not initialized. Please check API credentials.');
+      }
+      
       // Add the creator to the members if not already included
       if (!memberIds.includes(creatorId)) {
         memberIds.push(creatorId);
@@ -115,11 +150,11 @@ export class StreamChatService {
       
       // Create the channel
       await channel.create();
-      console.log(`Group channel created: ${channelId}`);
+      logger.info(`Group channel created: ${channelId}`);
       
       return channel;
     } catch (error) {
-      console.error('Error creating group channel:', error);
+      logger.error('Error creating group channel:', error);
       throw error;
     }
   }
@@ -129,11 +164,15 @@ export class StreamChatService {
    */
   async deleteChannel(channelId: string, channelType: string = 'messaging'): Promise<void> {
     try {
+      if (!serverClient) {
+        throw new Error('Stream Chat client is not initialized. Please check API credentials.');
+      }
+      
       const channel = serverClient.channel(channelType, channelId);
       await channel.delete();
-      console.log(`Channel deleted: ${channelId}`);
+      logger.info(`Channel deleted: ${channelId}`);
     } catch (error) {
-      console.error('Error deleting channel:', error);
+      logger.error('Error deleting channel:', error);
       throw error;
     }
   }
@@ -147,15 +186,19 @@ export class StreamChatService {
     channelType: string = 'messaging'
   ): Promise<void> {
     try {
+      if (!serverClient) {
+        throw new Error('Stream Chat client is not initialized. Please check API credentials.');
+      }
+      
       const channel = serverClient.channel(channelType, channelId);
       
       // Convert all member IDs to strings
       const members = memberIds.map(id => id.toString());
       
       await channel.addMembers(members);
-      console.log(`Members added to channel ${channelId}:`, members);
+      logger.info(`Members added to channel ${channelId}:`, members);
     } catch (error) {
-      console.error('Error adding members to channel:', error);
+      logger.error('Error adding members to channel:', error);
       throw error;
     }
   }
@@ -169,15 +212,19 @@ export class StreamChatService {
     channelType: string = 'messaging'
   ): Promise<void> {
     try {
+      if (!serverClient) {
+        throw new Error('Stream Chat client is not initialized. Please check API credentials.');
+      }
+      
       const channel = serverClient.channel(channelType, channelId);
       
       // Convert all member IDs to strings
       const members = memberIds.map(id => id.toString());
       
       await channel.removeMembers(members);
-      console.log(`Members removed from channel ${channelId}:`, members);
+      logger.info(`Members removed from channel ${channelId}:`, members);
     } catch (error) {
-      console.error('Error removing members from channel:', error);
+      logger.error('Error removing members from channel:', error);
       throw error;
     }
   }
@@ -187,6 +234,10 @@ export class StreamChatService {
    */
   async getUserChannels(userId: number): Promise<StreamChannel[]> {
     try {
+      if (!serverClient) {
+        throw new Error('Stream Chat client is not initialized. Please check API credentials.');
+      }
+      
       const filter = { type: 'messaging', members: { $in: [userId.toString()] } };
       
       // Use the correct sort format for Stream Chat API
@@ -199,7 +250,7 @@ export class StreamChatService {
       
       return result;
     } catch (error) {
-      console.error('Error fetching user channels:', error);
+      logger.error('Error fetching user channels:', error);
       throw error;
     }
   }

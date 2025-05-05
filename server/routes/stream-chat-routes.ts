@@ -38,7 +38,7 @@ router.get('/test-connection', async (req: Request, res: Response) => {
       success: true,
       message: 'Successfully connected to Stream Chat API and created test user'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error testing Stream Chat connection:', error);
     res.status(500).json({ 
       success: false, 

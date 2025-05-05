@@ -75,7 +75,7 @@ function DiagnosticPanel() {
           variant: 'destructive',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Error',
         description: 'Failed to test Stream Chat connection',
@@ -83,7 +83,9 @@ function DiagnosticPanel() {
       });
       setTestResult({
         success: false,
-        error: error.message,
+        error: error && typeof error === 'object' && 'message' in error 
+          ? error.message 
+          : 'Unknown error',
       });
     } finally {
       setTestLoading(false);
