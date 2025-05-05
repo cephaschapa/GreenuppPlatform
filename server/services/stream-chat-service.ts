@@ -15,21 +15,30 @@ export class StreamChatService {
   /**
    * Create a user in Stream Chat
    */
-  async createUser(user: User): Promise<any> {
+  async createUser(user: any): Promise<any> {
     try {
-      // Create the user
-      const userData = {
-        id: user.id.toString(), // Stream user IDs must be strings
-        name: user.username,
-        role: 'user',
-        image: user.profileImage ?? '',
-      };
+      // If it's a User object from our database
+      if (typeof user.username === 'string') {
+        const userData = {
+          id: user.id.toString(), // Stream user IDs must be strings
+          name: user.username,
+          role: 'user',
+          image: user.profileImage ?? '',
+        };
+        
+        // Upsert the user to Stream Chat
+        await serverClient.upsertUser(userData);
+        console.log(`User created in Stream Chat: ${user.id}`);
+        return userData;
+      } 
+      // If it's already a formatted user object 
+      else if (typeof user.name === 'string') {
+        await serverClient.upsertUser(user);
+        console.log(`Pre-formatted user created in Stream Chat: ${user.id}`);
+        return user;
+      }
       
-      // Upsert the user to Stream Chat
-      const response = await serverClient.upsertUser(userData);
-      
-      console.log(`User created in Stream Chat: ${user.id}`);
-      return userData; // Return the formatted user data
+      throw new Error('Invalid user format');
     } catch (error) {
       console.error('Error creating user in Stream Chat:', error);
       throw error;
@@ -180,10 +189,10 @@ export class StreamChatService {
     try {
       const filter = { type: 'messaging', members: { $in: [userId.toString()] } };
       
-      // Fix the sort parameter to use the proper type
-      const sort = { last_message_at: -1 };
+      // Use the correct sort format for Stream Chat API
+      const sort = [{ field: 'last_message_at', direction: -1 }];
       
-      const result = await serverClient.queryChannels(filter, sort, {
+      const result = await serverClient.queryChannels(filter, sort as any, {
         watch: false,
         state: true,
       });

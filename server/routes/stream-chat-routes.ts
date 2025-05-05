@@ -124,14 +124,24 @@ router.post('/group', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Name and member IDs array are required' });
     }
     
-    // Create/update the creator in Stream Chat
-    await streamChatService.createUser(req.user);
+    // Create/update the creator in Stream Chat with properly formatted data
+    const creatorData = {
+      id: req.user.id.toString(),
+      name: req.user.username,
+      image: req.user.profileImage ?? '',
+    };
+    await streamChatService.createUser(creatorData);
     
-    // Create/update all members in Stream Chat
+    // Create/update all members in Stream Chat with properly formatted data
     for (const memberId of members) {
       const member = await storage.getUser(memberId);
       if (member) {
-        await streamChatService.createUser(member);
+        const memberData = {
+          id: member.id.toString(),
+          name: member.username,
+          image: member.profileImage ?? '',
+        };
+        await streamChatService.createUser(memberData);
       }
     }
     
