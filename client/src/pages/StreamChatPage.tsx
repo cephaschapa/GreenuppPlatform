@@ -127,7 +127,7 @@ function NewChatDialogContent({ open, onOpenChange }: { open: boolean; onOpenCha
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   
   // Fetch users from our API
-  const { data: usersData, isLoading, error } = useQuery({
+  const { data: usersData, isLoading, error } = useQuery<{ users: Array<{ id: number; name: string; role: string }> }>({
     queryKey: ['/api/stream-chat/users'],
     enabled: open, // Only fetch when dialog is open
   });
@@ -318,6 +318,7 @@ export default function StreamChatPage() {
             <DialogTrigger asChild>
               <Button>New Chat</Button>
             </DialogTrigger>
+            {/* We need to wrap the dialog content in the Stream Chat Provider */}
             {isCreateDialogOpen && (
               <StreamChatProvider apiKey={STREAM_API_KEY}>
                 <NewChatDialogContent open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
