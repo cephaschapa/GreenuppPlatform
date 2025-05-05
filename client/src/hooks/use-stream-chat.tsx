@@ -113,11 +113,18 @@ export function StreamChatProvider({ children, apiKey }: StreamChatProviderProps
       initChat();
     }
 
-    // Cleanup
+    // Cleanup function
     return () => {
       if (chatClient) {
+        // Clear channels first to prevent any further operations
+        setUserChannels([]);
+        setIsInitialized(false);
+        
+        // Then disconnect the user
         chatClient.disconnectUser().then(() => {
-          console.log('Stream Chat disconnected');
+          console.log('Stream Chat disconnected successfully');
+        }).catch(err => {
+          console.error('Error disconnecting Stream Chat:', err);
         });
       }
     };

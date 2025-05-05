@@ -24,16 +24,21 @@ export const StreamChatComponent = ({
   activeChannelId,
   onChannelSelect,
 }: StreamChatComponentProps) => {
-  const { client, isConnecting, userChannels, error } = useStreamChat();
+  const { client, isConnecting, userChannels, error, isInitialized } = useStreamChat();
   const [activeChannel, setActiveChannel] = useState<Channel | undefined>(undefined);
 
   // Set the active channel when the activeChannelId prop changes
   useEffect(() => {
-    if (client && activeChannelId) {
-      const channel = userChannels.find(c => c.id === activeChannelId);
-      setActiveChannel(channel);
+    if (client && isInitialized && activeChannelId) {
+      try {
+        const channel = userChannels.find(c => c.id === activeChannelId);
+        setActiveChannel(channel);
+      } catch (err) {
+        console.error('Error setting active channel:', err);
+        setActiveChannel(undefined);
+      }
     }
-  }, [client, activeChannelId, userChannels]);
+  }, [client, isInitialized, activeChannelId, userChannels]);
 
   // If not connected, show loading
   if (isConnecting) {
@@ -84,18 +89,38 @@ export const StreamChatComponent = ({
               sort={sort}
               Preview={(props) => {
                 const { channel } = props;
+                
+                // Safe access to channel data
+                const handleClick = () => {
+                  try {
+                    handleChannelSelect(channel);
+                  } catch (err) {
+                    console.error('Error selecting channel:', err);
+                  }
+                };
+                
+                // Safe message access
+                let lastMessage = 'No messages yet';
+                try {
+                  if (channel.state?.messages && channel.state.messages.length > 0) {
+                    const message = channel.state.messages[channel.state.messages.length - 1];
+                    lastMessage = message?.text || 'No message content';
+                  }
+                } catch (err) {
+                  console.error('Error accessing channel messages:', err);
+                  lastMessage = 'Error loading messages';
+                }
+                
                 return (
                   <div
                     className={`p-3 cursor-pointer hover:bg-accent ${
                       activeChannel?.id === channel.id ? 'bg-accent' : ''
                     }`}
-                    onClick={() => handleChannelSelect(channel)}
+                    onClick={handleClick}
                   >
                     <div className="font-semibold">{channel.data?.name || 'Direct Message'}</div>
                     <div className="text-sm text-muted-foreground truncate">
-                      {channel.state.messages.length > 0
-                        ? channel.state.messages[channel.state.messages.length - 1].text
-                        : 'No messages yet'}
+                      {lastMessage}
                     </div>
                   </div>
                 );
