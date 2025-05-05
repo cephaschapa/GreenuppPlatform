@@ -141,69 +141,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     };
   }, [user]); // Only depend on user changes
   
-  // Handle incoming WebSocket messages
-  const handleWebSocketMessage = (data: any) => {
-    if (!data.type) return;
-    
-    switch (data.type) {
-      case 'auth_success':
-        console.log('WebSocket authentication successful');
-        // Fetch initial data
-        fetchRooms();
-        fetchTotalUnreadCount();
-        break;
-        
-      case 'new_message':
-        handleNewMessage(data.data);
-        break;
-        
-      case 'messages_read':
-        handleMessagesRead(data.data);
-        break;
-        
-      case 'typing_indicator':
-        handleTypingIndicator(data.data);
-        break;
-        
-      case 'user_online_status':
-        handleUserOnlineStatus(data.data);
-        break;
-        
-      case 'user_joined':
-        handleUserJoined(data.data);
-        break;
-        
-      case 'user_left':
-        handleUserLeft(data.data);
-        break;
-        
-      case 'room_joined':
-        console.log('Joined room:', data.data.room);
-        if (data.data.messages) {
-          setMessages(data.data.messages);
-        }
-        if (data.data.members) {
-          // Update room with member information
-          if (activeRoom && activeRoom.id === data.data.room.id) {
-            setActiveRoom({
-              ...activeRoom,
-              members: data.data.members
-            });
-          }
-        }
-        break;
-        
-      case 'error':
-        toast({
-          title: 'Chat Error',
-          description: data.data.message,
-          variant: 'destructive',
-        });
-        break;
-        
-      default:
-        console.log('Unknown WebSocket message type:', data.type);
-    }
+  // Placeholder for handleWebSocketMessage 
+  // This function is kept as a no-op for compatibility with existing code
+  // All WebSocket functionality has been disabled
+  const handleWebSocketMessage = (_data: any) => {
+    // No WebSocket support - function kept as a no-op for compatibility
+    return;
   };
   
   // Handle new incoming message
