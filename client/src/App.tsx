@@ -15,6 +15,7 @@ import PublicTraceVerificationPage from "@/pages/PublicTraceVerificationPage";
 import AiKnowledgeBasePage from "@/pages/AiKnowledgeBasePage";
 import GreenSocialsPage from "@/pages/GreenSocialsPage";
 import ChatPage from "@/pages/ChatPage";
+import StreamChatPage from "@/pages/StreamChatPage";
 import UploadTestPage from "@/pages/UploadTestPage";
 import EmailNotificationTestPage from "@/pages/EmailNotificationTestPage";
 import PublicEmailTestPage from "@/pages/PublicEmailTestPage";
@@ -96,6 +97,7 @@ function Router() {
       
       {/* Chat routes */}
       <ProtectedRoute path="/dashboard/chat" component={ChatPage} />
+      <ProtectedRoute path="/dashboard/stream-chat" component={StreamChatPage} />
       
       {/* Role-specific dashboard redirects */}
       <ProtectedRoute path="/buyer" component={() => <Redirect to="/dashboard/marketplace" />} />

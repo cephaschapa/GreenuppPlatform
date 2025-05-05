@@ -13,8 +13,7 @@ import {
 import { useStreamChat } from '@/hooks/use-stream-chat';
 
 // Import Stream Chat CSS
-import 'stream-chat-react/dist/css/index.css';
-import 'stream-chat-css/dist/css/index.css';
+import 'stream-chat-css';
 
 interface StreamChatComponentProps {
   activeChannelId?: string;
@@ -72,7 +71,8 @@ export const StreamChatComponent = ({
   };
 
   const filters = { type: 'messaging', members: { $in: [client.userID || ''] } };
-  const sort = { last_message_at: -1 };
+  // Use 'as any' to bypass typing issue with the Stream Chat API
+  const sort = { last_message_at: -1 } as any;
 
   return (
     <div className="h-full flex overflow-hidden">

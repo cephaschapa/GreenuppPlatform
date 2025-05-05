@@ -7,7 +7,25 @@ import { useAuth } from '@/hooks/use-auth';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { users as mockUsers } from '@/lib/mock-data'; // Import mock users for demo
+
+// Define mock users for demo
+const mockUsers = [
+  {
+    id: 1,
+    name: 'John Farmer',
+    role: 'farmer'
+  },
+  {
+    id: 2,
+    name: 'Jane Supplier',
+    role: 'supplier'
+  },
+  {
+    id: 3,
+    name: 'Mike Buyer',
+    role: 'buyer'
+  }
+];
 
 // Get the Stream Chat API key from environment variables
 const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY || '';
@@ -66,12 +84,12 @@ export default function StreamChatPage() {
                   onChange={(e) => {
                     setNewChatUserId(e.target.value);
                     setSelectedUser(
-                      mockUsers.find((u) => u.id.toString() === e.target.value) || null
+                      mockUsers.find((u: { id: number }) => u.id.toString() === e.target.value) || null
                     );
                   }}
                 >
                   <option value="">Select a user</option>
-                  {mockUsers.map((user) => (
+                  {mockUsers.map((user: { id: number; name: string }) => (
                     <option key={user.id} value={user.id.toString()}>
                       {user.name}
                     </option>
