@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { StreamChatProvider } from '@/hooks/use-stream-chat';
+import { StreamChatProvider, useStreamChat } from '@/hooks/use-stream-chat';
 import StreamChatComponent from '@/components/chat/StreamChatComponent';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -10,25 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, Loader2 } from 'lucide-react';
-
-// Define mock users for demo
-const mockUsers = [
-  {
-    id: 1,
-    name: 'John Farmer',
-    role: 'farmer'
-  },
-  {
-    id: 2,
-    name: 'Jane Supplier',
-    role: 'supplier'
-  },
-  {
-    id: 3,
-    name: 'Mike Buyer',
-    role: 'buyer'
-  }
-];
+import { useQuery } from '@tanstack/react-query';
 
 // Get the Stream Chat API key from environment variables
 const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY || '';
@@ -136,12 +118,135 @@ function DiagnosticPanel() {
   );
 }
 
+// Create a component for selecting users
+function NewChatDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const { toast } = useToast();
+  const { createDirectChannel } = useStreamChat();
+  const [newChatUserId, setNewChatUserId] = useState('');
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+  
+  // Fetch users from our API
+  const { data: usersData, isLoading, error } = useQuery({
+    queryKey: ['/api/stream-chat/users'],
+    enabled: open, // Only fetch when dialog is open
+  });
+  
+  const users = usersData?.users || [];
+  
+  // Reset state when dialog opens
+  useEffect(() => {
+    if (open) {
+      setNewChatUserId('');
+      setSelectedUser(null);
+    }
+  }, [open]);
+  
+  const startNewChat = async () => {
+    if (!selectedUser || !newChatUserId) return;
+    
+    setIsCreatingChat(true);
+    try {
+      // Use the StreamChat API to create a direct channel
+      const channel = await createDirectChannel(
+        parseInt(newChatUserId, 10),
+        selectedUser.name
+      );
+      
+      if (channel) {
+        toast({
+          title: 'Chat Created',
+          description: `Started chat with ${selectedUser.name}`,
+        });
+        onOpenChange(false);
+      } else {
+        throw new Error('Failed to create chat channel');
+      }
+    } catch (error) {
+      console.error('Error creating chat:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create chat. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreatingChat(false);
+    }
+  };
+  
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Start a New Chat</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4 pt-4">
+        <div className="space-y-2">
+          <Label htmlFor="userId">Select a User</Label>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-20">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : error ? (
+            <div className="p-3 border border-destructive text-destructive rounded-md text-sm">
+              Failed to load users. Please try again.
+            </div>
+          ) : users.length === 0 ? (
+            <div className="p-3 border rounded-md text-muted-foreground text-sm">
+              No users available to chat with.
+            </div>
+          ) : (
+            <select
+              id="userId"
+              className="w-full p-2 border rounded-md"
+              value={newChatUserId}
+              onChange={(e) => {
+                const userId = e.target.value;
+                setNewChatUserId(userId);
+                setSelectedUser(
+                  users.find((u: any) => u.id.toString() === userId) || null
+                );
+              }}
+            >
+              <option value="">Select a user</option>
+              {users.map((u: any) => (
+                <option key={u.id} value={u.id.toString()}>
+                  {u.name} ({u.role})
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        {selectedUser && (
+          <div className="p-3 border rounded-md bg-accent">
+            <div className="font-semibold">{selectedUser.name}</div>
+            <div className="text-sm text-muted-foreground">
+              {selectedUser.role}
+            </div>
+          </div>
+        )}
+        <Button
+          onClick={startNewChat}
+          disabled={!newChatUserId || isCreatingChat}
+          className="w-full"
+        >
+          {isCreatingChat ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating Chat...
+            </>
+          ) : (
+            'Start Chat'
+          )}
+        </Button>
+      </div>
+    </DialogContent>
+  );
+}
+
 export default function StreamChatPage() {
   const { toast } = useToast();
   const { user, isLoading } = useAuth();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [newChatUserId, setNewChatUserId] = useState('');
-  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   // Ensure we have the API key
@@ -213,55 +318,7 @@ export default function StreamChatPage() {
             <DialogTrigger asChild>
               <Button>New Chat</Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Start a New Chat</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="userId">Select a User</Label>
-                  <select
-                    id="userId"
-                    className="w-full p-2 border rounded-md"
-                    value={newChatUserId}
-                    onChange={(e) => {
-                      setNewChatUserId(e.target.value);
-                      setSelectedUser(
-                        mockUsers.find((u: { id: number }) => u.id.toString() === e.target.value) || null
-                      );
-                    }}
-                  >
-                    <option value="">Select a user</option>
-                    {mockUsers.map((user: { id: number; name: string }) => (
-                      <option key={user.id} value={user.id.toString()}>
-                        {user.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {selectedUser && (
-                  <div className="p-3 border rounded-md bg-accent">
-                    <div className="font-semibold">{selectedUser.name}</div>
-                    <div className="text-sm text-muted-foreground">{selectedUser.role}</div>
-                  </div>
-                )}
-                <Button
-                  onClick={() => {
-                    // In a real app, we'd use StreamChatContext's createDirectChannel
-                    // For now, just close the dialog and show a toast
-                    toast({
-                      title: 'Chat Started',
-                      description: `Started chat with ${selectedUser?.name || 'user'}`,
-                    });
-                    setIsCreateDialogOpen(false);
-                  }}
-                  disabled={!newChatUserId}
-                  className="w-full"
-                >
-                  Start Chat
-                </Button>
-              </div>
-            </DialogContent>
+            <NewChatDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
           </Dialog>
         </div>
       </div>
