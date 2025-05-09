@@ -46,12 +46,13 @@ const AiKnowledgeBasePage = () => {
             </svg>
           </div>
           <div className="relative z-10">
-            <h2 className="text-4xl font-bold mb-4">Farming Powered by Intelligence</h2>
+            <h2 className="text-4xl font-bold mb-4">Digital Agriculture Technology Platform</h2>
             <div className="prose prose-lg dark:prose-invert max-w-none mb-6">
               <p className="text-xl text-muted-foreground">
-                Greenupp leverages advanced artificial intelligence to transform farming practices. 
-                This knowledge base explains how our AI technologies work to help you make better 
-                agricultural decisions.
+                Greenupp is a comprehensive digital platform that leverages artificial intelligence, 
+                blockchain technology, and modern web capabilities to transform farming practices. 
+                This knowledge base provides detailed documentation on all our platform features 
+                and how they work together to improve agricultural outcomes.
               </p>
             </div>
             <div className="flex flex-wrap gap-4">
@@ -70,6 +71,14 @@ const AiKnowledgeBasePage = () => {
               <div className="bg-background/80 backdrop-blur rounded-lg px-4 py-3 inline-flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-yellow-500"></span>
                 <span className="text-sm font-medium">Predictive Analytics</span>
+              </div>
+              <div className="bg-background/80 backdrop-blur rounded-lg px-4 py-3 inline-flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-red-500"></span>
+                <span className="text-sm font-medium">Social Networking</span>
+              </div>
+              <div className="bg-background/80 backdrop-blur rounded-lg px-4 py-3 inline-flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-indigo-500"></span>
+                <span className="text-sm font-medium">Geospatial Analysis</span>
               </div>
             </div>
           </div>
@@ -221,6 +230,173 @@ const AiKnowledgeBasePage = () => {
           </CardContent>
         </Card>
         
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Stream Chat Communication Platform</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">
+              Our Stream Chat integration provides reliable, real-time communication between farmers, agricultural experts, 
+              and suppliers with guaranteed message delivery, even in areas with unstable internet connectivity.
+            </p>
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div className="bg-primary/10 rounded-lg p-4">
+                <h4 className="font-medium mb-2">Key Features</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Direct messaging between platform users</li>
+                  <li>Message persistence with offline support</li>
+                  <li>Secure, encrypted communications</li>
+                  <li>Real-time typing indicators and read receipts</li>
+                  <li>Media sharing (images, documents, etc.)</li>
+                </ul>
+              </div>
+              <div className="bg-primary/10 rounded-lg p-4">
+                <h4 className="font-medium mb-2">Technical Implementation</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>HTTP polling for improved reliability</li>
+                  <li>Client-side message queuing for offline use</li>
+                  <li>Optimized for low-bandwidth environments</li>
+                  <li>Consistent user experience across devices</li>
+                  <li>Custom UI with Greenupp's design language</li>
+                </ul>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Our chat platform is designed for agricultural contexts, enabling quick consultation with experts about 
+              crop issues, coordination with suppliers, and knowledge sharing between farmers facing similar challenges.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Green Socials Network</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">
+              Green Socials is our specialized agricultural social network that connects farmers worldwide, 
+              enabling knowledge sharing, community building, and collaborative problem-solving.
+            </p>
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div className="bg-primary/10 rounded-lg p-4">
+                <h4 className="font-medium mb-2">Network Features</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Customizable farmer profiles</li>
+                  <li>News feed with agricultural content</li>
+                  <li>Post creation with rich media support</li>
+                  <li>Comments, reactions, and sharing</li>
+                  <li>Follow system for content curation</li>
+                  <li>Stories functionality for quick updates</li>
+                </ul>
+              </div>
+              <div className="bg-primary/10 rounded-lg p-4">
+                <h4 className="font-medium mb-2">Benefits for Farmers</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Knowledge exchange with peers globally</li>
+                  <li>Solution sharing for common challenges</li>
+                  <li>Community support during critical seasons</li>
+                  <li>Regional agricultural news and updates</li>
+                  <li>Visibility for innovative farming practices</li>
+                  <li>Direct connections to buyers and suppliers</li>
+                </ul>
+              </div>
+            </div>
+            <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 mt-4">
+              <h4 className="font-medium mb-2">AI-Powered Content Curation</h4>
+              <p className="text-sm text-muted-foreground">
+                Our content recommendation system analyzes your farm profile, location, crop types, and interaction patterns 
+                to surface the most relevant posts, farming techniques, and connections. This ensures you see content that's 
+                directly applicable to your specific agricultural context and challenges.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Agricultural Marketplace</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">
+              Our enhanced agricultural marketplace connects farmers directly with buyers, suppliers, and service providers 
+              using location-based technology to facilitate efficient local transactions and reduce supply chain complexity.
+            </p>
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div className="bg-primary/10 rounded-lg p-4">
+                <h4 className="font-medium mb-2">Marketplace Features</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Verified seller profiles with ratings</li>
+                  <li>Location-based product discovery</li>
+                  <li>Distance calculation and proximity filters</li>
+                  <li>Product categories with detailed listings</li>
+                  <li>Integrated secure payment processing</li>
+                  <li>In-app messaging with sellers</li>
+                  <li>Product reviews and quality ratings</li>
+                </ul>
+              </div>
+              <div className="bg-primary/10 rounded-lg p-4">
+                <h4 className="font-medium mb-2">Technical Specifications</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>H3 geospatial indexing for precise location data</li>
+                  <li>Efficient distance calculations using hexagonal grid</li>
+                  <li>Stripe integration for secure payments</li>
+                  <li>Shopping cart functionality with quantity management</li>
+                  <li>Real-time inventory updates</li>
+                  <li>Integration with blockchain traceability</li>
+                  <li>Mobile-optimized interface with offline catalog browsing</li>
+                </ul>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              The marketplace prioritizes local agricultural commerce to reduce food miles and transportation costs, 
+              while blockchain integration ensures product authenticity and transparent supply chains.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Progressive Web App (PWA) Capabilities</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">
+              Greenupp is built as a Progressive Web App (PWA), providing an app-like experience with 
+              offline capabilities and improved performance for farmers working in areas with limited connectivity.
+            </p>
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div className="bg-primary/10 rounded-lg p-4">
+                <h4 className="font-medium mb-2">Offline Functionality</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Access critical farm data without internet</li>
+                  <li>Record field observations offline</li>
+                  <li>Queue activities to sync when connection restores</li>
+                  <li>Offline-first architecture with progressive enhancement</li>
+                  <li>Cached weather forecasts and recommendations</li>
+                </ul>
+              </div>
+              <div className="bg-primary/10 rounded-lg p-4">
+                <h4 className="font-medium mb-2">Performance Benefits</h4>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Fast loading times with service worker caching</li>
+                  <li>Reduced data usage for slower connections</li>
+                  <li>Home screen installation on mobile devices</li>
+                  <li>Push notifications for critical alerts</li>
+                  <li>Background sync for data reliability</li>
+                </ul>
+              </div>
+            </div>
+            <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 mt-4">
+              <h4 className="font-medium mb-2">Technical Implementation</h4>
+              <p className="text-sm text-muted-foreground">
+                Our PWA is built using service workers for caching and offline functionality, IndexedDB for 
+                local data storage, and a synchronization system that ensures data consistency between the 
+                device and server. This creates a resilient application that continues to function in the 
+                challenging connectivity environments often encountered in agricultural settings.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="mb-8">
           <CardHeader>
             <CardTitle>General AI Integration</CardTitle>
