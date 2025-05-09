@@ -14,8 +14,8 @@ const SolutionShowcase = () => {
           transition={{ duration: 0.6 }}
         >
           <h5 className="text-primary uppercase tracking-widest font-semibold mb-2 font-mono">Solutions</h5>
-          <h2 className="text-3xl md:text-4xl font-bold font-space mb-4">Comprehensive <span className="text-primary">Agricultural</span> Suite</h2>
-          <p className="max-w-2xl mx-auto text-muted-foreground">Our platform offers integrated solutions for every aspect of modern farming.</p>
+          <h2 className="text-3xl md:text-4xl font-bold font-space mb-4">Implemented <span className="text-primary">Platform</span> Features</h2>
+          <p className="max-w-2xl mx-auto text-muted-foreground">Explore the powerful features already available in our agricultural platform.</p>
         </motion.div>
         
         <motion.div 
@@ -26,42 +26,42 @@ const SolutionShowcase = () => {
           transition={{ duration: 0.8 }}
         >
           <div>
-            <h3 className="text-2xl font-bold font-space mb-4">AI Crop Analysis & Diagnosis</h3>
-            <p className="text-muted-foreground mb-6">Upload images from your smartphone to instantly identify diseases, pests, nutrient deficiencies, and growth stages with our advanced computer vision system.</p>
+            <h3 className="text-2xl font-bold font-space mb-4">Green Socials Platform</h3>
+            <p className="text-muted-foreground mb-6">Connect with other agricultural professionals through our robust social platform designed specifically for farmers and agribusiness.</p>
             <ul className="space-y-3 mb-8">
               <li className="flex items-start">
                 <i className="fas fa-check-circle text-primary mt-1 mr-3"></i>
-                <span>Disease detection with 99.2% accuracy</span>
+                <span>Post updates, images, and agricultural tips</span>
               </li>
               <li className="flex items-start">
                 <i className="fas fa-check-circle text-primary mt-1 mr-3"></i>
-                <span>Personalized treatment recommendations</span>
+                <span>Comment and react to other farmers' content</span>
               </li>
               <li className="flex items-start">
                 <i className="fas fa-check-circle text-primary mt-1 mr-3"></i>
-                <span>Growth stage monitoring and yield prediction</span>
+                <span>Follow experts and receive notifications</span>
               </li>
             </ul>
             <a href="#" className="text-primary flex items-center group">
-              <span className="mr-2 group-hover:mr-3 transition-all">Learn more about crop analysis</span>
+              <span className="mr-2 group-hover:mr-3 transition-all">Explore Green Socials</span>
               <i className="fas fa-arrow-right"></i>
             </a>
           </div>
           <div className="relative">
             <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg shadow-primary/10 bg-muted">
               <img 
-                src={aiCropAnalysisSvg} 
-                alt="AI analyzing crop health with digital overlay" 
+                src="https://images.unsplash.com/photo-1551650975-87deedd944c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1074&q=80" 
+                alt="Farmers sharing knowledge on digital platform" 
                 className="w-full"
               />
             </div>
             <div className="absolute top-4 right-4 bg-secondary/80 backdrop-blur-sm border border-primary/20 rounded-lg p-3 font-mono text-xs">
               <div className="flex items-center">
-                <span className="w-2 h-2 bg-primary rounded-full animate-pulse mr-2"></span>
-                <span>AI ANALYSIS ACTIVE</span>
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></span>
+                <span>SOCIAL FEED ACTIVE</span>
               </div>
-              <div className="mt-1 text-[#06E775]">Detecting: Leaf Blight</div>
-              <div className="mt-1">Confidence: 97.8%</div>
+              <div className="mt-1 text-[#06E775]">New posts: 5</div>
+              <div className="mt-1">Followers: 128</div>
             </div>
           </div>
         </motion.div>
@@ -76,44 +76,39 @@ const SolutionShowcase = () => {
           <div className="order-2 md:order-1 relative">
             <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg shadow-primary/10">
               <img 
-                src="https://images.unsplash.com/photo-1620127682229-33388276e540?ixlib=rb-4.0.3&auto=format&fit=crop&w=928&q=80" 
-                alt="IoT sensors in agricultural field with data visualization" 
+                src="https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=928&q=80" 
+                alt="Farmers communicating through digital platform" 
                 className="w-full"
               />
             </div>
-            <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
-              <div className="bg-secondary/80 backdrop-blur-sm border border-primary/20 rounded-full h-24 w-24 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-primary font-bold text-xl">24.3°C</div>
-                  <div className="text-xs font-mono mt-1">Soil Temp</div>
-                </div>
-              </div>
-            </div>
             <div className="absolute bottom-4 right-4 bg-secondary/80 backdrop-blur-sm border border-primary/20 rounded-lg p-3 font-mono text-xs">
-              <div className="mb-1">Humidity: 68%</div>
-              <div>Moisture: 42%</div>
-              <div className="mt-1 text-[#06E775]">Status: Optimal</div>
+              <div className="flex items-center mb-1">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                <span>2 Users Online</span>
+              </div>
+              <div>Last message: 2m ago</div>
+              <div className="mt-1 text-[#06E775]">New messages: 3</div>
             </div>
           </div>
           <div className="order-1 md:order-2">
-            <h3 className="text-2xl font-bold font-space mb-4">IoT Environmental Monitoring</h3>
-            <p className="text-muted-foreground mb-6">Deploy our network of smart sensors to continuously monitor soil conditions, weather patterns, and environmental factors affecting your crops.</p>
+            <h3 className="text-2xl font-bold font-space mb-4">Stream Chat Messaging</h3>
+            <p className="text-muted-foreground mb-6">Communicate instantly with fellow farmers, agricultural experts, and support staff through our reliable chat platform.</p>
             <ul className="space-y-3 mb-8">
               <li className="flex items-start">
                 <i className="fas fa-check-circle text-primary mt-1 mr-3"></i>
-                <span>Real-time soil moisture, temperature, and nutrient tracking</span>
+                <span>Private direct messaging with other users</span>
               </li>
               <li className="flex items-start">
                 <i className="fas fa-check-circle text-primary mt-1 mr-3"></i>
-                <span>Automated irrigation and fertigation control</span>
+                <span>Reliable message delivery and history</span>
               </li>
               <li className="flex items-start">
                 <i className="fas fa-check-circle text-primary mt-1 mr-3"></i>
-                <span>Early warning system for environmental changes</span>
+                <span>Mobile and desktop notifications</span>
               </li>
             </ul>
             <a href="#" className="text-primary flex items-center group">
-              <span className="mr-2 group-hover:mr-3 transition-all">Explore IoT solutions</span>
+              <span className="mr-2 group-hover:mr-3 transition-all">Start chatting now</span>
               <i className="fas fa-arrow-right"></i>
             </a>
           </div>
