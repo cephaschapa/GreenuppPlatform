@@ -1,124 +1,86 @@
-import React from 'react';
 import { Link } from 'wouter';
-import { Leaf } from 'lucide-react';
 
-const Footer: React.FC = () => {
-  const currentYear = new Date().getFullYear();
-
+const Footer = () => {
   return (
-    <footer className="border-t bg-background">
-      <div className="container mx-auto py-8 md:py-12">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:grid-cols-4">
-          {/* Logo & About */}
-          <div className="flex flex-col">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <Leaf className="h-6 w-6 text-primary" />
-              <span className="font-space font-bold text-xl">Greenupp</span>
-            </Link>
-            <p className="text-muted-foreground text-sm max-w-xs">
-              Transforming agriculture through intelligent, mobile-first technologies with enhanced 
-              marketplace capabilities and blockchain-enabled traceability.
+    <footer className="bg-card border-t border-border">
+      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-12 md:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12">
+          <div className="col-span-1 md:col-span-2">
+            <h2 className="text-2xl font-bold font-space tracking-tight text-foreground mb-4">Greenupp</h2>
+            <p className="text-muted-foreground max-w-md mb-6">
+              Revolutionizing agriculture through AI-driven technology, blockchain traceability, and comprehensive digital farming solutions.
             </p>
+            <div className="flex space-x-4">
+              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                <i className="fab fa-twitter text-xl"></i>
+                <span className="sr-only">Twitter</span>
+              </a>
+              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                <i className="fab fa-facebook text-xl"></i>
+                <span className="sr-only">Facebook</span>
+              </a>
+              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                <i className="fab fa-linkedin text-xl"></i>
+                <span className="sr-only">LinkedIn</span>
+              </a>
+              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                <i className="fab fa-instagram text-xl"></i>
+                <span className="sr-only">Instagram</span>
+              </a>
+            </div>
           </div>
 
-          {/* Quick Links */}
-          <div className="space-y-4">
-            <h4 className="font-medium text-sm text-foreground mb-4">Platform</h4>
-            <ul className="space-y-3 text-sm">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Quick Links</h3>
+            <ul className="space-y-2">
               <li>
-                <Link href="/marketplace" className="text-muted-foreground hover:text-primary transition-colors">
-                  Marketplace
-                </Link>
+                <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">Home</Link>
               </li>
               <li>
-                <Link href="/marketplace/sellers" className="text-muted-foreground hover:text-primary transition-colors">
-                  Find Sellers
-                </Link>
+                <Link href="/auth" className="text-muted-foreground hover:text-primary transition-colors">Login</Link>
               </li>
               <li>
-                <Link href="/trace" className="text-muted-foreground hover:text-primary transition-colors">
-                  Verify Products
-                </Link>
+                <a href="#features" className="text-muted-foreground hover:text-primary transition-colors">Features</a>
               </li>
               <li>
-                <Link href="/ai-knowledge-base" className="text-muted-foreground hover:text-primary transition-colors">
-                  AI Knowledge Base
-                </Link>
+                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">Pricing</a>
+              </li>
+              <li>
+                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">Blog</a>
               </li>
             </ul>
           </div>
 
-          {/* Farmers */}
-          <div className="space-y-4">
-            <h4 className="font-medium text-sm text-foreground mb-4">For Farmers</h4>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <Link href="/auth" className="text-muted-foreground hover:text-primary transition-colors">
-                  Sign Up
-                </Link>
-              </li>
-              <li>
-                <Link href="/auth" className="text-muted-foreground hover:text-primary transition-colors">
-                  Farm Management
-                </Link>
-              </li>
-              <li>
-                <Link href="/auth" className="text-muted-foreground hover:text-primary transition-colors">
-                  Sell Your Products
-                </Link>
-              </li>
-              <li>
-                <Link href="/auth" className="text-muted-foreground hover:text-primary transition-colors">
-                  Weather Forecasts
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div className="space-y-4">
-            <h4 className="font-medium text-sm text-foreground mb-4">Contact</h4>
-            <ul className="space-y-3 text-sm">
-              <li className="text-muted-foreground">
-                22nd Floor, Findeco House
-              </li>
-              <li className="text-muted-foreground">
-                Cairo Road, Lusaka, Zambia
-              </li>
-              <li className="text-muted-foreground">
-                info@greenupp.com
-              </li>
-              <li className="text-muted-foreground">
-                <a 
-                  href="https://www.metatronltd.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="hover:text-primary transition-colors"
-                >
-                  Powered by Metatron Technologies Ltd
-                </a>
-              </li>
-            </ul>
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-4">Contact</h3>
+            <address className="not-italic text-muted-foreground space-y-2">
+              <p className="flex items-start">
+                <i className="fas fa-map-marker-alt mt-1 mr-2 text-primary"></i>
+                <span>Metatron Technologies<br/>Murex Shopping Complex,<br/>Alick Nkhata Road,<br/>Lusaka, Zambia</span>
+              </p>
+              <p className="flex items-start">
+                <i className="fas fa-envelope mt-1 mr-2 text-primary"></i>
+                <span>
+                  <a href="mailto:cephas@metatronltd.com" className="hover:text-primary transition-colors">cephas@metatronltd.com</a><br/>
+                  <a href="mailto:cephaschapa@gmail.com" className="hover:text-primary transition-colors">cephaschapa@gmail.com</a>
+                </span>
+              </p>
+              <p className="flex items-start">
+                <i className="fas fa-phone-alt mt-1 mr-2 text-primary"></i>
+                <a href="tel:+260975808750" className="hover:text-primary transition-colors">+260 975 808 750</a>
+              </p>
+            </address>
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-center sm:text-left text-sm text-muted-foreground">
-            © {currentYear} Greenupp. All rights reserved.
+        <div className="border-t border-border mt-10 pt-8 flex flex-col md:flex-row justify-between items-center">
+          <p className="text-sm text-muted-foreground mb-4 md:mb-0">
+            &copy; {new Date().getFullYear()} Metatron Technologies. All rights reserved.
           </p>
-          <div className="flex gap-6">
-            <a 
-              href="#" 
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              Privacy Policy
-            </a>
-            <a 
-              href="#" 
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              Terms of Service
-            </a>
+          <div className="flex space-x-6">
+            <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Privacy Policy</a>
+            <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Terms of Service</a>
+            <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Cookie Policy</a>
           </div>
         </div>
       </div>
