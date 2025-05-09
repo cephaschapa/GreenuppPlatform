@@ -2,24 +2,31 @@ import { motion } from "framer-motion";
 
 const features = [
   {
-    icon: "fas fa-users",
-    title: "Green Socials",
-    description: "Connect with other farmers and agricultural experts. Share posts, comment, react and follow other users in our agricultural community.",
-    metric: "Real-time updates",
+    icon: "fas fa-cloud-sun-rain",
+    title: "Weather Intelligence",
+    description: "Access real-time weather updates, forecasts, and climate analysis tailored specifically to your farm's location.",
+    metric: "Precision forecasting",
     version: "v1.0"
   },
   {
-    icon: "fas fa-comment-dots",
-    title: "Stream Chat",
-    description: "Communicate directly with other farmers and experts through our reliable chat system. Get immediate help and share knowledge.",
-    metric: "Instant messaging",
+    icon: "fas fa-seedling",
+    title: "Smart Farming",
+    description: "Receive AI-powered crop recommendations, yield predictions, and growth monitoring to optimize your agricultural operations.",
+    metric: "Yield improvement",
+    version: "v1.0"
+  },
+  {
+    icon: "fas fa-viruses",
+    title: "Plant Diagnosis",
+    description: "Identify plant diseases and get treatment recommendations using advanced image recognition and artificial intelligence.",
+    metric: "Early detection",
     version: "v1.0"
   },
   {
     icon: "fas fa-link",
     title: "CropTrace Blockchain",
-    description: "Secure and transparent supply chain management from farm to table, ensuring product authenticity and quality.",
-    metric: "Immutable records",
+    description: "Track your agricultural products from seed to store with immutable blockchain records that verify authenticity and origin.",
+    metric: "Transparent traceability",
     version: "v1.0"
   }
 ];
@@ -60,7 +67,7 @@ const FeatureHighlights = () => {
         </motion.div>
         
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -110,29 +117,29 @@ const FeatureHighlights = () => {
               <div className="relative z-10">
                 <div className="flex items-center mb-3">
                   <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
-                    <i className="fas fa-bell text-primary"></i>
+                    <i className="fas fa-users text-primary"></i>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold font-space group-hover:text-primary transition-colors">Smart Notifications</h3>
+                  <h3 className="text-lg sm:text-xl font-bold font-space group-hover:text-primary transition-colors">Green Socials Network</h3>
                 </div>
-                <p className="text-sm sm:text-base text-muted-foreground mb-5">Stay updated with real-time notifications about social interactions, marketplace updates, and chat messages.</p>
+                <p className="text-sm sm:text-base text-muted-foreground mb-5">Connect with farmers worldwide through our specialized agricultural social network with posts, comments, and sharing.</p>
                 <div className="space-y-2 mb-4">
                   <div className="bg-background/80 dark:bg-muted rounded-lg p-2 flex items-start">
-                    <i className="fas fa-comment-dots text-blue-500 mt-1 mr-2"></i>
+                    <i className="fas fa-newspaper text-blue-500 mt-1 mr-2"></i>
                     <div>
-                      <p className="text-xs font-medium">New Message</p>
-                      <p className="text-xs text-muted-foreground">John Smith: What crops are you growing this season?</p>
+                      <p className="text-xs font-medium">News Feed</p>
+                      <p className="text-xs text-muted-foreground">Follow updates from your agricultural community</p>
                     </div>
                   </div>
                   
                   <div className="bg-background/80 dark:bg-muted rounded-lg p-2 flex items-start">
-                    <i className="fas fa-heart text-red-500 mt-1 mr-2"></i>
+                    <i className="fas fa-user-friends text-green-500 mt-1 mr-2"></i>
                     <div>
-                      <p className="text-xs font-medium">Social Update</p>
-                      <p className="text-xs text-muted-foreground">Sarah liked your post about sustainable farming</p>
+                      <p className="text-xs font-medium">Community Building</p>
+                      <p className="text-xs text-muted-foreground">Connect with other farmers and agricultural experts</p>
                     </div>
                   </div>
                 </div>
-                <div className="font-mono text-xs text-primary pt-2 border-t border-border">Notification system: Real-time with smart categorization</div>
+                <div className="font-mono text-xs text-primary pt-2 border-t border-border">Social platform: Knowledge sharing and community support</div>
               </div>
               <div className="absolute bottom-0 right-0 w-20 h-20 bg-primary/5 rounded-full blur-xl opacity-70 group-hover:opacity-100 transition-opacity"></div>
             </div>
@@ -163,6 +170,72 @@ const FeatureHighlights = () => {
                 <div className="font-mono text-xs text-primary pt-2 border-t border-border">Built-in cart functionality with seamless checkout process</div>
               </div>
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-xl opacity-70 group-hover:opacity-100 transition-opacity"></div>
+            </div>
+          </motion.div>
+
+          <motion.div 
+            className="grid grid-cols-1 gap-6 mt-8"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <div className="bg-card p-5 sm:p-6 rounded-xl border border-primary/20 relative overflow-hidden group hover:shadow-lg hover:shadow-primary/10 transition-all">
+              <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <div className="flex items-center mb-3">
+                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
+                      <i className="fas fa-comment-dots text-primary"></i>
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold font-space group-hover:text-primary transition-colors">Stream Chat Platform</h3>
+                  </div>
+                  <p className="text-sm sm:text-base text-muted-foreground mb-5">Communicate seamlessly with fellow farmers and experts through our reliable direct messaging system.</p>
+                  
+                  <div className="space-y-2 mb-4">
+                    <div className="bg-background/80 dark:bg-muted rounded-lg p-2 flex items-start">
+                      <i className="fas fa-comment-alt text-violet-500 mt-1 mr-2"></i>
+                      <div>
+                        <p className="text-xs font-medium">Private Messaging</p>
+                        <p className="text-xs text-muted-foreground">Secure one-on-one conversations with other users</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-background/80 dark:bg-muted rounded-lg p-2 flex items-start">
+                      <i className="fas fa-bell text-amber-500 mt-1 mr-2"></i>
+                      <div>
+                        <p className="text-xs font-medium">Smart Notifications</p>
+                        <p className="text-xs text-muted-foreground">Get alerted about new messages and important updates</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="font-mono text-xs text-primary pt-2 border-t border-border">Messaging system: Reliable with offline support</div>
+                </div>
+                
+                <div className="relative bg-background/50 dark:bg-muted/30 rounded-lg p-3 border border-border h-full flex flex-col">
+                  <div className="font-medium text-xs mb-3 pb-2 border-b border-border">Chat Preview</div>
+                  <div className="space-y-3 flex-grow overflow-hidden">
+                    <div className="flex items-start">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 flex-shrink-0 mr-2"></div>
+                      <div className="bg-blue-100 dark:bg-blue-900/30 rounded-lg px-3 py-2 text-xs max-w-[80%]">
+                        <p>Hi there! How's your corn crop doing with the recent rainfall?</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start justify-end">
+                      <div className="bg-primary/10 rounded-lg px-3 py-2 text-xs max-w-[80%]">
+                        <p>It's doing well! The rainfall has actually helped with growth.</p>
+                      </div>
+                      <div className="w-6 h-6 rounded-full bg-primary/20 flex-shrink-0 ml-2"></div>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-border flex">
+                    <div className="bg-background dark:bg-muted rounded flex-grow h-6 mr-2"></div>
+                    <div className="w-6 h-6 rounded-full bg-primary/70 flex items-center justify-center">
+                      <i className="fas fa-paper-plane text-background text-[10px]"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-xl opacity-70 group-hover:opacity-100 transition-opacity"></div>
             </div>
           </motion.div>
         </div>
