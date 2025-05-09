@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -8,6 +8,13 @@ interface NavbarProps {
 }
 
 const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
+  // Check if we're on app subdomain
+  const [isAppSubdomain, setIsAppSubdomain] = useState(false);
+  
+  useEffect(() => {
+    // Set whether we're on app.domain.com
+    setIsAppSubdomain(window.location.hostname.startsWith('app.'));
+  }, []);
   return (
     <nav className="fixed w-full bg-background/95 backdrop-blur-md z-50 border-b border-primary/20 shadow-md shadow-black/10 dark:shadow-black/20">
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-2 md:py-3 flex justify-between items-center">
@@ -31,71 +38,108 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
         </div>
 
         <div className="hidden md:flex space-x-6 lg:space-x-8 items-center">
-          <Link
-            href="/#features"
-            className="hover:text-primary transition duration-300 relative group"
-          >
-            Features
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-          </Link>
-          
-          <Link
-            href="/#advanced-features"
-            className="hover:text-primary transition duration-300 relative group"
-          >
-            Platform
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-          </Link>
-          <Link
-            href="/about"
-            className="hover:text-primary transition duration-300 relative group"
-          >
-            About Us
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-          </Link>
-          <Link
-            href="/marketplace"
-            className="hover:text-primary transition duration-300 relative group"
-          >
-            Marketplace
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-          </Link>
-          <Link
-            href="/#benefits"
-            className="hover:text-primary transition duration-300 relative group"
-          >
-            Benefits
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-          </Link>
-          <Link
-            href="/#community"
-            className="hover:text-primary transition duration-300 relative group"
-          >
-            Community
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-          </Link>
-          <Link
-            href="/trace"
-            className="hover:text-primary transition duration-300 relative group"
-          >
-            Verify Products
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-          </Link>
-          <Link
-            href="/ai-knowledge-base"
-            className="hover:text-primary transition duration-300 relative group"
-          >
-           QA
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-          </Link>
-          <ThemeToggle />
-          <Link
-            href="/auth"
-            className="group bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md transition-all duration-300 font-medium inline-flex items-center"
-          >
-            <span>Get Started</span>
-            <i className="fas fa-arrow-right ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all"></i>
-          </Link>
+          {isAppSubdomain ? (
+            // App subdomain navigation - dashboard focused
+            <>
+              <Link
+                href="/fields"
+                className="hover:text-primary transition duration-300 relative group"
+              >
+                Fields
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+              </Link>
+              <Link
+                href="/tasks"
+                className="hover:text-primary transition duration-300 relative group"
+              >
+                Tasks
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+              </Link>
+              <Link
+                href="/marketplace"
+                className="hover:text-primary transition duration-300 relative group"
+              >
+                Marketplace
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+              </Link>
+              <Link
+                href="/social"
+                className="hover:text-primary transition duration-300 relative group"
+              >
+                Green Socials
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+              </Link>
+              <Link
+                href="/notifications"
+                className="hover:text-primary transition duration-300 relative group"
+              >
+                Notifications
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+              </Link>
+              <ThemeToggle />
+              <Link
+                href="/profile"
+                className="group bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md transition-all duration-300 font-medium inline-flex items-center"
+              >
+                <span>My Profile</span>
+                <i className="fas fa-user ml-2"></i>
+              </Link>
+            </>
+          ) : (
+            // Main domain navigation - marketing focused
+            <>
+              <Link
+                href="/#features"
+                className="hover:text-primary transition duration-300 relative group"
+              >
+                Features
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+              </Link>
+              <Link
+                href="/#advanced-features"
+                className="hover:text-primary transition duration-300 relative group"
+              >
+                Platform
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+              </Link>
+              <Link
+                href="/about"
+                className="hover:text-primary transition duration-300 relative group"
+              >
+                About Us
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+              </Link>
+              <Link
+                href="/marketplace"
+                className="hover:text-primary transition duration-300 relative group"
+              >
+                Marketplace
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+              </Link>
+              <Link
+                href="/trace"
+                className="hover:text-primary transition duration-300 relative group"
+              >
+                Verify Products
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+              </Link>
+              <Link
+                href="/ai-knowledge-base"
+                className="hover:text-primary transition duration-300 relative group"
+              >
+               FAQ
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+              </Link>
+              <ThemeToggle />
+              <Link
+                href="/auth"
+                className="group bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md transition-all duration-300 font-medium inline-flex items-center"
+              >
+                <span>Get Started</span>
+                <i className="fas fa-arrow-right ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all"></i>
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="md:hidden flex items-center gap-3">

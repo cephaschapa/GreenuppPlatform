@@ -51,9 +51,57 @@ import ListCropOnMarketplace from "@/pages/farmer/ListCropOnMarketplace";
 import NotificationsPage from "@/pages/farmer/NotificationsPage";
 import NotificationSettingsPage from "@/pages/farmer/NotificationSettingsPage";
 
-function Router() {
+function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
+  // If we're on app.domain.com, we should display app-specific routes without /dashboard prefix
+  if (isAppSubdomain) {
+    return (
+      <Switch>
+        {/* In app subdomain, the root shows the dashboard */}
+        <ProtectedRoute path="/" component={DashboardPage} />
+        <Route path="/auth" component={AuthPage} />
+        
+        {/* Dashboard main pages - without /dashboard prefix on app subdomain */}
+        <ProtectedRoute path="/fields" component={FieldsPage} />
+        <ProtectedRoute path="/tasks" component={TasksPage} />
+        <ProtectedRoute path="/weather" component={WeatherPage} />
+        <ProtectedRoute path="/predictions" component={PredictionsPage} />
+        <ProtectedRoute path="/plant-diagnosis" component={PlantDiagnosisPage} />
+        <ProtectedRoute path="/profile" component={ProfilePage} />
+        <ProtectedRoute path="/settings" component={SettingsPage} />
+        <ProtectedRoute path="/profile-creation" component={ProfileCreationPage} />
+        
+        {/* Marketplace routes - without /dashboard prefix on app subdomain */}
+        <ProtectedRoute path="/marketplace" component={MarketplacePage} />
+        <ProtectedRoute path="/marketplace/new" component={CreateListingPage} />
+        <ProtectedRoute path="/marketplace/cart" component={CartPage} />
+        <ProtectedRoute path="/marketplace/checkout" component={CheckoutPage} />
+        <ProtectedRoute path="/marketplace/payment/confirmation" component={CheckoutPage} />
+        <ProtectedRoute path="/marketplace/:id" component={MarketplaceDetailPage} />
+        
+        {/* CropTrace routes - without /dashboard prefix on app subdomain */}
+        <ProtectedRoute path="/crops/:cropId/trace" component={CropTraceabilityPage} />
+        <ProtectedRoute path="/marketplace/list-crop" component={ListCropOnMarketplace} />
+        
+        {/* Notification routes - without /dashboard prefix on app subdomain */}
+        <ProtectedRoute path="/notifications" component={NotificationsPage} />
+        <ProtectedRoute path="/notification-settings" component={NotificationSettingsPage} />
+        
+        {/* Green Socials routes - without /dashboard prefix on app subdomain */}
+        <ProtectedRoute path="/social" component={GreenSocialsPage} />
+        
+        {/* Chat routes - without /dashboard prefix on app subdomain */}
+        <ProtectedRoute path="/chat" component={ChatPage} />
+        <ProtectedRoute path="/stream-chat" component={StreamChatPage} />
+        
+        <Route component={NotFound} />
+      </Switch>
+    );
+  }
+  
+  // Otherwise, we're on the main domain - show the public site with dashboard routes
   return (
     <Switch>
+      {/* Public/landing pages on main domain */}
       <Route path="/" component={Home} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/about" component={AboutPage} />
@@ -67,7 +115,7 @@ function Router() {
       <Route path="/public-email-test" component={PublicEmailTestPage} />
       <ProtectedRoute path="/test-email-notifications" component={EmailNotificationTestPage} />
       
-      {/* Dashboard routes */}
+      {/* Dashboard routes on main domain - with /dashboard prefix */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
       <ProtectedRoute path="/dashboard/fields" component={FieldsPage} />
       <ProtectedRoute path="/dashboard/tasks" component={TasksPage} />
@@ -78,7 +126,7 @@ function Router() {
       <ProtectedRoute path="/dashboard/settings" component={SettingsPage} />
       <ProtectedRoute path="/profile-creation" component={ProfileCreationPage} />
       
-      {/* Marketplace routes */}
+      {/* Marketplace routes on main domain - with /dashboard prefix */}
       <ProtectedRoute path="/dashboard/marketplace" component={MarketplacePage} />
       <ProtectedRoute path="/dashboard/marketplace/new" component={CreateListingPage} />
       <ProtectedRoute path="/dashboard/marketplace/cart" component={CartPage} />
@@ -86,18 +134,18 @@ function Router() {
       <ProtectedRoute path="/dashboard/marketplace/payment/confirmation" component={CheckoutPage} />
       <ProtectedRoute path="/dashboard/marketplace/:id" component={MarketplaceDetailPage} />
       
-      {/* CropTrace routes */}
+      {/* CropTrace routes on main domain - with /dashboard prefix */}
       <ProtectedRoute path="/dashboard/crops/:cropId/trace" component={CropTraceabilityPage} />
       <ProtectedRoute path="/dashboard/marketplace/list-crop" component={ListCropOnMarketplace} />
       
-      {/* Notification routes */}
+      {/* Notification routes on main domain - with /dashboard prefix */}
       <ProtectedRoute path="/dashboard/notifications" component={NotificationsPage} />
       <ProtectedRoute path="/dashboard/notification-settings" component={NotificationSettingsPage} />
       
-      {/* Green Socials routes */}
+      {/* Green Socials routes on main domain - with /dashboard prefix */}
       <ProtectedRoute path="/dashboard/social" component={GreenSocialsPage} />
       
-      {/* Chat routes */}
+      {/* Chat routes on main domain - with /dashboard prefix */}
       <ProtectedRoute path="/dashboard/chat" component={ChatPage} />
       <ProtectedRoute path="/dashboard/stream-chat" component={StreamChatPage} />
       
@@ -111,6 +159,9 @@ function Router() {
 }
 
 function App() {
+  // Check if we're on the app subdomain
+  const isAppSubdomain = window.location.hostname.startsWith('app.');
+  
   return (
     <ThemeProvider defaultTheme="system">
       <QueryClientProvider client={queryClient}>
@@ -124,7 +175,7 @@ function App() {
                   <ChatProvider>
                     <CartProvider>
                       <HelmetProvider>
-                        <Router />
+                        <Router isAppSubdomain={isAppSubdomain} />
                         <Toaster />
                         {/* PWA Components */}
                         <InstallPWA />

@@ -5,51 +5,57 @@ const benefits = [
   {
     icon: "fas fa-chart-line",
     title: "Increased Yield",
-    description: "Optimize growing conditions and quickly address issues to maximize production.",
+    description:
+      "Optimize growing conditions and quickly address issues to maximize production.",
     metric: "+28%",
     metricLabel: "Average improvement:",
-    percentage: 28
+    percentage: 28,
   },
   {
     icon: "fas fa-hand-holding-usd",
     title: "Cost Reduction",
-    description: "Reduce waste and optimize resource usage with data-driven decision making.",
+    description:
+      "Reduce waste and optimize resource usage with data-driven decision making.",
     metric: "-32%",
     metricLabel: "Average savings:",
-    percentage: 32
+    percentage: 32,
   },
   {
     icon: "fas fa-leaf",
     title: "Sustainability",
-    description: "Implement environmentally friendly practices that also improve your bottom line.",
+    description:
+      "Implement environmentally friendly practices that also improve your bottom line.",
     metric: "+45%",
     metricLabel: "Resource efficiency:",
-    percentage: 45
+    percentage: 45,
   },
   {
     icon: "fas fa-clock",
     title: "Time Savings",
-    description: "Automate monitoring and routine tasks to focus on strategic farm management.",
+    description:
+      "Automate monitoring and routine tasks to focus on strategic farm management.",
     metric: "12+ hours",
     metricLabel: "Hours saved weekly:",
-    percentage: 60
+    percentage: 60,
   },
   {
     icon: "fas fa-tag",
     title: "Premium Pricing",
-    description: "Command higher prices with transparent, traceable, and sustainable products.",
+    description:
+      "Command higher prices with transparent, traceable, and sustainable products.",
     metric: "+18%",
     metricLabel: "Price premium:",
-    percentage: 18
+    percentage: 18,
   },
   {
     icon: "fas fa-shield-alt",
     title: "Risk Mitigation",
-    description: "Anticipate and address potential issues before they impact your production.",
+    description:
+      "Anticipate and address potential issues before they impact your production.",
     metric: "-65%",
     metricLabel: "Risk reduction:",
-    percentage: 65
-  }
+    percentage: 65,
+  },
 ];
 
 const BenefitsSection = () => {
@@ -58,9 +64,9 @@ const BenefitsSection = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   const itemVariants = {
@@ -68,29 +74,37 @@ const BenefitsSection = () => {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.5 }
-    }
+      transition: { duration: 0.5 },
+    },
   };
 
   return (
     <section id="benefits" className="py-20 bg-muted relative overflow-hidden">
       <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
       <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
-      
+
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl relative z-10">
-        <motion.div 
+        <motion.div
           className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h5 className="text-primary uppercase tracking-widest font-semibold mb-2 font-mono">Benefits</h5>
-          <h2 className="text-3xl md:text-4xl font-bold font-space mb-4">Transform Your <span className="text-primary">Agricultural</span> Business</h2>
-          <p className="max-w-2xl mx-auto text-muted-foreground">Discover how Greenupp delivers measurable improvements to your farming operations.</p>
+          <h5 className="text-primary uppercase tracking-widest font-semibold mb-2 font-mono">
+            Benefits
+          </h5>
+          <h2 className="text-3xl md:text-4xl font-bold font-space mb-4">
+            Transform Your <span className="text-primary">Agricultural</span>{" "}
+            Business
+          </h2>
+          <p className="max-w-2xl mx-auto text-muted-foreground">
+            Discover how Greenupp delivers measurable improvements to your
+            farming operations.
+          </p>
         </motion.div>
-        
-        <motion.div 
+
+        <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
           variants={containerVariants}
           initial="hidden"
@@ -98,7 +112,7 @@ const BenefitsSection = () => {
           viewport={{ once: true, amount: 0.1 }}
         >
           {benefits.map((benefit, index) => (
-            <motion.div 
+            <motion.div
               key={index}
               className="bg-card rounded-xl p-6 border border-primary/20 hover:border-primary/50 transition duration-300"
               variants={itemVariants}
@@ -106,15 +120,19 @@ const BenefitsSection = () => {
               <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-5">
                 <i className={`${benefit.icon} text-primary text-2xl`}></i>
               </div>
-              <h3 className="text-xl font-bold font-space mb-3">{benefit.title}</h3>
+              <h3 className="text-xl font-bold font-space mb-3">
+                {benefit.title}
+              </h3>
               <p className="text-muted-foreground">{benefit.description}</p>
               <div className="mt-4">
                 <div className="flex justify-between text-sm mb-1">
                   <span>{benefit.metricLabel}</span>
-                  <span className="text-primary font-semibold">{benefit.metric}</span>
+                  <span className="text-primary font-semibold">
+                    {benefit.metric}
+                  </span>
                 </div>
                 <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                  <motion.div 
+                  <motion.div
                     className="h-full bg-primary rounded-full"
                     initial={{ width: 0 }}
                     whileInView={{ width: `${benefit.percentage}%` }}
@@ -126,15 +144,15 @@ const BenefitsSection = () => {
             </motion.div>
           ))}
         </motion.div>
-        
-        <motion.div 
+
+        <motion.div
           className="mt-16 bg-card rounded-xl p-8 border border-primary/20"
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div>
               <h3 className="text-2xl font-bold font-space mb-4">Success Stories</h3>
               <p className="text-muted-foreground mb-6">See how farmers around the world are transforming their operations with Greenupp.</p>
@@ -171,7 +189,7 @@ const BenefitsSection = () => {
                 +189% ROI
               </div>
             </div>
-          </div>
+          </div> */}
         </motion.div>
       </div>
     </section>

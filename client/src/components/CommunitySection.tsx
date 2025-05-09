@@ -127,7 +127,7 @@ const CommunitySection = () => {
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 md:p-12 relative z-10">
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 md:p-12 relative z-10">
             <div>
               <h3 className="text-2xl font-bold font-space mb-4">Global Community</h3>
               <p className="text-muted-foreground mb-6">Join 25,000+ innovative farmers from over 40 countries who are reshaping the future of agriculture together.</p>
@@ -161,7 +161,7 @@ const CommunitySection = () => {
                 +1K
               </div>
             </div>
-          </div>
+          </div> */}
         </motion.div>
       </div>
     </section>

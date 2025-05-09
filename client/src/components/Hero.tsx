@@ -59,7 +59,7 @@ const Hero = () => {
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-background bg-muted"></div>
               </div>
               <div>
-                <p className="text-xs md:text-sm text-muted-foreground">Trusted by <span className="text-primary font-semibold">2,500+</span> farmers worldwide</p>
+                <p className="text-xs md:text-sm text-muted-foreground">Trusted by <span className="text-primary font-semibold"></span> farmers countrywide</p>
               </div>
             </motion.div>
           </div>

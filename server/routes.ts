@@ -50,6 +50,22 @@ import { eq } from "drizzle-orm";
 import multer from "multer";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Middleware to handle subdomain routing
+  app.use((req, res, next) => {
+    // Get the host from the request
+    const host = req.hostname;
+    
+    // Check if we're on a subdomain (app.yourdomain.com)
+    if (host.startsWith('app.')) {
+      // Add a property to the request object to identify app/dashboard requests
+      (req as any).isDashboard = true;
+    } else {
+      // This is the main domain (yourdomain.com) - landing page
+      (req as any).isDashboard = false;
+    }
+    
+    next();
+  });
   console.log("Registering all API routes...");
   
   // Set up authentication and get the isAuthenticated middleware
