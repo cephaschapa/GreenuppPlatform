@@ -122,58 +122,47 @@ const SolutionShowcase = () => {
           transition={{ duration: 0.8 }}
         >
           <div>
-            <h3 className="text-2xl font-bold font-space mb-4">Blockchain Supply Chain</h3>
-            <p className="text-muted-foreground mb-6">Track your products from farm to consumer with our tamper-proof blockchain technology, building trust and commanding premium prices.</p>
+            <h3 className="text-2xl font-bold font-space mb-4">Agricultural Marketplace</h3>
+            <p className="text-muted-foreground mb-6">Buy and sell agricultural products, equipment, and supplies through our specialized marketplace designed for the farming community.</p>
             <ul className="space-y-3 mb-8">
               <li className="flex items-start">
                 <i className="fas fa-check-circle text-primary mt-1 mr-3"></i>
-                <span>QR code tracking for consumer transparency</span>
+                <span>Location-based listings with distance estimation</span>
               </li>
               <li className="flex items-start">
                 <i className="fas fa-check-circle text-primary mt-1 mr-3"></i>
-                <span>Certification and compliance documentation</span>
+                <span>Direct messaging with sellers and buyers</span>
               </li>
               <li className="flex items-start">
                 <i className="fas fa-check-circle text-primary mt-1 mr-3"></i>
-                <span>Smart contracts for automated payments</span>
+                <span>Integrated shopping cart and checkout</span>
               </li>
             </ul>
             <a href="#" className="text-primary flex items-center group">
-              <span className="mr-2 group-hover:mr-3 transition-all">Learn about blockchain traceability</span>
+              <span className="mr-2 group-hover:mr-3 transition-all">Browse the marketplace</span>
               <i className="fas fa-arrow-right"></i>
             </a>
           </div>
           <div className="relative">
             <div className="rounded-xl overflow-hidden border border-primary/20 shadow-lg shadow-primary/10">
               <img 
-                src="https://images.unsplash.com/photo-1561414927-6d86591d0c4f?ixlib=rb-4.0.3&auto=format&fit=crop&w=928&q=80" 
-                alt="Digital representation of blockchain in agriculture" 
+                src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?ixlib=rb-4.0.3&auto=format&fit=crop&w=928&q=80" 
+                alt="Agricultural marketplace with various products" 
                 className="w-full"
               />
             </div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-secondary/80 backdrop-blur-md border border-primary/20 rounded-xl p-4 max-w-xs">
-              <div className="flex items-center mb-2">
-                <i className="fas fa-shield-alt text-primary mr-2"></i>
-                <span className="font-bold font-space">Verified Product Journey</span>
+            <div className="absolute top-4 right-4 bg-secondary/80 backdrop-blur-sm border border-primary/20 rounded-lg p-3 font-mono text-xs">
+              <div className="flex items-center">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                <span>VERIFIED SELLER</span>
               </div>
-              <div className="space-y-2 font-mono text-xs">
-                <div className="flex items-center">
-                  <i className="fas fa-check-circle text-green-500 mr-2"></i>
-                  <span>Harvested: June 12, 2023</span>
-                </div>
-                <div className="flex items-center">
-                  <i className="fas fa-check-circle text-green-500 mr-2"></i>
-                  <span>Processed: June 13, 2023</span>
-                </div>
-                <div className="flex items-center">
-                  <i className="fas fa-check-circle text-green-500 mr-2"></i>
-                  <span>Shipped: June 15, 2023</span>
-                </div>
-                <div className="flex items-center">
-                  <i className="fas fa-truck text-[#06E775] mr-2"></i>
-                  <span>In Transit: Est. Arrival June 18</span>
-                </div>
-              </div>
+              <div className="mt-1">Rating: ★★★★★</div>
+              <div className="mt-1 text-[#06E775]">12.3km away</div>
+            </div>
+            <div className="absolute bottom-4 left-4 bg-secondary/80 backdrop-blur-sm border border-primary/20 rounded-lg p-3 font-mono text-xs">
+              <div className="font-bold mb-1">Organic Seeds</div>
+              <div>$24.99 per kg</div>
+              <div className="text-[#06E775] mt-1">In stock: 48 units</div>
             </div>
           </div>
         </motion.div>

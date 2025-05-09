@@ -14,14 +14,14 @@ const Hero = () => {
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-center">
           <div className="order-2 md:order-1 text-center md:text-left">
-            <h5 className="text-primary uppercase tracking-widest font-semibold mb-2 font-mono text-sm md:text-base">AI-Powered Farming</h5>
+            <h5 className="text-primary uppercase tracking-widest font-semibold mb-2 font-mono text-sm md:text-base">Connected Agricultural Platform</h5>
             <motion.h1 
               className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-space mb-4 md:mb-6 leading-tight"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              The Future of <span className="bg-gradient-to-r from-[#00CC66] to-[#06E775] bg-clip-text text-transparent">Agriculture</span> Is Here
+              Socialize, Chat, <span className="bg-gradient-to-r from-[#00CC66] to-[#06E775] bg-clip-text text-transparent">Connect</span> & Trade
             </motion.h1>
             <motion.p 
               className="text-base md:text-lg mb-6 md:mb-8 text-muted-foreground leading-relaxed max-w-xl mx-auto md:mx-0"
@@ -29,7 +29,7 @@ const Hero = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              Greenupp transforms traditional farming through AI, IoT, and blockchain technologies, enhancing productivity, sustainability, and profitability for farmers and livestock owners.
+              Greenupp brings farmers together with robust social networking, reliable chat, blockchain traceability, and a comprehensive agricultural marketplace - all on one powerful platform.
             </motion.p>
             <motion.div 
               className="flex flex-col sm:flex-row justify-center md:justify-start gap-4 sm:gap-4"

@@ -1,36 +1,36 @@
 import { motion } from "framer-motion";
 
-// General features (Phase 1)
+// Currently implemented features
 const generalFeatures = [
   {
-    icon: "fas fa-viruses",
-    title: "Crop Disease Diagnosis",
-    description: "AI-powered tools that use image recognition and sensor data to identify and diagnose crop diseases early, providing treatment recommendations."
+    icon: "fas fa-users",
+    title: "Green Socials Platform",
+    description: "A fully functional social network where farmers share experiences, follow experts, and build an agricultural community with posts, comments, and reactions."
+  },
+  {
+    icon: "fas fa-comment-dots",
+    title: "Stream Chat",
+    description: "Reliable real-time messaging system that enables direct communication between farmers, experts, and support staff with message history and notifications."
   },
   {
     icon: "fas fa-link",
-    title: "Crop Tracing",
-    description: "Blockchain-based system to trace the journey of crops from farm to table, ensuring transparency and trust in the supply chain."
+    title: "CropTrace",
+    description: "Blockchain-based system to trace the journey of crops from farm to table, ensuring transparency and trust in the supply chain with immutable records."
   },
   {
     icon: "fas fa-store",
-    title: "Marketplace",
-    description: "An online marketplace where farmers can buy and sell agricultural products, equipment, and supplies, connecting them directly to buyers."
+    title: "Agricultural Marketplace",
+    description: "A comprehensive marketplace where farmers can buy and sell agricultural products with location-based listings, secure checkout, and integrated messaging."
   },
   {
-    icon: "fas fa-cloud-sun-rain",
-    title: "Weather Service",
-    description: "Real-time weather forecasting tailored to specific farm locations, helping farmers plan activities and mitigate risks related to weather conditions."
+    icon: "fas fa-bell",
+    title: "Smart Notifications",
+    description: "Intelligent notification system that keeps users informed about social interactions, marketplace updates, chat messages and platform activities."
   },
   {
-    icon: "fas fa-users",
-    title: "Social Feed & Interaction",
-    description: "A social platform for farmers to share experiences, ask for advice, and collaborate on best practices, fostering a community of knowledge sharing."
-  },
-  {
-    icon: "fas fa-robot",
-    title: "AI Assistance",
-    description: "AI-driven insights and recommendations for improving crop yields, pest management, and resource optimization based on data analysis."
+    icon: "fas fa-shopping-cart",
+    title: "Cart Management",
+    description: "Seamless shopping experience with a fully functional cart system allowing users to add items, adjust quantities, and proceed to checkout."
   }
 ];
 
@@ -99,9 +99,9 @@ const AdvancedFeatures = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <div className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono tracking-wider mb-3">GREENUPP PLATFORM</div>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold font-space mb-4">General Purpose <span className="text-primary">Client</span></h2>
-          <p className="max-w-2xl mx-auto text-muted-foreground text-sm md:text-base">A versatile platform where farmers can manage all aspects of their operations, from monitoring crop health to accessing market prices.</p>
+          <div className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-mono tracking-wider mb-3">AVAILABLE FEATURES</div>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold font-space mb-4">Current <span className="text-primary">Platform</span> Capabilities</h2>
+          <p className="max-w-2xl mx-auto text-muted-foreground text-sm md:text-base">Explore the robust features already implemented in our agricultural platform, designed to enhance productivity and connectivity.</p>
         </motion.div>
         
         <motion.div 
@@ -141,23 +141,23 @@ const AdvancedFeatures = () => {
             <div className="relative z-10">
               <div className="flex items-center mb-3">
                 <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
-                  <i className="fas fa-comment-dots text-primary"></i>
+                  <i className="fas fa-images text-primary"></i>
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold font-space group-hover:text-primary transition-colors">Chat Service</h3>
+                <h3 className="text-lg sm:text-xl font-bold font-space group-hover:text-primary transition-colors">Social Media Stories</h3>
               </div>
-              <p className="text-sm sm:text-base text-muted-foreground mb-5">Integrated chat service for instant communication with experts, support teams, and other farmers, facilitating quick problem resolution and information exchange.</p>
+              <p className="text-sm sm:text-base text-muted-foreground mb-5">Share temporary content with the agricultural community through our Stories feature. Post images and updates that automatically disappear after 24 hours.</p>
               <div className="flex flex-wrap gap-2">
                 <div className="bg-muted rounded-lg px-3 py-1 text-xs sm:text-sm flex items-center">
                   <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                  Expert Support
+                  24-hour Stories
                 </div>
                 <div className="bg-muted rounded-lg px-3 py-1 text-xs sm:text-sm flex items-center">
                   <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                  Community Chat
+                  Image Sharing
                 </div>
                 <div className="bg-muted rounded-lg px-3 py-1 text-xs sm:text-sm flex items-center">
                   <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
-                  Voice Calls
+                  Story Viewer
                 </div>
               </div>
             </div>
@@ -168,26 +168,26 @@ const AdvancedFeatures = () => {
             <div className="relative z-10">
               <div className="flex items-center mb-3">
                 <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
-                  <i className="fas fa-bell text-primary"></i>
+                  <i className="fas fa-newspaper text-primary"></i>
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold font-space group-hover:text-primary transition-colors">Smart Notifications</h3>
+                <h3 className="text-lg sm:text-xl font-bold font-space group-hover:text-primary transition-colors">News Feed</h3>
               </div>
-              <p className="text-sm sm:text-base text-muted-foreground mb-5">Automated alerts and notifications for important events such as weather changes, market price shifts, pest outbreaks, and more, keeping farmers informed in real-time.</p>
+              <p className="text-sm sm:text-base text-muted-foreground mb-5">Stay updated with the latest agricultural news, trends, and innovations through our personalized news feed tailored to your farming interests.</p>
               
               <div className="space-y-2 mb-4">
                 <div className="bg-muted rounded-lg p-2 flex items-start">
-                  <i className="fas fa-exclamation-triangle text-yellow-500 mt-1 mr-2"></i>
+                  <i className="fas fa-leaf text-green-500 mt-1 mr-2"></i>
                   <div>
-                    <p className="text-xs font-medium">Weather Alert</p>
-                    <p className="text-xs text-muted-foreground">Heavy rain expected in your area in 6 hours</p>
+                    <p className="text-xs font-medium">Sustainable Farming</p>
+                    <p className="text-xs text-muted-foreground">New organic farming techniques gain popularity</p>
                   </div>
                 </div>
                 
                 <div className="bg-muted rounded-lg p-2 flex items-start">
-                  <i className="fas fa-chart-line text-green-500 mt-1 mr-2"></i>
+                  <i className="fas fa-tractor text-blue-500 mt-1 mr-2"></i>
                   <div>
-                    <p className="text-xs font-medium">Market Update</p>
-                    <p className="text-xs text-muted-foreground">Corn prices increased by 5% today</p>
+                    <p className="text-xs font-medium">Technology Update</p>
+                    <p className="text-xs text-muted-foreground">Smart irrigation systems reduce water usage by 30%</p>
                   </div>
                 </div>
               </div>
