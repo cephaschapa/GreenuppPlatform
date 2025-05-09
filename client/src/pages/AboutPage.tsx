@@ -17,13 +17,13 @@ const AboutPage = () => {
       name: "Cephas Chapa",
       title: "Founder & Software Engineer",
       bio: "Visionary software engineer with expertise in advanced web technologies, AI integration, and blockchain solutions. Cephas leads Greenupp's technical development and implementation strategy.",
-      image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=250&h=250&auto=format&fit=crop",
+      image: "https://images.unsplash.com/photo-1613444129793-c6892ebc9b28?q=80&w=250&h=250&auto=format&fit=crop",
     },
     {
       name: "Edson Mwimba",
       title: "Environmental Engineer",
       bio: "With a background in sustainable agricultural practices and environmental systems, Edson brings critical expertise in developing ecologically sound farming solutions and resource optimization.",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=250&h=250&auto=format&fit=crop",
+      image: "https://images.unsplash.com/photo-1628684362301-d7c9fbda3ec7?q=80&w=250&h=250&auto=format&fit=crop",
     }
   ];
 
