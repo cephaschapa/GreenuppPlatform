@@ -3,30 +3,44 @@ import { motion } from "framer-motion";
 const features = [
   {
     icon: "fas fa-cloud-sun-rain",
-    title: "Weather Intelligence",
-    description: "Access real-time weather updates, forecasts, and climate analysis tailored specifically to your farm's location.",
+    title: "Climate Analysis",
+    description: "Access real-time weather updates and sophisticated climate pattern analysis to make informed farming decisions based on meteorological data.",
     metric: "Precision forecasting",
     version: "v1.0"
   },
   {
-    icon: "fas fa-seedling",
-    title: "Smart Farming",
-    description: "Receive AI-powered crop recommendations, yield predictions, and growth monitoring to optimize your agricultural operations.",
-    metric: "Yield improvement",
+    icon: "fas fa-leaf",
+    title: "Crop Recommendation",
+    description: "Get AI-powered suggestions for ideal crops to plant based on your soil conditions, climate, location, and market trends.",
+    metric: "Optimized selection",
+    version: "v1.0"
+  },
+  {
+    icon: "fas fa-chart-line",
+    title: "Yield Prediction",
+    description: "Forecast crop yields with precision using historical data, climate patterns, and AI models that continuously improve with each season.",
+    metric: "Accurate forecasting",
     version: "v1.0"
   },
   {
     icon: "fas fa-viruses",
-    title: "Plant Diagnosis",
+    title: "Plant Disease Diagnosis",
     description: "Identify plant diseases and get treatment recommendations using advanced image recognition and artificial intelligence.",
     metric: "Early detection",
     version: "v1.0"
   },
   {
-    icon: "fas fa-link",
-    title: "CropTrace Blockchain",
-    description: "Track your agricultural products from seed to store with immutable blockchain records that verify authenticity and origin.",
-    metric: "Transparent traceability",
+    icon: "fas fa-tachometer-alt",
+    title: "Smart Dashboard",
+    description: "Monitor all aspects of your farm from a single, intuitive dashboard with real-time data visualization and farm performance metrics.",
+    metric: "Centralized control",
+    version: "v1.0"
+  },
+  {
+    icon: "fas fa-wifi-slash",
+    title: "Offline Mode",
+    description: "Continue using essential features even without internet connectivity. Your data will automatically sync once connection is restored.",
+    metric: "Continuous access",
     version: "v1.0"
   }
 ];
@@ -67,7 +81,7 @@ const FeatureHighlights = () => {
         </motion.div>
         
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -107,7 +121,7 @@ const FeatureHighlights = () => {
           </motion.div>
           
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8"
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -170,6 +184,37 @@ const FeatureHighlights = () => {
                 <div className="font-mono text-xs text-primary pt-2 border-t border-border">Built-in cart functionality with seamless checkout process</div>
               </div>
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-xl opacity-70 group-hover:opacity-100 transition-opacity"></div>
+            </div>
+
+            <div className="bg-card p-5 sm:p-6 rounded-xl border border-primary/20 relative overflow-hidden group hover:shadow-lg hover:shadow-primary/10 transition-all">
+              <div className="relative z-10">
+                <div className="flex items-center mb-3">
+                  <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
+                    <i className="fas fa-link text-primary"></i>
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold font-space group-hover:text-primary transition-colors">CropTrace Blockchain</h3>
+                </div>
+                <p className="text-sm sm:text-base text-muted-foreground mb-5">Track your agricultural products from seed to table with immutable blockchain records for authenticity and provenance verification.</p>
+                <div className="space-y-2 mb-4">
+                  <div className="bg-background/80 dark:bg-muted rounded-lg p-2 flex items-start">
+                    <i className="fas fa-history text-orange-500 mt-1 mr-2"></i>
+                    <div>
+                      <p className="text-xs font-medium">Immutable Record</p>
+                      <p className="text-xs text-muted-foreground">Tamper-proof history of crop production and handling</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-background/80 dark:bg-muted rounded-lg p-2 flex items-start">
+                    <i className="fas fa-qrcode text-indigo-500 mt-1 mr-2"></i>
+                    <div>
+                      <p className="text-xs font-medium">Verification System</p>
+                      <p className="text-xs text-muted-foreground">QR code scanning for instant verification of authenticity</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="font-mono text-xs text-primary pt-2 border-t border-border">Transparency system: Hyperledger Fabric blockchain</div>
+              </div>
+              <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-primary/5 rounded-full blur-xl opacity-70 group-hover:opacity-100 transition-opacity"></div>
             </div>
           </motion.div>
 
