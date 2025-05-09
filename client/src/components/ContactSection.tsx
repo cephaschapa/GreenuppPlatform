@@ -85,7 +85,10 @@ const ContactSection = () => {
                 <div>
                   <h4 className="font-bold mb-1">Email Us</h4>
                   <p className="text-muted-foreground mb-1">Our team typically responds within 24 hours</p>
-                  <a href="mailto:info@greenupp.tech" className="text-primary">info@greenupp.tech</a>
+                  <div className="space-y-1">
+                    <a href="mailto:cephas@metatronltd.com" className="text-primary block">cephas@metatronltd.com</a>
+                    <a href="mailto:cephaschapa@gmail.com" className="text-primary block">cephaschapa@gmail.com</a>
+                  </div>
                 </div>
               </div>
               
@@ -96,7 +99,7 @@ const ContactSection = () => {
                 <div>
                   <h4 className="font-bold mb-1">Call Us</h4>
                   <p className="text-muted-foreground mb-1">Available Monday-Friday, 8am-6pm</p>
-                  <a href="tel:+18005551234" className="text-primary">+1 (800) 555-1234</a>
+                  <a href="tel:+260975808750" className="text-primary">+260 975 808 750</a>
                 </div>
               </div>
               
@@ -106,8 +109,8 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <h4 className="font-bold mb-1">Visit Us</h4>
-                  <p className="text-muted-foreground mb-1">Come see our technology demonstration farm</p>
-                  <address className="text-primary not-italic">123 Innovation Way, Agritech Valley, CA 94016</address>
+                  <p className="text-muted-foreground mb-1">Come visit our headquarters</p>
+                  <address className="text-primary not-italic">Metatron Technologies<br/>Murex Shopping Complex<br/>Alick Nkhata Road<br/>Lusaka, Zambia</address>
                 </div>
               </div>
             </div>
