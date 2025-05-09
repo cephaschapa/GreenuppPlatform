@@ -52,8 +52,22 @@ import NotificationsPage from "@/pages/farmer/NotificationsPage";
 import NotificationSettingsPage from "@/pages/farmer/NotificationSettingsPage";
 
 function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
+  const { user, isLoading } = useAuth();
+  
   // If we're on app.domain.com, we should display app-specific routes without /dashboard prefix
   if (isAppSubdomain) {
+    // For app subdomain, if not authenticated, redirect to auth
+    if (!isLoading && !user) {
+      return (
+        <Switch>
+          <Route path="/auth" component={AuthPage} />
+          <Route path="*">
+            <Redirect to="/auth" />
+          </Route>
+        </Switch>
+      );
+    }
+    
     return (
       <Switch>
         {/* In app subdomain, the root shows the dashboard */}

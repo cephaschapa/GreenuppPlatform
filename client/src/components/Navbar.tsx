@@ -166,113 +166,185 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
         `}
       >
         <div className="container mx-auto px-4 py-2 md:px-6 lg:px-8 max-w-7xl flex flex-col space-y-2">
-          <Link
-            href="/#features"
-            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-              <span className="font-mono text-primary text-xs">01</span>
-            </div>
-            <span>Features</span>
-            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-          </Link>
-          <Link
-            href="/#solutions"
-            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-              <span className="font-mono text-primary text-xs">02</span>
-            </div>
-            <span>Solutions</span>
-            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-          </Link>
-          <Link
-            href="/#advanced-features"
-            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-              <span className="font-mono text-primary text-xs">03</span>
-            </div>
-            <span>Platform</span>
-            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-          </Link>
-          <Link
-            href="/about"
-            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-              <span className="font-mono text-primary text-xs">04</span>
-            </div>
-            <span>About Us</span>
-            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-          </Link>
-          <Link
-            href="/marketplace"
-            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-              <span className="font-mono text-primary text-xs">05</span>
-            </div>
-            <span>Marketplace</span>
-            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-          </Link>
-          <Link
-            href="/#benefits"
-            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-              <span className="font-mono text-primary text-xs">06</span>
-            </div>
-            <span>Benefits</span>
-            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-          </Link>
-          <Link
-            href="/#community"
-            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-              <span className="font-mono text-primary text-xs">07</span>
-            </div>
-            <span>Community</span>
-            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-          </Link>
-          <Link
-            href="/trace"
-            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-              <span className="font-mono text-primary text-xs">08</span>
-            </div>
-            <span>Verify Products</span>
-            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-          </Link>
-          <Link
-            href="/ai-knowledge-base"
-            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-              <span className="font-mono text-primary text-xs">09</span>
-            </div>
-            <span>AI Knowledge</span>
-            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-          </Link>
-          <Link
-            href="/auth"
-            className="group bg-background hover:bg-primary text-primary hover:text-primary-foreground py-3 rounded-md transition-all duration-300 font-medium text-center mt-2 border border-primary flex items-center justify-center"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <span>Get Started</span>
-            <i className="fas fa-arrow-right ml-2 group-hover:ml-3 transition-all"></i>
-          </Link>
+          {isAppSubdomain ? (
+            // App subdomain mobile menu - dashboard focused
+            <>
+              <Link
+                href="/fields"
+                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+                  <i className="fas fa-map-marker-alt text-primary text-xs"></i>
+                </div>
+                <span>Fields</span>
+                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+              </Link>
+              <Link
+                href="/tasks"
+                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+                  <i className="fas fa-tasks text-primary text-xs"></i>
+                </div>
+                <span>Tasks</span>
+                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+              </Link>
+              <Link
+                href="/marketplace"
+                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+                  <i className="fas fa-store text-primary text-xs"></i>
+                </div>
+                <span>Marketplace</span>
+                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+              </Link>
+              <Link
+                href="/social"
+                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+                  <i className="fas fa-users text-primary text-xs"></i>
+                </div>
+                <span>Green Socials</span>
+                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+              </Link>
+              <Link
+                href="/notifications"
+                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+                  <i className="fas fa-bell text-primary text-xs"></i>
+                </div>
+                <span>Notifications</span>
+                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+              </Link>
+              <Link
+                href="/profile"
+                className="group bg-background hover:bg-primary text-primary hover:text-primary-foreground py-3 rounded-md transition-all duration-300 font-medium text-center mt-2 border border-primary flex items-center justify-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>My Profile</span>
+                <i className="fas fa-user ml-2"></i>
+              </Link>
+            </>
+          ) : (
+            // Main domain mobile menu - marketing focused
+            <>
+              <Link
+                href="/#features"
+                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+                  <span className="font-mono text-primary text-xs">01</span>
+                </div>
+                <span>Features</span>
+                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+              </Link>
+              <Link
+                href="/#solutions"
+                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+                  <span className="font-mono text-primary text-xs">02</span>
+                </div>
+                <span>Solutions</span>
+                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+              </Link>
+              <Link
+                href="/#advanced-features"
+                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+                  <span className="font-mono text-primary text-xs">03</span>
+                </div>
+                <span>Platform</span>
+                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+              </Link>
+              <Link
+                href="/about"
+                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+                  <span className="font-mono text-primary text-xs">04</span>
+                </div>
+                <span>About Us</span>
+                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+              </Link>
+              <Link
+                href="/marketplace"
+                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+                  <span className="font-mono text-primary text-xs">05</span>
+                </div>
+                <span>Marketplace</span>
+                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+              </Link>
+              <Link
+                href="/#benefits"
+                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+                  <span className="font-mono text-primary text-xs">06</span>
+                </div>
+                <span>Benefits</span>
+                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+              </Link>
+              <Link
+                href="/#community"
+                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+                  <span className="font-mono text-primary text-xs">07</span>
+                </div>
+                <span>Community</span>
+                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+              </Link>
+              <Link
+                href="/trace"
+                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+                  <span className="font-mono text-primary text-xs">08</span>
+                </div>
+                <span>Verify Products</span>
+                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+              </Link>
+              <Link
+                href="/ai-knowledge-base"
+                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+                  <span className="font-mono text-primary text-xs">09</span>
+                </div>
+                <span>AI Knowledge</span>
+                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+              </Link>
+              <Link
+                href="/auth"
+                className="group bg-background hover:bg-primary text-primary hover:text-primary-foreground py-3 rounded-md transition-all duration-300 font-medium text-center mt-2 border border-primary flex items-center justify-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span>Get Started</span>
+                <i className="fas fa-arrow-right ml-2 group-hover:ml-3 transition-all"></i>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

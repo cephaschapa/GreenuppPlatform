@@ -16,6 +16,29 @@ app.use(express.urlencoded({ extended: false, limit: '25mb' }));
 // Serve uploaded files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, "../uploads")));
 
+// Middleware to check if we're on app subdomain and redirect to auth if not authenticated
+// This only applies to non-API routes and allows /auth and static assets
+app.use((req, res, next) => {
+  const host = req.get('host') || '';
+  const isAppSubdomain = host.startsWith('app.');
+  const path = req.path;
+  
+  // Skip API routes and already on auth page
+  if (path.startsWith('/api') || path === '/auth' || path.startsWith('/assets/') || 
+      path.includes('.') || path.startsWith('/_assets/')) {
+    return next();
+  }
+  
+  // If we're on app subdomain, check for authentication
+  if (isAppSubdomain && req.isAuthenticated && !req.isAuthenticated()) {
+    console.log(`Subdomain auth redirect: ${path} -> /auth`);
+    return res.redirect('/auth');
+  }
+  
+  next();
+});
+
+// Logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

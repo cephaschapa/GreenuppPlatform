@@ -18,6 +18,7 @@ import { useState, useEffect } from "react";
 export default function AuthPage() {
   const { user, isLoading } = useAuth();
   const [checked, setChecked] = useState(false);
+  const isAppSubdomain = window.location.hostname.startsWith('app.');
 
   useEffect(() => {
     // Only set checked to true after initial auth check is complete
@@ -29,12 +30,21 @@ export default function AuthPage() {
   // If the user is already logged in and we've completed initial loading, redirect based on their role
   if (checked && user && !isLoading) {
     console.log('Auth page: User is logged in, redirecting to dashboard');
-    if (user.role === 'buyer') {
-      return <Redirect to="/dashboard/marketplace" />;
-    } else if (user.role === 'supplier') {
-      return <Redirect to="/dashboard/marketplace" />;
+    
+    // If we're on app subdomain, don't use /dashboard prefix
+    if (isAppSubdomain) {
+      if (user.role === 'buyer' || user.role === 'supplier') {
+        return <Redirect to="/marketplace" />;
+      } else {
+        return <Redirect to="/" />;
+      }
     } else {
-      return <Redirect to="/dashboard" />;
+      // On main domain, use /dashboard prefix
+      if (user.role === 'buyer' || user.role === 'supplier') {
+        return <Redirect to="/dashboard/marketplace" />;
+      } else {
+        return <Redirect to="/dashboard" />;
+      }
     }
   }
 
