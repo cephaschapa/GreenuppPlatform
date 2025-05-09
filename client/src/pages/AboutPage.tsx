@@ -14,22 +14,22 @@ const AboutPage = () => {
 
   const founderProfiles = [
     {
+      name: "Cephas Chapa",
+      title: "Founder & Software Engineer",
+      bio: "Visionary software engineer with expertise in advanced web technologies, AI integration, and blockchain solutions. Cephas leads Greenupp's technical development and implementation strategy.",
+      image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=250&h=250&auto=format&fit=crop",
+    },
+    {
+      name: "Edson Mwimba",
+      title: "Environmental Engineer",
+      bio: "With a background in sustainable agricultural practices and environmental systems, Edson brings critical expertise in developing ecologically sound farming solutions and resource optimization.",
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=250&h=250&auto=format&fit=crop",
+    },
+    {
       name: "Dr. Lila Mwangi",
-      title: "CEO & Agricultural Scientist",
-      bio: "With over 15 years experience in agricultural research and a Ph.D. in Sustainable Agriculture, Dr. Mwangi leads Greenupp's scientific vision and strategic direction.",
+      title: "Agricultural Science Advisor",
+      bio: "With over 15 years experience in agricultural research and a Ph.D. in Sustainable Agriculture, Dr. Mwangi provides scientific guidance on crop management and agricultural best practices.",
       image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=250&h=250&auto=format&fit=crop",
-    },
-    {
-      name: "Amir Khan",
-      title: "CTO & AI Engineer",
-      bio: "Former tech lead at a major AI research lab, Amir brings extensive expertise in machine learning and computer vision to address complex agricultural challenges.",
-      image: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?q=80&w=250&h=250&auto=format&fit=crop",
-    },
-    {
-      name: "Elena Rodriguez",
-      title: "COO & Sustainability Director",
-      bio: "A champion for regenerative agriculture with an MBA in Sustainable Business, Elena oversees Greenupp's operations and environmental impact initiatives.",
-      image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=250&h=250&auto=format&fit=crop",
     }
   ];
 
