@@ -13,6 +13,7 @@ import PublicSellersPage from "@/pages/PublicSellersPage";
 import PublicSellerProfilePage from "@/pages/PublicSellerProfilePage";
 import PublicTraceVerificationPage from "@/pages/PublicTraceVerificationPage";
 import AiKnowledgeBasePage from "@/pages/AiKnowledgeBasePage";
+import AboutPage from "@/pages/AboutPage";
 import GreenSocialsPage from "@/pages/GreenSocialsPage";
 import ChatPage from "@/pages/ChatPage";
 import StreamChatPage from "@/pages/StreamChatPage";
@@ -55,6 +56,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/about" component={AboutPage} />
       <Route path="/marketplace" component={PublicMarketplacePage} />
       <Route path="/marketplace/sellers" component={PublicSellersPage} />
       <Route path="/marketplace/sellers/:id" component={PublicSellerProfilePage} />

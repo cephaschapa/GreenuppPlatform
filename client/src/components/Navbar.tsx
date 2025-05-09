@@ -47,6 +47,13 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
           </Link>
           <Link
+            href="/about"
+            className="hover:text-primary transition duration-300 relative group"
+          >
+            About Us
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
+          </Link>
+          <Link
             href="/marketplace"
             className="hover:text-primary transition duration-300 relative group"
           >
@@ -149,12 +156,23 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
           </Link>
           <Link
-            href="/marketplace"
+            href="/about"
             className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
               <span className="font-mono text-primary text-xs">04</span>
+            </div>
+            <span>About Us</span>
+            <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
+          </Link>
+          <Link
+            href="/marketplace"
+            className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
+              <span className="font-mono text-primary text-xs">05</span>
             </div>
             <span>Marketplace</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
@@ -165,7 +183,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-              <span className="font-mono text-primary text-xs">05</span>
+              <span className="font-mono text-primary text-xs">06</span>
             </div>
             <span>Benefits</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
@@ -176,7 +194,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-              <span className="font-mono text-primary text-xs">06</span>
+              <span className="font-mono text-primary text-xs">07</span>
             </div>
             <span>Community</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
@@ -187,7 +205,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-              <span className="font-mono text-primary text-xs">07</span>
+              <span className="font-mono text-primary text-xs">08</span>
             </div>
             <span>Verify Products</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
@@ -198,7 +216,7 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
             onClick={() => setMobileMenuOpen(false)}
           >
             <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-              <span className="font-mono text-primary text-xs">08</span>
+              <span className="font-mono text-primary text-xs">09</span>
             </div>
             <span>AI Knowledge</span>
             <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
