@@ -52,6 +52,12 @@ export function Sidebar() {
   const { unreadCount: notificationCount } = useNotifications();
   const { totalUnreadCount: chatUnreadCount } = useChat();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAppSubdomain, setIsAppSubdomain] = useState(false);
+  
+  useEffect(() => {
+    // Check if we're on app subdomain
+    setIsAppSubdomain(window.location.hostname.startsWith('app.'));
+  }, []);
 
   const farmerNavItems = [
     {
@@ -272,20 +278,76 @@ export function Sidebar() {
     // Add more buyer-specific navigation items here
   ];
 
+  // Function to rewrite URLs for subdomain
+  const getPathForSubdomain = (path: string): string => {
+    if (!isAppSubdomain) return path; // Keep as is for main domain
+    
+    // For app subdomain, remove '/dashboard' prefix
+    if (path.startsWith('/dashboard')) {
+      return path === '/dashboard' ? '/' : path.replace('/dashboard/', '/');
+    }
+    
+    return path; // Keep paths like /trace and /ai-knowledge-base as is
+  };
+
+  // Define nav item type
+  type NavItem = {
+    title: string;
+    href: string;
+    icon: React.ReactNode;
+    mobileIcon: React.ReactNode;
+    active: boolean;
+    showInMobileNav: boolean;
+  };
+
+  // Create modified nav items for the current subdomain
+  const createSubdomainNavItems = (items: NavItem[]) => {
+    return items.map(item => {
+      // Create new path based on subdomain
+      const newPath = getPathForSubdomain(item.href);
+      
+      // Create new active check based on subdomain paths
+      // We need to check both the original and new paths to handle initial render
+      const newActive = isAppSubdomain 
+        ? (newPath === location || item.href === location) 
+        : item.active;
+      
+      // For paths that start with /dashboard/xyz, also check for /xyz on app subdomain
+      const isNestedPath = item.href.startsWith('/dashboard/') && isAppSubdomain;
+      const appEquivalentPath = isNestedPath ? item.href.replace('/dashboard', '') : '';
+      const activePath = isNestedPath 
+        ? (location === appEquivalentPath || location === item.href || newActive)
+        : newActive;
+      
+      return {
+        ...item,
+        href: newPath,
+        active: activePath
+      };
+    });
+  };
+
   // Select the appropriate navigation items based on user role
   const getNavItems = () => {
     if (!user) return [];
 
+    let items: NavItem[] = [];
     switch (user.role) {
       case UserRole.FARMER:
-        return farmerNavItems;
+        items = farmerNavItems;
+        break;
       case UserRole.SUPPLIER:
-        return supplierNavItems;
+        items = supplierNavItems;
+        break;
       case UserRole.BUYER:
-        return buyerNavItems;
+        items = buyerNavItems;
+        break;
       default:
-        return [];
+        items = [];
     }
+    
+    // Apply subdomain-specific path adjustments
+    return createSubdomainNavItems(items);
   };
 
   const navItems = getNavItems();
@@ -306,7 +368,7 @@ export function Sidebar() {
           </Button>
 
           <Link
-            href="/dashboard"
+            href={isAppSubdomain ? "/" : "/dashboard"}
             className="text-xl font-bold font-space tracking-wider relative"
           >
             Green<span className="text-primary">upp</span>
@@ -336,7 +398,7 @@ export function Sidebar() {
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link
-                  href="/dashboard/profile"
+                  href={isAppSubdomain ? "/profile" : "/dashboard/profile"}
                   className="cursor-pointer w-full"
                 >
                   Profile
@@ -344,7 +406,7 @@ export function Sidebar() {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link
-                  href="/dashboard/settings"
+                  href={isAppSubdomain ? "/settings" : "/dashboard/settings"}
                   className="cursor-pointer w-full"
                 >
                   Settings
@@ -546,10 +608,10 @@ export function Sidebar() {
           </div>
 
           <div className="flex gap-2 mb-4">
-            <Link href="/dashboard/marketplace/cart">
+            <Link href={isAppSubdomain ? "/marketplace/cart" : "/dashboard/marketplace/cart"}>
               <CartIcon variant="sidebar" showLabel={true} />
             </Link>
-            <Link href="/dashboard/notifications">
+            <Link href={isAppSubdomain ? "/notifications" : "/dashboard/notifications"}>
               <NotificationBell />
             </Link>
           </div>
