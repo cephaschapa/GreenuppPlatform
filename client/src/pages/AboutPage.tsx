@@ -24,12 +24,6 @@ const AboutPage = () => {
       title: "Environmental Engineer",
       bio: "With a background in sustainable agricultural practices and environmental systems, Edson brings critical expertise in developing ecologically sound farming solutions and resource optimization.",
       image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=250&h=250&auto=format&fit=crop",
-    },
-    {
-      name: "Dr. Lila Mwangi",
-      title: "Agricultural Science Advisor",
-      bio: "With over 15 years experience in agricultural research and a Ph.D. in Sustainable Agriculture, Dr. Mwangi provides scientific guidance on crop management and agricultural best practices.",
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=250&h=250&auto=format&fit=crop",
     }
   ];
 
@@ -337,7 +331,7 @@ const AboutPage = () => {
               </p>
             </motion.div>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="flex flex-col md:flex-row justify-center gap-12 max-w-4xl mx-auto">
               {founderProfiles.map((profile, index) => (
                 <motion.div
                   key={index}
@@ -345,18 +339,18 @@ const AboutPage = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: 0.1 * index }}
-                  className="text-center"
+                  className="text-center flex-1"
                 >
-                  <div className="relative w-48 h-48 mx-auto mb-6 overflow-hidden rounded-full border-4 border-background shadow-lg">
+                  <div className="relative w-56 h-56 mx-auto mb-6 overflow-hidden rounded-full border-4 border-background shadow-lg">
                     <img 
                       src={profile.image} 
                       alt={profile.name} 
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <h3 className="text-xl font-bold">{profile.name}</h3>
+                  <h3 className="text-2xl font-bold">{profile.name}</h3>
                   <p className="text-primary font-medium mb-3">{profile.title}</p>
-                  <p className="text-muted-foreground">{profile.bio}</p>
+                  <p className="text-muted-foreground text-lg">{profile.bio}</p>
                 </motion.div>
               ))}
             </div>
