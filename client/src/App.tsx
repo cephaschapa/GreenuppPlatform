@@ -17,6 +17,7 @@ import AboutPage from "@/pages/AboutPage";
 import GreenSocialsPage from "@/pages/GreenSocialsPage";
 import ChatPage from "@/pages/ChatPage";
 import StreamChatPage from "@/pages/StreamChatPage";
+import FarmingAssistantPage from "@/pages/FarmingAssistantPage";
 import UploadTestPage from "@/pages/UploadTestPage";
 import EmailNotificationTestPage from "@/pages/EmailNotificationTestPage";
 import PublicEmailTestPage from "@/pages/PublicEmailTestPage";
@@ -106,6 +107,7 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
         {/* Chat routes - without /dashboard prefix on app subdomain */}
         <ProtectedRoute path="/chat" component={ChatPage} />
         <ProtectedRoute path="/stream-chat" component={StreamChatPage} />
+        <ProtectedRoute path="/farming-assistant" component={FarmingAssistantPage} />
         
         <Route component={NotFound} />
       </Switch>
@@ -162,6 +164,7 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
       {/* Chat routes on main domain - with /dashboard prefix */}
       <ProtectedRoute path="/dashboard/chat" component={ChatPage} />
       <ProtectedRoute path="/dashboard/stream-chat" component={StreamChatPage} />
+      <ProtectedRoute path="/dashboard/farming-assistant" component={FarmingAssistantPage} />
       
       {/* Role-specific dashboard redirects */}
       <ProtectedRoute path="/buyer" component={() => <Redirect to="/dashboard/marketplace" />} />

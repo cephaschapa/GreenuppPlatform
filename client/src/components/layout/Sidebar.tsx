@@ -28,6 +28,7 @@ import {
   ShieldCheck,
   Users,
   Grid,
+  Brain,
   MessageSquare,
 } from "lucide-react";
 import { CartIcon } from "@/components/cart/CartIcon";
