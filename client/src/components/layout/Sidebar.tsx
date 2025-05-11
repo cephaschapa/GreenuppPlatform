@@ -173,6 +173,14 @@ export function Sidebar() {
       active: location === "/dashboard/stream-chat",
       showInMobileNav: true,
     },
+    {
+      title: "AI Farming Assistant",
+      href: "/dashboard/farming-assistant",
+      icon: <Brain className="h-5 w-5" />,
+      mobileIcon: <Brain className="h-6 w-6" />,
+      active: location === "/dashboard/farming-assistant",
+      showInMobileNav: true,
+    },
   ];
 
   const supplierNavItems = [
@@ -282,6 +290,14 @@ export function Sidebar() {
       icon: <MessageSquare className="h-5 w-5" />,
       mobileIcon: <MessageSquare className="h-6 w-6" />,
       active: location === "/dashboard/stream-chat",
+      showInMobileNav: true,
+    },
+    {
+      title: "AI Farming Assistant",
+      href: "/dashboard/farming-assistant",
+      icon: <Brain className="h-5 w-5" />,
+      mobileIcon: <Brain className="h-6 w-6" />,
+      active: location === "/dashboard/farming-assistant",
       showInMobileNav: true,
     },
     // Add more buyer-specific navigation items here
