@@ -216,11 +216,13 @@ const CustomChannelHeader = ({ onBackClick }: { onBackClick?: () => void }) => {
 interface StreamChatComponentProps {
   activeChannelId?: string;
   onChannelSelect?: (channel: Channel) => void;
+  onNewChatClick?: () => void;
 }
 
 export const StreamChatComponent = ({
   activeChannelId,
   onChannelSelect,
+  onNewChatClick,
 }: StreamChatComponentProps) => {
   const { client, isConnecting, userChannels, error, isInitialized } =
     useStreamChat();
@@ -338,8 +340,9 @@ export const StreamChatComponent = ({
               <button 
                 className="floating-action-button"
                 onClick={() => {
-                  // Function to create a new chat would go here
-                  alert("Create new chat functionality will be implemented here");
+                  if (onNewChatClick) {
+                    onNewChatClick();
+                  }
                 }}
                 title="Start a new chat"
               >

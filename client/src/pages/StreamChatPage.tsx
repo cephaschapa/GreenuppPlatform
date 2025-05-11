@@ -372,28 +372,21 @@ export default function StreamChatPage() {
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
-            {/* Advanced Settings button has been removed per user request */}
-            <Dialog
-              open={isCreateDialogOpen}
-              onOpenChange={setIsCreateDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Users size={16} />
-                  <span>New Chat</span>
-                </Button>
-              </DialogTrigger>
-              {/* We need to wrap the dialog content in the Stream Chat Provider */}
-              {isCreateDialogOpen && (
-                <StreamChatProvider apiKey={STREAM_API_KEY}>
-                  <NewChatDialogContent
-                    open={isCreateDialogOpen}
-                    onOpenChange={setIsCreateDialogOpen}
-                  />
-                </StreamChatProvider>
-              )}
-            </Dialog>
+          {/* New Chat dialog is now triggered by the floating action button */}
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+          >
+            {/* We need to wrap the dialog content in the Stream Chat Provider */}
+            {isCreateDialogOpen && (
+              <StreamChatProvider apiKey={STREAM_API_KEY}>
+                <NewChatDialogContent
+                  open={isCreateDialogOpen}
+                  onOpenChange={setIsCreateDialogOpen}
+                />
+              </StreamChatProvider>
+            )}
+          </Dialog>
           </div>
         </div>
 
@@ -406,7 +399,9 @@ export default function StreamChatPage() {
         }`}
       >
         <StreamChatProvider apiKey={STREAM_API_KEY}>
-          <StreamChatComponent />
+          <StreamChatComponent 
+            onNewChatClick={() => setIsCreateDialogOpen(true)}
+          />
         </StreamChatProvider>
       </div>
     </div>
