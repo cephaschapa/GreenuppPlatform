@@ -127,7 +127,7 @@ const CustomMessageInput = () => {
   );
 };
 
-// Custom Channel Header
+// Custom Channel Header component
 const CustomChannelHeader = ({ onBackClick }: { onBackClick?: () => void }) => {
   const { channel } = useChannelStateContext();
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -163,7 +163,7 @@ const CustomChannelHeader = ({ onBackClick }: { onBackClick?: () => void }) => {
   }
   
   return (
-    <div className="custom-channel-header px-4 py-3 border-b flex items-center gap-3">
+    <div className="custom-channel-header px-4 py-3 border-b flex items-center gap-3 bg-background">
       {isMobile && onBackClick && (
         <button 
           onClick={onBackClick}
@@ -197,16 +197,16 @@ const CustomChannelHeader = ({ onBackClick }: { onBackClick?: () => void }) => {
       </div>
       
       {/* Navigation Links */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <a href="/dashboard" className="p-2 rounded-full hover:bg-accent transition-colors">
-          <Home size={19} className="text-muted-foreground" />
+          <Home size={20} className="text-muted-foreground" />
         </a>
         <a href="/notifications" className="p-2 rounded-full hover:bg-accent transition-colors relative">
-          <Bell size={19} className="text-muted-foreground" />
-          <span className="absolute top-0 right-0 bg-primary w-2 h-2 rounded-full"></span>
+          <Bell size={20} className="text-muted-foreground" />
+          <span className="absolute top-0 right-0 bg-red-500 w-2.5 h-2.5 rounded-full"></span>
         </a>
         <a href="/cart" className="p-2 rounded-full hover:bg-accent transition-colors">
-          <ShoppingCart size={19} className="text-muted-foreground" />
+          <ShoppingCart size={20} className="text-muted-foreground" />
         </a>
       </div>
     </div>

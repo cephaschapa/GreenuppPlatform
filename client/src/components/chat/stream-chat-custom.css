@@ -505,6 +505,54 @@ html.dark .floating-action-button,
   box-shadow: 0 4px 12px rgba(0, 200, 83, 0.2);
 }
 
+/* Custom channel header styling */
+.custom-channel-header {
+  background-color: var(--background-light);
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  border-bottom: 1px solid var(--border-light) !important;
+  padding: 0.75rem 1rem !important;
+  z-index: 20 !important;
+  position: relative !important;
+}
+
+/* Navigation links in header */
+.custom-channel-header a {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  transition: all 0.2s ease !important;
+}
+
+.custom-channel-header a:hover {
+  background-color: var(--accent-color) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Hide original stream chat headers */
+.str-chat__header-livestream,
+.str-chat__header,
+.str-chat__channel-header,
+.str-chat__header-livestream,
+button.str-chat__header-hamburger {
+  display: none !important;
+}
+
+/* Notification indicator */
+.custom-channel-header .absolute.top-0.right-0 {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background-color: red !important;
+}
+
 /* Channel list styling - light mode */
 .str-chat__channel-list {
   background-color: var(--surface-light);
