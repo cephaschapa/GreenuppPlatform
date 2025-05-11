@@ -109,9 +109,9 @@ export async function generateCropYieldPrediction(data: CropData): Promise<Inser
       predictedYield: null,
       yieldUnit: "tons",
       confidenceLevel: null,
-      factorsConsidered: {
-        errorMessage: "Failed to generate AI prediction. Please try again later."
-      },
+      factorsConsidered: { 
+        error: "Failed to generate AI prediction. Please try again later." 
+      } as Record<string, any>,
     };
   }
 }
@@ -167,9 +167,9 @@ export async function farmingAssistantChat(
     };
 
     // Prepare the conversation history
-    const conversationHistory = [
+    const conversationHistory: ChatMessage[] = [
       systemMessage,
-      ...messages.slice(-10) as ChatMessage[], // Only keep the last 10 messages for context window management
+      ...messages.slice(-10), // Only keep the last 10 messages for context window management
     ];
 
     // Call OpenAI
