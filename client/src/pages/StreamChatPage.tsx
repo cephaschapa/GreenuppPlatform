@@ -372,12 +372,12 @@ export default function StreamChatPage() {
               </p>
             </div>
           </div>
-          {/* New Chat dialog is now triggered by the floating action button */}
+          
+          {/* Dialog is now triggered by floating action button in StreamChatComponent */}
           <Dialog
             open={isCreateDialogOpen}
             onOpenChange={setIsCreateDialogOpen}
           >
-            {/* We need to wrap the dialog content in the Stream Chat Provider */}
             {isCreateDialogOpen && (
               <StreamChatProvider apiKey={STREAM_API_KEY}>
                 <NewChatDialogContent
@@ -387,7 +387,6 @@ export default function StreamChatPage() {
               </StreamChatProvider>
             )}
           </Dialog>
-          </div>
         </div>
 
         {showDiagnostics && <DiagnosticPanel />}
