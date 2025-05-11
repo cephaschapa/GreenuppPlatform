@@ -165,11 +165,11 @@ export function Sidebar() {
       showInMobileNav: true,
     },
     {
-      title: "Stream Chat",
-      href: "/dashboard/stream-chat",
+      title: "Chat",
+      href: "/dashboard/chat",
       icon: <MessageSquare className="h-5 w-5" />,
       mobileIcon: <MessageSquare className="h-6 w-6" />,
-      active: location === "/dashboard/stream-chat",
+      active: location === "/dashboard/chat",
       showInMobileNav: true,
     },
   ];
@@ -216,11 +216,11 @@ export function Sidebar() {
       showInMobileNav: true,
     },
     {
-      title: "Stream Chat",
-      href: "/dashboard/stream-chat",
+      title: "Chat",
+      href: "/dashboard/chat",
       icon: <MessageSquare className="h-5 w-5" />,
       mobileIcon: <MessageSquare className="h-6 w-6" />,
-      active: location === "/dashboard/stream-chat",
+      active: location === "/dashboard/chat",
       showInMobileNav: true,
     },
     // Add more supplier-specific navigation items here
@@ -268,11 +268,11 @@ export function Sidebar() {
       showInMobileNav: true,
     },
     {
-      title: "Stream Chat",
-      href: "/dashboard/stream-chat",
+      title: "Chat",
+      href: "/dashboard/chat",
       icon: <MessageSquare className="h-5 w-5" />,
       mobileIcon: <MessageSquare className="h-6 w-6" />,
-      active: location === "/dashboard/stream-chat",
+      active: location === "/dashboard/chat",
       showInMobileNav: true,
     },
     // Add more buyer-specific navigation items here
