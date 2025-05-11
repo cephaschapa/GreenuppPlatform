@@ -26,7 +26,27 @@ import {
   Paperclip,
   Smile,
 } from "lucide-react";
-import { useMediaQuery } from "@/hooks/use-media-query";
+
+// Simple media query hook implementation inline to avoid module import issues
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState<boolean>(false);
+  
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(query);
+    setMatches(mediaQuery.matches);
+    
+    const handleChange = (event: MediaQueryListEvent) => {
+      setMatches(event.matches);
+    };
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, [query]);
+  
+  return matches;
+}
 
 // Import Stream Chat CSS
 import "stream-chat-css/dist/css/index.css";
@@ -116,7 +136,8 @@ const CustomChannelHeader = ({ onBackClick }: { onBackClick?: () => void }) => {
     if (channel) {
       if (channel.data?.name === "Direct Message") {
         const members = Object.values(channel.state?.members || {});
-        const otherMember = members.find(m => m.user?.id !== channel.client.userID);
+        // Access the client using _client instead of client
+        const otherMember = members.find(m => m.user?.id !== channel._client?.userID);
         if (otherMember?.user) {
           otherUser = otherMember.user;
           channelName = otherMember.user.name || otherMember.user.id;
@@ -124,7 +145,7 @@ const CustomChannelHeader = ({ onBackClick }: { onBackClick?: () => void }) => {
         }
       } else if (channel.data?.name && channel.data.name.includes('and')) {
         // Handle "user1 and user2" format
-        const currentUserId = channel.client.userID;
+        const currentUserId = channel._client?.userID;
         const parts = channel.data.name.split(' and ');
         const otherUserName = parts.find(part => !part.includes(currentUserId?.toString() || ''));
         if (otherUserName) {
@@ -149,7 +170,10 @@ const CustomChannelHeader = ({ onBackClick }: { onBackClick?: () => void }) => {
       
       <div className="relative">
         {otherUser?.image ? (
-          <Avatar image={otherUser.image} name={channelName} size={40} />
+          // Use the avatar component without size prop
+          <div className="w-10 h-10 overflow-hidden rounded-full">
+            <Avatar image={otherUser.image} name={channelName} />
+          </div>
         ) : (
           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
             <UserCircle2 size={24} />

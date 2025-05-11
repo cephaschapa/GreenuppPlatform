@@ -81,6 +81,7 @@ html.dark .str-chat__header,
 /* Message list styling - light mode */
 .str-chat__list {
   padding: 1rem;
+  padding-bottom: 2.5rem; /* Extra padding at bottom to ensure messages aren't hidden behind input */
   background-color: var(--surface-light);
   flex: 1;
   overflow-y: auto;
@@ -117,6 +118,11 @@ html.dark .str-chat__list::-webkit-scrollbar-thumb,
 .str-chat__message-simple {
   margin-bottom: 0.75rem;
   max-width: 85%;
+}
+
+/* Add more space after last message */
+.str-chat__message-list-scroll > div:last-child {
+  margin-bottom: 1.5rem;
 }
 
 .str-chat__message-simple-text {
@@ -475,6 +481,30 @@ html.dark .greenupp-channel-preview-message,
 html.dark .online-indicator,
 [data-theme="dark"] .online-indicator {
   border-color: var(--background-dark);
+}
+
+/* Message input container styling */
+.custom-message-input {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  background-color: var(--background-light);
+  min-height: 70px;
+  position: relative;
+  z-index: 20;
+}
+
+html.dark .custom-message-input,
+[data-theme="dark"] .custom-message-input {
+  background-color: var(--background-dark);
+  border-color: var(--border-dark);
+}
+
+/* Add extra padding to the bottom of the message list for scrolling */
+.str-chat__message-list-scroll {
+  padding-bottom: 2rem;
 }
 
 /* Mobile optimizations */
