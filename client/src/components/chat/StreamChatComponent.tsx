@@ -307,9 +307,9 @@ export const StreamChatComponent = ({
   const sort = { last_message_at: -1 } as any;
 
   return (
-    <div className="h-full flex overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden">
       <Chat client={client} theme="str-chat__theme-light">
-        <div className="flex h-full w-full">
+        <div className="flex h-full w-full flex-1">
           {(showChannelList || !isMobile) && (
             <div className={`${isMobile ? 'w-full' : 'w-auto'} border-r overflow-hidden`}>
               <div className="channel-list-header py-3 px-4 border-b">

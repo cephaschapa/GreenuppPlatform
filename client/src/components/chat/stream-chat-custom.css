@@ -521,8 +521,10 @@ html.dark .custom-message-input,
 .str-chat__scrollable-container {
   flex: 1;
   overflow-y: auto;
-  max-height: calc(100vh - 180px); /* Adjust based on header + input height */
+  height: 100%;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Window styling for sticky input */
@@ -532,6 +534,28 @@ html.dark .custom-message-input,
   flex-direction: column;
   position: relative;
   overflow: hidden; /* Prevent overall window scrolling */
+}
+
+/* Make sure chat layout takes full height */
+.str-chat,
+.str-chat__container,
+.str-chat__main-panel,
+.str-chat__channel,
+.str-chat-channel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.str-chat__list {
+  flex: 1; /* Let message list take available space */
+}
+
+/* Fix message list to make the scrolling work nicely with sticky input */
+.str-chat ul.str-chat__ul {
+  flex: 1;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .str-chat__channel {

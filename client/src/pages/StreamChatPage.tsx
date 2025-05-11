@@ -356,57 +356,61 @@ export default function StreamChatPage() {
   }
 
   return (
-    <div className="container mx-auto p-4 h-[calc(100vh-5rem)]">
-      <div className="mb-4 flex justify-between items-center">
-        <div className="flex items-center">
-          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary mr-3">
-            <MessageSquare size={20} />
+    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="container mx-auto p-4 pb-2">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary mr-3">
+              <MessageSquare size={20} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold font-space tracking-tight">
+                Chat
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Connect with other farmers in real-time
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold font-space tracking-tight">
-              Chat
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Connect with other farmers in real-time
-            </p>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowDiagnostics(!showDiagnostics)}
+              variant="outline"
+              size="sm"
+              className="hidden md:flex"
+            >
+              {showDiagnostics ? "Hide Diagnostics" : "Advanced Settings"}
+            </Button>
+            <Dialog
+              open={isCreateDialogOpen}
+              onOpenChange={setIsCreateDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Users size={16} />
+                  <span>New Chat</span>
+                </Button>
+              </DialogTrigger>
+              {/* We need to wrap the dialog content in the Stream Chat Provider */}
+              {isCreateDialogOpen && (
+                <StreamChatProvider apiKey={STREAM_API_KEY}>
+                  <NewChatDialogContent
+                    open={isCreateDialogOpen}
+                    onOpenChange={setIsCreateDialogOpen}
+                  />
+                </StreamChatProvider>
+              )}
+            </Dialog>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setShowDiagnostics(!showDiagnostics)}
-            variant="outline"
-            size="sm"
-            className="hidden md:flex"
-          >
-            {showDiagnostics ? "Hide Diagnostics" : "Advanced Settings"}
-          </Button>
-          <Dialog
-            open={isCreateDialogOpen}
-            onOpenChange={setIsCreateDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Users size={16} />
-                <span>New Chat</span>
-              </Button>
-            </DialogTrigger>
-            {/* We need to wrap the dialog content in the Stream Chat Provider */}
-            {isCreateDialogOpen && (
-              <StreamChatProvider apiKey={STREAM_API_KEY}>
-                <NewChatDialogContent
-                  open={isCreateDialogOpen}
-                  onOpenChange={setIsCreateDialogOpen}
-                />
-              </StreamChatProvider>
-            )}
-          </Dialog>
-        </div>
+
+        {showDiagnostics && <DiagnosticPanel />}
       </div>
 
-      {showDiagnostics && <DiagnosticPanel />}
-
-      <div
-        className={`${showDiagnostics ? "h-[calc(100%-12rem)]" : "h-[calc(100%-4.5rem)]"} border rounded-lg shadow-sm overflow-hidden`}
+      <div 
+        className={`flex-1 border-t rounded-t-lg shadow-sm overflow-hidden ${
+          showDiagnostics ? "mt-2" : "mt-0"
+        }`}
       >
         <StreamChatProvider apiKey={STREAM_API_KEY}>
           <StreamChatComponent />
