@@ -458,7 +458,9 @@ export const StreamChatComponent = ({
                 <StreamChannel channel={activeChannel}>
                   <Window>
                     <CustomChannelHeader onBackClick={isMobile ? handleBackToList : undefined} />
-                    <MessageList />
+                    <div className="str-chat__scrollable-container">
+                      <MessageList />
+                    </div>
                     <CustomMessageInput />
                   </Window>
                   <Thread />
