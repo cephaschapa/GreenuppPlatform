@@ -373,14 +373,7 @@ export default function StreamChatPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              onClick={() => setShowDiagnostics(!showDiagnostics)}
-              variant="outline"
-              size="sm"
-              className="hidden md:flex"
-            >
-              {showDiagnostics ? "Hide Diagnostics" : "Advanced Settings"}
-            </Button>
+            {/* Advanced Settings button has been removed per user request */}
             <Dialog
               open={isCreateDialogOpen}
               onOpenChange={setIsCreateDialogOpen}
