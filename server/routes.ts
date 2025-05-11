@@ -17,6 +17,7 @@ import { testEmailRouter } from './routes/test-email-notifications';
 import publicEmailTestRouter from './routes/test-public-email-notifications';
 import chatRoutes from './routes/chat-routes';
 import streamChatRoutes from './routes/stream-chat-routes';
+import farmingAssistantRoutes from './routes/farming-assistant';
 import { setWebSocketNotifier } from './services/websocket-notifier';
 
 import { 
