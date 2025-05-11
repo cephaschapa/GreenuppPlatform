@@ -224,6 +224,14 @@ export function Sidebar() {
       active: location === "/dashboard/stream-chat",
       showInMobileNav: true,
     },
+    {
+      title: "Farming Assistant",
+      href: "/dashboard/farming-assistant",
+      icon: <Brain className="h-5 w-5" />,
+      mobileIcon: <Brain className="h-6 w-6" />,
+      active: location === "/dashboard/farming-assistant",
+      showInMobileNav: true,
+    },
     // Add more supplier-specific navigation items here
   ];
 
