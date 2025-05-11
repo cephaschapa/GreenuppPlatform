@@ -42,7 +42,7 @@ router.post('/', async (req, res) => {
       
       for (const field of fields) {
         const crops = await storage.getCropsByField(field.id);
-        crops.forEach((crop: Crop) => cropTypes.add(crop.cropType));
+        crops.forEach((crop: Crop) => cropTypes.add(crop.name));
       }
       
       userContext = {

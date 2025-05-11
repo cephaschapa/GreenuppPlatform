@@ -131,6 +131,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up Stream Chat routes
   console.log("Setting up Stream Chat routes");
   app.use("/api/stream-chat", streamChatRoutes);
+  
+  // Set up AI farming assistant routes
+  console.log("Setting up AI farming assistant routes");
+  app.use("/api/farming-assistant", farmingAssistantRoutes);
 
   // Configure multer for file uploads with error handling
   const multerStorage = multer.memoryStorage();
