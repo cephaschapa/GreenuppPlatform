@@ -469,6 +469,42 @@ html.dark .str-chat__textarea:focus,
   }
 }
 
+/* Floating action button for new chat */
+.floating-action-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color) 0%, color-mix(in srgb, var(--primary-color), #2020ff 20%) 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 170, 80, 0.3);
+  border: none;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.floating-action-button:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 170, 80, 0.4);
+}
+
+.floating-action-button:active {
+  transform: translateY(0) scale(0.95);
+}
+
+/* Dark mode styling for floating action button */
+html.dark .floating-action-button,
+[data-theme="dark"] .floating-action-button {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, color-mix(in srgb, var(--primary-dark), #3030ff 30%) 100%);
+  box-shadow: 0 4px 12px rgba(0, 200, 83, 0.2);
+}
+
 /* Channel list styling - light mode */
 .str-chat__channel-list {
   background-color: var(--surface-light);

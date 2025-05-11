@@ -326,13 +326,26 @@ export const StreamChatComponent = ({
       <Chat client={client} theme="str-chat__theme-light">
         <div className="flex h-full w-full flex-1">
           {(showChannelList || !isMobile) && (
-            <div className={`${isMobile ? 'w-full' : 'w-auto'} border-r overflow-hidden`}>
+            <div className={`${isMobile ? 'w-full' : 'w-auto'} border-r overflow-hidden relative`}>
               <div className="channel-list-header py-3 px-4 border-b">
                 <h2 className="text-lg font-semibold font-space">Messages</h2>
                 <p className="text-xs text-muted-foreground">
                   {userChannels.length} conversations
                 </p>
               </div>
+              
+              {/* Floating action button for new chat */}
+              <button 
+                className="floating-action-button"
+                onClick={() => {
+                  // Function to create a new chat would go here
+                  alert("Create new chat functionality will be implemented here");
+                }}
+                title="Start a new chat"
+              >
+                <UserPlus size={20} />
+              </button>
+              
               <ChannelList
                 filters={filters}
                 sort={sort}
