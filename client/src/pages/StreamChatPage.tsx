@@ -1,19 +1,31 @@
-import { useState, useEffect } from 'react';
-import { StreamChatProvider, useStreamChat } from '@/hooks/use-stream-chat';
-import StreamChatComponent from '@/components/chat/StreamChatComponent';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { apiRequest } from '@/lib/queryClient';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, Loader2, MessageSquare, Users } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from "react";
+import { StreamChatProvider, useStreamChat } from "@/hooks/use-stream-chat";
+import StreamChatComponent from "@/components/chat/StreamChatComponent";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { apiRequest } from "@/lib/queryClient";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { AlertTriangle, Loader2, MessageSquare, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 // Get the Stream Chat API key from environment variables
-const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY || '';
+const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY || "";
 
 function DiagnosticPanel() {
   const [status, setStatus] = useState<any>(null);
@@ -25,14 +37,14 @@ function DiagnosticPanel() {
   const checkStatus = async () => {
     setLoading(true);
     try {
-      const response = await apiRequest('GET', '/api/stream-chat/status');
+      const response = await apiRequest("GET", "/api/stream-chat/status");
       const data = await response.json();
       setStatus(data);
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to fetch Stream Chat status',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to fetch Stream Chat status",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -42,32 +54,36 @@ function DiagnosticPanel() {
   const testConnection = async () => {
     setTestLoading(true);
     try {
-      const response = await apiRequest('GET', '/api/stream-chat/test-connection');
+      const response = await apiRequest(
+        "GET",
+        "/api/stream-chat/test-connection",
+      );
       const data = await response.json();
       setTestResult(data);
       if (data.success) {
         toast({
-          title: 'Success',
-          description: 'Connection test successful',
+          title: "Success",
+          description: "Connection test successful",
         });
       } else {
         toast({
-          title: 'Error',
-          description: data.error || 'Connection test failed',
-          variant: 'destructive',
+          title: "Error",
+          description: data.error || "Connection test failed",
+          variant: "destructive",
         });
       }
     } catch (error: any) {
       toast({
-        title: 'Error',
-        description: 'Failed to test Stream Chat connection',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to test Stream Chat connection",
+        variant: "destructive",
       });
       setTestResult({
         success: false,
-        error: error && typeof error === 'object' && 'message' in error 
-          ? error.message 
-          : 'Unknown error',
+        error:
+          error && typeof error === "object" && "message" in error
+            ? error.message
+            : "Unknown error",
       });
     } finally {
       setTestLoading(false);
@@ -86,29 +102,44 @@ function DiagnosticPanel() {
         <div className="flex flex-col gap-4">
           <div className="flex gap-4">
             <Button onClick={checkStatus} disabled={loading}>
-              {loading ? 'Checking...' : 'Check API Status'}
+              {loading ? "Checking..." : "Check API Status"}
             </Button>
-            <Button onClick={testConnection} disabled={testLoading} variant="secondary">
-              {testLoading ? 'Testing...' : 'Test Connection'}
+            <Button
+              onClick={testConnection}
+              disabled={testLoading}
+              variant="secondary"
+            >
+              {testLoading ? "Testing..." : "Test Connection"}
             </Button>
           </div>
 
           {status && (
             <div className="p-4 border rounded-lg bg-muted">
               <h3 className="font-semibold mb-2">API Status</h3>
-              <pre className="text-xs overflow-auto">{JSON.stringify(status, null, 2)}</pre>
+              <pre className="text-xs overflow-auto">
+                {JSON.stringify(status, null, 2)}
+              </pre>
             </div>
           )}
 
           {testResult && (
-            <div className={`p-4 border rounded-lg ${testResult.success ? 'bg-green-50' : 'bg-red-50'}`}>
+            <div
+              className={`p-4 border rounded-lg ${testResult.success ? "bg-green-50" : "bg-red-50"}`}
+            >
               <h3 className="font-semibold mb-2">Connection Test Result</h3>
-              <pre className="text-xs overflow-auto">{JSON.stringify(testResult, null, 2)}</pre>
+              <pre className="text-xs overflow-auto">
+                {JSON.stringify(testResult, null, 2)}
+              </pre>
             </div>
           )}
 
           <div className="text-sm text-muted-foreground">
-            <p>API Key: {STREAM_API_KEY ? `${STREAM_API_KEY.substring(0, 5)}...` : 'Not set'}</p>
+            <p>
+              API Key:{" "}
+              {STREAM_API_KEY
+                ? `${STREAM_API_KEY.substring(0, 5)}...`
+                : "Not set"}
+            </p>
             <p>Front-end ENV var: VITE_STREAM_API_KEY</p>
             <p>Back-end ENV vars: STREAM_API_KEY, STREAM_API_SECRET</p>
           </div>
@@ -119,61 +150,71 @@ function DiagnosticPanel() {
 }
 
 // Create a component for selecting users within the StreamChatProvider context
-function NewChatDialogContent({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+function NewChatDialogContent({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const { toast } = useToast();
   const { createDirectChannel } = useStreamChat();
-  const [newChatUserId, setNewChatUserId] = useState('');
+  const [newChatUserId, setNewChatUserId] = useState("");
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
-  
+
   // Fetch users from our API
-  const { data: usersData, isLoading, error } = useQuery<{ users: Array<{ id: number; name: string; role: string }> }>({
-    queryKey: ['/api/stream-chat/users'],
+  const {
+    data: usersData,
+    isLoading,
+    error,
+  } = useQuery<{ users: Array<{ id: number; name: string; role: string }> }>({
+    queryKey: ["/api/stream-chat/users"],
     enabled: open, // Only fetch when dialog is open
   });
-  
+
   const users = usersData?.users || [];
-  
+
   // Reset state when dialog opens
   useEffect(() => {
     if (open) {
-      setNewChatUserId('');
+      setNewChatUserId("");
       setSelectedUser(null);
     }
   }, [open]);
-  
+
   const startNewChat = async () => {
     if (!selectedUser || !newChatUserId) return;
-    
+
     setIsCreatingChat(true);
     try {
       // Use the StreamChat API to create a direct channel
       const channel = await createDirectChannel(
         parseInt(newChatUserId, 10),
-        selectedUser.name
+        selectedUser.name,
       );
-      
+
       if (channel) {
         toast({
-          title: 'Chat Created',
+          title: "Chat Created",
           description: `Started chat with ${selectedUser.name}`,
         });
         onOpenChange(false);
       } else {
-        throw new Error('Failed to create chat channel');
+        throw new Error("Failed to create chat channel");
       }
     } catch (error) {
-      console.error('Error creating chat:', error);
+      console.error("Error creating chat:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to create chat. Please try again.',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to create chat. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsCreatingChat(false);
     }
   };
-  
+
   return (
     <DialogContent>
       <DialogHeader>
@@ -203,7 +244,7 @@ function NewChatDialogContent({ open, onOpenChange }: { open: boolean; onOpenCha
                 const userId = e.target.value;
                 setNewChatUserId(userId);
                 setSelectedUser(
-                  users.find((u: any) => u.id.toString() === userId) || null
+                  users.find((u: any) => u.id.toString() === userId) || null,
                 );
               }}
             >
@@ -235,7 +276,7 @@ function NewChatDialogContent({ open, onOpenChange }: { open: boolean; onOpenCha
               Creating Chat...
             </>
           ) : (
-            'Start Chat'
+            "Start Chat"
           )}
         </Button>
       </div>
@@ -253,9 +294,10 @@ export default function StreamChatPage() {
   useEffect(() => {
     if (!STREAM_API_KEY) {
       toast({
-        title: 'Configuration Error',
-        description: 'Stream Chat API key is missing. Please add it to your environment variables.',
-        variant: 'destructive',
+        title: "Configuration Error",
+        description:
+          "Stream Chat API key is missing. Please add it to your environment variables.",
+        variant: "destructive",
       });
     }
   }, [toast]);
@@ -277,10 +319,14 @@ export default function StreamChatPage() {
         <div className="bg-destructive/20 border border-destructive text-destructive p-4 rounded-md">
           <h2 className="font-bold">Authentication Required</h2>
           <p>
-            You need to be logged in to use the chat feature. Please log in or register to continue.
+            You need to be logged in to use the chat feature. Please log in or
+            register to continue.
           </p>
         </div>
-        <Button onClick={() => window.location.href = '/auth'} className="mt-4">
+        <Button
+          onClick={() => (window.location.href = "/auth")}
+          className="mt-4"
+        >
           Go to Login
         </Button>
       </div>
@@ -294,12 +340,15 @@ export default function StreamChatPage() {
         <div className="bg-destructive/20 border border-destructive text-destructive p-4 rounded-md">
           <h2 className="font-bold">Stream Chat Configuration Error</h2>
           <p>
-            The Stream Chat API key is missing. Please make sure the VITE_STREAM_API_KEY environment
-            variable is set.
+            The Stream Chat API key is missing. Please make sure the
+            VITE_STREAM_API_KEY environment variable is set.
           </p>
         </div>
-        <Button onClick={() => setShowDiagnostics(!showDiagnostics)} className="mt-4">
-          {showDiagnostics ? 'Hide Diagnostics' : 'Show Diagnostics'}
+        <Button
+          onClick={() => setShowDiagnostics(!showDiagnostics)}
+          className="mt-4"
+        >
+          {showDiagnostics ? "Hide Diagnostics" : "Show Diagnostics"}
         </Button>
         {showDiagnostics && <DiagnosticPanel />}
       </div>
@@ -314,20 +363,27 @@ export default function StreamChatPage() {
             <MessageSquare size={20} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold font-space tracking-tight">Chat</h1>
-            <p className="text-sm text-muted-foreground">Connect with other farmers in real-time</p>
+            <h1 className="text-2xl font-bold font-space tracking-tight">
+              Chat
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Connect with other farmers in real-time
+            </p>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button 
-            onClick={() => setShowDiagnostics(!showDiagnostics)} 
-            variant="outline" 
+          <Button
+            onClick={() => setShowDiagnostics(!showDiagnostics)}
+            variant="outline"
             size="sm"
             className="hidden md:flex"
           >
-            {showDiagnostics ? 'Hide Diagnostics' : 'Advanced Settings'}
+            {showDiagnostics ? "Hide Diagnostics" : "Advanced Settings"}
           </Button>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+          >
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <Users size={16} />
@@ -337,7 +393,10 @@ export default function StreamChatPage() {
             {/* We need to wrap the dialog content in the Stream Chat Provider */}
             {isCreateDialogOpen && (
               <StreamChatProvider apiKey={STREAM_API_KEY}>
-                <NewChatDialogContent open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
+                <NewChatDialogContent
+                  open={isCreateDialogOpen}
+                  onOpenChange={setIsCreateDialogOpen}
+                />
               </StreamChatProvider>
             )}
           </Dialog>
@@ -346,14 +405,12 @@ export default function StreamChatPage() {
 
       {showDiagnostics && <DiagnosticPanel />}
 
-      <div className={`${showDiagnostics ? 'h-[calc(100%-12rem)]' : 'h-[calc(100%-4.5rem)]'} border rounded-lg shadow-sm overflow-hidden bg-white dark:bg-gray-950`}>
+      <div
+        className={`${showDiagnostics ? "h-[calc(100%-12rem)]" : "h-[calc(100%-4.5rem)]"} border rounded-lg shadow-sm overflow-hidden`}
+      >
         <StreamChatProvider apiKey={STREAM_API_KEY}>
           <StreamChatComponent />
         </StreamChatProvider>
-      </div>
-      
-      <div className="mt-4 text-xs text-muted-foreground text-center">
-        <p>Powered by Stream Chat</p>
       </div>
     </div>
   );
