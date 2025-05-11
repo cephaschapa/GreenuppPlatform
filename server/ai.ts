@@ -9,6 +9,12 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Message interface for conversation history
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 interface CropData {
   cropId: number;
   cropType: string;
@@ -104,8 +110,80 @@ export async function generateCropYieldPrediction(data: CropData): Promise<Inser
       yieldUnit: "tons",
       confidenceLevel: null,
       factorsConsidered: {
-        error: "Failed to generate AI prediction. Please try again later."
+        errorMessage: "Failed to generate AI prediction. Please try again later."
       },
     };
+  }
+}
+
+/**
+ * Generate a farming best practices chat response using OpenAI
+ */
+export async function farmingAssistantChat(
+  messages: ChatMessage[],
+  userContext?: {
+    cropTypes?: string[];
+    region?: string;
+    soilType?: string;
+    farmingExperience?: string;
+  }
+): Promise<string> {
+  try {
+    // Create a system message with farming knowledge and context
+    const systemMessage: ChatMessage = {
+      role: 'system',
+      content: `You are GreenWisdom, an advanced agricultural assistant specializing in sustainable farming practices. 
+      Your purpose is to provide personalized, expert advice to farmers using the latest agricultural science and research.
+      
+      ${userContext ? `
+      User context:
+      Crops grown: ${userContext.cropTypes?.join(', ') || 'Unknown'}
+      Region: ${userContext.region || 'Unknown'}
+      Soil type: ${userContext.soilType || 'Unknown'}
+      Farming experience: ${userContext.farmingExperience || 'Unknown'}
+      ` : ''}
+      
+      When providing advice:
+      - Be practical and specific, offering actionable steps
+      - Consider sustainable farming practices
+      - Adapt recommendations to the user's region and crop types when known
+      - Include scientific explanations but in accessible language
+      - Reference modern agricultural research when relevant
+      - Avoid generic answers that don't address the specific question
+      
+      Topics you can provide expert advice on include:
+      - Soil health and management
+      - Pest and disease control using IPM methods
+      - Crop selection and rotation strategies
+      - Water management and conservation
+      - Sustainable farming practices
+      - Climate-smart agriculture
+      - Organic farming techniques
+      - Farm equipment and technology
+      - Post-harvest handling
+      - Market access and certification
+      
+      Be friendly, encouraging, and empowering. Your advice should help farmers improve their practices, increase yields, and farm more sustainably.`
+    };
+
+    // Prepare the conversation history
+    const conversationHistory = [
+      systemMessage,
+      ...messages.slice(-10) as ChatMessage[], // Only keep the last 10 messages for context window management
+    ];
+
+    // Call OpenAI
+    const response = await openai.chat.completions.create({
+      model: MODEL,
+      messages: conversationHistory,
+      temperature: 0.7, // Slightly creative but still focused
+      max_tokens: 1000, // Limit response length
+    });
+
+    // Return the assistant's response
+    return response.choices[0].message.content || "I'm sorry, I couldn't generate a response. Please try again.";
+  } catch (error) {
+    console.error("Error in farming assistant chat:", error);
+    return "I'm sorry, I encountered an error processing your question. Please try again later.";
   }
 }
