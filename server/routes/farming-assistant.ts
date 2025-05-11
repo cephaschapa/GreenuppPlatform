@@ -7,14 +7,24 @@ import { type Crop } from '@shared/schema';
 
 const router = Router();
 
-// Schema for chat request validation
-const assistantChatRequestSchema = z.object({
+// Schema for chat request validation - support both single message and full message array formats
+const simpleMessageSchema = z.object({
+  message: z.string()
+});
+
+const fullMessageSchema = z.object({
   messages: z.array(z.object({
     role: z.enum(['user', 'assistant', 'system']),
     content: z.string()
   })),
   includeFarmerContext: z.boolean().optional().default(true)
 });
+
+// We'll use two separate schemas rather than a discriminated union
+const assistantChatRequestSchema = z.union([
+  simpleMessageSchema,
+  fullMessageSchema
+]);
 
 type AssistantChatRequest = z.infer<typeof assistantChatRequestSchema>;
 
@@ -27,7 +37,24 @@ router.post('/', async (req, res) => {
   try {
     // Validate request
     const validatedData = assistantChatRequestSchema.parse(req.body);
-    const { messages, includeFarmerContext } = validatedData;
+    
+    // Process messages based on format
+    let messages: ChatMessage[] = [];
+    let includeFarmerContext = true;
+    
+    if ('message' in validatedData) {
+      // Simple format with single message
+      messages = [
+        {
+          role: 'user',
+          content: validatedData.message
+        }
+      ];
+    } else {
+      // Full format with message array
+      messages = validatedData.messages;
+      includeFarmerContext = validatedData.includeFarmerContext ?? true;
+    }
 
     // Get user context if requested
     let userContext = undefined;
@@ -70,6 +97,44 @@ router.post('/', async (req, res) => {
     }
     
     res.status(500).json({ error: 'Failed to process your request. Please try again later.' });
+  }
+});
+
+// GET endpoint to provide context about the farmer's crops and fields
+router.get('/context', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: 'You must be logged in to use this feature' });
+  }
+
+  try {
+    // Get farmer profile data
+    const farmerProfile = await storage.getFarmerProfile(req.user.id);
+    
+    // Get field data
+    const fields = await storage.getFields(req.user.id);
+    
+    // Get crop data
+    const crops = [];
+    const soilTypes = new Set<string>();
+    
+    for (const field of fields) {
+      const fieldCrops = await storage.getCropsByField(field.id);
+      crops.push(...fieldCrops);
+      
+      if (field.soilType) {
+        soilTypes.add(field.soilType);
+      }
+    }
+    
+    res.json({
+      crops,
+      fields,
+      soilTypes: Array.from(soilTypes),
+      region: farmerProfile?.farmLocation || undefined
+    });
+  } catch (error) {
+    console.error('Error fetching farming context:', error);
+    res.status(500).json({ error: 'Failed to fetch farming context' });
   }
 });
 

@@ -62,8 +62,16 @@ export default function FarmingAssistantPage() {
     }
   }, []);
 
+  // Define types for the farming context
+  interface FarmingContext {
+    crops?: { id: number; name: string; }[];
+    fields?: { id: number; name: string; location: string; }[];
+    soilTypes?: string[];
+    region?: string;
+  }
+  
   // Fetch farming context (crops, fields, etc.) for personalized responses
-  const { data: farmingContext, isLoading: isLoadingContext } = useQuery({
+  const { data: farmingContext, isLoading: isLoadingContext } = useQuery<FarmingContext>({
     queryKey: ["/api/farming-assistant/context"],
     enabled: firstMessageSent,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -159,13 +167,13 @@ export default function FarmingAssistantPage() {
             <div>
               <p>
                 <span className="font-medium">AI Assistant is using context from your farm:</span>{" "}
-                {farmingContext.crops?.length > 0 && (
-                  <>Crops: {farmingContext.crops.map((c: any) => c.name).join(", ")}.</>
+                {farmingContext.crops && farmingContext.crops.length > 0 && (
+                  <>Crops: {farmingContext.crops.map((c) => c.name).join(", ")}.</>
                 )}{" "}
-                {farmingContext.fields?.length > 0 && (
+                {farmingContext.fields && farmingContext.fields.length > 0 && (
                   <>Location: {farmingContext.fields[0].location}.</>
                 )}{" "}
-                {farmingContext.soilTypes?.length > 0 && (
+                {farmingContext.soilTypes && farmingContext.soilTypes.length > 0 && (
                   <>Soil: {farmingContext.soilTypes.join(", ")}.</>
                 )}
               </p>
