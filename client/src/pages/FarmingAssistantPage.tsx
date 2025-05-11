@@ -81,7 +81,7 @@ export default function FarmingAssistantPage() {
   const { mutate: sendMessage, isPending } = useMutation({
     mutationFn: async (message: string) => {
       const response = await apiRequest("POST", "/api/farming-assistant/chat", {
-        message,
+        message, // Simple format
       });
       return response.json();
     },
@@ -167,15 +167,15 @@ export default function FarmingAssistantPage() {
             <div>
               <p>
                 <span className="font-medium">AI Assistant is using context from your farm:</span>{" "}
-                {farmingContext.crops && farmingContext.crops.length > 0 && (
+                {farmingContext.crops && farmingContext.crops.length > 0 ? (
                   <>Crops: {farmingContext.crops.map((c) => c.name).join(", ")}.</>
-                )}{" "}
-                {farmingContext.fields && farmingContext.fields.length > 0 && (
+                ) : null}{" "}
+                {farmingContext.fields && farmingContext.fields.length > 0 ? (
                   <>Location: {farmingContext.fields[0].location}.</>
-                )}{" "}
-                {farmingContext.soilTypes && farmingContext.soilTypes.length > 0 && (
+                ) : null}{" "}
+                {farmingContext.soilTypes && farmingContext.soilTypes.length > 0 ? (
                   <>Soil: {farmingContext.soilTypes.join(", ")}.</>
-                )}
+                ) : null}
               </p>
             </div>
           </div>
