@@ -25,6 +25,11 @@ import {
   Image as ImageIcon,
   Paperclip,
   Smile,
+  Home,
+  ShoppingCart,
+  Bell,
+  PlusCircle,
+  UserPlus,
 } from "lucide-react";
 
 // Simple media query hook implementation inline to avoid module import issues
@@ -191,9 +196,19 @@ const CustomChannelHeader = ({ onBackClick }: { onBackClick?: () => void }) => {
         </p>
       </div>
       
-      <button className="p-2 rounded-full hover:bg-accent transition-colors">
-        <Menu size={18} className="text-muted-foreground" />
-      </button>
+      {/* Navigation Links */}
+      <div className="flex items-center gap-2">
+        <a href="/dashboard" className="p-2 rounded-full hover:bg-accent transition-colors">
+          <Home size={19} className="text-muted-foreground" />
+        </a>
+        <a href="/notifications" className="p-2 rounded-full hover:bg-accent transition-colors relative">
+          <Bell size={19} className="text-muted-foreground" />
+          <span className="absolute top-0 right-0 bg-primary w-2 h-2 rounded-full"></span>
+        </a>
+        <a href="/cart" className="p-2 rounded-full hover:bg-accent transition-colors">
+          <ShoppingCart size={19} className="text-muted-foreground" />
+        </a>
+      </div>
     </div>
   );
 };
