@@ -1,41 +1,21 @@
 {
-  "name": "Greenupp - Digital Agriculture Platform",
+  "name": "Greenupp - Future of Agriculture",
   "short_name": "Greenupp",
   "description": "Comprehensive digital agriculture platform with advanced weather tracking and farm management",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#00FF00",
+  "background_color": "#FFFFFF",
+  "theme_color": "#24a148",
   "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
     {
       "src": "/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ],
-  "categories": ["agriculture", "farming", "weather", "farm management"],
-  "orientation": "portrait-primary",
-  "shortcuts": [
-    {
-      "name": "Weather",
-      "short_name": "Weather",
-      "description": "Check weather conditions",
-      "url": "/dashboard/weather",
-      "icons": [{ "src": "/icon-96x96.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "Crops",
-      "short_name": "Crops",
-      "description": "Manage your crops",
-      "url": "/dashboard/crops",
-      "icons": [{ "src": "/icon-96x96.png", "sizes": "96x96" }]
+      "type": "image/png"
     }
   ]
 }

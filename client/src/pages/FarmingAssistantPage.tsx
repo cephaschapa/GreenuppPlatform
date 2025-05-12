@@ -17,6 +17,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
+import greenuppLogo from "@/assets/greenupp-logo.svg";
 import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -432,8 +433,11 @@ export default function FarmingAssistantPage() {
           {/* Mobile header with session dropdown - visible only on mobile */}
           <div className="flex items-center mb-4 md:mb-0 p-4 border-b justify-between">
             <div className="flex items-center">
-              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary mr-3">
-                <Brain size={20} />
+              <div className="flex items-center mr-3">
+                <img src={greenuppLogo} alt="Greenupp Logo" className="h-8 mr-3" />
+                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                  <Brain size={16} />
+                </div>
               </div>
               <div>
                 <h1 className="text-xl font-bold font-space tracking-tight">
@@ -521,6 +525,7 @@ export default function FarmingAssistantPage() {
             <div className="bg-card border rounded-lg p-4 flex-1 overflow-y-auto flex flex-col gap-4">
               {messages.length === 0 && !isPending ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-8">
+                  <img src={greenuppLogo} alt="Greenupp Logo" className="h-12 mb-4" />
                   <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6">
                     <Brain size={40} />
                   </div>
