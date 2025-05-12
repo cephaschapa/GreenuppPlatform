@@ -742,3 +742,22 @@ export type InsertChatRoomMember = z.infer<typeof insertChatRoomMemberSchema>;
 export type ChatRoomMember = typeof chatRoomMembers.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
+
+// AI Assistant chat messages
+export const aiAssistantMessages = pgTable("ai_assistant_messages", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  role: text("role").notNull(), // 'user', 'assistant', or 'system'
+  content: text("content").notNull(),
+  contextData: jsonb("context_data").$type<Record<string, any>>(), // Store context like crops, soil type, etc.
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  sessionId: text("session_id").notNull(), // Group messages by conversation session
+});
+
+export const insertAiAssistantMessageSchema = createInsertSchema(aiAssistantMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertAiAssistantMessage = z.infer<typeof insertAiAssistantMessageSchema>;
+export type AiAssistantMessage = typeof aiAssistantMessages.$inferSelect;
