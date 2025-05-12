@@ -33,10 +33,31 @@ interface GreenuppDB extends DBSchema {
       timestamp: number;
     };
   };
+  aiAssistantMessages: {
+    key: string;
+    value: {
+      id: string;
+      userId: number;
+      role: 'user' | 'assistant' | 'system';
+      content: string;
+      timestamp: number;
+      sessionId: string;
+    };
+  };
+  aiAssistantSessions: {
+    key: string;
+    value: {
+      id: string;
+      userId: number;
+      title: string;
+      lastMessageDate: number;
+      contextData?: Record<string, any>;
+    };
+  };
 }
 
 // Database version - increment when schema changes
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 // Database name
 const DB_NAME = 'greenupp-db';
@@ -44,7 +65,7 @@ const DB_NAME = 'greenupp-db';
 // Open database connection
 export async function openDatabase(): Promise<IDBPDatabase<GreenuppDB>> {
   return openDB<GreenuppDB>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
+    upgrade(db, oldVersion, newVersion) {
       // Create stores if they don't exist
       if (!db.objectStoreNames.contains('weatherData')) {
         db.createObjectStore('weatherData', { keyPath: 'location' });
@@ -60,6 +81,21 @@ export async function openDatabase(): Promise<IDBPDatabase<GreenuppDB>> {
       
       if (!db.objectStoreNames.contains('formData')) {
         db.createObjectStore('formData', { keyPath: 'id', autoIncrement: true });
+      }
+      
+      // Version 2 adds AI Assistant message stores
+      if (oldVersion < 2) {
+        if (!db.objectStoreNames.contains('aiAssistantMessages')) {
+          const messagesStore = db.createObjectStore('aiAssistantMessages', { keyPath: 'id' });
+          messagesStore.createIndex('sessionId', 'sessionId', { unique: false });
+          messagesStore.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+        
+        if (!db.objectStoreNames.contains('aiAssistantSessions')) {
+          const sessionsStore = db.createObjectStore('aiAssistantSessions', { keyPath: 'id' });
+          sessionsStore.createIndex('userId', 'userId', { unique: false });
+          sessionsStore.createIndex('lastMessageDate', 'lastMessageDate', { unique: false });
+        }
       }
     },
   });
@@ -164,16 +200,106 @@ export async function deleteFormData(id: number): Promise<void> {
   await db.delete('formData', id);
 }
 
+// AI Assistant message functions
+export interface AIAssistantMessage {
+  id: string;
+  userId: number;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: number;
+  sessionId: string;
+}
+
+export interface AIAssistantSession {
+  id: string;
+  userId: number;
+  title: string;
+  lastMessageDate: number;
+  contextData?: Record<string, any>;
+}
+
+// Save a message to the database
+export async function saveAIAssistantMessage(message: AIAssistantMessage): Promise<void> {
+  const db = await openDatabase();
+  await db.put('aiAssistantMessages', message);
+  
+  // Update session's last message date
+  const session = await db.get('aiAssistantSessions', message.sessionId);
+  if (session) {
+    await db.put('aiAssistantSessions', {
+      ...session,
+      lastMessageDate: message.timestamp,
+    });
+  }
+}
+
+// Get all messages for a specific session
+export async function getAIAssistantMessagesBySession(sessionId: string): Promise<AIAssistantMessage[]> {
+  const db = await openDatabase();
+  try {
+    const index = db.transaction('aiAssistantMessages').store.index('sessionId');
+    const messages = await index.getAll(sessionId);
+    return messages.sort((a, b) => a.timestamp - b.timestamp);
+  } catch (error) {
+    console.error('Error retrieving AI Assistant messages from IndexedDB:', error);
+    return [];
+  }
+}
+
+// Save or update a session
+export async function saveAIAssistantSession(session: AIAssistantSession): Promise<void> {
+  const db = await openDatabase();
+  await db.put('aiAssistantSessions', session);
+}
+
+// Get all sessions for a user
+export async function getAIAssistantSessionsByUser(userId: number): Promise<AIAssistantSession[]> {
+  const db = await openDatabase();
+  try {
+    const index = db.transaction('aiAssistantSessions').store.index('userId');
+    const sessions = await index.getAll(userId);
+    return sessions.sort((a, b) => b.lastMessageDate - a.lastMessageDate); // Most recent first
+  } catch (error) {
+    console.error('Error retrieving AI Assistant sessions from IndexedDB:', error);
+    return [];
+  }
+}
+
+// Delete a specific session and all its messages
+export async function deleteAIAssistantSession(sessionId: string): Promise<void> {
+  const db = await openDatabase();
+  const tx = db.transaction(['aiAssistantSessions', 'aiAssistantMessages'], 'readwrite');
+  
+  // Delete session
+  await tx.objectStore('aiAssistantSessions').delete(sessionId);
+  
+  // Delete all messages with this sessionId
+  const messagesIndex = tx.objectStore('aiAssistantMessages').index('sessionId');
+  let cursor = await messagesIndex.openCursor(sessionId);
+  
+  while (cursor) {
+    await cursor.delete();
+    cursor = await cursor.continue();
+  }
+  
+  await tx.done;
+}
+
 // Clear all data from the database
 export async function clearDatabase(): Promise<void> {
   const db = await openDatabase();
-  const tx = db.transaction(['weatherData', 'weatherPreferences', 'crops', 'formData'], 'readwrite');
+  const tx = db.transaction(
+    ['weatherData', 'weatherPreferences', 'crops', 'formData', 'aiAssistantMessages', 'aiAssistantSessions'], 
+    'readwrite'
+  );
   
   await Promise.all([
     tx.objectStore('weatherData').clear(),
     tx.objectStore('weatherPreferences').clear(),
     tx.objectStore('crops').clear(),
     tx.objectStore('formData').clear(),
+    tx.objectStore('aiAssistantMessages').clear(),
+    tx.objectStore('aiAssistantSessions').clear(),
   ]);
   
   await tx.done;

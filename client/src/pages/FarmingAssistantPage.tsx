@@ -13,10 +13,30 @@ import {
   User,
   Bot,
   Info,
+  History,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { 
+  saveAIAssistantMessage, 
+  getAIAssistantMessagesBySession,
+  saveAIAssistantSession,
+  getAIAssistantSessionsByUser,
+  deleteAIAssistantSession,
+  AIAssistantMessage,
+  AIAssistantSession
+} from "@/lib/indexedDb";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Define message interface
 interface Message {
@@ -34,20 +54,140 @@ export default function FarmingAssistantPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [firstMessageSent, setFirstMessageSent] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string>("");
+  const [sessions, setSessions] = useState<AIAssistantSession[]>([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState<boolean>(false);
+  const [showSessions, setShowSessions] = useState<boolean>(false);
 
-  // Add a welcome message on first load
-  useEffect(() => {
-    if (messages.length === 0) {
-      setMessages([
-        {
-          id: "welcome",
-          role: "assistant",
-          content: "👋 Hello! I'm your AI Farming Assistant, ready to provide personalized advice based on your crops, soil conditions, and region. How can I help you today?",
-          timestamp: new Date(),
-        },
-      ]);
+  // Create a new session
+  const createNewSession = async () => {
+    if (!user) return;
+    
+    const sessionId = `session_${Date.now()}`;
+    const newSession: AIAssistantSession = {
+      id: sessionId,
+      userId: user.id,
+      title: 'New Conversation',
+      lastMessageDate: Date.now(),
+      contextData: {}, // Will be updated with farming context later
+    };
+    
+    // Save the new session
+    await saveAIAssistantSession(newSession);
+    setCurrentSessionId(sessionId);
+    
+    // Add welcome message
+    const welcomeMessage: AIAssistantMessage = {
+      id: `${sessionId}_welcome`,
+      userId: user.id,
+      role: 'assistant',
+      content: "👋 Hello! I'm your AI Farming Assistant, ready to provide personalized advice based on your crops, soil conditions, and region. How can I help you today?",
+      timestamp: Date.now(),
+      sessionId: sessionId,
+    };
+    
+    await saveAIAssistantMessage(welcomeMessage);
+    
+    // Update UI
+    setMessages([{
+      id: welcomeMessage.id,
+      role: welcomeMessage.role,
+      content: welcomeMessage.content,
+      timestamp: new Date(welcomeMessage.timestamp),
+    }]);
+    
+    // Refresh sessions list
+    await loadSessions();
+    
+    return sessionId;
+  };
+  
+  // Load all sessions for current user
+  const loadSessions = async () => {
+    if (!user) return;
+    
+    setIsLoadingSessions(true);
+    try {
+      const userSessions = await getAIAssistantSessionsByUser(user.id);
+      setSessions(userSessions);
+      
+      // If we have sessions but no current session selected, load the most recent one
+      if (userSessions.length > 0 && !currentSessionId) {
+        setCurrentSessionId(userSessions[0].id);
+        await loadMessagesForSession(userSessions[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading sessions:', error);
+    } finally {
+      setIsLoadingSessions(false);
     }
-  }, []);
+  };
+  
+  // Load messages for a specific session
+  const loadMessagesForSession = async (sessionId: string) => {
+    if (!sessionId || !user) return;
+    
+    try {
+      const sessionMessages = await getAIAssistantMessagesBySession(sessionId);
+      
+      // Convert to our Message interface format
+      const formattedMessages: Message[] = sessionMessages.map(msg => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date(msg.timestamp),
+      }));
+      
+      setMessages(formattedMessages);
+      setCurrentSessionId(sessionId);
+    } catch (error) {
+      console.error('Error loading messages for session:', error);
+    }
+  };
+  
+  // Delete a session
+  const deleteSession = async (sessionId: string) => {
+    try {
+      await deleteAIAssistantSession(sessionId);
+      toast({
+        title: "Session deleted",
+        description: "The conversation has been removed",
+      });
+      
+      // If we deleted the current session, clear messages and create a new session
+      if (sessionId === currentSessionId) {
+        setCurrentSessionId("");
+        setMessages([]);
+        await createNewSession();
+      }
+      
+      // Refresh sessions list
+      await loadSessions();
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete conversation",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Initialize on load
+  useEffect(() => {
+    const initializeChat = async () => {
+      if (user) {
+        await loadSessions();
+        
+        // If no sessions found after loading, create a new one
+        if (sessions.length === 0 && !isLoadingSessions) {
+          await createNewSession();
+        }
+      }
+    };
+    
+    initializeChat();
+  }, [user]);
 
   // Scroll to bottom when messages update
   useEffect(() => {
@@ -77,61 +217,144 @@ export default function FarmingAssistantPage() {
   });
 
   // Send message mutation
-  const { mutate: sendMessage, isPending } = useMutation({
-    mutationFn: async (message: string) => {
+  const { mutate: sendMessageToApi, isPending } = useMutation({
+    mutationFn: async (payload: { message: string, sessionId: string }) => {
       const response = await apiRequest("POST", "/api/farming-assistant/chat", {
-        message, // Simple format
+        message: payload.message, // Simple format
+        sessionId: payload.sessionId,
       });
       return response.json();
     },
-    onSuccess: (data) => {
-      // Add assistant's response to messages
+    onSuccess: async (data, variables) => {
+      if (!user) return;
+      
+      // Create assistant message
+      const assistantMessage: AIAssistantMessage = {
+        id: `${variables.sessionId}_${Date.now()}`,
+        userId: user.id,
+        role: "assistant",
+        content: data.response,
+        timestamp: Date.now(),
+        sessionId: variables.sessionId,
+      };
+      
+      // Save to IndexedDB
+      await saveAIAssistantMessage(assistantMessage);
+      
+      // Update session's lastMessageDate
+      const session = sessions.find(s => s.id === variables.sessionId);
+      if (session) {
+        await saveAIAssistantSession({
+          ...session,
+          lastMessageDate: assistantMessage.timestamp,
+        });
+        
+        // Refresh sessions list
+        loadSessions();
+      }
+      
+      // Add assistant's response to UI
       setMessages((prev) => [
         ...prev,
         {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: data.response,
-          timestamp: new Date(),
+          id: assistantMessage.id,
+          role: assistantMessage.role,
+          content: assistantMessage.content,
+          timestamp: new Date(assistantMessage.timestamp),
         },
       ]);
     },
-    onError: (error: Error) => {
+    onError: async (error: Error, variables) => {
+      if (!user) return;
+      
       toast({
         title: "Error sending message",
         description: error.message,
         variant: "destructive",
       });
-      // Add error message
+      
+      // Create error message
+      const errorMessage: AIAssistantMessage = {
+        id: `${variables.sessionId}_${Date.now()}`,
+        userId: user.id,
+        role: "assistant",
+        content: "I'm sorry, I encountered an error while processing your request. Please try again later.",
+        timestamp: Date.now(),
+        sessionId: variables.sessionId,
+      };
+      
+      // Save to IndexedDB
+      await saveAIAssistantMessage(errorMessage);
+      
+      // Add error message to UI
       setMessages((prev) => [
         ...prev,
         {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content:
-            "I'm sorry, I encountered an error while processing your request. Please try again later.",
-          timestamp: new Date(),
+          id: errorMessage.id,
+          role: errorMessage.role,
+          content: errorMessage.content,
+          timestamp: new Date(errorMessage.timestamp),
         },
       ]);
     },
   });
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !user) return;
 
-    // Add user message to state
-    const userMessage: Message = {
-      id: crypto.randomUUID(),
+    // If no active session, create one
+    let sessionId = currentSessionId;
+    if (!sessionId) {
+      sessionId = await createNewSession() || '';
+      if (!sessionId) return;
+    }
+
+    // Create user message for IndexedDB
+    const userMessage: AIAssistantMessage = {
+      id: `${sessionId}_${Date.now()}`,
+      userId: user.id,
       role: "user",
       content: input,
-      timestamp: new Date(),
+      timestamp: Date.now(),
+      sessionId: sessionId,
     };
-    setMessages((prev) => [...prev, userMessage]);
+    
+    // Save to IndexedDB
+    await saveAIAssistantMessage(userMessage);
+    
+    // Update session title if it's the first message
+    const session = sessions.find(s => s.id === sessionId);
+    if (session && session.title === 'New Conversation') {
+      // Use first few words of message as title
+      const title = input.substring(0, 30) + (input.length > 30 ? '...' : '');
+      await saveAIAssistantSession({
+        ...session,
+        title,
+        lastMessageDate: userMessage.timestamp,
+      });
+      
+      // Refresh sessions list
+      loadSessions();
+    }
+    
+    // Add user message to UI
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: userMessage.id,
+        role: userMessage.role,
+        content: userMessage.content,
+        timestamp: new Date(userMessage.timestamp),
+      },
+    ]);
 
     // Send to API
-    sendMessage(input);
+    sendMessageToApi({
+      message: input,
+      sessionId: sessionId,
+    });
 
     // Clear input field
     setInput("");
