@@ -31,6 +31,7 @@ import {
   Brain,
   MessageSquare,
 } from "lucide-react";
+import greenuppLogo from "@/assets/greenupp-logo.svg";
 import { CartIcon } from "@/components/cart/CartIcon";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -394,9 +395,13 @@ export function Sidebar() {
 
           <Link
             href={isAppSubdomain ? "/" : "/dashboard"}
-            className="text-xl font-bold font-space tracking-wider relative"
+            className="flex items-center"
           >
-            Green<span className="text-primary">upp</span>
+            <img 
+              src={greenuppLogo} 
+              alt="Greenupp Logo" 
+              className="h-8" 
+            />
             <span className="absolute -top-1 -right-10 text-slate-600 text-[10px] px-1 py-0.5 rounded-full font-semibold">
               BETA
             </span>
@@ -561,13 +566,14 @@ export function Sidebar() {
         <div className="p-6">
           <Link
             href="/"
-            className="text-2xl font-bold font-space tracking-wider group flex items-center relative"
+            className="group flex items-center relative"
           >
-            Green
-            <span className="text-primary group-hover:animate-pulse transition-all">
-              upp
-            </span>
-            <span className="absolute -top-1 -right-0 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full font-semibold">
+            <img 
+              src={greenuppLogo} 
+              alt="Greenupp Logo" 
+              className="h-10 group-hover:opacity-90 transition-opacity" 
+            />
+            <span className="absolute -top-1 right-1 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full font-semibold">
               BETA
             </span>
           </Link>

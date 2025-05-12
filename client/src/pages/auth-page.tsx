@@ -14,6 +14,7 @@ import { Redirect } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import greenuppLogo from "@/assets/greenupp-logo.svg";
 
 export default function AuthPage() {
   const { user, isLoading } = useAuth();
@@ -54,7 +55,9 @@ export default function AuthPage() {
       <div className="w-full md:w-1/2 flex flex-col justify-center items-center p-6 md:p-10">
         <div className="max-w-md w-full">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 font-space">Greenupp</h1>
+            <div className="flex items-center gap-2 mb-2">
+              <img src={greenuppLogo} alt="Greenupp Logo" className="h-12" />
+            </div>
             <p className="text-gray-600 dark:text-gray-400">
               Join the future of sustainable farming
             </p>
