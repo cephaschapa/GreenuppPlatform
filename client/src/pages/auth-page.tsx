@@ -14,7 +14,7 @@ import { Redirect } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import greenuppLogo from "@/assets/greenupp-logo.svg";
+import greenuppLogo from "@/assets/greenupp-full-logo.png";
 
 export default function AuthPage() {
   const { user, isLoading } = useAuth();
