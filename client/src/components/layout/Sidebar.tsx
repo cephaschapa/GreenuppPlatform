@@ -31,7 +31,7 @@ import {
   Brain,
   MessageSquare,
 } from "lucide-react";
-import greenuppLogo from "@/assets/greenupp-logo.svg";
+import greenuppLogo from "@/assets/greenupp-full-logo.png";
 import { CartIcon } from "@/components/cart/CartIcon";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";

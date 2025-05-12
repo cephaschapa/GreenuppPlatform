@@ -17,7 +17,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import greenuppLogo from "@/assets/greenupp-logo.svg";
+import greenuppLogo from "@/assets/greenupp-full-logo.png";
 import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
