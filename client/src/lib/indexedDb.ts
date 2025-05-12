@@ -33,6 +33,7 @@ interface GreenuppDB extends DBSchema {
       timestamp: number;
     };
   };
+  // AI assistant message store
   aiAssistantMessages: {
     key: string;
     value: {
@@ -43,7 +44,12 @@ interface GreenuppDB extends DBSchema {
       timestamp: number;
       sessionId: string;
     };
+    indexes: {
+      'sessionId': string; // used as 'by-session' index
+      'timestamp': number; // used as 'by-timestamp' index
+    };
   };
+  // AI assistant session store
   aiAssistantSessions: {
     key: string;
     value: {
@@ -52,6 +58,10 @@ interface GreenuppDB extends DBSchema {
       title: string;
       lastMessageDate: number;
       contextData?: Record<string, any>;
+    };
+    indexes: {
+      'userId': number; // used as 'by-user' index
+      'lastMessageDate': number; // used as 'by-last-message' index
     };
   };
 }

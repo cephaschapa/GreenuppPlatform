@@ -367,124 +367,251 @@ export default function FarmingAssistantPage() {
 
   return (
     <DashboardLayout title="AI Farming Assistant" description="Get personalized farming advice powered by AI">
-      <div className="max-w-4xl mx-auto">
-        {/* Mobile header - hidden on desktop */}
-        <div className="flex items-center mb-6 md:hidden">
-          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mr-4">
-            <Brain size={24} />
+      <div className="flex h-[calc(100vh-10rem)]">
+        {/* Session sidebar - hidden on mobile by default */}
+        <div className={`border-r bg-card w-[280px] flex-shrink-0 hidden md:block`}>
+          <div className="p-4 border-b flex items-center justify-between">
+            <h3 className="font-medium">Conversations</h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => createNewSession()}
+              title="New conversation"
+            >
+              <Plus size={18} />
+            </Button>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold font-space tracking-tight">
-              AI Farming Assistant
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Get personalized farming advice powered by AI
-            </p>
+          
+          <div className="h-[calc(100vh-14rem)] overflow-y-auto py-2">
+            {isLoadingSessions ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : sessions.length === 0 ? (
+              <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                <p>No conversations yet</p>
+                <p className="mt-1">Start chatting to create one</p>
+              </div>
+            ) : (
+              <div className="space-y-1 px-2">
+                {sessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className={`flex items-center justify-between p-2 rounded-md text-sm hover:bg-accent/50 cursor-pointer group ${
+                      currentSessionId === session.id ? "bg-accent" : ""
+                    }`}
+                    onClick={() => loadMessagesForSession(session.id)}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <History size={16} className="text-muted-foreground" />
+                      <span className="truncate">{session.title}</span>
+                    </div>
+                    
+                    {currentSessionId === session.id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteSession(session.id);
+                        }}
+                        title="Delete conversation"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Context indicator (when available) */}
-        {farmingContext && (
-          <Card className="p-3 mb-4 bg-muted/30 border border-muted">
-            <div className="flex items-start gap-2 text-xs text-muted-foreground">
-              <Info size={14} className="mt-0.5" />
+        
+        <div className="flex-1 flex flex-col">
+          {/* Mobile header with session dropdown - visible only on mobile */}
+          <div className="flex items-center mb-4 md:mb-0 p-4 border-b justify-between">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary mr-3">
+                <Brain size={20} />
+              </div>
               <div>
-                <p>
-                  <span className="font-medium">AI Assistant is using context from your farm:</span>{" "}
-                  {farmingContext.crops && farmingContext.crops.length > 0 ? (
-                    <>Crops: {farmingContext.crops.map((c) => c.name).join(", ")}.</>
-                  ) : null}{" "}
-                  {farmingContext.fields && farmingContext.fields.length > 0 ? (
-                    <>Location: {farmingContext.fields[0].location}.</>
-                  ) : null}{" "}
-                  {farmingContext.soilTypes && farmingContext.soilTypes.length > 0 ? (
-                    <>Soil: {farmingContext.soilTypes.join(", ")}.</>
-                  ) : null}
+                <h1 className="text-xl font-bold font-space tracking-tight">
+                  AI Farming Assistant
+                </h1>
+                <p className="text-xs text-muted-foreground">
+                  Get personalized farming advice
                 </p>
               </div>
             </div>
-          </Card>
-        )}
+            
+            {/* Mobile session controls */}
+            <div className="flex items-center gap-2 md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <History size={14} />
+                    <span>History</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[200px]">
+                  <DropdownMenuLabel>Conversations</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {sessions.length === 0 ? (
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">No conversations yet</div>
+                  ) : (
+                    sessions.map((session) => (
+                      <DropdownMenuItem 
+                        key={session.id}
+                        className="gap-2 justify-between"
+                        onClick={() => loadMessagesForSession(session.id)}
+                      >
+                        <span className="truncate">{session.title}</span>
+                        {currentSessionId === session.id && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteSession(session.id);
+                            }}
+                          >
+                            <Trash2 size={12} />
+                          </Button>
+                        )}
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => createNewSession()}>
+                    <Plus size={14} className="mr-2" />
+                    New conversation
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
 
-        {/* Messages container */}
-        <div className="bg-card border rounded-lg p-4 h-[calc(100vh-16rem)] md:h-[calc(100vh-22rem)] overflow-y-auto flex flex-col gap-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={cn("flex items-start gap-3 max-w-[85%] animate-in fade-in-0 zoom-in-95 duration-300", {
-                "ml-auto": message.role === "user",
-              })}
-            >
-              {/* Avatar */}
-              {message.role !== "user" ? (
-                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary flex-shrink-0">
-                  <Bot size={16} />
+          <div className="flex-1 flex flex-col px-4 py-2">
+            {/* Context indicator (when available) */}
+            {farmingContext && (
+              <Card className="p-3 mb-4 bg-muted/30 border border-muted">
+                <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                  <Info size={14} className="mt-0.5" />
+                  <div>
+                    <p>
+                      <span className="font-medium">AI Assistant is using context from your farm:</span>{" "}
+                      {farmingContext.crops && farmingContext.crops.length > 0 ? (
+                        <>Crops: {farmingContext.crops.map((c) => c.name).join(", ")}.</>
+                      ) : null}{" "}
+                      {farmingContext.fields && farmingContext.fields.length > 0 ? (
+                        <>Location: {farmingContext.fields[0].location}.</>
+                      ) : null}{" "}
+                      {farmingContext.soilTypes && farmingContext.soilTypes.length > 0 ? (
+                        <>Soil: {farmingContext.soilTypes.join(", ")}.</>
+                      ) : null}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Messages container */}
+            <div className="bg-card border rounded-lg p-4 flex-1 overflow-y-auto flex flex-col gap-4">
+              {messages.length === 0 && !isPending ? (
+                <div className="h-full flex flex-col items-center justify-center text-center p-8">
+                  <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-6">
+                    <Brain size={40} />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">AI Farming Assistant</h3>
+                  <p className="text-muted-foreground max-w-md">
+                    I can provide personalized farming advice based on your specific crops, soil conditions, and region. Ask me anything about farming!
+                  </p>
                 </div>
               ) : (
-                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-secondary/80 text-secondary-foreground order-last flex-shrink-0">
-                  <User size={16} />
-                </div>
+                <>
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={cn("flex items-start gap-3 max-w-[85%] animate-in fade-in-0 zoom-in-95 duration-300", {
+                        "ml-auto": message.role === "user",
+                      })}
+                    >
+                      {/* Avatar */}
+                      {message.role !== "user" ? (
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary flex-shrink-0">
+                          <Bot size={16} />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-secondary/80 text-secondary-foreground order-last flex-shrink-0">
+                          <User size={16} />
+                        </div>
+                      )}
+
+                      {/* Message bubble */}
+                      <div
+                        className={cn(
+                          "py-2.5 px-3 rounded-lg",
+                          message.role === "user"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-foreground"
+                        )}
+                      >
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                          <Markdown>{message.content}</Markdown>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Loading indicator */}
+                  {isPending && (
+                    <div className="flex items-start gap-3 max-w-[85%]">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary flex-shrink-0">
+                        <Bot size={16} />
+                      </div>
+                      <div className="py-2.5 px-3 rounded-lg bg-muted">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Scroll anchor */}
+                  <div ref={messagesEndRef} />
+                </>
               )}
+            </div>
 
-              {/* Message bubble */}
-              <div
-                className={cn(
-                  "py-2.5 px-3 rounded-lg",
-                  message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-foreground"
-                )}
+            {/* Message input form */}
+            <form onSubmit={handleSubmit} className="mt-4 flex items-center gap-2">
+              <Textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask about crop management, pest control, soil health..."
+                className="min-h-[52px] max-h-32 py-3"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
+              />
+              <Button
+                type="submit"
+                className="h-[52px] w-[52px] p-0"
+                disabled={isPending || !input.trim()}
               >
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <Markdown>{message.content}</Markdown>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {/* Loading indicator */}
-          {isPending && (
-            <div className="flex items-start gap-3 max-w-[85%]">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 text-primary flex-shrink-0">
-                <Bot size={16} />
-              </div>
-              <div className="py-2.5 px-3 rounded-lg bg-muted">
-                <Loader2 className="h-4 w-4 animate-spin" />
-              </div>
-            </div>
-          )}
-
-          {/* Scroll anchor */}
-          <div ref={messagesEndRef} />
+                {isPending ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Send className="h-5 w-5" />
+                )}
+              </Button>
+            </form>
+          </div>
         </div>
-
-        {/* Message input form */}
-        <form onSubmit={handleSubmit} className="mt-4 flex items-center gap-2">
-          <Textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about crop management, pest control, soil health..."
-            className="min-h-[52px] max-h-32 py-3"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit(e);
-              }
-            }}
-          />
-          <Button
-            type="submit"
-            className="h-[52px] w-[52px] p-0"
-            disabled={isPending || !input.trim()}
-          >
-            {isPending ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <Send className="h-5 w-5" />
-            )}
-          </Button>
-        </form>
       </div>
     </DashboardLayout>
   );
