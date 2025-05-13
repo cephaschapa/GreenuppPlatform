@@ -5,19 +5,19 @@ import { motion } from 'framer-motion';
 const sampleConversation = [
   {
     type: 'user',
-    message: "What is the best time to plant corn in the southern region?"
+    message: 'What is the best time to plant corn in the southern region?'
   },
   {
     type: 'ai',
-    message: "In the southern region, the ideal time to plant corn is typically between mid-March and early May when soil temperatures consistently reach 60°F (15.5°C) at a 4-inch depth. Early planting often yields better results due to longer growing season, but make sure to check your specific location's last frost date and current soil moisture levels."
+    message: 'In the southern region, the ideal time to plant corn is typically between mid-March and early May when soil temperatures consistently reach 60°F (15.5°C) at a 4-inch depth. Early planting often yields better results due to longer growing season, but make sure to check your specific location\'s last frost date and current soil moisture levels.'
   },
   {
     type: 'user',
-    message: "I have noticed some yellow spots on my corn leaves. What could this be?"
+    message: 'I have noticed some yellow spots on my corn leaves. What could this be?'
   },
   {
     type: 'ai',
-    message: "Yellow spots on corn leaves could indicate several issues. The most common causes are: 1) Nitrogen deficiency (yellowing starts at leaf tips and moves along the midrib in a V-shape), 2) Fungal diseases like Southern Corn Leaf Blight (rectangular yellow-to-brown lesions), or 3) Micronutrient deficiencies (zinc or iron). Can you share a photo of the affected leaves for a more precise diagnosis?"
+    message: 'Yellow spots on corn leaves could indicate several issues. The most common causes are: 1) Nitrogen deficiency (yellowing starts at leaf tips and moves along the midrib in a V-shape), 2) Fungal diseases like Southern Corn Leaf Blight (rectangular yellow-to-brown lesions), or 3) Micronutrient deficiencies (zinc or iron). Can you share a photo of the affected leaves for a more precise diagnosis?'
   }
 ];
 
