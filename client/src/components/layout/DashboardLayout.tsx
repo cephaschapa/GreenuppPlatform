@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
+import { PopoverAssistant } from "@/components/chat/PopoverAssistant";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -33,6 +34,9 @@ export function DashboardLayout({
           </div>
         </main>
       </div>
+      
+      {/* Popover AI Assistant */}
+      <PopoverAssistant />
     </div>
   );
 }
