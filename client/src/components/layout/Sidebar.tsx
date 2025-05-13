@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useCart } from "@/hooks/use-cart";
-import { useNotifications } from "@/hooks/use-notifications";
 import { useChat } from "@/hooks/use-chat";
 import { Button } from "@/components/ui/button";
-import { NotificationBell } from "@/components/NotificationBell";
+// Import for NotificationBell, useCart, and useNotifications removed as they're now in TopNavbar
 import {
   LayoutDashboard,
   TractorIcon,
@@ -50,15 +48,13 @@ import {
 export function Sidebar() {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
-  const { itemCount } = useCart();
-  const { unreadCount: notificationCount } = useNotifications();
   const { totalUnreadCount: chatUnreadCount } = useChat();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAppSubdomain, setIsAppSubdomain] = useState(false);
-  
+
   useEffect(() => {
     // Check if we're on app subdomain
-    setIsAppSubdomain(window.location.hostname.startsWith('app.'));
+    setIsAppSubdomain(window.location.hostname.startsWith("app."));
   }, []);
 
   const farmerNavItems = [
@@ -307,12 +303,12 @@ export function Sidebar() {
   // Function to rewrite URLs for subdomain
   const getPathForSubdomain = (path: string): string => {
     if (!isAppSubdomain) return path; // Keep as is for main domain
-    
+
     // For app subdomain, remove '/dashboard' prefix
-    if (path.startsWith('/dashboard')) {
-      return path === '/dashboard' ? '/' : path.replace('/dashboard/', '/');
+    if (path.startsWith("/dashboard")) {
+      return path === "/dashboard" ? "/" : path.replace("/dashboard/", "/");
     }
-    
+
     return path; // Keep paths like /trace and /ai-knowledge-base as is
   };
 
@@ -328,27 +324,30 @@ export function Sidebar() {
 
   // Create modified nav items for the current subdomain
   const createSubdomainNavItems = (items: NavItem[]) => {
-    return items.map(item => {
+    return items.map((item) => {
       // Create new path based on subdomain
       const newPath = getPathForSubdomain(item.href);
-      
+
       // Create new active check based on subdomain paths
       // We need to check both the original and new paths to handle initial render
-      const newActive = isAppSubdomain 
-        ? (newPath === location || item.href === location) 
+      const newActive = isAppSubdomain
+        ? newPath === location || item.href === location
         : item.active;
-      
+
       // For paths that start with /dashboard/xyz, also check for /xyz on app subdomain
-      const isNestedPath = item.href.startsWith('/dashboard/') && isAppSubdomain;
-      const appEquivalentPath = isNestedPath ? item.href.replace('/dashboard', '') : '';
-      const activePath = isNestedPath 
-        ? (location === appEquivalentPath || location === item.href || newActive)
+      const isNestedPath =
+        item.href.startsWith("/dashboard/") && isAppSubdomain;
+      const appEquivalentPath = isNestedPath
+        ? item.href.replace("/dashboard", "")
+        : "";
+      const activePath = isNestedPath
+        ? location === appEquivalentPath || location === item.href || newActive
         : newActive;
-      
+
       return {
         ...item,
         href: newPath,
-        active: activePath
+        active: activePath,
       };
     });
   };
@@ -371,7 +370,7 @@ export function Sidebar() {
       default:
         items = [];
     }
-    
+
     // Apply subdomain-specific path adjustments
     return createSubdomainNavItems(items);
   };
@@ -397,11 +396,7 @@ export function Sidebar() {
             href={isAppSubdomain ? "/" : "/dashboard"}
             className="flex items-center"
           >
-            <img 
-              src={greenuppLogo} 
-              alt="Greenupp Logo" 
-              className="h-8" 
-            />
+            <img src={greenuppLogo} alt="Greenupp Logo" className="h-8" />
             <span className="absolute -top-1 -right-10 text-slate-600 text-[10px] px-1 py-0.5 rounded-full font-semibold">
               BETA
             </span>
@@ -467,12 +462,18 @@ export function Sidebar() {
             )}
           >
             {item.title === "Chat" && chatUnreadCount > 0 && (
-              <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full">
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full"
+              >
                 {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
               </Badge>
             )}
             {item.title === "Socials" && notificationCount > 0 && (
-              <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full">
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full"
+              >
                 {notificationCount > 9 ? "9+" : notificationCount}
               </Badge>
             )}
@@ -488,12 +489,12 @@ export function Sidebar() {
           <div
             className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-fade-in"
             onClick={() => setIsMobileMenuOpen(false)}
-            style={{ animationDuration: '0.25s' }}
+            style={{ animationDuration: "0.25s" }}
           >
             <div
               className="fixed top-0 right-0 bottom-0 w-[280px] bg-sidebar border-l border-primary/20 shadow-xl p-4 overflow-y-auto safe-top safe-bottom flex flex-col h-screen animate-slide-in-right"
               onClick={(e) => e.stopPropagation()}
-              style={{ animationDuration: '0.3s' }}
+              style={{ animationDuration: "0.3s" }}
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Menu</h2>
@@ -526,12 +527,18 @@ export function Sidebar() {
                         <span>{item.title}</span>
                       </div>
                       {item.title === "Chat" && chatUnreadCount > 0 && (
-                        <Badge variant="destructive" className="h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full">
+                        <Badge
+                          variant="destructive"
+                          className="h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full"
+                        >
                           {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
                         </Badge>
                       )}
                       {item.title === "Socials" && notificationCount > 0 && (
-                        <Badge variant="destructive" className="h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full">
+                        <Badge
+                          variant="destructive"
+                          className="h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full"
+                        >
                           {notificationCount > 9 ? "9+" : notificationCount}
                         </Badge>
                       )}
@@ -545,7 +552,7 @@ export function Sidebar() {
                   variant="outline"
                   size="sm"
                   className="w-full flex items-center gap-2 animate-fade-in"
-                  style={{ animationDelay: '0.5s' }}
+                  style={{ animationDelay: "0.5s" }}
                   onClick={() => {
                     logoutMutation.mutate();
                     setIsMobileMenuOpen(false);
@@ -564,14 +571,11 @@ export function Sidebar() {
       {/* Desktop Sidebar */}
       <div className="hidden md:flex h-screen flex-col bg-sidebar text-sidebar-foreground border-r border-primary/20 w-64 fixed top-0 left-0">
         <div className="p-6">
-          <Link
-            href="/"
-            className="group flex items-center relative"
-          >
-            <img 
-              src={greenuppLogo} 
-              alt="Greenupp Logo" 
-              className="h-10 group-hover:opacity-90 transition-opacity" 
+          <Link href="/" className="group flex items-center relative">
+            <img
+              src={greenuppLogo}
+              alt="Greenupp Logo"
+              className="h-10 group-hover:opacity-90 transition-opacity"
             />
             <span className="absolute -top-1 right-1 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full font-semibold">
               BETA
@@ -598,12 +602,18 @@ export function Sidebar() {
                 </div>
                 <div className="flex items-center">
                   {item.title === "Chat" && chatUnreadCount > 0 && (
-                    <Badge variant="destructive" className="h-5 w-5 mr-1 flex items-center justify-center p-0 text-[10px] rounded-full">
+                    <Badge
+                      variant="destructive"
+                      className="h-5 w-5 mr-1 flex items-center justify-center p-0 text-[10px] rounded-full"
+                    >
                       {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
                     </Badge>
                   )}
                   {item.title === "Socials" && notificationCount > 0 && (
-                    <Badge variant="destructive" className="h-5 w-5 mr-1 flex items-center justify-center p-0 text-[10px] rounded-full">
+                    <Badge
+                      variant="destructive"
+                      className="h-5 w-5 mr-1 flex items-center justify-center p-0 text-[10px] rounded-full"
+                    >
                       {notificationCount > 9 ? "9+" : notificationCount}
                     </Badge>
                   )}
@@ -620,34 +630,12 @@ export function Sidebar() {
         </ScrollArea>
 
         <div className="p-4 border-t border-primary/20">
-          <div className="flex items-center gap-3 px-3 py-2 mb-4">
-            <Avatar className="h-9 w-9 border border-primary/20">
-              <AvatarFallback className="bg-primary/20 text-primary">
-                {(user && (user.firstName?.[0] || user.username?.[0])) || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="truncate">
-              <p className="text-sm font-medium truncate">
-                {user?.firstName || user?.username}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {user && user.role
-                  ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
-                  : "User"}
-              </p>
-            </div>
+          {/* Build version - using import.meta.env for Vite */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              Build: v1.0.0
+            </span>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full flex items-center gap-2"
-            onClick={() => logoutMutation.mutate()}
-            disabled={logoutMutation.isPending}
-          >
-            <LogOut className="h-4 w-4" />
-            {logoutMutation.isPending ? "Logging out..." : "Sign Out"}
-          </Button>
         </div>
       </div>
     </>
