@@ -638,15 +638,6 @@ export function Sidebar() {
             </div>
           </div>
 
-          <div className="flex gap-2 mb-4">
-            <Link href={isAppSubdomain ? "/marketplace/cart" : "/dashboard/marketplace/cart"}>
-              <CartIcon variant="sidebar" showLabel={true} />
-            </Link>
-            <Link href={isAppSubdomain ? "/notifications" : "/dashboard/notifications"}>
-              <NotificationBell />
-            </Link>
-          </div>
-
           <Button
             variant="outline"
             size="sm"

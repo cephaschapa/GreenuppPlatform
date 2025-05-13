@@ -434,7 +434,6 @@ export default function FarmingAssistantPage() {
           <div className="flex items-center mb-4 md:mb-0 p-4 border-b justify-between">
             <div className="flex items-center">
               <div className="flex items-center mr-3">
-                <img src={greenuppLogo} alt="Greenupp Logo" className="h-8 mr-3" />
                 <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary">
                   <Brain size={16} />
                 </div>
