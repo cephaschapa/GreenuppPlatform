@@ -404,9 +404,7 @@ export function Sidebar() {
         </div>
 
         <div className="flex items-center gap-2">
-          <CartIcon variant="mobile" />
-          <NotificationBell />
-
+          {/* Cart and notification functions moved to TopNavbar */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="rounded-full h-8 w-8 p-0">
@@ -469,14 +467,7 @@ export function Sidebar() {
                 {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
               </Badge>
             )}
-            {item.title === "Socials" && notificationCount > 0 && (
-              <Badge
-                variant="destructive"
-                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full"
-              >
-                {notificationCount > 9 ? "9+" : notificationCount}
-              </Badge>
-            )}
+            {/* Social notifications moved to top navbar */}
             {item.mobileIcon}
             <span className="text-xs line-clamp-1 text-center max-w-[70px]">
               {item.title}
@@ -534,14 +525,7 @@ export function Sidebar() {
                           {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
                         </Badge>
                       )}
-                      {item.title === "Socials" && notificationCount > 0 && (
-                        <Badge
-                          variant="destructive"
-                          className="h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full"
-                        >
-                          {notificationCount > 9 ? "9+" : notificationCount}
-                        </Badge>
-                      )}
+                      {/* Social notifications moved to top navbar */}
                     </Link>
                   ))}
                 </div>
