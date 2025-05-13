@@ -110,10 +110,11 @@ export function PopoverAssistant() {
       // Create assistant message
       const assistantMessage: AIAssistantMessage = {
         id: crypto.randomUUID(),
+        userId: user!.id,
         sessionId: currentSession.id,
         content: data.message,
         role: "assistant",
-        timestamp: new Date()
+        timestamp: Date.now()
       };
       
       // Save to local storage
@@ -125,7 +126,7 @@ export function PopoverAssistant() {
       // Update session last message time
       const updatedSession = {
         ...currentSession,
-        lastMessageAt: new Date()
+        lastMessageDate: Date.now()
       };
       await saveAIAssistantSession(updatedSession);
       setCurrentSession(updatedSession);
@@ -136,10 +137,11 @@ export function PopoverAssistant() {
       // Create error message
       const errorMessage: AIAssistantMessage = {
         id: crypto.randomUUID(),
+        userId: user!.id,
         sessionId: currentSession.id,
         content: "Sorry, I encountered an error. Please try again later.",
         role: "assistant",
-        timestamp: new Date()
+        timestamp: Date.now()
       };
       
       // Save to local storage
@@ -160,15 +162,16 @@ export function PopoverAssistant() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!input.trim() || !currentSession) return;
+    if (!input.trim() || !currentSession || !user) return;
     
     // Create user message
     const userMessage: AIAssistantMessage = {
       id: crypto.randomUUID(),
+      userId: user!.id,
       sessionId: currentSession.id,
       content: input,
       role: "user",
-      timestamp: new Date()
+      timestamp: Date.now()
     };
     
     // Save to local storage
@@ -186,7 +189,7 @@ export function PopoverAssistant() {
     // Update session last message time
     const updatedSession = {
       ...currentSession,
-      lastMessageAt: new Date()
+      lastMessageDate: Date.now()
     };
     await saveAIAssistantSession(updatedSession);
     setCurrentSession(updatedSession);
