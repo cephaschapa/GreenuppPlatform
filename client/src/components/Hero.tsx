@@ -191,7 +191,8 @@ const Hero = () => {
       </div>
       
       {/* CSS for pulse animation */}
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-10px); }
@@ -206,7 +207,8 @@ const Hero = () => {
         .pulse-animation {
           animation: pulse-animation 4s infinite;
         }
-      `}</style>
+        `
+      }} />
     </header>
   );
 };
