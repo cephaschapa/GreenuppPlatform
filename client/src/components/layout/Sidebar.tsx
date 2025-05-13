@@ -30,7 +30,6 @@ import {
   MessageSquare,
 } from "lucide-react";
 import greenuppLogo from "@/assets/greenupp-full-logo.png";
-import { CartIcon } from "@/components/cart/CartIcon";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserRole } from "@shared/schema";
@@ -593,14 +592,7 @@ export function Sidebar() {
                       {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
                     </Badge>
                   )}
-                  {item.title === "Socials" && notificationCount > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="h-5 w-5 mr-1 flex items-center justify-center p-0 text-[10px] rounded-full"
-                    >
-                      {notificationCount > 9 ? "9+" : notificationCount}
-                    </Badge>
-                  )}
+                  {/* Social notifications moved to top navbar */}
                   <ChevronRight
                     className={cn(
                       "h-4 w-4 opacity-0 transition-opacity",
