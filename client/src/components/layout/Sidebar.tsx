@@ -50,6 +50,8 @@ export function Sidebar() {
   const { totalUnreadCount: chatUnreadCount } = useChat();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAppSubdomain, setIsAppSubdomain] = useState(false);
+  // Temporarily using 0 as notification count was moved to TopNavbar
+  const notificationCount = 0;
 
   useEffect(() => {
     // Check if we're on app subdomain
