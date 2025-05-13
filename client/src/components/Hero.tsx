@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import droneFieldImage from "../assets/drone-field.svg";
-import greenuppLogo from "../assets/greenupp-full-logo.png";
+import greenuppLogo from "../assets/greenupp-full-logo.png"; // This now uses the updated logo
 import { Link } from "wouter";
 
 const Hero = () => {

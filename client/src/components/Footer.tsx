@@ -1,4 +1,5 @@
 import { Link } from 'wouter';
+import greenuppLogo from "../assets/greenupp-full-logo.png";
 
 const Footer = () => {
   return (
@@ -6,7 +7,13 @@ const Footer = () => {
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12">
           <div className="col-span-1 md:col-span-2">
-            <h2 className="text-2xl font-bold font-space tracking-tight text-foreground mb-4">Greenupp</h2>
+            <div className="mb-4">
+              <img 
+                src={greenuppLogo} 
+                alt="Greenupp Logo" 
+                className="h-10 w-auto mb-4"
+              />
+            </div>
             <p className="text-muted-foreground max-w-md mb-6">
               Revolutionizing agriculture through AI-driven technology, blockchain traceability, and comprehensive digital farming solutions.
             </p>

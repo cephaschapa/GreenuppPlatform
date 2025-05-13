@@ -1,6 +1,7 @@
 import { FC, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { ThemeToggle } from "./ThemeToggle";
+import greenuppLogo from "../assets/greenupp-full-logo.png";
 
 interface NavbarProps {
   mobileMenuOpen: boolean;
@@ -19,19 +20,16 @@ const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
     <nav className="fixed w-full bg-background/95 backdrop-blur-md z-50 border-b border-primary/20 shadow-md shadow-black/10 dark:shadow-black/20">
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-2 md:py-3 flex justify-between items-center">
         <div className="flex items-center">
-          <div className="text-primary text-2xl md:text-3xl mr-1 relative">
-            <i className="fas fa-leaf"></i>
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-          </div>
           <Link
             href="/"
-            className="text-xl md:text-2xl font-bold font-space tracking-wider group relative"
+            className="group relative"
           >
-            Green
-            <span className="text-primary group-hover:animate-pulse transition-all">
-              upp
-            </span>
-            <span className="absolute -top-2 -right-12 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full font-semibold">
+            <img 
+              src={greenuppLogo} 
+              alt="Greenupp Logo" 
+              className="h-8 md:h-10 w-auto"
+            />
+            <span className="absolute -top-2 -right-8 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full font-semibold">
               BETA
             </span>
           </Link>
