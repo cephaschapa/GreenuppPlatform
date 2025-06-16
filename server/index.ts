@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -10,31 +11,36 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 // Increase JSON payload size limit to 25MB for image uploads
-app.use(express.json({ limit: '25mb' }));
-app.use(express.urlencoded({ extended: false, limit: '25mb' }));
+app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ extended: false, limit: "25mb" }));
 
 // Serve uploaded files from the uploads directory
-app.use('/uploads', express.static(path.join(__dirname, "../uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Middleware to check if we're on app subdomain and redirect to auth if not authenticated
 // This only applies to non-API routes and allows /auth and static assets
 app.use((req, res, next) => {
-  const host = req.get('host') || '';
-  const isAppSubdomain = host.startsWith('app.');
+  const host = req.get("host") || "";
+  const isAppSubdomain = host.startsWith("app.");
   const path = req.path;
-  
+
   // Skip API routes and already on auth page
-  if (path.startsWith('/api') || path === '/auth' || path.startsWith('/assets/') || 
-      path.includes('.') || path.startsWith('/_assets/')) {
+  if (
+    path.startsWith("/api") ||
+    path === "/auth" ||
+    path.startsWith("/assets/") ||
+    path.includes(".") ||
+    path.startsWith("/_assets/")
+  ) {
     return next();
   }
-  
+
   // If we're on app subdomain, check for authentication
   if (isAppSubdomain && req.isAuthenticated && !req.isAuthenticated()) {
     console.log(`Subdomain auth redirect: ${path} -> /auth`);
-    return res.redirect('/auth');
+    return res.redirect("/auth");
   }
-  
+
   next();
 });
 
@@ -82,21 +88,21 @@ app.use((req, res, next) => {
 
   // Log environment for debugging if needed
   if (process.env.DEBUG_APP) {
-    console.log('NODE_ENV:', process.env.NODE_ENV);
-    console.log('App environment:', app.get("env"));
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+    console.log("App environment:", app.get("env"));
   }
-  
+
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
     if (process.env.DEBUG_APP) {
-      console.log('Setting up Vite for development');
+      console.log("Setting up Vite for development");
     }
     await setupVite(app, server);
   } else {
     if (process.env.DEBUG_APP) {
-      console.log('Setting up static serving for production');
+      console.log("Setting up static serving for production");
     }
     serveStatic(app);
   }
@@ -105,11 +111,14 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  server.listen(
+    {
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    },
+    () => {
+      log(`serving on port ${port}`);
+    }
+  );
 })();
