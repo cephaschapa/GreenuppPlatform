@@ -1,14 +1,17 @@
 /* Greenupp Chat UI Customization - Enhanced for Modern Design */
 
+/* Import the font */
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap");
+
 /* Primary color customization */
 :root {
-  --primary-color: #00C853;
+  --primary-color: #00c853;
   --primary-light: rgba(0, 200, 83, 0.15);
   --primary-dark: #00a844;
   --accent-color: #f3f3f3;
   --border-radius: 0.5rem;
-  --font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  
+  --font-family: "Space Grotesk", sans-serif;
+
   /* Light mode colors */
   --background-light: #ffffff;
   --surface-light: #f9fafb;
@@ -16,7 +19,7 @@
   --text-primary-light: #111827;
   --text-secondary-light: #64748b;
   --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
-  
+
   /* Dark mode colors */
   --background-dark: #121212;
   --surface-dark: #1e1e1e;
@@ -26,6 +29,10 @@
   --shadow-dark: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
+* {
+  font-family: var(--font-family) !important;
+}
+
 /* Handle light and dark mode variants */
 .str-chat {
   --str-chat__primary-color: var(--primary-color);
@@ -33,7 +40,6 @@
   --str-chat__primary-text-color: var(--text-primary-light);
   --str-chat__secondary-text-color: var(--text-secondary-light);
   height: 100%;
-  font-family: var(--font-family);
   width: 100%;
   transition: all 200ms ease-in-out;
 }
@@ -146,7 +152,7 @@ html.dark .str-chat__list::-webkit-scrollbar-thumb,
 
 /* Left bubble arrow effect */
 .str-chat__message-simple-text::before {
-  content: '';
+  content: "";
   position: absolute;
   left: -7px;
   top: 12px;
@@ -163,7 +169,11 @@ html.dark .str-chat__list::-webkit-scrollbar-thumb,
 }
 
 .str-chat__message-simple--mine .str-chat__message-simple-text {
-  background: linear-gradient(135deg, var(--primary-color) 0%, color-mix(in srgb, var(--primary-color), #2020ff 20%) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-color) 0%,
+    color-mix(in srgb, var(--primary-color), #2020ff 20%) 100%
+  );
   color: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border-top-left-radius: 18px;
@@ -174,7 +184,11 @@ html.dark .str-chat__list::-webkit-scrollbar-thumb,
 .str-chat__message-simple--mine .str-chat__message-simple-text::before {
   left: auto;
   right: -7px;
-  background: linear-gradient(135deg, var(--primary-color) 0%, color-mix(in srgb, var(--primary-color), #2020ff 20%) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-color) 0%,
+    color-mix(in srgb, var(--primary-color), #2020ff 20%) 100%
+  );
 }
 
 /* Hover effects for fun interaction */
@@ -198,14 +212,28 @@ html.dark .str-chat__message-simple-text::before,
 }
 
 html.dark .str-chat__message-simple--mine .str-chat__message-simple-text,
-[data-theme="dark"] .str-chat__message-simple--mine .str-chat__message-simple-text {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, color-mix(in srgb, var(--primary-dark), #3030ff 30%) 100%);
+[data-theme="dark"]
+  .str-chat__message-simple--mine
+  .str-chat__message-simple-text {
+  background: linear-gradient(
+    135deg,
+    var(--primary-dark) 0%,
+    color-mix(in srgb, var(--primary-dark), #3030ff 30%) 100%
+  );
   border: none;
 }
 
-html.dark .str-chat__message-simple--mine .str-chat__message-simple-text::before,
-[data-theme="dark"] .str-chat__message-simple--mine .str-chat__message-simple-text::before {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, color-mix(in srgb, var(--primary-dark), #3030ff 30%) 100%);
+html.dark
+  .str-chat__message-simple--mine
+  .str-chat__message-simple-text::before,
+[data-theme="dark"]
+  .str-chat__message-simple--mine
+  .str-chat__message-simple-text::before {
+  background: linear-gradient(
+    135deg,
+    var(--primary-dark) 0%,
+    color-mix(in srgb, var(--primary-dark), #3030ff 30%) 100%
+  );
 }
 
 /* Message timestamp */
@@ -290,11 +318,13 @@ html.dark .str-chat__message-simple--mine .str-chat__message-simple-text::before
 }
 
 @keyframes typing-bounce {
-  0%, 80%, 100% { 
+  0%,
+  80%,
+  100% {
     transform: scale(0);
   }
-  40% { 
-    transform: scale(1.0);
+  40% {
+    transform: scale(1);
   }
 }
 
@@ -477,7 +507,11 @@ html.dark .str-chat__textarea:focus,
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary-color) 0%, color-mix(in srgb, var(--primary-color), #2020ff 20%) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-color) 0%,
+    color-mix(in srgb, var(--primary-color), #2020ff 20%) 100%
+  );
   color: white;
   display: flex;
   align-items: center;
@@ -501,7 +535,11 @@ html.dark .str-chat__textarea:focus,
 /* Dark mode styling for floating action button */
 html.dark .floating-action-button,
 [data-theme="dark"] .floating-action-button {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, color-mix(in srgb, var(--primary-dark), #3030ff 30%) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-dark) 0%,
+    color-mix(in srgb, var(--primary-dark), #3030ff 30%) 100%
+  );
   box-shadow: 0 4px 12px rgba(0, 200, 83, 0.2);
 }
 
@@ -577,7 +615,9 @@ button.str-chat__header-hamburger {
   margin: 0;
   padding: 0;
   overflow-y: auto;
-  flex: 1;
+  width: 280px !important;
+  overflow: hidden;
+  position: fixed !important;
 }
 
 .str-chat__channel-list-messenger::-webkit-scrollbar {
@@ -804,7 +844,9 @@ html.dark .online-indicator,
   right: 0;
   z-index: 100; /* Higher z-index to ensure it's always on top */
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(5px); /* Create a slight blur effect for any content underneath */
+  backdrop-filter: blur(
+    5px
+  ); /* Create a slight blur effect for any content underneath */
   margin-top: auto; /* Push to bottom of flex container */
 }
 
@@ -875,23 +917,23 @@ html.dark .custom-message-input,
     display: flex;
     flex-direction: column;
   }
-  
+
   .str-chat__main-panel {
     width: 100%;
     flex-direction: column;
   }
-  
+
   .str-chat__thread {
     width: 100%;
     border-left: none;
     border-top: 1px solid var(--border-light);
   }
-  
+
   html.dark .str-chat__thread,
   [data-theme="dark"] .str-chat__thread {
     border-top: 1px solid var(--border-dark);
   }
-  
+
   .str-chat__input-flat {
     padding: 0.5rem;
   }

@@ -354,7 +354,7 @@ export const StreamChatComponent = ({
             <div
               className={`${
                 isMobile ? "w-full" : "w-auto"
-              } border-r overflow-hidden relative`}
+              } border-r overflow-hidden relative `}
             >
               <div className="channel-list-header py-3 px-4 border-b">
                 <h2 className="text-lg font-semibold font-space">Messages</h2>
