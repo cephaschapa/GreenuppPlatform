@@ -13,11 +13,11 @@ import {
   Avatar,
 } from "stream-chat-react";
 import { useStreamChat } from "@/hooks/use-stream-chat";
-import { 
-  Loader2, 
-  MessageSquare, 
-  AlertTriangle, 
-  Users, 
+import {
+  Loader2,
+  MessageSquare,
+  AlertTriangle,
+  Users,
   ChevronLeft,
   Menu,
   UserCircle2,
@@ -35,21 +35,21 @@ import {
 // Simple media query hook implementation inline to avoid module import issues
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState<boolean>(false);
-  
+
   useEffect(() => {
     const mediaQuery = window.matchMedia(query);
     setMatches(mediaQuery.matches);
-    
+
     const handleChange = (event: MediaQueryListEvent) => {
       setMatches(event.matches);
     };
-    
-    mediaQuery.addEventListener('change', handleChange);
+
+    mediaQuery.addEventListener("change", handleChange);
     return () => {
-      mediaQuery.removeEventListener('change', handleChange);
+      mediaQuery.removeEventListener("change", handleChange);
     };
   }, [query]);
-  
+
   return matches;
 }
 
@@ -61,34 +61,40 @@ import "./stream-chat-custom.css";
 const CustomMessageInput = () => {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { channel } = useChannelStateContext();
-  
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       const text = inputRef.current?.value.trim();
-      
+
       if (text && channel) {
         try {
           channel.sendMessage({
             text,
           });
           if (inputRef.current) {
-            inputRef.current.value = '';
+            inputRef.current.value = "";
           }
         } catch (err) {
-          console.error('Error sending message:', err);
+          console.error("Error sending message:", err);
         }
       }
     }
   };
-  
+
   return (
     <div className="custom-message-input p-3 border-t flex items-end gap-2">
       <div className="input-actions flex items-center gap-2">
-        <button className="p-2 rounded-full hover:bg-accent transition-colors" title="Attach file">
+        <button
+          className="p-2 rounded-full hover:bg-accent transition-colors"
+          title="Attach file"
+        >
           <Paperclip size={20} className="text-muted-foreground" />
         </button>
-        <button className="p-2 rounded-full hover:bg-accent transition-colors" title="Add image">
+        <button
+          className="p-2 rounded-full hover:bg-accent transition-colors"
+          title="Add image"
+        >
           <ImageIcon size={20} className="text-muted-foreground" />
         </button>
       </div>
@@ -100,11 +106,14 @@ const CustomMessageInput = () => {
           rows={1}
           onKeyDown={handleKeyDown}
         />
-        <button className="absolute right-2 bottom-2 p-1 rounded-full hover:bg-accent transition-colors" title="Add emoji">
+        <button
+          className="absolute right-2 bottom-2 p-1 rounded-full hover:bg-accent transition-colors"
+          title="Add emoji"
+        >
           <Smile size={18} className="text-muted-foreground" />
         </button>
       </div>
-      <button 
+      <button
         className="p-2 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all hover:shadow-md"
         onClick={() => {
           const text = inputRef.current?.value.trim();
@@ -112,10 +121,10 @@ const CustomMessageInput = () => {
             try {
               channel.sendMessage({ text });
               if (inputRef.current) {
-                inputRef.current.value = '';
+                inputRef.current.value = "";
               }
             } catch (err) {
-              console.error('Error sending message:', err);
+              console.error("Error sending message:", err);
             }
           }
         }}
@@ -131,28 +140,33 @@ const CustomMessageInput = () => {
 const CustomChannelHeader = ({ onBackClick }: { onBackClick?: () => void }) => {
   const { channel } = useChannelStateContext();
   const isMobile = useMediaQuery("(max-width: 768px)");
-  
+
   // Extract the other user's information
   let otherUser: any = null;
   let channelName = channel?.data?.name || "Chat";
   let isOnline = false;
-  
+
   try {
     if (channel) {
       if (channel.data?.name === "Direct Message") {
         const members = Object.values(channel.state?.members || {});
         // Access the client using _client instead of client
-        const otherMember = members.find(m => m.user?.id !== channel._client?.userID);
+        const otherMember = members.find(
+          (m) => m.user?.id !== channel._client?.userID
+        );
         if (otherMember?.user) {
           otherUser = otherMember.user;
+          console.log(otherUser);
           channelName = otherMember.user.name || otherMember.user.id;
           isOnline = otherMember.user.online || false;
         }
-      } else if (channel.data?.name && channel.data.name.includes('and')) {
+      } else if (channel.data?.name && channel.data.name.includes("and")) {
         // Handle "user1 and user2" format
         const currentUserId = channel._client?.userID;
-        const parts = channel.data.name.split(' and ');
-        const otherUserName = parts.find(part => !part.includes(currentUserId?.toString() || ''));
+        const parts = channel.data.name.split(" and ");
+        const otherUserName = parts.find(
+          (part) => !part.includes(currentUserId?.toString() || "")
+        );
         if (otherUserName) {
           channelName = otherUserName.trim();
         }
@@ -161,18 +175,18 @@ const CustomChannelHeader = ({ onBackClick }: { onBackClick?: () => void }) => {
   } catch (err) {
     console.error("Error extracting channel info:", err);
   }
-  
+
   return (
     <div className="custom-channel-header px-4 py-3 border-b flex items-center gap-3 bg-background">
       {isMobile && onBackClick && (
-        <button 
+        <button
           onClick={onBackClick}
           className="p-1 rounded-full hover:bg-accent transition-colors"
         >
           <ChevronLeft size={20} />
         </button>
       )}
-      
+
       <div className="relative">
         {otherUser?.image ? (
           // Use the avatar component without size prop
@@ -188,24 +202,33 @@ const CustomChannelHeader = ({ onBackClick }: { onBackClick?: () => void }) => {
           <div className="absolute bottom-0 right-0 w-3 h-3 bg-primary rounded-full border-2 border-background"></div>
         )}
       </div>
-      
+
       <div className="flex-1">
         <h3 className="font-medium text-base">{channelName}</h3>
         <p className="text-xs text-muted-foreground">
-          {isOnline ? 'Online' : 'Offline'}
+          {isOnline ? "Online" : "Offline"}
         </p>
       </div>
-      
+
       {/* Navigation Links */}
       <div className="flex items-center gap-3">
-        <a href="/dashboard" className="p-2 rounded-full hover:bg-accent transition-colors">
+        <a
+          href="/dashboard"
+          className="p-2 rounded-full hover:bg-accent transition-colors"
+        >
           <Home size={20} className="text-muted-foreground" />
         </a>
-        <a href="/notifications" className="p-2 rounded-full hover:bg-accent transition-colors relative">
+        <a
+          href="/notifications"
+          className="p-2 rounded-full hover:bg-accent transition-colors relative"
+        >
           <Bell size={20} className="text-muted-foreground" />
           <span className="absolute top-0 right-0 bg-red-500 w-2.5 h-2.5 rounded-full"></span>
         </a>
-        <a href="/cart" className="p-2 rounded-full hover:bg-accent transition-colors">
+        <a
+          href="/cart"
+          className="p-2 rounded-full hover:bg-accent transition-colors"
+        >
           <ShoppingCart size={20} className="text-muted-foreground" />
         </a>
       </div>
@@ -227,7 +250,7 @@ export const StreamChatComponent = ({
   const { client, isConnecting, userChannels, error, isInitialized } =
     useStreamChat();
   const [activeChannel, setActiveChannel] = useState<Channel | undefined>(
-    undefined,
+    undefined
   );
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [showChannelList, setShowChannelList] = useState(!isMobile);
@@ -328,16 +351,20 @@ export const StreamChatComponent = ({
       <Chat client={client} theme="str-chat__theme-light">
         <div className="flex h-full w-full flex-1">
           {(showChannelList || !isMobile) && (
-            <div className={`${isMobile ? 'w-full' : 'w-auto'} border-r overflow-hidden relative`}>
+            <div
+              className={`${
+                isMobile ? "w-full" : "w-auto"
+              } border-r overflow-hidden relative`}
+            >
               <div className="channel-list-header py-3 px-4 border-b">
                 <h2 className="text-lg font-semibold font-space">Messages</h2>
                 <p className="text-xs text-muted-foreground">
                   {userChannels.length} conversations
                 </p>
               </div>
-              
+
               {/* Floating action button for new chat */}
-              <button 
+              <button
                 className="floating-action-button"
                 onClick={() => {
                   if (onNewChatClick) {
@@ -348,7 +375,7 @@ export const StreamChatComponent = ({
               >
                 <UserPlus size={20} />
               </button>
-              
+
               <ChannelList
                 filters={filters}
                 sort={sort}
@@ -374,21 +401,32 @@ export const StreamChatComponent = ({
                       channel.state.messages.length > 0
                     ) {
                       const message =
-                        channel.state.messages[channel.state.messages.length - 1];
+                        channel.state.messages[
+                          channel.state.messages.length - 1
+                        ];
                       lastMessage = message?.text || "No message content";
-                      
-                      if (channel.data?.name && channel.data.name.includes('and')) {
+
+                      if (
+                        channel.data?.name &&
+                        channel.data.name.includes("and")
+                      ) {
                         const currentUserId = client.userID;
-                        const parts = channel.data.name.split(' and ');
-                        chatUserName = parts.find(part => !part.includes(currentUserId?.toString() || ''))?.trim() || '';
+                        const parts = channel.data.name.split(" and ");
+                        chatUserName =
+                          parts
+                            .find(
+                              (part) =>
+                                !part.includes(currentUserId?.toString() || "")
+                            )
+                            ?.trim() || "";
                       }
-                      
+
                       // Format date nicely
                       if (message?.created_at) {
                         const date = new Date(message.created_at);
                         const now = new Date();
                         const diffHours = Math.floor(
-                          (now.getTime() - date.getTime()) / (1000 * 60 * 60),
+                          (now.getTime() - date.getTime()) / (1000 * 60 * 60)
                         );
 
                         if (diffHours < 24) {
@@ -415,15 +453,22 @@ export const StreamChatComponent = ({
                   let otherUser = "User";
                   let isOnline = false;
                   let userImage = "";
-                  
+
                   try {
-                    if ((channel.data?.name === "Direct Message" || channel.data?.name?.includes('and')) && client) {
-                      const members = Object.values(channel.state?.members || {});
+                    if (
+                      (channel.data?.name === "Direct Message" ||
+                        channel.data?.name?.includes("and")) &&
+                      client
+                    ) {
+                      const members = Object.values(
+                        channel.state?.members || {}
+                      );
                       const otherMember = members.find(
-                        (m) => m.user?.id !== client.userID,
+                        (m) => m.user?.id !== client.userID
                       );
                       if (otherMember?.user) {
-                        otherUser = otherMember.user.name || otherMember.user.id;
+                        otherUser =
+                          otherMember.user.name || otherMember.user.id;
                         isOnline = otherMember.user.online || false;
                         userImage = otherMember.user.image || "";
                       }
@@ -433,18 +478,22 @@ export const StreamChatComponent = ({
                   }
 
                   const isActive = activeChannel?.id === channel.id;
-                  
+
+                  console.log(chatUserName);
+
                   return (
                     <div
-                      className={`greenupp-channel-preview ${isActive ? "active" : ""}`}
+                      className={`greenupp-channel-preview ${
+                        isActive ? "active" : ""
+                      }`}
                       onClick={handleClick}
                     >
                       <div className="flex justify-between items-center">
                         <div className="greenupp-channel-preview-title">
                           <div className="relative">
                             {userImage ? (
-                              <img 
-                                src={userImage} 
+                              <img
+                                src={userImage}
                                 alt={otherUser}
                                 className="w-9 h-9 rounded-full object-cover"
                               />
@@ -453,16 +502,16 @@ export const StreamChatComponent = ({
                                 <UserCircle2 size={22} />
                               </div>
                             )}
-                            
+
                             {isOnline && (
                               <div className="online-indicator"></div>
                             )}
                           </div>
                           <div className="flex flex-col ml-2">
-                            <span className="truncate font-medium">
+                            <span className="truncate font-medium line-clamp-1">
                               {channel.data?.name === "Direct Message"
-                                ? otherUser
-                                : chatUserName || "Channel"}
+                                ? chatUserName
+                                : otherUser || "Channel"}
                             </span>
                             <span className="text-xs text-muted-foreground truncate mt-0.5">
                               {lastMessage}
@@ -481,14 +530,16 @@ export const StreamChatComponent = ({
               />
             </div>
           )}
-          
+
           {/* Chat window - only show if we're on desktop, or on mobile when a channel is selected */}
           {(!isMobile || (isMobile && !showChannelList)) && (
             <div className="flex-1 w-full">
               {activeChannel ? (
                 <StreamChannel channel={activeChannel}>
                   <Window>
-                    <CustomChannelHeader onBackClick={isMobile ? handleBackToList : undefined} />
+                    <CustomChannelHeader
+                      onBackClick={isMobile ? handleBackToList : undefined}
+                    />
                     <div className="str-chat__scrollable-container">
                       <MessageList />
                     </div>
@@ -501,12 +552,15 @@ export const StreamChatComponent = ({
                   <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4">
                     <MessageSquare size={28} />
                   </div>
-                  <h3 className="text-lg font-medium">No conversation selected</h3>
+                  <h3 className="text-lg font-medium">
+                    No conversation selected
+                  </h3>
                   <p className="text-sm text-muted-foreground mt-2 max-w-md">
-                    Select a conversation from the list or start a new chat to begin messaging
+                    Select a conversation from the list or start a new chat to
+                    begin messaging
                   </p>
                   {isMobile && (
-                    <button 
+                    <button
                       className="mt-4 px-4 py-2 bg-primary text-white rounded-md flex items-center gap-2"
                       onClick={handleBackToList}
                     >

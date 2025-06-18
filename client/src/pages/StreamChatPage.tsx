@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/card";
 import { AlertTriangle, Loader2, MessageSquare, Users } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 // Get the Stream Chat API key from environment variables
 const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY || "";
@@ -56,7 +57,7 @@ function DiagnosticPanel() {
     try {
       const response = await apiRequest(
         "GET",
-        "/api/stream-chat/test-connection",
+        "/api/stream-chat/test-connection"
       );
       const data = await response.json();
       setTestResult(data);
@@ -124,7 +125,9 @@ function DiagnosticPanel() {
 
           {testResult && (
             <div
-              className={`p-4 border rounded-lg ${testResult.success ? "bg-green-50" : "bg-red-50"}`}
+              className={`p-4 border rounded-lg ${
+                testResult.success ? "bg-green-50" : "bg-red-50"
+              }`}
             >
               <h3 className="font-semibold mb-2">Connection Test Result</h3>
               <pre className="text-xs overflow-auto">
@@ -191,7 +194,7 @@ function NewChatDialogContent({
       // Use the StreamChat API to create a direct channel
       const channel = await createDirectChannel(
         parseInt(newChatUserId, 10),
-        selectedUser.name,
+        selectedUser.name
       );
 
       if (channel) {
@@ -244,7 +247,7 @@ function NewChatDialogContent({
                 const userId = e.target.value;
                 setNewChatUserId(userId);
                 setSelectedUser(
-                  users.find((u: any) => u.id.toString() === userId) || null,
+                  users.find((u: any) => u.id.toString() === userId) || null
                 );
               }}
             >
@@ -356,53 +359,47 @@ export default function StreamChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
-      <div className="container mx-auto p-4 pb-2">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary mr-3">
-              <MessageSquare size={20} />
+    <DashboardLayout title="" description="" styles="w-full p-0!">
+      <div className="flex flex-col h-[100vh] !w-[100vw] absolute overflow-hidden left-[255px] top-6">
+        <div className="">
+          <div className="flex ">
+            <div className="flex">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary mr-3">
+                <MessageSquare size={20} />
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold font-space tracking-tight">
-                Chat
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Connect with other farmers in real-time
-              </p>
-            </div>
+
+            {/* Dialog is now triggered by floating action button in StreamChatComponent */}
+            <Dialog
+              open={isCreateDialogOpen}
+              onOpenChange={setIsCreateDialogOpen}
+            >
+              {isCreateDialogOpen && (
+                <StreamChatProvider apiKey={STREAM_API_KEY}>
+                  <NewChatDialogContent
+                    open={isCreateDialogOpen}
+                    onOpenChange={setIsCreateDialogOpen}
+                  />
+                </StreamChatProvider>
+              )}
+            </Dialog>
           </div>
-          
-          {/* Dialog is now triggered by floating action button in StreamChatComponent */}
-          <Dialog
-            open={isCreateDialogOpen}
-            onOpenChange={setIsCreateDialogOpen}
-          >
-            {isCreateDialogOpen && (
-              <StreamChatProvider apiKey={STREAM_API_KEY}>
-                <NewChatDialogContent
-                  open={isCreateDialogOpen}
-                  onOpenChange={setIsCreateDialogOpen}
-                />
-              </StreamChatProvider>
-            )}
-          </Dialog>
+
+          {showDiagnostics && <DiagnosticPanel />}
         </div>
 
-        {showDiagnostics && <DiagnosticPanel />}
+        <div
+          className={`flex-1 border-t rounded-t-lg shadow-sm overflow-hidden ${
+            showDiagnostics ? "mt-2" : "mt-0"
+          }`}
+        >
+          <StreamChatProvider apiKey={STREAM_API_KEY}>
+            <StreamChatComponent
+              onNewChatClick={() => setIsCreateDialogOpen(true)}
+            />
+          </StreamChatProvider>
+        </div>
       </div>
-
-      <div 
-        className={`flex-1 border-t rounded-t-lg shadow-sm overflow-hidden ${
-          showDiagnostics ? "mt-2" : "mt-0"
-        }`}
-      >
-        <StreamChatProvider apiKey={STREAM_API_KEY}>
-          <StreamChatComponent 
-            onNewChatClick={() => setIsCreateDialogOpen(true)}
-          />
-        </StreamChatProvider>
-      </div>
-    </div>
+    </DashboardLayout>
   );
 }
