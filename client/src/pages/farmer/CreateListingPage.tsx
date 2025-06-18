@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Upload, Plus, X, MapPin, Loader2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
-import LocationSelector, { LocationData } from "@/components/marketplace/LocationSelector";
+import LocationSelector, {
+  LocationData,
+} from "@/components/marketplace/LocationSelector";
+import { useAuth } from "@/hooks/use-auth";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -67,6 +70,7 @@ const SUBCATEGORIES: Record<string, { id: string; name: string }[]> = {
 
 // Form schema with validation
 const listingSchema = z.object({
+  sellerId: z.number(),
   title: z
     .string()
     .min(5, { message: "Title must be at least 5 characters" })
@@ -95,6 +99,7 @@ type ListingFormValues = z.infer<typeof listingSchema>;
 
 export default function CreateListingPage() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [locationData, setLocationData] = useState<LocationData | null>(null);
@@ -104,6 +109,7 @@ export default function CreateListingPage() {
   const form = useForm<ListingFormValues>({
     resolver: zodResolver(listingSchema),
     defaultValues: {
+      sellerId: user?.id || 0, // Set the user ID from session
       title: "",
       description: "",
       category: "",
@@ -120,6 +126,11 @@ export default function CreateListingPage() {
       tags: [],
     },
   });
+
+  // Log user data when component mounts
+  useEffect(() => {
+    console.log("Current user data:", user);
+  }, [user]);
 
   // Get the selected category to show relevant subcategories
   const watchCategory = form.watch("category");
@@ -167,14 +178,9 @@ export default function CreateListingPage() {
           const lng = position.coords.longitude;
 
           try {
-            // Use reverse geocoding to get address details
+            // Use our proxy endpoint instead of calling Nominatim directly
             const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-              {
-                headers: {
-                  'Accept-Language': 'en'
-                }
-              }
+              `/api/geocode/reverse?lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
             );
             const data = await response.json();
 
@@ -182,27 +188,34 @@ export default function CreateListingPage() {
               const newLocationData: LocationData = {
                 latitude: lat,
                 longitude: lng,
-                country: data.address.country || '',
-                region: data.address.state || data.address.county || '',
-                city: data.address.city || data.address.town || data.address.village || '',
-                neighborhood: data.address.suburb || data.address.neighbourhood || null,
+                country: data.address.country || "",
+                region: data.address.state || data.address.county || "",
+                city:
+                  data.address.city ||
+                  data.address.town ||
+                  data.address.village ||
+                  "",
+                neighborhood:
+                  data.address.suburb || data.address.neighbourhood || null,
                 postalCode: data.address.postcode || null,
                 formattedAddress: data.display_name || null,
-                placeId: data.place_id?.toString() || null
+                placeId: data.place_id?.toString() || null,
               };
 
               setLocationData(newLocationData);
-              
+
               toast({
                 title: "Location detected",
-                description: "Your current location has been added to the listing",
+                description:
+                  "Your current location has been added to the listing",
               });
             }
           } catch (error) {
             console.error("Error fetching location data:", error);
             toast({
               title: "Location error",
-              description: "Could not get location details. Please try setting it manually.",
+              description:
+                "Could not get location details. Please try setting it manually.",
               variant: "destructive",
             });
           } finally {
@@ -221,14 +234,6 @@ export default function CreateListingPage() {
           });
         }
       );
-    } else {
-      setLocationLoading(false);
-
-      toast({
-        title: "Location not supported",
-        description: "Your browser doesn't support geolocation",
-        variant: "destructive",
-      });
     }
   };
 
@@ -258,7 +263,7 @@ export default function CreateListingPage() {
           formData,
           {
             isFormData: true,
-          },
+          }
         );
         return await response.json();
       } catch (error) {
@@ -326,15 +331,15 @@ export default function CreateListingPage() {
       formData.append("country", locationData.country);
       formData.append("region", locationData.region);
       formData.append("city", locationData.city);
-      
+
       if (locationData.neighborhood) {
         formData.append("neighborhood", locationData.neighborhood);
       }
-      
+
       if (locationData.postalCode) {
         formData.append("postalCode", locationData.postalCode);
       }
-      
+
       if (locationData.formattedAddress) {
         formData.append("formattedAddress", locationData.formattedAddress);
       }
@@ -472,7 +477,7 @@ export default function CreateListingPage() {
                                   >
                                     {subcategory.name}
                                   </SelectItem>
-                                ),
+                                )
                               )}
                             </SelectContent>
                           </Select>
@@ -714,8 +719,10 @@ export default function CreateListingPage() {
                   {locationData && (
                     <div className="text-sm text-muted-foreground">
                       <MapPin className="h-4 w-4 inline mr-1" />
-                      {locationData.formattedAddress || 
-                        `${locationData.city}${locationData.region ? `, ${locationData.region}` : ''}, ${locationData.country}`}
+                      {locationData.formattedAddress ||
+                        `${locationData.city}${
+                          locationData.region ? `, ${locationData.region}` : ""
+                        }, ${locationData.country}`}
                     </div>
                   )}
                 </div>
@@ -724,7 +731,7 @@ export default function CreateListingPage() {
 
                 {/* Map-based location selector */}
                 <div className="mt-4 mb-6">
-                  <LocationSelector 
+                  <LocationSelector
                     initialLocation={locationData}
                     onLocationSelect={(location) => setLocationData(location)}
                   />

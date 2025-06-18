@@ -1,9 +1,13 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { setupVite, serveStatic } from "./vite";
 import path from "path";
 import { fileURLToPath } from "url";
+import { errorHandler } from "./lib/errors";
+import { logger, logApiRequest } from "./lib/logger";
+import morgan from "morgan";
+import { stream } from "./lib/logger";
 
 // Fix for __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -13,6 +17,12 @@ const app = express();
 // Increase JSON payload size limit to 25MB for image uploads
 app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: false, limit: "25mb" }));
+
+// Setup request logging
+app.use(morgan("combined", { stream }));
+
+// Add our custom request logging
+app.use(logApiRequest);
 
 // Serve uploaded files from the uploads directory
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
@@ -68,7 +78,7 @@ app.use((req, res, next) => {
         logLine = logLine.slice(0, 79) + "…";
       }
 
-      log(logLine);
+      logger.info(logLine);
     }
   });
 
@@ -78,31 +88,24 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
+  // Global error handler
+  app.use(errorHandler);
 
   // Log environment for debugging if needed
   if (process.env.DEBUG_APP) {
-    console.log("NODE_ENV:", process.env.NODE_ENV);
-    console.log("App environment:", app.get("env"));
+    logger.info("NODE_ENV:", process.env.NODE_ENV);
+    logger.info("App environment:", app.get("env"));
   }
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // Setup Vite in development or serve static files in production
   if (app.get("env") === "development") {
     if (process.env.DEBUG_APP) {
-      console.log("Setting up Vite for development");
+      logger.info("Setting up Vite for development");
     }
     await setupVite(app, server);
   } else {
     if (process.env.DEBUG_APP) {
-      console.log("Setting up static serving for production");
+      logger.info("Setting up static serving for production");
     }
     serveStatic(app);
   }
@@ -118,7 +121,7 @@ app.use((req, res, next) => {
       reusePort: true,
     },
     () => {
-      log(`serving on port ${port}`);
+      logger.info(`Server running on port ${port}`);
     }
   );
 })();

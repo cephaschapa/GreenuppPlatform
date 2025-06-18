@@ -5,13 +5,13 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
-  DialogClose
+  DialogClose,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -22,13 +22,13 @@ import {
   Bot,
   X,
   Maximize2,
-  MessageSquare
+  MessageSquare,
 } from "lucide-react";
 import greenuppLogo from "@/assets/greenupp-full-logo.png";
 import { cn } from "@/lib/utils";
 import Markdown from "react-markdown";
-import { 
-  saveAIAssistantMessage, 
+import {
+  saveAIAssistantMessage,
   getAIAssistantMessagesBySession,
   saveAIAssistantSession,
   getAIAssistantSessionsByUser,
@@ -43,17 +43,18 @@ export function PopoverAssistant() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<AIAssistantMessage[]>([]);
-  const [currentSession, setCurrentSession] = useState<AIAssistantSession | null>(null);
+  const [currentSession, setCurrentSession] =
+    useState<AIAssistantSession | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   // Load last session or create new one
   useEffect(() => {
     const loadSession = async () => {
       if (!user) return;
-      
+
       // Get all sessions
       const sessions = await getAIAssistantSessionsByUser(user.id);
-      
+
       let session: AIAssistantSession;
       if (sessions.length > 0) {
         // Use most recent session
@@ -65,36 +66,36 @@ export function PopoverAssistant() {
           userId: user.id,
           title: "New Conversation",
           lastMessageDate: Date.now(),
-          contextData: {}
+          contextData: {},
         };
         await saveAIAssistantSession(session);
       }
-      
+
       setCurrentSession(session);
-      
+
       // Load messages for this session
       const sessionMessages = await getAIAssistantMessagesBySession(session.id);
       setMessages(sessionMessages);
     };
-    
+
     if (open) {
       loadSession();
     }
   }, [user, open]);
-  
+
   // Scroll to bottom on new messages
   useEffect(() => {
     if (messagesEndRef.current && open) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, open]);
-  
+
   // Query for farming context
   const { data: farmingContext } = useQuery({
     queryKey: ["/api/farming-assistant/context"],
     enabled: !!user && open,
   });
-  
+
   // Send message mutation
   const { mutate: sendMessage, isPending } = useMutation({
     mutationFn: async (message: string) => {
@@ -106,7 +107,7 @@ export function PopoverAssistant() {
     },
     onSuccess: async (data) => {
       if (!currentSession) return;
-      
+
       // Create assistant message
       const assistantMessage: AIAssistantMessage = {
         id: crypto.randomUUID(),
@@ -114,26 +115,26 @@ export function PopoverAssistant() {
         sessionId: currentSession.id,
         content: data.message,
         role: "assistant",
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-      
+
       // Save to local storage
       await saveAIAssistantMessage(assistantMessage);
-      
+
       // Update UI
-      setMessages(prev => [...prev, assistantMessage]);
-      
+      setMessages((prev) => [...prev, assistantMessage]);
+
       // Update session last message time
       const updatedSession = {
         ...currentSession,
-        lastMessageDate: Date.now()
+        lastMessageDate: Date.now(),
       };
       await saveAIAssistantSession(updatedSession);
       setCurrentSession(updatedSession);
     },
     onError: async (error: Error) => {
       if (!currentSession) return;
-      
+
       // Create error message
       const errorMessage: AIAssistantMessage = {
         id: crypto.randomUUID(),
@@ -141,29 +142,29 @@ export function PopoverAssistant() {
         sessionId: currentSession.id,
         content: "Sorry, I encountered an error. Please try again later.",
         role: "assistant",
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-      
+
       // Save to local storage
       await saveAIAssistantMessage(errorMessage);
-      
+
       // Update UI
-      setMessages(prev => [...prev, errorMessage]);
-      
+      setMessages((prev) => [...prev, errorMessage]);
+
       // Show toast
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
-    }
+    },
   });
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!input.trim() || !currentSession || !user) return;
-    
+
     // Create user message
     const userMessage: AIAssistantMessage = {
       id: crypto.randomUUID(),
@@ -171,39 +172,36 @@ export function PopoverAssistant() {
       sessionId: currentSession.id,
       content: input,
       role: "user",
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
-    
+
     // Save to local storage
     await saveAIAssistantMessage(userMessage);
-    
+
     // Update UI
-    setMessages(prev => [...prev, userMessage]);
-    
+    setMessages((prev) => [...prev, userMessage]);
+
     // Clear input
     setInput("");
-    
+
     // Send to API
     sendMessage(input);
-    
+
     // Update session last message time
     const updatedSession = {
       ...currentSession,
-      lastMessageDate: Date.now()
+      lastMessageDate: Date.now(),
     };
     await saveAIAssistantSession(updatedSession);
     setCurrentSession(updatedSession);
   };
-  
+
   return (
     <div className="fixed bottom-6 right-6 z-50">
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button
-            size="lg"
-            className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all"
-          >
-            <Brain className="h-6 w-6" />
+          <Button className="h-14 w-14 p-0 rounded-full shadow-lg hover:shadow-xl transition-all">
+            <Brain className="h-8 w-8" />
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px] h-[600px] flex flex-col p-0">
@@ -215,7 +213,11 @@ export function PopoverAssistant() {
               </div>
               <div className="flex items-center gap-2">
                 <Link href="/farming-assistant">
-                  <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setOpen(false)}
+                  >
                     <Maximize2 className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -227,18 +229,26 @@ export function PopoverAssistant() {
               </div>
             </div>
           </DialogHeader>
-          
+
           {/* Messages container */}
           <ScrollArea className="flex-1 p-4">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                <img src={greenuppLogo} alt="Greenupp Logo" className="h-10 mb-4" />
+                <img
+                  src={greenuppLogo}
+                  alt="Greenupp Logo"
+                  className="h-10 mb-4"
+                />
                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4">
                   <Brain size={30} />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">AI Farming Assistant</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  AI Farming Assistant
+                </h3>
                 <p className="text-muted-foreground text-sm">
-                  I can provide personalized farming advice based on your specific crops, soil conditions, and region. Ask me anything about farming!
+                  I can provide personalized farming advice based on your
+                  specific crops, soil conditions, and region. Ask me anything
+                  about farming!
                 </p>
               </div>
             ) : (
@@ -248,9 +258,7 @@ export function PopoverAssistant() {
                     key={message.id}
                     className={cn(
                       "mb-4 max-w-[85%] animate-in fade-in-50 slide-in-from-bottom-3 duration-300",
-                      message.role === "user"
-                        ? "ml-auto text-right"
-                        : "mr-auto"
+                      message.role === "user" ? "ml-auto text-right" : "mr-auto"
                     )}
                   >
                     <div
@@ -274,7 +282,7 @@ export function PopoverAssistant() {
                           </>
                         )}
                       </div>
-                      
+
                       <div
                         className={cn(
                           "text-left leading-relaxed",
@@ -296,7 +304,7 @@ export function PopoverAssistant() {
               </>
             )}
           </ScrollArea>
-          
+
           {/* Input area */}
           <form
             onSubmit={handleSubmit}

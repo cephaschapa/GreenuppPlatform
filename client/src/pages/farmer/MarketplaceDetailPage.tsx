@@ -119,38 +119,39 @@ export default function MarketplaceDetailPage() {
       const response = await fetch(`/api/marketplace/listings/${params.id}`, {
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`Error fetching listing: ${response.status}`, errorText);
-        throw new Error(`Failed to fetch listing: ${response.status} ${errorText || response.statusText}`);
+        throw new Error(
+          `Failed to fetch listing: ${response.status} ${
+            errorText || response.statusText
+          }`
+        );
       }
-      
+
       const data = await response.json();
       console.log("Listing data from API:", data);
       return data;
     },
   });
-  
+
   // Fetch location data if the listing has a locationId
-  const {
-    data: locationData,
-    isLoading: isLoadingLocation,
-  } = useQuery({
+  const { data: locationData, isLoading: isLoadingLocation } = useQuery({
     queryKey: ["/api/locations", listing?.locationId],
     queryFn: async () => {
       if (!listing?.locationId) return null;
-      
+
       const response = await fetch(`/api/locations/${listing.locationId}`, {
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`Error fetching location: ${response.status}`, errorText);
         return null;
       }
-      
+
       const data = await response.json();
       console.log("Location data from API:", data);
       return data;
@@ -228,15 +229,15 @@ export default function MarketplaceDetailPage() {
       });
     }
   };
-  
+
   // Handle adding product to cart
   const handleAddToCart = async () => {
     if (!listing) return;
-    
+
     setIsAddingToCart(true);
     try {
       await addToCart(listing.id, 1);
-      
+
       toast({
         title: "Added to cart",
         description: "Item has been added to your shopping cart",
@@ -306,7 +307,7 @@ export default function MarketplaceDetailPage() {
         imageArray = listing.images.filter((img) => img && img !== "");
         console.log(
           "Images are provided as an array, count:",
-          imageArray.length,
+          imageArray.length
         );
       } else if (typeof listing.images === "string") {
         // First try to parse it as JSON (stringified array)
@@ -316,13 +317,13 @@ export default function MarketplaceDetailPage() {
             imageArray = parsed.filter((img) => img && img !== "");
             console.log(
               "Images parsed from JSON string, count:",
-              imageArray.length,
+              imageArray.length
             );
           } else {
             // If it's not an array after parsing, use as single string
             imageArray = [listing.images];
             console.log(
-              "Using single image string (not an array after parsing)",
+              "Using single image string (not an array after parsing)"
             );
           }
         } catch (e) {
@@ -340,7 +341,7 @@ export default function MarketplaceDetailPage() {
 
   // Additional validation to ensure all array items are valid
   imageArray = imageArray.filter(
-    (url) => url && typeof url === "string" && url.trim() !== "",
+    (url) => url && typeof url === "string" && url.trim() !== ""
   );
 
   console.log("Final image array:", imageArray);
@@ -356,8 +357,8 @@ export default function MarketplaceDetailPage() {
     typeof listing.price === "string"
       ? parseFloat(listing.price)
       : typeof listing.price === "number"
-        ? listing.price
-        : 0;
+      ? listing.price
+      : 0;
 
   // Format the created date
   const createdAt = new Date(listing.createdAt);
@@ -366,7 +367,9 @@ export default function MarketplaceDetailPage() {
   return (
     <DashboardLayout
       title={listing.title || "Listing Details"}
-      description={`${getCategoryLabel(listing.category)} ${listing.subcategory ? `- ${listing.subcategory}` : ""}`}
+      description={`${getCategoryLabel(listing.category)} ${
+        listing.subcategory ? `- ${listing.subcategory}` : ""
+      }`}
     >
       <div className="container mx-auto px-4 py-6">
         <Button variant="link" onClick={navigateBack} className="p-0 mb-4">
@@ -409,7 +412,11 @@ export default function MarketplaceDetailPage() {
                         key={index}
                         onClick={() => setActiveImageIndex(index)}
                         className={`w-16 h-16 flex-shrink-0 rounded-md overflow-hidden cursor-pointer border-2 
-                          ${activeImageIndex === index ? "border-primary" : "border-transparent"}`}
+                          ${
+                            activeImageIndex === index
+                              ? "border-primary"
+                              : "border-transparent"
+                          }`}
                       >
                         <img
                           src={image}
@@ -460,6 +467,15 @@ export default function MarketplaceDetailPage() {
                   </div>
                 </div>
 
+                <div>
+                  <p>
+                    Blockchain Trace ID:{" "}
+                    {listing.traceabilityBatchId
+                      ? listing.traceabilityBatchId
+                      : "NA"}
+                  </p>
+                </div>
+
                 <div className="flex flex-col gap-2 text-sm text-muted-foreground mb-4">
                   {isValidDate && (
                     <div className="flex items-center">
@@ -479,14 +495,22 @@ export default function MarketplaceDetailPage() {
                       {listing.description || "No description provided"}
                     </p>
                   </div>
-                  
+
                   {/* Location map */}
                   {listing.locationId && locationData && (
                     <LocationMap
-                      sellerLatitude={locationData.latitude ? parseFloat(locationData.latitude) : null}
-                      sellerLongitude={locationData.longitude ? parseFloat(locationData.longitude) : null}
+                      sellerLatitude={
+                        locationData.latitude
+                          ? parseFloat(locationData.latitude)
+                          : null
+                      }
+                      sellerLongitude={
+                        locationData.longitude
+                          ? parseFloat(locationData.longitude)
+                          : null
+                      }
                       locationAddress={locationData.formattedAddress}
-                      locationName={`${listing.title || 'Listing'} Location`}
+                      locationName={`${listing.title || "Listing"} Location`}
                     />
                   )}
 
@@ -522,7 +546,9 @@ export default function MarketplaceDetailPage() {
                     {listing.priceUnit && (
                       <div>
                         <h3 className="text-sm font-medium flex items-center">
-                          <span className="inline-flex items-center justify-center h-4 w-4 mr-1 text-xs font-semibold">ZMW</span>
+                          <span className="inline-flex items-center justify-center h-4 w-4 mr-1 text-xs font-semibold">
+                            ZMW
+                          </span>
                           Price Per Unit
                         </h3>
                         <p className="text-muted-foreground">
@@ -543,7 +569,9 @@ export default function MarketplaceDetailPage() {
                       onClick={handleFavoriteToggle}
                     >
                       <Heart
-                        className={`h-4 w-4 mr-2 ${isFavorite ? "fill-red-500 text-red-500" : ""}`}
+                        className={`h-4 w-4 mr-2 ${
+                          isFavorite ? "fill-red-500 text-red-500" : ""
+                        }`}
                       />
                       {isFavorite ? "Saved" : "Save"}
                     </Button>
@@ -628,9 +656,11 @@ export default function MarketplaceDetailPage() {
                         <Plus className="h-3 w-3" />
                       </div>
                     )}
-                    <span className="ml-1">{isAddingToCart ? "Adding..." : "Add to Cart"}</span>
+                    <span className="ml-1">
+                      {isAddingToCart ? "Adding..." : "Add to Cart"}
+                    </span>
                   </Button>
-                  
+
                   <Button
                     className="w-full"
                     variant="outline"

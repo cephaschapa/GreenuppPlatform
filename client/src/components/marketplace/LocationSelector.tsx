@@ -1,20 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+import { useState, useEffect, useRef } from "react";
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from "lucide-react";
 
 // Fix Leaflet's default icon issues
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import icon from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
 const DefaultIcon = L.icon({
   iconUrl: icon,
   shadowUrl: iconShadow,
   iconSize: [25, 41],
-  iconAnchor: [12, 41]
+  iconAnchor: [12, 41],
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
@@ -47,13 +47,20 @@ function MapClickHandler({ onLocationSelect }: MapClickHandlerProps) {
       onLocationSelect(e.latlng.lat, e.latlng.lng);
     },
   });
-  
+
   return null;
 }
 
-export default function LocationSelector({ initialLocation, onLocationSelect }: LocationSelectorProps) {
+export default function LocationSelector({
+  initialLocation,
+  onLocationSelect,
+}: LocationSelectorProps) {
   const [position, setPosition] = useState<[number, number] | null>(() => {
-    if (initialLocation && typeof initialLocation.latitude === 'number' && typeof initialLocation.longitude === 'number') {
+    if (
+      initialLocation &&
+      typeof initialLocation.latitude === "number" &&
+      typeof initialLocation.longitude === "number"
+    ) {
       return [initialLocation.latitude, initialLocation.longitude];
     }
     return null;
@@ -69,18 +76,13 @@ export default function LocationSelector({ initialLocation, onLocationSelect }: 
     setPosition([lat, lng]);
 
     try {
-      // Use reverse geocoding to get address details
+      // Use our proxy endpoint instead of calling Nominatim directly
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-        {
-          headers: {
-            'Accept-Language': 'en'
-          }
-        }
+        `/api/geocode/reverse?lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch location data');
+        throw new Error("Failed to fetch location data");
       }
 
       const data = await response.json();
@@ -89,20 +91,25 @@ export default function LocationSelector({ initialLocation, onLocationSelect }: 
         const locationData: LocationData = {
           latitude: lat,
           longitude: lng,
-          country: data.address.country || '',
-          region: data.address.state || data.address.county || '',
-          city: data.address.city || data.address.town || data.address.village || '',
-          neighborhood: data.address.suburb || data.address.neighbourhood || null,
+          country: data.address.country || "",
+          region: data.address.state || data.address.county || "",
+          city:
+            data.address.city ||
+            data.address.town ||
+            data.address.village ||
+            "",
+          neighborhood:
+            data.address.suburb || data.address.neighbourhood || null,
           postalCode: data.address.postcode || null,
           formattedAddress: data.display_name || null,
-          placeId: data.place_id?.toString() || null
+          placeId: data.place_id?.toString() || null,
         };
 
         onLocationSelect(locationData);
       }
     } catch (err) {
-      console.error('Error fetching location data:', err);
-      setError('Failed to get location details. Please try again.');
+      console.error("Error fetching location data:", err);
+      setError("Failed to get location details. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -113,16 +120,19 @@ export default function LocationSelector({ initialLocation, onLocationSelect }: 
     if (!position && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const newPos: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+          const newPos: [number, number] = [
+            pos.coords.latitude,
+            pos.coords.longitude,
+          ];
           setPosition(newPos);
-          
+
           // Center map on position
           if (mapRef.current) {
             mapRef.current.setView(newPos, 13);
           }
         },
         (err) => {
-          console.error('Error getting user location:', err);
+          console.error("Error getting user location:", err);
           // Default to central Zambia if location cannot be determined
           const defaultPos: [number, number] = [-15.4167, 28.2833]; // Lusaka, Zambia
           setPosition(defaultPos);
@@ -147,7 +157,7 @@ export default function LocationSelector({ initialLocation, onLocationSelect }: 
             center={position}
             zoom={13}
             scrollWheelZoom={true}
-            style={{ height: '100%', width: '100%' }}
+            style={{ height: "100%", width: "100%" }}
             ref={mapRef}
           >
             <TileLayer
