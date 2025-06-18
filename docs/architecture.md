@@ -13,8 +13,10 @@ server/
 ├── services/          # Core business logic services
 │   ├── hyperledger.ts    # Blockchain integration
 │   ├── croptrace.ts      # Crop traceability
-│   ├── qrcode.ts         # QR code generation
-│   └── redis.ts          # Caching layer
+│   ├── stream-chat.ts    # Real-time messaging
+│   ├── upload.ts         # File handling
+│   ├── email.ts          # Email notifications
+│   └── h3.ts            # Geospatial features
 ├── routes/            # API endpoints
 ├── db/                # Database configuration
 └── middleware/        # Request processing
@@ -36,52 +38,37 @@ server/
    - Maintains blockchain state
    - Chosen for: Security, immutability, trust
 
-3. **Redis Service**
+3. **Stream Chat Service**
 
-   - Caches frequently accessed data
-   - Manages real-time features
-   - Reduces database load
-   - Chosen for: Performance, scalability
+   - Real-time messaging using Stream's cloud service
+   - Channel management (direct and group chats)
+   - User presence and online status
+   - File sharing and media support
+   - Message history and search
+   - Chosen for: Production-ready scalability, reliability, and rich features
 
-4. **Chat Service**
-
-   - **Stream Chat Integration**
-     - Real-time messaging using Stream's cloud service
-     - Channel management (direct and group chats)
-     - User presence and online status
-     - File sharing and media support
-     - Message history and search
-     - Chosen for: Production-ready scalability, reliability, and rich features
-
-5. **Upload Service**
+4. **Upload Service**
 
    - Handles file uploads (images, documents)
    - Manages storage and retrieval
    - Implements file size and type restrictions
    - Chosen for: Secure file handling
 
-6. **QR Code Service**
-
-   - Generates QR codes for crop traceability
-   - Creates verification links
-   - Manages QR code data structure
-   - Chosen for: Mobile accessibility
-
-7. **H3 Service**
+5. **H3 Service**
 
    - Geospatial calculations and mapping
    - Distance and bearing calculations
    - Location-based features
    - Chosen for: Geographic functionality
 
-8. **Email Service**
+6. **Email Service**
 
    - Handles email notifications
    - Manages email templates
    - Tracks delivery status
    - Chosen for: User communication
 
-9. **Social Notifications Service**
+7. **Social Notifications Service**
    - Manages platform notifications
    - Handles user interactions
    - Integrates with email service
