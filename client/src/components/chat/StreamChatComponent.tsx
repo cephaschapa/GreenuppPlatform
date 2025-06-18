@@ -83,7 +83,7 @@ const CustomMessageInput = () => {
   };
 
   return (
-    <div className="custom-message-input p-3 border-t flex items-end gap-2">
+    <div className="custom-message-input border-t flex items-end gap-2">
       <div className="input-actions flex items-center gap-2">
         <button
           className="p-2 rounded-full hover:bg-accent transition-colors"
@@ -479,11 +479,9 @@ export const StreamChatComponent = ({
 
                   const isActive = activeChannel?.id === channel.id;
 
-                  console.log(chatUserName);
-
                   return (
                     <div
-                      className={`greenupp-channel-preview ${
+                      className={`greenupp-channel-preview w-[300px] -p-2 ${
                         isActive ? "active" : ""
                       }`}
                       onClick={handleClick}

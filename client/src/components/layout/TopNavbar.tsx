@@ -17,11 +17,16 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-export function TopNavbar() {
+interface TopNavbarProps {
+  title: string;
+  description?: string;
+}
+
+export function TopNavbar({ title, description }: TopNavbarProps) {
   const { user } = useAuth();
   const [location] = useLocation();
   const { toast } = useToast();
-  const isAppSubdomain = location.indexOf('/dashboard') === -1;
+  const isAppSubdomain = location.indexOf("/dashboard") === -1;
 
   // Logout mutation
   const logoutMutation = useMutation({
@@ -45,6 +50,13 @@ export function TopNavbar() {
     <div className="fixed right-0 md:right-0 z-40 h-14 md:h-16 bg-background/95 backdrop-blur border-b border-border flex items-center px-4 md:px-6 top-0 left-0 md:left-64">
       {/* Title shown on mobile only */}
       <div className="md:hidden flex-1 font-medium">Dashboard</div>
+      {/* Show page title and description */}
+      <div className="hidden md:block">
+        <h1 className="text-2xl font-bold">{title}</h1>
+        {description && (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        )}
+      </div>
 
       {/* Right section with profile and notifications */}
       <div className="flex items-center gap-2 ml-auto">

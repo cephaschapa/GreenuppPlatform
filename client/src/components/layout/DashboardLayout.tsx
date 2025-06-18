@@ -19,7 +19,7 @@ export function DashboardLayout({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Sidebar />
-      <TopNavbar />
+      <TopNavbar title={title} description={description} />
 
       {/* Main content with padding adjustments for mobile */}
       <div className="md:pl-64">
@@ -27,14 +27,14 @@ export function DashboardLayout({
           {/* Add top padding on mobile to account for status bar, and top navbar on desktop */}
           <div className={`pt-16 pb-20 md:pb-0 ${styles}`}>
             {/* Title only visible on desktop, mobile uses status bar instead */}
-            <div className="hidden md:block mb-8">
+            {/* <div className="hidden md:block mb-8">
               <h1 className="text-3xl font-bold font-space mb-2 relative inline-block">
                 {title}
               </h1>
               {description && (
                 <p className="text-muted-foreground">{description}</p>
               )}
-            </div>
+            </div> */}
 
             {children}
           </div>
