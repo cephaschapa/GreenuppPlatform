@@ -43,28 +43,15 @@ server/
    - Reduces database load
    - Chosen for: Performance, scalability
 
-4. **Chat Services**
+4. **Chat Service**
 
-   - **Stream Chat Service**: Primary chat implementation using Stream's cloud service
-
-     - Real-time messaging
-     - Channel management
-     - User presence
-     - File sharing and media
-     - Chosen for: Reliability, scalability, and rich features
-
-   - **WebSocket Chat Services**:
-
-     - **Basic WebSocket Service**: Direct WebSocket implementation
-     - **Redis WebSocket Service**: Redis-backed for scalability
-     - **Socket.IO Service**: Alternative implementation using Socket.IO
-     - Chosen for: Flexibility and custom requirements
-
-   - **Redis Chat Service**:
-     - Pub/Sub messaging
-     - Message caching
-     - Real-time features
-     - Chosen for: Performance at scale
+   - **Stream Chat Integration**
+     - Real-time messaging using Stream's cloud service
+     - Channel management (direct and group chats)
+     - User presence and online status
+     - File sharing and media support
+     - Message history and search
+     - Chosen for: Production-ready scalability, reliability, and rich features
 
 5. **Upload Service**
 
