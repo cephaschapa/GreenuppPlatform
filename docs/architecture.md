@@ -37,10 +37,70 @@ server/
    - Chosen for: Security, immutability, trust
 
 3. **Redis Service**
+
    - Caches frequently accessed data
    - Manages real-time features
    - Reduces database load
    - Chosen for: Performance, scalability
+
+4. **Chat Services**
+
+   - **Stream Chat Service**: Primary chat implementation using Stream's cloud service
+
+     - Real-time messaging
+     - Channel management
+     - User presence
+     - File sharing and media
+     - Chosen for: Reliability, scalability, and rich features
+
+   - **WebSocket Chat Services**:
+
+     - **Basic WebSocket Service**: Direct WebSocket implementation
+     - **Redis WebSocket Service**: Redis-backed for scalability
+     - **Socket.IO Service**: Alternative implementation using Socket.IO
+     - Chosen for: Flexibility and custom requirements
+
+   - **Redis Chat Service**:
+     - Pub/Sub messaging
+     - Message caching
+     - Real-time features
+     - Chosen for: Performance at scale
+
+5. **Upload Service**
+
+   - Handles file uploads (images, documents)
+   - Manages storage and retrieval
+   - Implements file size and type restrictions
+   - Chosen for: Secure file handling
+
+6. **QR Code Service**
+
+   - Generates QR codes for crop traceability
+   - Creates verification links
+   - Manages QR code data structure
+   - Chosen for: Mobile accessibility
+
+7. **H3 Service**
+
+   - Geospatial calculations and mapping
+   - Distance and bearing calculations
+   - Location-based features
+   - Chosen for: Geographic functionality
+
+8. **Email Service**
+
+   - Handles email notifications
+   - Manages email templates
+   - Tracks delivery status
+   - Chosen for: User communication
+
+9. **Social Notifications Service**
+   - Manages platform notifications
+   - Handles user interactions
+   - Integrates with email service
+   - Chosen for: User engagement
+
+Each service is designed as a singleton instance to ensure consistent state management and resource utilization across the application. The services are loosely coupled, allowing for independent scaling and maintenance.
 
 ### Database Architecture
 
