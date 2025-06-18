@@ -15,16 +15,13 @@ import PublicTraceVerificationPage from "@/pages/PublicTraceVerificationPage";
 import AiKnowledgeBasePage from "@/pages/AiKnowledgeBasePage";
 import AboutPage from "@/pages/AboutPage";
 import GreenSocialsPage from "@/pages/GreenSocialsPage";
-import ChatPage from "@/pages/ChatPage";
 import StreamChatPage from "@/pages/StreamChatPage";
 import FarmingAssistantPage from "@/pages/FarmingAssistantPage";
 import UploadTestPage from "@/pages/UploadTestPage";
 import EmailNotificationTestPage from "@/pages/EmailNotificationTestPage";
 import PublicEmailTestPage from "@/pages/PublicEmailTestPage";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
-import { ChatProvider } from "@/hooks/use-chat";
 import { SocketIOProvider } from "@/hooks/use-socketio";
-import { SocketIOChatProvider } from "@/hooks/use-socketio-chat";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import InstallPWA from "@/components/ui/InstallPWA";
@@ -126,7 +123,6 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
         <ProtectedRoute path="/social" component={GreenSocialsPage} />
 
         {/* Chat routes - without /dashboard prefix on app subdomain */}
-        <ProtectedRoute path="/chat" component={ChatPage} />
         <ProtectedRoute path="/stream-chat" component={StreamChatPage} />
         <ProtectedRoute
           path="/farming-assistant"
@@ -228,7 +224,6 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
       <ProtectedRoute path="/dashboard/social" component={GreenSocialsPage} />
 
       {/* Chat routes on main domain - with /dashboard prefix */}
-      <ProtectedRoute path="/dashboard/chat" component={ChatPage} />
       <ProtectedRoute
         path="/dashboard/stream-chat"
         component={StreamChatPage}
@@ -266,19 +261,15 @@ function App() {
             <NotificationProvider>
               {/* Use legacy ChatProvider for now, but start integrating SocketIO */}
               <SocketIOProvider>
-                <SocketIOChatProvider>
-                  <ChatProvider>
-                    <CartProvider>
-                      <HelmetProvider>
-                        <Router isAppSubdomain={isAppSubdomain} />
-                        <Toaster />
-                        {/* PWA Components */}
-                        {/* <InstallPWA /> */}
-                        <OfflineIndicator />
-                      </HelmetProvider>
-                    </CartProvider>
-                  </ChatProvider>
-                </SocketIOChatProvider>
+                <CartProvider>
+                  <HelmetProvider>
+                    <Router isAppSubdomain={isAppSubdomain} />
+                    <Toaster />
+                    {/* PWA Components */}
+                    {/* <InstallPWA /> */}
+                    <OfflineIndicator />
+                  </HelmetProvider>
+                </CartProvider>
               </SocketIOProvider>
             </NotificationProvider>
           </WebSocketProvider>

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useChat } from "@/hooks/use-chat";
 import { Button } from "@/components/ui/button";
 // Import for NotificationBell, useCart, and useNotifications removed as they're now in TopNavbar
 import {
@@ -47,7 +46,6 @@ import {
 export function Sidebar() {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
-  const { totalUnreadCount: chatUnreadCount } = useChat();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAppSubdomain, setIsAppSubdomain] = useState(false);
   // Temporarily using 0 as notification count was moved to TopNavbar
@@ -457,17 +455,17 @@ export function Sidebar() {
             href={item.href}
             className={cn(
               "flex flex-col items-center justify-center gap-1 w-full h-full px-1 relative",
-              item.active ? "text-primary" : "text-muted-foreground",
+              item.active ? "text-primary" : "text-muted-foreground"
             )}
           >
-            {item.title === "Chat" && chatUnreadCount > 0 && (
+            {/* {item.title === "Chat" && chatUnreadCount > 0 && (
               <Badge
                 variant="destructive"
                 className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full"
               >
                 {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
               </Badge>
-            )}
+            )} */}
             {/* Social notifications moved to top navbar */}
             {item.mobileIcon}
             <span className="text-xs line-clamp-1 text-center max-w-[70px]">
@@ -509,7 +507,7 @@ export function Sidebar() {
                         "flex items-center justify-between px-2 py-2 rounded-md transition-colors animate-scale-in",
                         item.active
                           ? "bg-primary/20 text-primary"
-                          : "text-foreground hover:bg-primary/10",
+                          : "text-foreground hover:bg-primary/10"
                       )}
                       style={{ animationDelay: `${index * 0.05}s` }}
                       onClick={() => setIsMobileMenuOpen(false)}
@@ -518,14 +516,14 @@ export function Sidebar() {
                         {item.icon}
                         <span>{item.title}</span>
                       </div>
-                      {item.title === "Chat" && chatUnreadCount > 0 && (
+                      {/* {item.title === "Chat" && chatUnreadCount > 0 && (
                         <Badge
                           variant="destructive"
                           className="h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full"
                         >
                           {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
                         </Badge>
-                      )}
+                      )} */}
                       {/* Social notifications moved to top navbar */}
                     </Link>
                   ))}
@@ -578,7 +576,7 @@ export function Sidebar() {
                   "flex items-center justify-between px-3 py-2 rounded-md transition-colors",
                   item.active
                     ? "bg-primary/20 text-primary"
-                    : "text-muted-foreground hover:text-sidebar-foreground hover:bg-primary/10",
+                    : "text-muted-foreground hover:text-sidebar-foreground hover:bg-primary/10"
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -586,19 +584,19 @@ export function Sidebar() {
                   <span>{item.title}</span>
                 </div>
                 <div className="flex items-center">
-                  {item.title === "Chat" && chatUnreadCount > 0 && (
+                  {/* {item.title === "Chat" && chatUnreadCount > 0 && (
                     <Badge
                       variant="destructive"
                       className="h-5 w-5 mr-1 flex items-center justify-center p-0 text-[10px] rounded-full"
                     >
                       {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
                     </Badge>
-                  )}
+                  )} */}
                   {/* Social notifications moved to top navbar */}
                   <ChevronRight
                     className={cn(
                       "h-4 w-4 opacity-0 transition-opacity",
-                      item.active && "opacity-100",
+                      item.active && "opacity-100"
                     )}
                   />
                 </div>
@@ -610,9 +608,7 @@ export function Sidebar() {
         <div className="p-4 border-t border-primary/20">
           {/* Build version - using import.meta.env for Vite */}
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">
-              Build: v1.0.0
-            </span>
+            <span className="text-xs text-muted-foreground">Build: v1.0.0</span>
           </div>
         </div>
       </div>

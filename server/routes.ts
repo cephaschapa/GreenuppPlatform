@@ -18,7 +18,6 @@ import { testUploadPostRouter } from "./routes/test-upload-to-post";
 import { testRouter } from "./routes/test-routes";
 import { testEmailRouter } from "./routes/test-email-notifications";
 import publicEmailTestRouter from "./routes/test-public-email-notifications";
-import chatRoutes from "./routes/chat-routes";
 import streamChatRoutes from "./routes/stream-chat-routes";
 import farmingAssistantRoutes from "./routes/farming-assistant";
 import { setWebSocketNotifier } from "./services/websocket-notifier";
@@ -139,10 +138,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up chat routes
   // Always use standard chat routes instead of Redis
-  console.log(
-    "Using standard database-only chat implementation (Redis disabled)"
-  );
-  app.use("/api/chat", chatRoutes);
 
   // Set up Stream Chat routes
   console.log("Setting up Stream Chat routes");
@@ -364,11 +359,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Ensure the field belongs to the authenticated user
         if (field.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message: "You don't have permission to access this field",
-            });
+          return res.status(403).json({
+            message: "You don't have permission to access this field",
+          });
         }
 
         res.json(field);
@@ -433,11 +426,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (existingField.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message: "You don't have permission to update this field",
-            });
+          return res.status(403).json({
+            message: "You don't have permission to update this field",
+          });
         }
 
         // Validate and update field
@@ -480,11 +471,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (existingField.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message: "You don't have permission to delete this field",
-            });
+          return res.status(403).json({
+            message: "You don't have permission to delete this field",
+          });
         }
 
         // Delete field
@@ -811,11 +800,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (field.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message: "You don't have permission to access this field",
-            });
+          return res.status(403).json({
+            message: "You don't have permission to access this field",
+          });
         }
 
         const crops = await storage.getCropsByField(fieldId);
@@ -1075,11 +1062,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Verify the activity's crop belongs to the user
         const crop = await storage.getCrop(activity.cropId);
         if (!crop || crop.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message: "You don't have permission to access this activity",
-            });
+          return res.status(403).json({
+            message: "You don't have permission to access this activity",
+          });
         }
 
         res.json(activity);
@@ -1113,12 +1098,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (crop.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message:
-                "You don't have permission to add activities to this crop",
-            });
+          return res.status(403).json({
+            message: "You don't have permission to add activities to this crop",
+          });
         }
 
         // Validate and create activity
@@ -1167,11 +1149,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Verify the activity's crop belongs to the user
         const crop = await storage.getCrop(existingActivity.cropId);
         if (!crop || crop.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message: "You don't have permission to update this activity",
-            });
+          return res.status(403).json({
+            message: "You don't have permission to update this activity",
+          });
         }
 
         // Validate and update activity
@@ -1230,11 +1210,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Verify the activity's crop belongs to the user
         const crop = await storage.getCrop(activity.cropId);
         if (!crop || crop.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message: "You don't have permission to delete this activity",
-            });
+          return res.status(403).json({
+            message: "You don't have permission to delete this activity",
+          });
         }
 
         // Delete activity
@@ -1517,11 +1495,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const priority = req.params.priority;
         if (!["low", "medium", "high"].includes(priority)) {
-          return res
-            .status(400)
-            .json({
-              message: "Invalid priority. Must be 'low', 'medium', or 'high'",
-            });
+          return res.status(400).json({
+            message: "Invalid priority. Must be 'low', 'medium', or 'high'",
+          });
         }
 
         const tasks = await storage.getTasksByPriority(req.user.id, priority);
@@ -1556,12 +1532,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (crop.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message:
-                "You don't have permission to access tasks for this crop",
-            });
+          return res.status(403).json({
+            message: "You don't have permission to access tasks for this crop",
+          });
         }
 
         const tasks = await storage.getTasksByCrop(cropId);
@@ -1596,12 +1569,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (field.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message:
-                "You don't have permission to access tasks for this field",
-            });
+          return res.status(403).json({
+            message: "You don't have permission to access tasks for this field",
+          });
         }
 
         const tasks = await storage.getTasksByField(fieldId);
@@ -1671,12 +1641,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           if (crop.userId !== req.user.id) {
-            return res
-              .status(403)
-              .json({
-                message:
-                  "You don't have permission to associate tasks with this crop",
-              });
+            return res.status(403).json({
+              message:
+                "You don't have permission to associate tasks with this crop",
+            });
           }
         }
 
@@ -1688,12 +1656,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           if (field.userId !== req.user.id) {
-            return res
-              .status(403)
-              .json({
-                message:
-                  "You don't have permission to associate tasks with this field",
-              });
+            return res.status(403).json({
+              message:
+                "You don't have permission to associate tasks with this field",
+            });
           }
         }
 
@@ -1757,12 +1723,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           if (crop.userId !== req.user.id) {
-            return res
-              .status(403)
-              .json({
-                message:
-                  "You don't have permission to associate tasks with this crop",
-              });
+            return res.status(403).json({
+              message:
+                "You don't have permission to associate tasks with this crop",
+            });
           }
         }
 
@@ -1777,12 +1741,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           if (field.userId !== req.user.id) {
-            return res
-              .status(403)
-              .json({
-                message:
-                  "You don't have permission to associate tasks with this field",
-              });
+            return res.status(403).json({
+              message:
+                "You don't have permission to associate tasks with this field",
+            });
           }
         }
 
@@ -1866,11 +1828,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (existingTask.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message: "You don't have permission to complete this task",
-            });
+          return res.status(403).json({
+            message: "You don't have permission to complete this task",
+          });
         }
 
         // Complete task
@@ -1917,12 +1877,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (crop.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message:
-                "You don't have permission to access predictions for this crop",
-            });
+          return res.status(403).json({
+            message:
+              "You don't have permission to access predictions for this crop",
+          });
         }
 
         const predictions = await storage.getCropYieldPredictions(cropId);
@@ -1959,12 +1917,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (crop.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message:
-                "You don't have permission to create predictions for this crop",
-            });
+          return res.status(403).json({
+            message:
+              "You don't have permission to create predictions for this crop",
+          });
         }
 
         // Validate prediction data
@@ -2014,12 +1970,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (crop.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message:
-                "You don't have permission to create predictions for this crop",
-            });
+          return res.status(403).json({
+            message:
+              "You don't have permission to create predictions for this crop",
+          });
         }
 
         // Import the AI prediction generator dynamically to avoid circular dependencies
@@ -2114,11 +2068,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Ensure the analysis belongs to the authenticated user
         if (analysis.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message: "You don't have permission to access this analysis",
-            });
+          return res.status(403).json({
+            message: "You don't have permission to access this analysis",
+          });
         }
 
         res.json(analysis);
@@ -2152,12 +2104,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (field.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message:
-                "You don't have permission to access this field's analyses",
-            });
+          return res.status(403).json({
+            message:
+              "You don't have permission to access this field's analyses",
+          });
         }
 
         const analyses = await storage.getPlantAnalysisByField(fieldId);
@@ -2194,12 +2144,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (crop.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message:
-                "You don't have permission to access this crop's analyses",
-            });
+          return res.status(403).json({
+            message: "You don't have permission to access this crop's analyses",
+          });
         }
 
         const analyses = await storage.getPlantAnalysisByCrop(cropId);
@@ -2322,11 +2269,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (existingAnalysis.userId !== req.user.id) {
-          return res
-            .status(403)
-            .json({
-              message: "You don't have permission to delete this analysis",
-            });
+          return res.status(403).json({
+            message: "You don't have permission to delete this analysis",
+          });
         }
 
         // Delete analysis
@@ -2469,756 +2414,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   });
-
-  // ---- MARKETPLACE ROUTES MOVED TO SERVER/ROUTES/MARKETPLACE.TS ----
-
-  /* app.get("/api/marketplace/listings", async (req, res) => {
-    try {
-      const {
-        category,
-        search,
-        sellerId,
-        minPrice,
-        maxPrice,
-        condition,
-        status,
-        locationId,
-        radius,
-        sortBy,
-        limit,
-        offset
-      } = req.query;
-      
-      const params: any = {};
-      
-      if (category) params.category = category;
-      if (search) params.search = search;
-      if (sellerId) params.sellerId = parseInt(sellerId as string);
-      if (minPrice) params.minPrice = parseFloat(minPrice as string);
-      if (maxPrice) params.maxPrice = parseFloat(maxPrice as string);
-      if (condition) params.condition = condition;
-      if (status) params.status = status;
-      if (locationId) params.locationId = parseInt(locationId as string);
-      if (radius) params.radius = parseFloat(radius as string);
-      if (sortBy) params.sortBy = sortBy;
-      if (limit) params.limit = parseInt(limit as string);
-      if (offset) params.offset = parseInt(offset as string);
-      
-      const listings = await storage.getMarketplaceListings(Object.keys(params).length > 0 ? params : undefined);
-      
-      res.json(listings);
-    } catch (error) {
-      console.error("Error fetching marketplace listings:", error);
-      res.status(500).json({ message: "Failed to retrieve listings" });
-    }
-  });
-  
-  // Get listings by location with radius search
-  app.get("/api/marketplace/listings/by-location", async (req, res) => {
-    try {
-      const { latitude, longitude, radius } = req.query;
-      
-      if (!latitude || !longitude || !radius) {
-        return res.status(400).json({ message: "Latitude, longitude, and radius are required" });
-      }
-      
-      const lat = parseFloat(latitude as string);
-      const lng = parseFloat(longitude as string);
-      const rad = parseFloat(radius as string);
-      
-      if (isNaN(lat) || isNaN(lng) || isNaN(rad)) {
-        return res.status(400).json({ message: "Invalid parameters" });
-      }
-      
-      // Extract any additional filter parameters
-      const {
-        category,
-        minPrice,
-        maxPrice,
-        condition,
-        status
-      } = req.query;
-      
-      const filters: any = {};
-      
-      if (category) filters.category = category;
-      if (condition) filters.condition = condition;
-      if (status) filters.status = status;
-      if (minPrice || maxPrice) {
-        // Handle price separately since we can't filter directly by min/max in the function
-        filters.minPrice = minPrice ? parseFloat(minPrice as string) : undefined;
-        filters.maxPrice = maxPrice ? parseFloat(maxPrice as string) : undefined;
-      }
-      
-      const listings = await storage.getMarketplaceListingsByLocation(lat, lng, rad, 
-        Object.keys(filters).length > 0 ? filters : undefined);
-      
-      res.json(listings);
-    } catch (error) {
-      console.error("Error fetching listings by location:", error);
-      res.status(500).json({ message: "Failed to retrieve listings" });
-    }
-  });
-  
-  // Get listings by seller with their location radius
-  app.get("/api/marketplace/listings/by-seller-location/:sellerId", async (req, res) => {
-    try {
-      const sellerId = parseInt(req.params.sellerId);
-      if (isNaN(sellerId)) {
-        return res.status(400).json({ message: "Invalid seller ID" });
-      }
-      
-      const { radius } = req.query;
-      if (!radius) {
-        return res.status(400).json({ message: "Radius parameter is required" });
-      }
-      
-      const rad = parseFloat(radius as string);
-      if (isNaN(rad)) {
-        return res.status(400).json({ message: "Invalid radius" });
-      }
-      
-      const listings = await storage.getMarketplaceListingsBySellerLocation(sellerId, rad);
-      
-      res.json(listings);
-    } catch (error) {
-      console.error("Error fetching listings by seller location:", error);
-      res.status(500).json({ message: "Failed to retrieve listings" });
-    }
-  });
-  
-  // Get specific listing by ID
-  app.get("/api/marketplace/listings/:id", async (req, res) => {
-    try {
-      const listingId = parseInt(req.params.id);
-      if (isNaN(listingId)) {
-        return res.status(400).json({ message: "Invalid listing ID" });
-      }
-      
-      const listing = await storage.getMarketplaceListing(listingId);
-      if (!listing) {
-        return res.status(404).json({ message: "Listing not found" });
-      }
-      
-      // Increment views count
-      await storage.incrementListingViews(listingId);
-      
-      res.json(listing);
-    } catch (error) {
-      console.error("Error fetching marketplace listing:", error);
-      res.status(500).json({ message: "Failed to retrieve listing" });
-    }
-  });
-  
-  // Get listings by seller
-  app.get("/api/marketplace/sellers/:sellerId/listings", async (req, res) => {
-    try {
-      const sellerId = parseInt(req.params.sellerId);
-      if (isNaN(sellerId)) {
-        return res.status(400).json({ message: "Invalid seller ID" });
-      }
-      
-      const listings = await storage.getMarketplaceListingsBySeller(sellerId);
-      
-      res.json(listings);
-    } catch (error) {
-      console.error("Error fetching seller listings:", error);
-      res.status(500).json({ message: "Failed to retrieve listings" });
-    }
-  });
-  
-  // Create listing (authenticated users only)
-  app.post("/api/marketplace/listings", isAuthenticated, (req, res, next) => {
-    console.log("Starting marketplace listings POST handler");
-    
-    // Wrap multer in try/catch to prevent server crashes
-    try {
-      upload(req, res, (err) => {
-        if (err) {
-          console.error("Multer error:", err);
-          return res.status(400).json({ 
-            message: "File upload error", 
-            details: err.message 
-          });
-        }
-        next();
-      });
-    } catch (error) {
-      console.error("Critical error in file upload middleware:", error);
-      return res.status(500).json({ message: "Server error processing file upload" });
-    }
-  }, async (req, res) => {
-    console.log("POST /api/marketplace/listings endpoint hit");
-    try {
-      if (!req.user) {
-        console.log("User not authenticated in marketplace listings POST");
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      console.log("User authenticated:", req.user.id);
-      console.log("Request body:", req.body);
-      console.log("Request files:", req.files ? (req.files as Express.Multer.File[]).length : "no files");
-      
-      console.log("Request body:", req.body);
-      console.log("Files:", req.files);
-      
-      // Process files if any
-      let images: string[] = [];
-      // Handle multer.fields() format
-      const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
-      
-      if (files && files.images && files.images.length > 0) {
-        // Convert Buffer to base64 string for storage
-        images = files.images.map(file => {
-          const base64 = file.buffer.toString('base64');
-          return `data:${file.mimetype};base64,${base64}`;
-        });
-      }
-      
-      // Combine form data with processed images
-      const listingData = insertMarketplaceListingSchema.parse({
-        ...req.body,
-        sellerId: req.user.id,
-        images: images.length > 0 ? images : undefined
-      });
-      
-      const newListing = await storage.createMarketplaceListing(listingData);
-      
-      res.status(201).json(newListing);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const validationError = fromZodError(error);
-        res.status(400).json({ message: validationError.message });
-      } else {
-        console.error("Error creating marketplace listing:", error);
-        res.status(500).json({ message: "Failed to create listing" });
-      }
-    }
-  });
-  
-  // Update listing (authenticated users only, must be seller)
-  app.patch("/api/marketplace/listings/:id", isAuthenticated, (req, res, next) => {
-    console.log("Starting marketplace listings PATCH handler");
-    
-    // Wrap multer in try/catch to prevent server crashes
-    try {
-      upload(req, res, (err) => {
-        if (err) {
-          console.error("Multer error:", err);
-          return res.status(400).json({ 
-            message: "File upload error", 
-            details: err.message 
-          });
-        }
-        next();
-      });
-    } catch (error) {
-      console.error("Critical error in file upload middleware:", error);
-      return res.status(500).json({ message: "Server error processing file upload" });
-    }
-  }, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const listingId = parseInt(req.params.id);
-      if (isNaN(listingId)) {
-        return res.status(400).json({ message: "Invalid listing ID" });
-      }
-      
-      const existingListing = await storage.getMarketplaceListing(listingId);
-      if (!existingListing) {
-        return res.status(404).json({ message: "Listing not found" });
-      }
-      
-      // Check if the user is the seller
-      if (existingListing.sellerId !== req.user.id) {
-        return res.status(403).json({ message: "You don't have permission to update this listing" });
-      }
-      
-      // Process files if any
-      let images: string[] | undefined;
-      // Handle multer.fields() format
-      const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
-      
-      if (files && files.images && files.images.length > 0) {
-        // Convert Buffer to base64 string for storage
-        const newImages = files.images.map(file => {
-          const base64 = file.buffer.toString('base64');
-          return `data:${file.mimetype};base64,${base64}`;
-        });
-        
-        // Combine with existing images if needed
-        if (req.body.keepExistingImages === 'true' && existingListing.images) {
-          images = [...existingListing.images, ...newImages];
-        } else {
-          images = newImages;
-        }
-      }
-      
-      const listingData = insertMarketplaceListingSchema.partial().parse({
-        ...req.body,
-        images
-      });
-      
-      // Ensure user cannot change sellerId
-      delete listingData.sellerId;
-      
-      const updatedListing = await storage.updateMarketplaceListing(listingId, listingData);
-      
-      res.json(updatedListing);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const validationError = fromZodError(error);
-        res.status(400).json({ message: validationError.message });
-      } else {
-        console.error("Error updating marketplace listing:", error);
-        res.status(500).json({ message: "Failed to update listing" });
-      }
-    }
-  });
-  
-  // Delete listing (authenticated users only, must be seller)
-  app.delete("/api/marketplace/listings/:id", isAuthenticated, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const listingId = parseInt(req.params.id);
-      if (isNaN(listingId)) {
-        return res.status(400).json({ message: "Invalid listing ID" });
-      }
-      
-      const existingListing = await storage.getMarketplaceListing(listingId);
-      if (!existingListing) {
-        return res.status(404).json({ message: "Listing not found" });
-      }
-      
-      // Check if the user is the seller
-      if (existingListing.sellerId !== req.user.id) {
-        return res.status(403).json({ message: "You don't have permission to delete this listing" });
-      }
-      
-      const success = await storage.deleteMarketplaceListing(listingId);
-      
-      if (success) {
-        res.json({ success: true, message: "Listing deleted successfully" });
-      } else {
-        res.status(500).json({ message: "Failed to delete listing" });
-      }
-    } catch (error) {
-      console.error("Error deleting marketplace listing:", error);
-      res.status(500).json({ message: "Failed to delete listing" });
-    }
-  });
-  
-  // ---- Marketplace Reviews ----
-  
-  // Get reviews for a listing or seller
-  app.get("/api/marketplace/reviews", async (req, res) => {
-    try {
-      const { listingId, sellerId } = req.query;
-      
-      if (!listingId && !sellerId) {
-        return res.status(400).json({ message: "Either listingId or sellerId is required" });
-      }
-      
-      let listingIdParam: number | undefined;
-      let sellerIdParam: number | undefined;
-      
-      if (listingId) {
-        listingIdParam = parseInt(listingId as string);
-        if (isNaN(listingIdParam)) {
-          return res.status(400).json({ message: "Invalid listing ID" });
-        }
-      }
-      
-      if (sellerId) {
-        sellerIdParam = parseInt(sellerId as string);
-        if (isNaN(sellerIdParam)) {
-          return res.status(400).json({ message: "Invalid seller ID" });
-        }
-      }
-      
-      const reviews = await storage.getMarketplaceReviews(listingIdParam, sellerIdParam);
-      
-      res.json(reviews);
-    } catch (error) {
-      console.error("Error fetching reviews:", error);
-      res.status(500).json({ message: "Failed to retrieve reviews" });
-    }
-  });
-  
-  // Create review (authenticated users only)
-  app.post("/api/marketplace/reviews", isAuthenticated, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const reviewData = insertMarketplaceReviewSchema.parse({
-        ...req.body,
-        reviewerId: req.user.id
-      });
-      
-      // Check if user is reviewing their own listing
-      if (reviewData.sellerId === req.user.id) {
-        return res.status(400).json({ message: "You cannot review your own listing" });
-      }
-      
-      const newReview = await storage.createMarketplaceReview(reviewData);
-      
-      res.status(201).json(newReview);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const validationError = fromZodError(error);
-        res.status(400).json({ message: validationError.message });
-      } else {
-        console.error("Error creating review:", error);
-        res.status(500).json({ message: "Failed to create review" });
-      }
-    }
-  });
-  
-  // Update review (authenticated users only, must be reviewer)
-  app.patch("/api/marketplace/reviews/:id", isAuthenticated, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const reviewId = parseInt(req.params.id);
-      if (isNaN(reviewId)) {
-        return res.status(400).json({ message: "Invalid review ID" });
-      }
-      
-      const existingReview = await storage.getMarketplaceReview(reviewId);
-      if (!existingReview) {
-        return res.status(404).json({ message: "Review not found" });
-      }
-      
-      // Check if the user is the reviewer
-      if (existingReview.reviewerId !== req.user.id) {
-        return res.status(403).json({ message: "You don't have permission to update this review" });
-      }
-      
-      const reviewData = insertMarketplaceReviewSchema.partial().parse(req.body);
-      
-      // Ensure user cannot change reviewer ID or seller ID
-      delete reviewData.reviewerId;
-      delete reviewData.sellerId;
-      
-      const updatedReview = await storage.updateMarketplaceReview(reviewId, reviewData);
-      
-      res.json(updatedReview);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const validationError = fromZodError(error);
-        res.status(400).json({ message: validationError.message });
-      } else {
-        console.error("Error updating review:", error);
-        res.status(500).json({ message: "Failed to update review" });
-      }
-    }
-  });
-  
-  // Delete review (authenticated users only, must be reviewer)
-  app.delete("/api/marketplace/reviews/:id", isAuthenticated, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const reviewId = parseInt(req.params.id);
-      if (isNaN(reviewId)) {
-        return res.status(400).json({ message: "Invalid review ID" });
-      }
-      
-      const existingReview = await storage.getMarketplaceReview(reviewId);
-      if (!existingReview) {
-        return res.status(404).json({ message: "Review not found" });
-      }
-      
-      // Check if the user is the reviewer
-      if (existingReview.reviewerId !== req.user.id) {
-        return res.status(403).json({ message: "You don't have permission to delete this review" });
-      }
-      
-      const success = await storage.deleteMarketplaceReview(reviewId);
-      
-      if (success) {
-        res.json({ success: true, message: "Review deleted successfully" });
-      } else {
-        res.status(500).json({ message: "Failed to delete review" });
-      }
-    } catch (error) {
-      console.error("Error deleting review:", error);
-      res.status(500).json({ message: "Failed to delete review" });
-    }
-  });
-  
-  // ---- Marketplace Favorites ----
-  
-  // Get user's favorites (authenticated users only)
-  app.get("/api/marketplace/favorites", isAuthenticated, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const favorites = await storage.getMarketplaceFavorites(req.user.id);
-      
-      res.json(favorites);
-    } catch (error) {
-      console.error("Error fetching favorites:", error);
-      res.status(500).json({ message: "Failed to retrieve favorites" });
-    }
-  });
-  
-  // Add listing to favorites (authenticated users only)
-  app.post("/api/marketplace/favorites", isAuthenticated, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const favoriteData = insertMarketplaceFavoriteSchema.parse({
-        ...req.body,
-        userId: req.user.id
-      });
-      
-      const newFavorite = await storage.createMarketplaceFavorite(favoriteData);
-      
-      res.status(201).json(newFavorite);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const validationError = fromZodError(error);
-        res.status(400).json({ message: validationError.message });
-      } else {
-        console.error("Error adding favorite:", error);
-        res.status(500).json({ message: "Failed to add favorite" });
-      }
-    }
-  });
-  
-  // Remove listing from favorites (authenticated users only)
-  app.delete("/api/marketplace/favorites/:id", isAuthenticated, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const favoriteId = parseInt(req.params.id);
-      if (isNaN(favoriteId)) {
-        return res.status(400).json({ message: "Invalid favorite ID" });
-      }
-      
-      const existingFavorite = await storage.getMarketplaceFavorite(favoriteId);
-      if (!existingFavorite) {
-        return res.status(404).json({ message: "Favorite not found" });
-      }
-      
-      // Check if the user owns this favorite
-      if (existingFavorite.userId !== req.user.id) {
-        return res.status(403).json({ message: "You don't have permission to remove this favorite" });
-      }
-      
-      const success = await storage.deleteMarketplaceFavorite(favoriteId);
-      
-      if (success) {
-        res.json({ success: true, message: "Favorite removed successfully" });
-      } else {
-        res.status(500).json({ message: "Failed to remove favorite" });
-      }
-    } catch (error) {
-      console.error("Error removing favorite:", error);
-      res.status(500).json({ message: "Failed to remove favorite" });
-    }
-  });
-  
-  // ---- Marketplace Messages ----
-  
-  // Get conversations (authenticated users only)
-  app.get("/api/marketplace/messages", isAuthenticated, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const { senderId, recipientId, listingId } = req.query;
-      
-      let senderIdParam: number | undefined;
-      let recipientIdParam: number | undefined;
-      let listingIdParam: number | undefined;
-      
-      if (senderId) {
-        senderIdParam = parseInt(senderId as string);
-        if (isNaN(senderIdParam)) {
-          return res.status(400).json({ message: "Invalid sender ID" });
-        }
-      }
-      
-      if (recipientId) {
-        recipientIdParam = parseInt(recipientId as string);
-        if (isNaN(recipientIdParam)) {
-          return res.status(400).json({ message: "Invalid recipient ID" });
-        }
-      }
-      
-      if (listingId) {
-        listingIdParam = parseInt(listingId as string);
-        if (isNaN(listingIdParam)) {
-          return res.status(400).json({ message: "Invalid listing ID" });
-        }
-      }
-      
-      // Ensure user can only access their own conversations
-      if ((senderIdParam && senderIdParam !== req.user.id) && 
-          (recipientIdParam && recipientIdParam !== req.user.id)) {
-        return res.status(403).json({ message: "You can only access your own conversations" });
-      }
-      
-      // If no sender or recipient specified, default to user as either
-      if (!senderIdParam && !recipientIdParam) {
-        const sentMessages = await storage.getMarketplaceMessages(req.user.id, undefined, listingIdParam);
-        const receivedMessages = await storage.getMarketplaceMessages(undefined, req.user.id, listingIdParam);
-        
-        // Combine and sort by date
-        const allMessages = [...sentMessages, ...receivedMessages].sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        
-        return res.json(allMessages);
-      }
-      
-      const messages = await storage.getMarketplaceMessages(senderIdParam, recipientIdParam, listingIdParam);
-      
-      res.json(messages);
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-      res.status(500).json({ message: "Failed to retrieve messages" });
-    }
-  });
-  
-  // Send message (authenticated users only)
-  app.post("/api/marketplace/messages", isAuthenticated, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const messageData = insertMarketplaceMessageSchema.parse({
-        ...req.body,
-        senderId: req.user.id
-      });
-      
-      // Check if user is sending message to themselves
-      if (messageData.recipientId === req.user.id) {
-        return res.status(400).json({ message: "You cannot send a message to yourself" });
-      }
-      
-      const newMessage = await storage.createMarketplaceMessage(messageData);
-      
-      res.status(201).json(newMessage);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const validationError = fromZodError(error);
-        res.status(400).json({ message: validationError.message });
-      } else {
-        console.error("Error sending message:", error);
-        res.status(500).json({ message: "Failed to send message" });
-      }
-    }
-  });
-  
-  // Mark message as read (authenticated users only, must be recipient)
-  app.patch("/api/marketplace/messages/:id/read", isAuthenticated, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const messageId = parseInt(req.params.id);
-      if (isNaN(messageId)) {
-        return res.status(400).json({ message: "Invalid message ID" });
-      }
-      
-      const existingMessage = await storage.getMarketplaceMessage(messageId);
-      if (!existingMessage) {
-        return res.status(404).json({ message: "Message not found" });
-      }
-      
-      // Check if the user is the recipient
-      if (existingMessage.recipientId !== req.user.id) {
-        return res.status(403).json({ message: "You don't have permission to mark this message as read" });
-      }
-      
-      const success = await storage.markMessageAsRead(messageId);
-      
-      if (success) {
-        const updatedMessage = await storage.getMarketplaceMessage(messageId);
-        res.json(updatedMessage);
-      } else {
-        res.status(500).json({ message: "Failed to mark message as read" });
-      }
-    } catch (error) {
-      console.error("Error marking message as read:", error);
-      res.status(500).json({ message: "Failed to mark message as read" });
-    }
-  });
-  
-  // Delete message (authenticated users only, must be sender or recipient)
-  app.delete("/api/marketplace/messages/:id", isAuthenticated, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const messageId = parseInt(req.params.id);
-      if (isNaN(messageId)) {
-        return res.status(400).json({ message: "Invalid message ID" });
-      }
-      
-      const existingMessage = await storage.getMarketplaceMessage(messageId);
-      if (!existingMessage) {
-        return res.status(404).json({ message: "Message not found" });
-      }
-      
-      // Check if the user is the sender or recipient
-      if (existingMessage.senderId !== req.user.id && existingMessage.recipientId !== req.user.id) {
-        return res.status(403).json({ message: "You don't have permission to delete this message" });
-      }
-      
-      const success = await storage.deleteMarketplaceMessage(messageId);
-      
-      if (success) {
-        res.json({ success: true, message: "Message deleted successfully" });
-      } else {
-        res.status(500).json({ message: "Failed to delete message" });
-      }
-    } catch (error) {
-      console.error("Error deleting message:", error);
-      res.status(500).json({ message: "Failed to delete message" });
-    }
-  });
-  
-  // Get unread message count (authenticated users only)
-  app.get("/api/marketplace/messages/unread/count", isAuthenticated, async (req, res) => {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-      }
-      
-      const count = await storage.getUnreadMessageCount(req.user.id);
-      
-      res.json({ count });
-    } catch (error) {
-      console.error("Error getting unread message count:", error);
-      res.status(500).json({ message: "Failed to get unread message count" });
-    }
-  });
-  */
 
   // Log all registered routes for debugging
   console.log("Registered routes:");
