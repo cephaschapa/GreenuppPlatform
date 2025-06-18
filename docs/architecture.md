@@ -118,5 +118,60 @@ marketplace_listings
 #### Hyperledger Fabric
 
 ```
+Crop Lifecycle Events
+├── Creation
+│   ├── Initial crop registration
+│   └── Batch ID generation
+├── Growth Stages
+│   ├── Planting records
+│   ├── Growth monitoring
+│   └── Treatment history
+├── Harvest
+│   ├── Yield data
+│   └── Quality metrics
+├── Processing
+│   ├── Post-harvest handling
+│   └── Storage conditions
+└── Distribution
+    ├── Transport records
+    └── Chain of custody
+```
 
+- **Why Hyperledger Fabric?**
+  - Permissioned blockchain for controlled access
+  - Low energy consumption compared to public chains
+  - Enterprise-grade security features
+  - Flexible consensus mechanisms
+  - Private data collections for sensitive info
+  - Smart contracts for automated verification
+
+#### Smart Contracts
+
+1. **CropTrace Contract**
+
+   - Manages crop lifecycle events
+   - Validates data integrity
+   - Enforces business rules
+   - Emits verification events
+
+2. **Marketplace Integration**
+   - Links listings to verified crops
+   - Validates crop ownership
+   - Tracks transfers and sales
+   - Maintains audit trail
+
+#### Verification Process
+
+```
+Verification Request
+├── Load crop data from database
+├── Query blockchain history
+│   ├── Retrieve all events
+│   └── Validate event chain
+├── Verify signatures
+│   ├── Check authority
+│   └── Validate timestamps
+└── Generate verification result
+    ├── Compile event history
+    └── Create verification report
 ```
