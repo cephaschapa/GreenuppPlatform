@@ -13,6 +13,13 @@ COPY package.json package-lock.json* .npmrc ./
 # Install ALL dependencies (including devDependencies) for build
 RUN npm ci --include=dev
 
+# Install production dependencies only
+FROM base AS deps-prod
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+COPY package.json package-lock.json* .npmrc ./
+RUN npm ci --only=production
+
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
@@ -41,8 +48,8 @@ COPY --from=builder /app/dist/index.js ./dist/index.js
 # Copy package.json for start script
 COPY package.json ./
 
-# Install only production dependencies for the final image
-RUN npm ci --only=production
+# Copy production node_modules
+COPY --from=deps-prod /app/node_modules ./node_modules
 
 # Create uploads directory
 RUN mkdir -p uploads && chown nextjs:nodejs uploads
