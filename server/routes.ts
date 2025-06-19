@@ -60,6 +60,7 @@ import { eq } from "drizzle-orm";
 // that's already declared in auth.ts
 
 import multer from "multer";
+import healthRoutes from "./routes/health.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to handle subdomain routing
@@ -88,6 +89,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log(
     "Initialized Green Socials with consistent authentication middleware"
   );
+
+  // Set up health check routes FIRST (no auth required)
+  app.use("/api", healthRoutes);
 
   // Set up seller routes FIRST
   // IMPORTANT: We need to register this BEFORE the marketplace routes
