@@ -3,12 +3,9 @@ import { db } from "../db.js";
 
 const router = Router();
 
-// Health check endpoint for Railway
+// Fast health check endpoint for Railway (no database dependency)
 router.get("/health", async (req, res) => {
   try {
-    // Check database connection
-    await db.execute("SELECT 1");
-
     res.status(200).json({
       status: "healthy",
       timestamp: new Date().toISOString(),
@@ -21,7 +18,34 @@ router.get("/health", async (req, res) => {
     res.status(503).json({
       status: "unhealthy",
       timestamp: new Date().toISOString(),
-      error: "Database connection failed",
+      error: "Server error",
+    });
+  }
+});
+
+// Database health check (separate endpoint for detailed checks)
+router.get("/health/db", async (req, res) => {
+  try {
+    // Check database connection with timeout
+    const dbPromise = db.execute("SELECT 1");
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Database timeout")), 5000)
+    );
+
+    await Promise.race([dbPromise, timeoutPromise]);
+
+    res.status(200).json({
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      database: "connected",
+    });
+  } catch (error) {
+    console.error("Database health check failed:", error);
+    res.status(503).json({
+      status: "unhealthy",
+      timestamp: new Date().toISOString(),
+      database: "disconnected",
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
@@ -35,9 +59,14 @@ router.get("/health/detailed", async (req, res) => {
       disk: false,
     };
 
-    // Database check
+    // Database check with timeout
     try {
-      await db.execute("SELECT 1");
+      const dbPromise = db.execute("SELECT 1");
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Database timeout")), 5000)
+      );
+
+      await Promise.race([dbPromise, timeoutPromise]);
       checks.database = true;
     } catch (error) {
       console.error("Database health check failed:", error);
@@ -67,7 +96,7 @@ router.get("/health/detailed", async (req, res) => {
     res.status(503).json({
       status: "unhealthy",
       timestamp: new Date().toISOString(),
-      error: error.message,
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
