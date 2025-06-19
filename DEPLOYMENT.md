@@ -61,12 +61,54 @@ railway link
 
 ### 2. Set Environment Variables
 
+**⚠️ CRITICAL: You must set these environment variables in Railway for the app to start!**
+
+#### Required Variables (Must be set)
+
+| Variable         | Description                  | Example                               |
+| ---------------- | ---------------------------- | ------------------------------------- |
+| `DATABASE_URL`   | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
+| `SESSION_SECRET` | Secret key for sessions      | `your-super-secret-key-here`          |
+
+#### Optional Variables (Enable additional features)
+
+| Variable                 | Description                    | Example                     |
+| ------------------------ | ------------------------------ | --------------------------- |
+| `OPENAI_API_KEY`         | OpenAI API key for AI features | `sk-your-openai-key`        |
+| `SENDGRID_API_KEY`       | SendGrid API key for emails    | `SG.your-sendgrid-key`      |
+| `OPENWEATHER_API_KEY`    | OpenWeather API key            | `your-weather-key`          |
+| `STRIPE_SECRET_KEY`      | Stripe secret key for payments | `sk_test_your-stripe-key`   |
+| `VITE_STRIPE_PUBLIC_KEY` | Stripe public key              | `pk_test_your-stripe-key`   |
+| `STREAM_API_KEY`         | Stream Chat API key            | `your-stream-key`           |
+| `STREAM_API_SECRET`      | Stream Chat API secret         | `your-stream-secret`        |
+| `VITE_STREAM_API_KEY`    | Stream Chat public key         | `your-stream-key`           |
+| `ANTHROPIC_API_KEY`      | Anthropic API key              | `sk-ant-your-anthropic-key` |
+
+#### Setting Variables in Railway
+
+1. **Go to your Railway project dashboard**
+2. **Click on your service**
+3. **Go to the 'Variables' tab**
+4. **Add each variable with its corresponding value**
+
+#### Database Setup
+
+1. **Create a PostgreSQL database in Railway:**
+
+   - Go to your Railway project
+   - Click "New Service" → "Database" → "PostgreSQL"
+   - Railway will automatically provide the `DATABASE_URL`
+
+2. **Or use an external database:**
+   - Set `DATABASE_URL` to your external PostgreSQL connection string
+
+#### Session Secret
+
+Generate a secure session secret:
+
 ```bash
-# Set all environment variables
-railway variables set DATABASE_URL=your_neon_database_url
-railway variables set SESSION_SECRET=your_session_secret
-railway variables set NODE_ENV=production
-# ... add all other variables
+# Generate a random 32-character string
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 ### 3. Deploy Manually (First Time)
@@ -149,6 +191,7 @@ npm run dev
 npm run dev          # Start development server
 npm run build        # Build for production
 npm run start        # Start production server
+npm run start:debug  # Start production server with debug logging
 npm run lint         # Run ESLint
 npm run lint:fix     # Fix ESLint issues
 npm run format       # Format code with Prettier
@@ -180,7 +223,23 @@ npm run db:push      # Push database schema changes
 
 ### Common Issues
 
-#### 1. Build Failures
+#### 1. "cross-env: not found" Error
+
+**Problem**: The server fails to start with `sh: cross-env: not found`
+
+**Solution**:
+
+- ✅ **Fixed**: `cross-env` has been moved to main dependencies
+- ✅ **Fixed**: Start script now uses direct environment variable setting
+- ✅ **Fixed**: Railway configuration updated to use `npm run start:debug`
+
+**If you still see this error:**
+
+1. Check Railway logs: `railway logs`
+2. Ensure you're using the latest code
+3. Redeploy: `railway up`
+
+#### 2. Build Failures
 
 ```bash
 # Check build logs
@@ -193,51 +252,81 @@ railway variables list
 npm run build
 ```
 
-#### 2. Database Connection Issues
+#### 3. Database Connection Issues
 
 ```bash
 # Verify DATABASE_URL
 railway variables get DATABASE_URL
 
-# Test database connection
-npm run db:push
+# Check database status
+railway logs | grep -i database
 ```
 
-#### 3. Health Check Failures
+#### 4. Missing Environment Variables
+
+**Problem**: Server fails to start due to missing environment variables
+
+**Solution**:
+
+1. Check Railway logs for specific missing variables
+2. Set all required variables in Railway dashboard
+3. Minimum required variables:
+   - `DATABASE_URL`
+   - `SESSION_SECRET`
+
+#### 5. Health Check Failures
+
+**Problem**: Health check returns "service unavailable"
+
+**Solution**:
+
+1. Check Railway logs: `railway logs`
+2. Verify server is starting properly
+3. Check for missing environment variables
+4. Ensure database is accessible
+
+### Debug Mode
+
+Enable debug mode by setting:
+
+```env
+DEBUG_APP=true
+```
+
+This will provide more detailed logging during startup.
+
+### Local Testing
+
+Test the production build locally:
 
 ```bash
-# Check application logs
-railway logs
+# Build the project
+npm run build
 
-# Verify port configuration
-# Ensure PORT=5000 is set
+# Test with production environment
+NODE_ENV=production PORT=5000 npm start
 ```
 
-#### 4. GitHub Actions Failures
+## 📊 Performance & Scaling
 
-- Check Actions tab for detailed error messages
-- Verify secrets are properly configured
-- Ensure branch protection rules are set correctly
+### Railway Scaling
 
-### Rollback Strategy
+- **Automatic**: Railway scales based on traffic
+- **Manual**: Adjust resources in dashboard
+- **Custom domains**: Add custom domains in Railway
 
-```bash
-# Railway automatic rollback
-# If health checks fail, Railway automatically rolls back
+### Performance Optimization
 
-# Manual rollback
-railway rollback
+- **Caching**: Implement Redis caching
+- **CDN**: Use Railway's CDN for static assets
+- **Database**: Optimize queries and indexes
 
-# Check deployment history
-railway deployments
-```
-
-## 🔒 Security Considerations
+## 🛡️ Security
 
 ### Environment Variables
 
 - Never commit `.env` files
-- Use Railway's encrypted variables
+- Use Railway's secure variable storage
 - Rotate secrets regularly
 
 ### Database Security
@@ -248,61 +337,62 @@ railway deployments
 
 ### Application Security
 
-- Keep dependencies updated
-- Regular security audits
-- Monitor for vulnerabilities
+- Input validation
+- SQL injection prevention
+- XSS protection
+- CSRF protection
 
-## 📊 Performance Optimization
+## 🔧 Maintenance
 
-### Build Optimization
+### Regular Tasks
 
-- Multi-stage Docker builds
-- Dependency caching
-- Bundle size analysis
+1. **Update dependencies**: `npm update`
+2. **Security audits**: `npm audit`
+3. **Database backups**: Automated in Railway
+4. **Log monitoring**: Check Railway logs
 
-### Runtime Optimization
+### Backup Strategy
 
-- Node.js memory limits
-- Database query optimization
-- CDN for static assets
-
-## 🔄 Continuous Improvement
-
-### Metrics to Monitor
-
-- Deployment success rate
-- Build times
-- Application response times
-- Error rates
-- User experience metrics
-
-### Regular Maintenance
-
-- Weekly dependency updates
-- Monthly security audits
-- Quarterly performance reviews
+- **Database**: Automated daily backups
+- **Code**: Git repository
+- **Configuration**: Railway variables
 
 ## 📞 Support
 
-### Getting Help
+### Railway Support
 
-1. Check Railway documentation
-2. Review GitHub Actions logs
-3. Check application logs
-4. Contact team for issues
+- [Railway Documentation](https://docs.railway.app/)
+- [Railway Discord](https://discord.gg/railway)
+- [Railway Status](https://status.railway.app/)
 
-### Useful Commands
+### Application Support
 
-```bash
-# Railway
-railway status          # Check deployment status
-railway logs            # View application logs
-railway variables       # Manage environment variables
-railway domains         # Manage custom domains
+- Check logs: `railway logs`
+- Debug mode: Set `DEBUG_APP=true`
+- Health checks: `/api/health`
 
-# GitHub Actions
-# Check Actions tab in repository for workflow status
-```
+## 🎯 Best Practices
+
+### Development
+
+- Test locally before deploying
+- Use feature branches
+- Review code before merging
+- Monitor deployment logs
+
+### Production
+
+- Set up monitoring and alerts
+- Regular security updates
+- Performance monitoring
+- Backup verification
+
+### Environment Management
+
+- Use different environments for dev/staging/prod
+- Never use production data in development
+- Document all environment variables
+- Use secure secret management
 
 ---
 
