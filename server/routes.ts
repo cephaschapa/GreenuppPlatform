@@ -81,6 +81,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   console.log("Registering all API routes...");
 
+  // Set up health check routes FIRST (no auth required) - BEFORE authentication
+  app.use("/api", healthRoutes);
+
   // Set up authentication and get the isAuthenticated middleware
   const { isAuthenticated } = setupAuth(app);
 
@@ -89,9 +92,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log(
     "Initialized Green Socials with consistent authentication middleware"
   );
-
-  // Set up health check routes FIRST (no auth required)
-  app.use("/api", healthRoutes);
 
   // Set up seller routes FIRST
   // IMPORTANT: We need to register this BEFORE the marketplace routes
