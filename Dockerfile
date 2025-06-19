@@ -7,9 +7,11 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
+# Copy package files first for better caching
+COPY package.json package-lock.json* .npmrc ./
+
 # Install ALL dependencies (including devDependencies) for build
-COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --include=dev
 
 # Rebuild the source code only when needed
 FROM base AS builder
