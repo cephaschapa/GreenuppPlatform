@@ -81,8 +81,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   console.log("Registering all API routes...");
 
+  // HEALTH CHECKS DISABLED - Uncomment to re-enable
   // Set up health check routes FIRST (no auth required) - BEFORE authentication
-  app.use("/api", healthRoutes);
+  // app.use("/api", healthRoutes);
 
   // Set up authentication and get the isAuthenticated middleware
   const { isAuthenticated } = setupAuth(app);
