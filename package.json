@@ -16,7 +16,7 @@
     "test": "echo \"No tests specified\" && exit 0",
     "test:watch": "echo \"No tests specified\" && exit 0",
     "type-check": "tsc --noEmit",
-    "clean": "rm -rf dist node_modules/.cache",
+    "clean": "rimraf dist node_modules/.cache",
     "prebuild": "npm run clean"
   },
   "dependencies": {
@@ -148,6 +148,7 @@
     "drizzle-kit": "^0.30.4",
     "esbuild": "^0.25.0",
     "postcss": "^8.4.47",
+    "rimraf": "^6.0.1",
     "tailwindcss": "^3.4.14",
     "tsx": "^4.19.1",
     "typescript": "5.6.3",
