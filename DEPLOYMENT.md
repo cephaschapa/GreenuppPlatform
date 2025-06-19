@@ -121,8 +121,8 @@ The pipeline automatically runs on:
 ### Prerequisites
 
 ```bash
-Node.js 18+
-npm or yarn
+Node.js 20+
+npm 10+
 PostgreSQL database (Neon recommended)
 ```
 
