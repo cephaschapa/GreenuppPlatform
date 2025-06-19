@@ -160,3 +160,4 @@ jobs:
           else
             echo "Vulnerabilities found - please review"
             exit 1
+          fi

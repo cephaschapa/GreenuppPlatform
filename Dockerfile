@@ -7,9 +7,9 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
+# Install ALL dependencies (including devDependencies) for build
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production
+RUN npm ci
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -39,8 +39,8 @@ COPY --from=builder /app/dist/index.js ./dist/index.js
 # Copy package.json for start script
 COPY package.json ./
 
-# Copy node_modules
-COPY --from=deps /app/node_modules ./node_modules
+# Install only production dependencies for the final image
+RUN npm ci --only=production
 
 # Create uploads directory
 RUN mkdir -p uploads && chown nextjs:nodejs uploads
