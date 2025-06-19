@@ -30,6 +30,8 @@ import {
   Bell,
   PlusCircle,
   UserPlus,
+  MoreHorizontal,
+  MoreVertical,
 } from "lucide-react";
 
 // Simple media query hook implementation inline to avoid module import issues
@@ -83,7 +85,7 @@ const CustomMessageInput = () => {
   };
 
   return (
-    <div className="custom-message-input border-t flex items-end gap-2">
+    <div className="custom-message-input border flex items-center gap-2 w-full sticky bottom-0">
       <div className="input-actions flex items-center gap-2">
         <button
           className="p-2 rounded-full hover:bg-accent transition-colors"
@@ -216,20 +218,7 @@ const CustomChannelHeader = ({ onBackClick }: { onBackClick?: () => void }) => {
           href="/dashboard"
           className="p-2 rounded-full hover:bg-accent transition-colors"
         >
-          <Home size={20} className="text-muted-foreground" />
-        </a>
-        <a
-          href="/notifications"
-          className="p-2 rounded-full hover:bg-accent transition-colors relative"
-        >
-          <Bell size={20} className="text-muted-foreground" />
-          <span className="absolute top-0 right-0 bg-red-500 w-2.5 h-2.5 rounded-full"></span>
-        </a>
-        <a
-          href="/cart"
-          className="p-2 rounded-full hover:bg-accent transition-colors"
-        >
-          <ShoppingCart size={20} className="text-muted-foreground" />
+          <MoreVertical size={20} className="text-muted-foreground" />
         </a>
       </div>
     </div>
@@ -531,7 +520,7 @@ export const StreamChatComponent = ({
 
           {/* Chat window - only show if we're on desktop, or on mobile when a channel is selected */}
           {(!isMobile || (isMobile && !showChannelList)) && (
-            <div className="flex-1 w-full">
+            <div className="flex-1 w-full left-6">
               {activeChannel ? (
                 <StreamChannel channel={activeChannel}>
                   <Window>

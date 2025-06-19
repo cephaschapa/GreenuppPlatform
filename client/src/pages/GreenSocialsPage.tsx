@@ -161,7 +161,9 @@ const isMediaArray = (media: any): media is Array<any> => {
 };
 
 // Type guard for media object format
-const isMediaObject = (media: any): media is { url: string; type?: string; caption?: string } => {
+const isMediaObject = (
+  media: any
+): media is { url: string; type?: string; caption?: string } => {
   return media && typeof media === "object" && typeof media.url === "string";
 };
 
@@ -250,7 +252,7 @@ const GreenSocialsPage = () => {
     queryKey: ["/api/social/profile", user?.id],
     queryFn: () =>
       apiRequest("GET", `/api/social/profile/${user?.id}`).then((res) =>
-        res.json(),
+        res.json()
       ),
     enabled: !!user,
   });
@@ -294,7 +296,7 @@ const GreenSocialsPage = () => {
     queryKey: ["/api/social/expertise-categories"],
     queryFn: () =>
       apiRequest("GET", "/api/social/expertise-categories").then((res) =>
-        res.json(),
+        res.json()
       ),
     enabled: !!user,
   });
@@ -336,7 +338,7 @@ const GreenSocialsPage = () => {
     content: string;
     postType?: string;
     visibility?: string;
-    media?: Array<{url: string; type: string; caption?: string}>;
+    media?: Array<{ url: string; type: string; caption?: string }>;
     hashtags?: string[];
     cropsTags?: string[];
   }
@@ -345,19 +347,19 @@ const GreenSocialsPage = () => {
     mutationFn: async (payload: CreatePostPayload) => {
       console.log("Creating post with the provided payload:");
       console.log(JSON.stringify(payload, null, 2));
-      
+
       const res = await apiRequest("POST", "/api/social/posts", payload);
-      
+
       // Log the response status
       console.log("Post creation response status:", res.status);
-      
+
       // If there was an error, try to get more details
       if (!res.ok) {
         const errorText = await res.text();
         console.error("Post creation error details:", errorText);
         throw new Error(`Failed to create post: ${errorText}`);
       }
-      
+
       const responseData = await res.json();
       console.log("Post creation response:", responseData);
       return responseData;
@@ -467,7 +469,7 @@ const GreenSocialsPage = () => {
     mutationFn: async (postId: number) => {
       const res = await apiRequest(
         "DELETE",
-        `/api/social/posts/${postId}/like`,
+        `/api/social/posts/${postId}/like`
       );
       return res.json();
     },
@@ -534,7 +536,7 @@ const GreenSocialsPage = () => {
     mutationFn: async (commentId: number) => {
       const res = await apiRequest(
         "POST",
-        `/api/social/comments/${commentId}/like`,
+        `/api/social/comments/${commentId}/like`
       );
       return res.json();
     },
@@ -561,7 +563,7 @@ const GreenSocialsPage = () => {
     mutationFn: async (commentId: number) => {
       const res = await apiRequest(
         "DELETE",
-        `/api/social/comments/${commentId}/like`,
+        `/api/social/comments/${commentId}/like`
       );
       return res.json();
     },
@@ -604,7 +606,7 @@ const GreenSocialsPage = () => {
           targetType,
           targetId,
           externalPlatform,
-        },
+        }
       );
       return res.json();
     },
@@ -663,7 +665,7 @@ const GreenSocialsPage = () => {
     mutationFn: async (postId: number) => {
       const res = await apiRequest(
         "DELETE",
-        `/api/social/posts/${postId}/save`,
+        `/api/social/posts/${postId}/save`
       );
       return res.json();
     },
@@ -704,7 +706,7 @@ const GreenSocialsPage = () => {
         {
           reason,
           description,
-        },
+        }
       );
       return res.json();
     },
@@ -746,7 +748,7 @@ const GreenSocialsPage = () => {
         {
           reason,
           description,
-        },
+        }
       );
       return res.json();
     },
@@ -809,7 +811,7 @@ const GreenSocialsPage = () => {
         "POST",
         "/api/test/upload-single",
         formData,
-        { isFormData: true },
+        { isFormData: true }
       );
 
       if (!response.ok) {
@@ -866,7 +868,9 @@ const GreenSocialsPage = () => {
   };
 
   // Handler for handling file input change
-  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (e.target.files && e.target.files.length > 0) {
       // Check if the number of files to be added exceeds the limit of 5 total
       if (mediaUrls.length + e.target.files.length > 5) {
@@ -878,7 +882,7 @@ const GreenSocialsPage = () => {
         e.target.value = "";
         return;
       }
-      
+
       // If uploading multiple files at once, use the batch upload endpoint
       if (e.target.files.length > 1) {
         await handleMultiplePhotosUpload(e.target.files);
@@ -886,66 +890,68 @@ const GreenSocialsPage = () => {
         // Single file - use existing single file upload
         handlePhotoUpload(e.target.files[0]);
       }
-      
+
       // Reset the input value so the same files can be selected again if needed
       e.target.value = "";
     }
   };
-  
+
   // Handle multiple files upload in a single request
   const handleMultiplePhotosUpload = async (files: FileList) => {
     setIsUploading(true);
     setPostType("image"); // Change post type to image
-    
+
     try {
       const formData = new FormData();
-      
+
       // Add all files to the form data
-      Array.from(files).forEach(file => {
+      Array.from(files).forEach((file) => {
         // Validate each file
         if (!file.type.startsWith("image/")) {
           throw new Error(`File "${file.name}" is not an image`);
         }
-        
+
         const maxSize = 5 * 1024 * 1024; // 5MB in bytes
         if (file.size > maxSize) {
           throw new Error(`File "${file.name}" exceeds 5MB size limit`);
         }
-        
+
         formData.append("files", file);
       });
-      
+
       console.log(`Uploading ${files.length} files as batch`);
-      
+
       const response = await apiRequest(
         "POST",
         "/api/test/upload-multiple",
         formData,
-        { isFormData: true },
+        { isFormData: true }
       );
-      
+
       if (!response.ok) {
         throw new Error(`Upload failed with status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       console.log("Multiple upload response:", data);
-      
+
       // Add each uploaded file to the mediaUrls array
-      const newMediaItems = data.files.map((file: { 
-        url: string; 
-        originalName: string; 
-        filename: string;
-        mimetype: string;
-        size: number;
-      }) => ({
-        url: getFullUrl(file.url),
-        type: "image",
-        caption: file.originalName,
-      }));
-      
+      const newMediaItems = data.files.map(
+        (file: {
+          url: string;
+          originalName: string;
+          filename: string;
+          mimetype: string;
+          size: number;
+        }) => ({
+          url: getFullUrl(file.url),
+          type: "image",
+          caption: file.originalName,
+        })
+      );
+
       setMediaUrls([...mediaUrls, ...newMediaItems]);
-      
+
       toast({
         title: "Images uploaded",
         description: `${files.length} images have been added to the post`,
@@ -954,7 +960,8 @@ const GreenSocialsPage = () => {
       console.error("Multiple upload error:", error);
       toast({
         title: "Upload failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
+        description:
+          error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
     } finally {
@@ -977,7 +984,7 @@ const GreenSocialsPage = () => {
     console.log("- Post type:", postType);
     console.log("- Visibility:", postVisibility);
     console.log("- Media items count:", mediaUrls.length);
-    
+
     // Log each media item structure
     if (mediaUrls.length > 0) {
       console.log("Media items details:");
@@ -985,14 +992,14 @@ const GreenSocialsPage = () => {
         console.log(`Media ${index + 1}:`, {
           url: media.url,
           type: media.type,
-          caption: media.caption
+          caption: media.caption,
         });
       });
     }
-    
+
     console.log("- Hashtags:", hashtags);
     console.log("- Crops Tags:", cropsTags);
-    
+
     // Prepare and log the actual payload that will be sent
     const payload = {
       content: newPostContent,
@@ -1002,7 +1009,7 @@ const GreenSocialsPage = () => {
       hashtags: hashtags.length > 0 ? hashtags : undefined,
       cropsTags: cropsTags.length > 0 ? cropsTags : undefined,
     };
-    
+
     console.log("Full post payload:", JSON.stringify(payload, null, 2));
 
     // Pass the whole payload to the mutation instead of just the content
@@ -1048,7 +1055,7 @@ const GreenSocialsPage = () => {
   const handleReplyToComment = (
     commentId: number,
     postId: number,
-    content: string,
+    content: string
   ) => {
     if (!content.trim()) {
       toast({
@@ -1084,7 +1091,7 @@ const GreenSocialsPage = () => {
     postId: number,
     targetType: string,
     targetId?: number,
-    externalPlatform?: string,
+    externalPlatform?: string
   ) => {
     sharePostMutation.mutate({
       postId,
@@ -1108,7 +1115,7 @@ const GreenSocialsPage = () => {
   const handleReportPost = (
     postId: number,
     reason: string,
-    description?: string,
+    description?: string
   ) => {
     if (!reason) {
       toast({
@@ -1126,7 +1133,7 @@ const GreenSocialsPage = () => {
   const handleReportComment = (
     commentId: number,
     reason: string,
-    description?: string,
+    description?: string
   ) => {
     if (!reason) {
       toast({
@@ -1139,18 +1146,22 @@ const GreenSocialsPage = () => {
 
     reportCommentMutation.mutate({ commentId, reason, description });
   };
-  
+
   // Type guard to check if media is a string URL
   const isStringMedia = (media: any): media is string => {
-    return typeof media === 'string';
+    return typeof media === "string";
   };
 
   // Type guard to check if media is a media object (with url, type, caption properties)
-  const isMediaObject = (media: any): media is { url: string; type: string; caption?: string } => {
-    return media !== null && 
-           typeof media === 'object' && 
-           !Array.isArray(media) &&
-           typeof media.url === 'string';
+  const isMediaObject = (
+    media: any
+  ): media is { url: string; type: string; caption?: string } => {
+    return (
+      media !== null &&
+      typeof media === "object" &&
+      !Array.isArray(media) &&
+      typeof media.url === "string"
+    );
   };
 
   // Type guard to check if media is an array
@@ -1166,29 +1177,29 @@ const GreenSocialsPage = () => {
       return media.url;
     } else if (isMediaArray(media) && media.length > 0) {
       const firstItem = media[0];
-      if (typeof firstItem === 'string') {
+      if (typeof firstItem === "string") {
         return firstItem;
-      } else if (firstItem && typeof firstItem === 'object' && firstItem.url) {
+      } else if (firstItem && typeof firstItem === "object" && firstItem.url) {
         return firstItem.url;
       }
     }
-    return '';
+    return "";
   };
 
   // Helper function to get the full URL for an image
   const getFullUrl = (url: string) => {
     if (!url) return "";
-    
+
     // Already a full URL
     if (url.startsWith("http://") || url.startsWith("https://")) {
       return url;
     }
-    
+
     // Relative URL - prefix with API base URL
     if (url.startsWith("/")) {
       return `${window.location.origin}${url}`;
     }
-    
+
     // Just the filename - prefix with uploads path
     return `${window.location.origin}/uploads/${url}`;
   };
@@ -1242,7 +1253,10 @@ const GreenSocialsPage = () => {
 
   if (isProfileLoading) {
     return (
-      <DashboardLayout title="Green Socials">
+      <DashboardLayout
+        title="Green Socials"
+        description="Share your thoughts, tips, or questions with the community"
+      >
         <div className="flex justify-center items-center h-96">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
@@ -1251,10 +1265,11 @@ const GreenSocialsPage = () => {
   }
 
   return (
-    <DashboardLayout title="Green Socials">
+    <DashboardLayout
+      title="Green Socials"
+      description="Share your thoughts, tips, or questions with the community"
+    >
       <div className="container mx-auto py-6">
-        <h1 className="text-3xl font-bold mb-6">Green Socials</h1>
-
         <Tabs defaultValue="feed" className="w-full">
           <TabsList className="mb-6 flex w-full grid grid-cols-5">
             <TabsTrigger
@@ -1545,7 +1560,7 @@ const GreenSocialsPage = () => {
                                   }
                               )[],
                               post,
-                              idx,
+                              idx
                             ) => {
                               result.push(post);
 
@@ -1670,7 +1685,7 @@ const GreenSocialsPage = () => {
 
                               return result;
                             },
-                            [],
+                            []
                           )
                           .map((item, idx) => {
                             if ("isSponsoredAd" in item) {
@@ -1698,7 +1713,7 @@ const GreenSocialsPage = () => {
                                       <AvatarFallback>
                                         {getInitials(
                                           post.profile.displayName ||
-                                            post.author.username,
+                                            post.author.username
                                         )}
                                       </AvatarFallback>
                                     </Avatar>
@@ -1721,7 +1736,12 @@ const GreenSocialsPage = () => {
                                   {/* Post Media Display - Enhanced for different formats */}
                                   {post.post.media && (
                                     <div
-                                      className={`mt-4 ${Array.isArray(post.post.media) && post.post.media.length > 1 ? "grid grid-cols-2 gap-2" : ""}`}
+                                      className={`mt-4 ${
+                                        Array.isArray(post.post.media) &&
+                                        post.post.media.length > 1
+                                          ? "grid grid-cols-2 gap-2"
+                                          : ""
+                                      }`}
                                     >
                                       {(() => {
                                         // Handle different formats of media field
@@ -1740,10 +1760,18 @@ const GreenSocialsPage = () => {
                                                 alt="Post image"
                                                 className="w-full h-full object-cover max-h-96"
                                                 onLoad={(e) => {
-                                                  console.log("Image loaded successfully:", (e.target as HTMLImageElement).src);
+                                                  console.log(
+                                                    "Image loaded successfully:",
+                                                    (
+                                                      e.target as HTMLImageElement
+                                                    ).src
+                                                  );
                                                 }}
                                                 onError={(e) => {
-                                                  console.error("Image load error for URL:", mediaUrl);
+                                                  console.error(
+                                                    "Image load error for URL:",
+                                                    mediaUrl
+                                                  );
                                                   const target =
                                                     e.target as HTMLImageElement;
                                                   target.src =
@@ -1752,9 +1780,14 @@ const GreenSocialsPage = () => {
                                               />
                                             </div>
                                           );
-                                        } else if (isMediaObject(post.post.media)) {
+                                        } else if (
+                                          isMediaObject(post.post.media)
+                                        ) {
                                           // Case 1b: media is a media object with url, type, caption
-                                          console.log("Mobile card - found media object:", post.post.media);
+                                          console.log(
+                                            "Mobile card - found media object:",
+                                            post.post.media
+                                          );
                                           const mediaUrl = post.post.media.url;
                                           return (
                                             <div
@@ -1765,13 +1798,24 @@ const GreenSocialsPage = () => {
                                             >
                                               <img
                                                 src={getFullUrl(mediaUrl)}
-                                                alt={post.post.media.caption || "Post image"}
+                                                alt={
+                                                  post.post.media.caption ||
+                                                  "Post image"
+                                                }
                                                 className="w-full h-full object-cover max-h-96"
                                                 onLoad={(e) => {
-                                                  console.log("Mobile card - media object image loaded successfully:", (e.target as HTMLImageElement).src);
+                                                  console.log(
+                                                    "Mobile card - media object image loaded successfully:",
+                                                    (
+                                                      e.target as HTMLImageElement
+                                                    ).src
+                                                  );
                                                 }}
                                                 onError={(e) => {
-                                                  console.error("Mobile card - media object image load error for URL:", mediaUrl);
+                                                  console.error(
+                                                    "Mobile card - media object image load error for URL:",
+                                                    mediaUrl
+                                                  );
                                                   const target =
                                                     e.target as HTMLImageElement;
                                                   target.src =
@@ -1800,19 +1844,38 @@ const GreenSocialsPage = () => {
                                                     onClick={() =>
                                                       window.open(
                                                         item,
-                                                        "_blank",
+                                                        "_blank"
                                                       )
                                                     }
                                                   >
                                                     <img
                                                       src={getFullUrl(item)}
-                                                      alt={`Post image ${idx + 1}`}
-                                                      className={`w-full h-full object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? "max-h-96" : "h-60"}`}
+                                                      alt={`Post image ${
+                                                        idx + 1
+                                                      }`}
+                                                      className={`w-full h-full object-cover ${
+                                                        post.post.media &&
+                                                        Array.isArray(
+                                                          post.post.media
+                                                        ) &&
+                                                        post.post.media
+                                                          .length === 1
+                                                          ? "max-h-96"
+                                                          : "h-60"
+                                                      }`}
                                                       onLoad={(e) => {
-                                                        console.log("Array image loaded successfully:", (e.target as HTMLImageElement).src);
+                                                        console.log(
+                                                          "Array image loaded successfully:",
+                                                          (
+                                                            e.target as HTMLImageElement
+                                                          ).src
+                                                        );
                                                       }}
                                                       onError={(e) => {
-                                                        console.error("Array image load error for URL:", item);
+                                                        console.error(
+                                                          "Array image load error for URL:",
+                                                          item
+                                                        );
                                                         const target =
                                                           e.target as HTMLImageElement;
                                                         target.src =
@@ -1834,24 +1897,43 @@ const GreenSocialsPage = () => {
                                                       onClick={() =>
                                                         window.open(
                                                           item.url,
-                                                          "_blank",
+                                                          "_blank"
                                                         )
                                                       }
                                                     >
                                                       <img
                                                         src={getFullUrl(
-                                                          item.url || "",
+                                                          item.url || ""
                                                         )}
                                                         alt={
                                                           item.caption ||
-                                                          `Post image ${idx + 1}`
+                                                          `Post image ${
+                                                            idx + 1
+                                                          }`
                                                         }
-                                                        className={`w-full h-full object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? "max-h-96" : "h-60"}`}
+                                                        className={`w-full h-full object-cover ${
+                                                          post.post.media &&
+                                                          Array.isArray(
+                                                            post.post.media
+                                                          ) &&
+                                                          post.post.media
+                                                            .length === 1
+                                                            ? "max-h-96"
+                                                            : "h-60"
+                                                        }`}
                                                         onLoad={(e) => {
-                                                          console.log("Media object image loaded successfully:", (e.target as HTMLImageElement).src);
+                                                          console.log(
+                                                            "Media object image loaded successfully:",
+                                                            (
+                                                              e.target as HTMLImageElement
+                                                            ).src
+                                                          );
                                                         }}
                                                         onError={(e) => {
-                                                          console.error("Media object image load error for URL:", item.url);
+                                                          console.error(
+                                                            "Media object image load error for URL:",
+                                                            item.url
+                                                          );
                                                           const target =
                                                             e.target as HTMLImageElement;
                                                           target.src =
@@ -1868,7 +1950,7 @@ const GreenSocialsPage = () => {
                                                 }
                                               }
                                               return null;
-                                            },
+                                            }
                                           );
                                         }
                                         return null;
@@ -1896,11 +1978,15 @@ const GreenSocialsPage = () => {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className={`gap-1 ${likedPosts[post.post.id] ? "text-primary" : ""}`}
+                                      className={`gap-1 ${
+                                        likedPosts[post.post.id]
+                                          ? "text-primary"
+                                          : ""
+                                      }`}
                                       onClick={() =>
                                         handleToggleLike(
                                           post.post.id,
-                                          likedPosts[post.post.id] || false,
+                                          likedPosts[post.post.id] || false
                                         )
                                       }
                                     >
@@ -1945,13 +2031,17 @@ const GreenSocialsPage = () => {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className={`aspect-square p-0 sm:aspect-auto sm:px-3 ${savedPosts[post.post.id] ? "text-primary" : ""}`}
+                                      className={`aspect-square p-0 sm:aspect-auto sm:px-3 ${
+                                        savedPosts[post.post.id]
+                                          ? "text-primary"
+                                          : ""
+                                      }`}
                                       onClick={() => {
                                         if (savedPosts[post.post.id]) {
                                           // If already saved, unsave it
                                           apiRequest(
                                             "DELETE",
-                                            `/api/social/posts/${post.post.id}/save`,
+                                            `/api/social/posts/${post.post.id}/save`
                                           )
                                             .then(() => {
                                               // Optimistic UI update
@@ -2070,7 +2160,7 @@ const GreenSocialsPage = () => {
                                             <AvatarFallback>
                                               {getInitials(
                                                 comment.profile.displayName ||
-                                                  comment.author.username,
+                                                  comment.author.username
                                               )}
                                             </AvatarFallback>
                                           </Avatar>
@@ -2098,7 +2188,7 @@ const GreenSocialsPage = () => {
                                                   setTimeout(() => {
                                                     const replyInput =
                                                       document.getElementById(
-                                                        `reply-input-${comment.comment.id}`,
+                                                        `reply-input-${comment.comment.id}`
                                                       );
                                                     if (replyInput) {
                                                       replyInput.focus();
@@ -2112,7 +2202,7 @@ const GreenSocialsPage = () => {
                                                 className="text-xs text-muted-foreground hover:text-primary transition-colors"
                                                 onClick={() =>
                                                   likeCommentMutation.mutate(
-                                                    comment.comment.id,
+                                                    comment.comment.id
                                                   )
                                                 }
                                               >
@@ -2121,7 +2211,7 @@ const GreenSocialsPage = () => {
                                               </button>
                                               <span className="text-xs text-muted-foreground">
                                                 {formatDate(
-                                                  comment.comment.createdAt,
+                                                  comment.comment.createdAt
                                                 )}
                                               </span>
                                             </div>
@@ -2149,7 +2239,7 @@ const GreenSocialsPage = () => {
                                   <AvatarFallback>
                                     {getInitials(
                                       post.profile.displayName ||
-                                        post.author.username,
+                                        post.author.username
                                     )}
                                   </AvatarFallback>
                                 </Avatar>
@@ -2172,7 +2262,12 @@ const GreenSocialsPage = () => {
                               {/* Post Media Display - Enhanced for different formats */}
                               {post.post.media && (
                                 <div
-                                  className={`mt-4 ${Array.isArray(post.post.media) && post.post.media.length > 1 ? "grid grid-cols-2 gap-2" : ""}`}
+                                  className={`mt-4 ${
+                                    Array.isArray(post.post.media) &&
+                                    post.post.media.length > 1
+                                      ? "grid grid-cols-2 gap-2"
+                                      : ""
+                                  }`}
                                 >
                                   {(() => {
                                     // Handle different formats of media field
@@ -2191,10 +2286,17 @@ const GreenSocialsPage = () => {
                                             alt="Post image"
                                             className="w-full h-full object-cover max-h-96"
                                             onLoad={(e) => {
-                                              console.log("String media image loaded successfully:", (e.target as HTMLImageElement).src);
+                                              console.log(
+                                                "String media image loaded successfully:",
+                                                (e.target as HTMLImageElement)
+                                                  .src
+                                              );
                                             }}
                                             onError={(e) => {
-                                              console.error("String media image load error for URL:", mediaUrl);
+                                              console.error(
+                                                "String media image load error for URL:",
+                                                mediaUrl
+                                              );
                                               const target =
                                                 e.target as HTMLImageElement;
                                               target.src =
@@ -2205,7 +2307,10 @@ const GreenSocialsPage = () => {
                                       );
                                     } else if (isMediaObject(post.post.media)) {
                                       // Case 1b: media is a media object with url, type, caption
-                                      console.log("Found media object:", post.post.media);
+                                      console.log(
+                                        "Found media object:",
+                                        post.post.media
+                                      );
                                       const mediaUrl = post.post.media.url;
                                       return (
                                         <div
@@ -2219,10 +2324,17 @@ const GreenSocialsPage = () => {
                                             alt="Post image"
                                             className="w-full h-full object-cover max-h-96"
                                             onLoad={(e) => {
-                                              console.log("Mobile view image loaded successfully:", (e.target as HTMLImageElement).src);
+                                              console.log(
+                                                "Mobile view image loaded successfully:",
+                                                (e.target as HTMLImageElement)
+                                                  .src
+                                              );
                                             }}
                                             onError={(e) => {
-                                              console.error("Mobile view image load error for URL:", mediaUrl);
+                                              console.error(
+                                                "Mobile view image load error for URL:",
+                                                mediaUrl
+                                              );
                                               const target =
                                                 e.target as HTMLImageElement;
                                               target.src =
@@ -2248,12 +2360,28 @@ const GreenSocialsPage = () => {
                                                 <img
                                                   src={getFullUrl(item)}
                                                   alt={`Post image ${idx + 1}`}
-                                                  className={`w-full h-full object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? "max-h-96" : "h-60"}`}
+                                                  className={`w-full h-full object-cover ${
+                                                    post.post.media &&
+                                                    Array.isArray(
+                                                      post.post.media
+                                                    ) &&
+                                                    post.post.media.length === 1
+                                                      ? "max-h-96"
+                                                      : "h-60"
+                                                  }`}
                                                   onLoad={(e) => {
-                                                    console.log("Mobile array image loaded successfully:", (e.target as HTMLImageElement).src);
+                                                    console.log(
+                                                      "Mobile array image loaded successfully:",
+                                                      (
+                                                        e.target as HTMLImageElement
+                                                      ).src
+                                                    );
                                                   }}
                                                   onError={(e) => {
-                                                    console.error("Mobile array image load error for URL:", item);
+                                                    console.error(
+                                                      "Mobile array image load error for URL:",
+                                                      item
+                                                    );
                                                     const target =
                                                       e.target as HTMLImageElement;
                                                     target.src =
@@ -2275,24 +2403,41 @@ const GreenSocialsPage = () => {
                                                   onClick={() =>
                                                     window.open(
                                                       item.url,
-                                                      "_blank",
+                                                      "_blank"
                                                     )
                                                   }
                                                 >
                                                   <img
                                                     src={getFullUrl(
-                                                      item.url || "",
+                                                      item.url || ""
                                                     )}
                                                     alt={
                                                       item.caption ||
                                                       `Post image ${idx + 1}`
                                                     }
-                                                    className={`w-full h-full object-cover ${post.post.media && Array.isArray(post.post.media) && post.post.media.length === 1 ? "max-h-96" : "h-60"}`}
+                                                    className={`w-full h-full object-cover ${
+                                                      post.post.media &&
+                                                      Array.isArray(
+                                                        post.post.media
+                                                      ) &&
+                                                      post.post.media.length ===
+                                                        1
+                                                        ? "max-h-96"
+                                                        : "h-60"
+                                                    }`}
                                                     onLoad={(e) => {
-                                                      console.log("Mobile media object image loaded successfully:", (e.target as HTMLImageElement).src);
+                                                      console.log(
+                                                        "Mobile media object image loaded successfully:",
+                                                        (
+                                                          e.target as HTMLImageElement
+                                                        ).src
+                                                      );
                                                     }}
                                                     onError={(e) => {
-                                                      console.error("Mobile media object image load error for URL:", item.url);
+                                                      console.error(
+                                                        "Mobile media object image load error for URL:",
+                                                        item.url
+                                                      );
                                                       const target =
                                                         e.target as HTMLImageElement;
                                                       target.src =
@@ -2309,7 +2454,7 @@ const GreenSocialsPage = () => {
                                             }
                                           }
                                           return null;
-                                        },
+                                        }
                                       );
                                     }
                                     return null;
@@ -2337,14 +2482,21 @@ const GreenSocialsPage = () => {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className={`gap-1 ${likedPosts[post.post.id] ? "text-primary" : ""}`}
+                                  className={`gap-1 ${
+                                    likedPosts[post.post.id]
+                                      ? "text-primary"
+                                      : ""
+                                  }`}
                                   onClick={(e) => {
                                     e.stopPropagation(); // Prevent event bubbling
                                     handleToggleLike(
                                       post.post.id,
-                                      likedPosts[post.post.id] || false,
+                                      likedPosts[post.post.id] || false
                                     );
-                                    console.log("Like button clicked for post:", post.post.id);
+                                    console.log(
+                                      "Like button clicked for post:",
+                                      post.post.id
+                                    );
                                   }}
                                 >
                                   {likedPosts[post.post.id] ? (
@@ -2368,7 +2520,10 @@ const GreenSocialsPage = () => {
                                       [post.post.id]:
                                         !visibleComments[post.post.id],
                                     });
-                                    console.log("Comment button clicked for post:", post.post.id);
+                                    console.log(
+                                      "Comment button clicked for post:",
+                                      post.post.id
+                                    );
                                   }}
                                 >
                                   <MessageCircle className="h-4 w-4" />
@@ -2397,7 +2552,7 @@ const GreenSocialsPage = () => {
                                         setShareTarget("profile");
                                         handleSharePost(
                                           post.post.id,
-                                          "profile",
+                                          "profile"
                                         );
                                       }}
                                     >
@@ -2410,7 +2565,7 @@ const GreenSocialsPage = () => {
                                         setShareTarget("community");
                                         handleSharePost(
                                           post.post.id,
-                                          "community",
+                                          "community"
                                         );
                                       }}
                                     >
@@ -2426,7 +2581,7 @@ const GreenSocialsPage = () => {
                                           post.post.id,
                                           "external",
                                           undefined,
-                                          "twitter",
+                                          "twitter"
                                         );
                                       }}
                                     >
@@ -2441,7 +2596,7 @@ const GreenSocialsPage = () => {
                                           post.post.id,
                                           "external",
                                           undefined,
-                                          "facebook",
+                                          "facebook"
                                         );
                                       }}
                                     >
@@ -2456,7 +2611,7 @@ const GreenSocialsPage = () => {
                                           post.post.id,
                                           "external",
                                           undefined,
-                                          "whatsapp",
+                                          "whatsapp"
                                         );
                                       }}
                                     >
@@ -2470,7 +2625,11 @@ const GreenSocialsPage = () => {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className={`aspect-square p-0 sm:aspect-auto sm:px-3 ${savedPosts[post.post.id] ? "text-primary" : ""}`}
+                                      className={`aspect-square p-0 sm:aspect-auto sm:px-3 ${
+                                        savedPosts[post.post.id]
+                                          ? "text-primary"
+                                          : ""
+                                      }`}
                                     >
                                       {savedPosts[post.post.id] ? (
                                         <Bookmark className="h-4 w-4 text-primary fill-primary" />
@@ -2494,7 +2653,10 @@ const GreenSocialsPage = () => {
                                               ...savedPosts,
                                               [post.post.id]: true,
                                             });
-                                            console.log("Save post clicked for post:", post.post.id);
+                                            console.log(
+                                              "Save post clicked for post:",
+                                              post.post.id
+                                            );
                                           }}
                                         >
                                           <Bookmark className="mr-2 h-4 w-4" />
@@ -2504,7 +2666,7 @@ const GreenSocialsPage = () => {
                                           onClick={() => {
                                             handleSavePost(
                                               post.post.id,
-                                              "Favorites",
+                                              "Favorites"
                                             );
                                             setSavedPosts({
                                               ...savedPosts,
@@ -2612,7 +2774,7 @@ const GreenSocialsPage = () => {
                                             handleReportPost(
                                               post.post.id,
                                               reportReason,
-                                              reportDescription,
+                                              reportDescription
                                             );
                                             setReportReason("");
                                             setReportDescription("");
@@ -2653,7 +2815,7 @@ const GreenSocialsPage = () => {
                                       if (e.key === "Enter") {
                                         handleAddComment(
                                           post.post.id,
-                                          newComments[post.post.id] || "",
+                                          newComments[post.post.id] || ""
                                         );
                                         setNewComments({
                                           ...newComments,
@@ -2668,7 +2830,7 @@ const GreenSocialsPage = () => {
                                     onClick={() => {
                                       handleAddComment(
                                         post.post.id,
-                                        newComments[post.post.id] || "",
+                                        newComments[post.post.id] || ""
                                       );
                                       setNewComments({
                                         ...newComments,
@@ -2701,7 +2863,7 @@ const GreenSocialsPage = () => {
                                             <AvatarFallback>
                                               {getInitials(
                                                 comment.profile.displayName ||
-                                                  comment.author.username,
+                                                  comment.author.username
                                               )}
                                             </AvatarFallback>
                                           </Avatar>
@@ -2716,8 +2878,8 @@ const GreenSocialsPage = () => {
                                                 <span className="text-xs text-muted-foreground">
                                                   {formatRelativeTime(
                                                     new Date(
-                                                      comment.comment.createdAt,
-                                                    ),
+                                                      comment.comment.createdAt
+                                                    )
                                                   )}
                                                 </span>
                                               </div>
@@ -2732,7 +2894,7 @@ const GreenSocialsPage = () => {
                                                   onClick={() =>
                                                     handleToggleCommentLike(
                                                       comment.comment.id,
-                                                      false,
+                                                      false
                                                     )
                                                   }
                                                 >
@@ -2779,10 +2941,10 @@ const GreenSocialsPage = () => {
                                                         </Label>
                                                         <Select
                                                           onValueChange={(
-                                                            value,
+                                                            value
                                                           ) =>
                                                             setReportReason(
-                                                              value,
+                                                              value
                                                             )
                                                           }
                                                         >
@@ -2823,7 +2985,7 @@ const GreenSocialsPage = () => {
                                                           }
                                                           onChange={(e) =>
                                                             setReportDescription(
-                                                              e.target.value,
+                                                              e.target.value
                                                             )
                                                           }
                                                         />
@@ -2842,11 +3004,11 @@ const GreenSocialsPage = () => {
                                                               comment.comment
                                                                 .id,
                                                               reportReason,
-                                                              reportDescription,
+                                                              reportDescription
                                                             );
                                                             setReportReason("");
                                                             setReportDescription(
-                                                              "",
+                                                              ""
                                                             );
                                                           }}
                                                         >
@@ -2873,7 +3035,7 @@ const GreenSocialsPage = () => {
                                                     />
                                                     <AvatarFallback>
                                                       {getInitials(
-                                                        user?.username || "",
+                                                        user?.username || ""
                                                       )}
                                                     </AvatarFallback>
                                                   </Avatar>
@@ -2884,7 +3046,7 @@ const GreenSocialsPage = () => {
                                                       value={replyContent}
                                                       onChange={(e) =>
                                                         setReplyContent(
-                                                          e.target.value,
+                                                          e.target.value
                                                         )
                                                       }
                                                       onKeyDown={(e) => {
@@ -2892,7 +3054,7 @@ const GreenSocialsPage = () => {
                                                           handleReplyToComment(
                                                             comment.comment.id,
                                                             post.post.id,
-                                                            replyContent,
+                                                            replyContent
                                                           );
                                                         }
                                                       }}
@@ -2906,7 +3068,7 @@ const GreenSocialsPage = () => {
                                                         handleReplyToComment(
                                                           comment.comment.id,
                                                           post.post.id,
-                                                          replyContent,
+                                                          replyContent
                                                         )
                                                       }
                                                     >
@@ -2918,7 +3080,7 @@ const GreenSocialsPage = () => {
                                                       className="h-7 w-7"
                                                       onClick={() => {
                                                         setSelectedComment(
-                                                          null,
+                                                          null
                                                         );
                                                         setReplyContent("");
                                                       }}
@@ -2953,7 +3115,7 @@ const GreenSocialsPage = () => {
                                                               reply.profile
                                                                 .displayName ||
                                                                 reply.author
-                                                                  .username,
+                                                                  .username
                                                             )}
                                                           </AvatarFallback>
                                                         </Avatar>
@@ -2969,8 +3131,8 @@ const GreenSocialsPage = () => {
                                                               <span className="text-xs text-muted-foreground">
                                                                 {formatRelativeTime(
                                                                   new Date(
-                                                                    reply.comment.createdAt,
-                                                                  ),
+                                                                    reply.comment.createdAt
+                                                                  )
                                                                 )}
                                                               </span>
                                                             </div>
@@ -2990,7 +3152,7 @@ const GreenSocialsPage = () => {
                                                                     reply
                                                                       .comment
                                                                       .id,
-                                                                    false,
+                                                                    false
                                                                   )
                                                                 }
                                                               >
@@ -3037,10 +3199,10 @@ const GreenSocialsPage = () => {
                                                                       </Label>
                                                                       <Select
                                                                         onValueChange={(
-                                                                          value,
+                                                                          value
                                                                         ) =>
                                                                           setReportReason(
-                                                                            value,
+                                                                            value
                                                                           )
                                                                         }
                                                                       >
@@ -3083,12 +3245,12 @@ const GreenSocialsPage = () => {
                                                                           reportDescription
                                                                         }
                                                                         onChange={(
-                                                                          e,
+                                                                          e
                                                                         ) =>
                                                                           setReportDescription(
                                                                             e
                                                                               .target
-                                                                              .value,
+                                                                              .value
                                                                           )
                                                                         }
                                                                       />
@@ -3112,13 +3274,13 @@ const GreenSocialsPage = () => {
                                                                               .comment
                                                                               .id,
                                                                             reportReason,
-                                                                            reportDescription,
+                                                                            reportDescription
                                                                           );
                                                                           setReportReason(
-                                                                            "",
+                                                                            ""
                                                                           );
                                                                           setReportDescription(
-                                                                            "",
+                                                                            ""
                                                                           );
                                                                         }}
                                                                       >
@@ -3133,13 +3295,13 @@ const GreenSocialsPage = () => {
                                                           </div>
                                                         </div>
                                                       </div>
-                                                    ),
+                                                    )
                                                   )}
                                                 </div>
                                               )}
                                           </div>
                                         </div>
-                                      ),
+                                      )
                                     )}
 
                                   {(!post.post.comments ||
@@ -3652,7 +3814,7 @@ const GreenSocialsPage = () => {
                                 />
                                 <AvatarFallback>
                                   {getInitials(
-                                    item.displayName || item.username,
+                                    item.displayName || item.username
                                   )}
                                 </AvatarFallback>
                               </Avatar>
@@ -3662,7 +3824,7 @@ const GreenSocialsPage = () => {
                                 </div>
                               )}
                               {item.expertise?.some((exp: string) =>
-                                exp.toLowerCase().includes("crop"),
+                                exp.toLowerCase().includes("crop")
                               ) && (
                                 <div className="absolute -top-1 -right-1 bg-green-500/10 rounded-full p-1">
                                   <Crop className="h-4 w-4 text-green-500" />
@@ -3772,7 +3934,7 @@ const GreenSocialsPage = () => {
                             />
                             <AvatarFallback>
                               {getInitials(
-                                activity.displayName || activity.username,
+                                activity.displayName || activity.username
                               )}
                             </AvatarFallback>
                           </Avatar>

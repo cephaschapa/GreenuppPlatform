@@ -105,7 +105,7 @@ const PlantDiagnosisPage = () => {
       const response = await apiRequest(
         "POST",
         "/api/plant-analyses",
-        formData,
+        formData
       );
       return response.json();
     },
@@ -139,7 +139,7 @@ const PlantDiagnosisPage = () => {
   const compressImage = (
     dataURL: string,
     maxWidth = 800,
-    quality = 0.7,
+    quality = 0.7
   ): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
@@ -331,19 +331,13 @@ const PlantDiagnosisPage = () => {
   };
 
   return (
-    <DashboardLayout title="">
+    <DashboardLayout
+      title="Plant Disease Diagnosis"
+      description=" Upload photos of your plants to identify diseases and get
+              treatment recommendations"
+    >
       <div className="container mx-auto py-6">
         <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Plant Disease Diagnosis
-            </h1>
-            <p className="text-muted-foreground">
-              Upload photos of your plants to identify diseases and get
-              treatment recommendations
-            </p>
-          </div>
-
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
@@ -633,7 +627,9 @@ const PlantDiagnosisPage = () => {
                                     )}
                                   </h3>
                                   <p className="text-sm text-muted-foreground">
-                                    {formatDate(analysis.analysisDate)}
+                                    {formatDate(
+                                      analysis.analysisDate as unknown as string
+                                    )}
                                   </p>
                                 </div>
                                 <div className="flex items-center">
@@ -654,7 +650,9 @@ const PlantDiagnosisPage = () => {
                                   <p className="text-sm">Health Score:</p>
                                   <div className="w-full max-w-[200px] h-2 bg-gray-200 rounded-full overflow-hidden">
                                     <div
-                                      className={`h-full ${getHealthColor(analysis.healthScore)}`}
+                                      className={`h-full ${getHealthColor(
+                                        analysis.healthScore
+                                      )}`}
                                       style={{
                                         width: `${analysis.healthScore}%`,
                                       }}

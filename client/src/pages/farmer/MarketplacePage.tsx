@@ -456,18 +456,13 @@ export default function MarketplacePage() {
   });
 
   return (
-    <DashboardLayout title="" description="">
+    <DashboardLayout
+      title="Marketplace"
+      description="Buy and sells agricultural products and services"
+    >
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-1">
-                Marketplace
-              </h1>
-              <p className="text-muted-foreground">
-                Buy and sells agricultural products and services
-              </p>
-            </div>
             <Button
               onClick={navigateToCreate}
               className="bg-green-600 hover:bg-green-700"

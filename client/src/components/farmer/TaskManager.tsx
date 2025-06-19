@@ -27,7 +27,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -43,20 +47,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { CheckedState } from "@radix-ui/react-checkbox";
 
 // Task priority colors
 const priorityColors = {
   high: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-  medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+  medium:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
   low: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
 };
 
@@ -69,9 +70,15 @@ const taskFormSchema = insertFarmerTaskSchema.extend({
 
 export function TaskManager() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedPriority, setSelectedPriority] = useState<string | undefined>();
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    new Date()
+  );
+  const [selectedPriority, setSelectedPriority] = useState<
+    string | undefined
+  >();
+  const [dateRange, setDateRange] = useState<
+    { from: Date; to: Date } | undefined
+  >();
   const [activeTab, setActiveTab] = useState("all");
 
   const {
@@ -84,6 +91,8 @@ export function TaskManager() {
   } = useTasks();
 
   // Task form
+
+  // TODO: Ensure for submission funtionality works
   const form = useForm<z.infer<typeof taskFormSchema>>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
@@ -114,7 +123,7 @@ export function TaskManager() {
           ? tasks.filter(
               (task) =>
                 format(new Date(task.dueDate), "yyyy-MM-dd") ===
-                format(selectedDate, "yyyy-MM-dd"),
+                format(selectedDate, "yyyy-MM-dd")
             )
           : tasks;
 
@@ -127,10 +136,7 @@ export function TaskManager() {
         if (!dateRange?.from || !dateRange?.to) return tasks;
         return tasks.filter((task) => {
           const taskDate = new Date(task.dueDate);
-          return (
-            taskDate >= dateRange.from &&
-            taskDate <= dateRange.to
-          );
+          return taskDate >= dateRange.from && taskDate <= dateRange.to;
         });
 
       case "completed":
@@ -159,7 +165,6 @@ export function TaskManager() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold tracking-tight">Task Manager</h2>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>Add New Task</Button>
@@ -172,7 +177,10 @@ export function TaskManager() {
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={form.control}
                   name="title"
@@ -212,7 +220,7 @@ export function TaskManager() {
                       <FormLabel>Priority</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        defaultValue={field?.value!}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -284,7 +292,7 @@ export function TaskManager() {
           <TabsTrigger value="pending">Pending</TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
         </TabsList>
-        
+
         {/* Filter Controls */}
         <div className="mb-6 mt-4">
           {activeTab === "calendar" && (
@@ -341,8 +349,11 @@ export function TaskManager() {
                       <Calendar
                         mode="single"
                         selected={dateRange?.from}
-                        onSelect={(date) => 
-                          setDateRange(prev => ({ from: date || new Date(), to: prev?.to || new Date() }))
+                        onSelect={(date) =>
+                          setDateRange((prev) => ({
+                            from: date || new Date(),
+                            to: prev?.to || new Date(),
+                          }))
                         }
                         initialFocus
                       />
@@ -368,10 +379,13 @@ export function TaskManager() {
                       <Calendar
                         mode="single"
                         selected={dateRange?.to}
-                        onSelect={(date) => 
-                          setDateRange(prev => ({ from: prev?.from || new Date(), to: date || new Date() }))
+                        onSelect={(date) =>
+                          setDateRange((prev) => ({
+                            from: prev?.from || new Date(),
+                            to: date || new Date(),
+                          }))
                         }
-                        disabled={(date) => 
+                        disabled={(date) =>
                           date < (dateRange?.from || new Date())
                         }
                         initialFocus
@@ -394,13 +408,28 @@ export function TaskManager() {
             </div>
           ) : (
             filteredTasks().map((task) => (
-              <Card key={task.id} className={cn("overflow-hidden", task.completed && "opacity-75")}>
+              <Card
+                key={task.id}
+                className={cn(
+                  "overflow-hidden",
+                  task.completed && "opacity-75"
+                )}
+              >
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
-                    <CardTitle className={cn("text-lg", task.completed && "line-through")}>{task.title}</CardTitle>
+                    <CardTitle
+                      className={cn(
+                        "text-lg",
+                        task.completed && "line-through"
+                      )}
+                    >
+                      {task.title}
+                    </CardTitle>
                     <Badge
                       className={`${
-                        priorityColors[task.priority as keyof typeof priorityColors]
+                        priorityColors[
+                          task.priority as keyof typeof priorityColors
+                        ]
                       }`}
                     >
                       {task.priority}
@@ -411,7 +440,9 @@ export function TaskManager() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pb-2">
-                  <p className={cn("text-sm", task.completed && "line-through")}>
+                  <p
+                    className={cn("text-sm", task.completed && "line-through")}
+                  >
                     {task.description || "No description provided"}
                   </p>
                 </CardContent>
@@ -419,13 +450,13 @@ export function TaskManager() {
                   <div className="flex items-center">
                     <Checkbox
                       id={`task-complete-${task.id}`}
-                      checked={task.completed}
+                      checked={task.completed as CheckedState}
                       onCheckedChange={() => {
                         if (!task.completed) {
                           handleCompleteTask(task.id);
                         }
                       }}
-                      disabled={task.completed}
+                      disabled={task?.completed!}
                     />
                     <label
                       htmlFor={`task-complete-${task.id}`}

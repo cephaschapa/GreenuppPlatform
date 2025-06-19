@@ -360,7 +360,7 @@ export default function StreamChatPage() {
 
   return (
     <DashboardLayout title="" description="" styles="w-full">
-      <div className="flex flex-col h-[100vh] w-full fixed overflow-hidden left-[256px] top-16">
+      <div className="flex flex-col h-[calc(100vh-4rem)] lg:w-2/3 fixed overflow-hidden left-[256px] top-16">
         <div className="">
           <div className="flex ">
             {/* Dialog is now triggered by floating action button in StreamChatComponent */}
