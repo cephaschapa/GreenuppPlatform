@@ -52,6 +52,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { CheckedState } from "@radix-ui/react-checkbox";
+import { useAuth } from "@/hooks/use-auth";
 
 // Task priority colors
 const priorityColors = {
@@ -90,12 +91,13 @@ export function TaskManager() {
     completeTaskMutation,
   } = useTasks();
 
-  // Task form
+  const { user } = useAuth();
 
-  // TODO: Ensure for submission funtionality works
+  // Task form
   const form = useForm<z.infer<typeof taskFormSchema>>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
+      userId: user?.id,
       title: "",
       description: "",
       priority: "medium",
@@ -105,10 +107,24 @@ export function TaskManager() {
 
   // Handler for task creation
   const onSubmit = (values: z.infer<typeof taskFormSchema>) => {
-    createTaskMutation.mutate(values, {
+    console.log("onSubmit called with values:", values);
+
+    // Transform the data to match the API expectations
+    const taskData = {
+      ...values,
+      dueDate: values.dueDate.toISOString().split("T")[0], // Convert to YYYY-MM-DD format
+    };
+
+    console.log("Submitting task data:", taskData); // Debug log
+
+    createTaskMutation.mutate(taskData, {
       onSuccess: () => {
+        console.log("Task created successfully!");
         setIsCreateDialogOpen(false);
         form.reset();
+      },
+      onError: (error) => {
+        console.error("Task creation error:", error); // Debug log
       },
     });
   };
@@ -178,7 +194,10 @@ export function TaskManager() {
             </DialogHeader>
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit(onSubmit)}
+                onSubmit={(e) => {
+                  console.log("Form submitted, calling handleSubmit...");
+                  form.handleSubmit(onSubmit)(e);
+                }}
                 className="space-y-4"
               >
                 <FormField

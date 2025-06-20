@@ -1709,9 +1709,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
 
+        console.log(req.user);
+
         const newTask = await storage.createTask({
           ...taskData,
-          userId: req.user.id,
+          userId: taskData.userId,
         });
 
         res.status(201).json(newTask);

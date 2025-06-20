@@ -20,7 +20,11 @@ export function useTasks() {
   const createTaskMutation = useMutation({
     mutationFn: async (task: any) => {
       const res = await apiRequest("POST", "/api/tasks", task);
-      return res.json();
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to create task");
+      }
+      return await res.json();
     },
     onSuccess: () => {
       toast({
@@ -120,7 +124,10 @@ export function useTasks() {
     return useQuery<FarmerTask[]>({
       queryKey: ["/api/tasks/range", startDate, endDate],
       queryFn: async () => {
-        const res = await apiRequest("GET", `/api/tasks/range/${startDate}/${endDate}`);
+        const res = await apiRequest(
+          "GET",
+          `/api/tasks/range/${startDate}/${endDate}`
+        );
         return res.json();
       },
     });
