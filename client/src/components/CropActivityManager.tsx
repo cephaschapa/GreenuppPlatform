@@ -66,7 +66,7 @@ export function CropActivityManager({
       return apiRequest(
         "POST",
         `/api/crops/${crop?.id}/activities`,
-        activityData,
+        activityData
       );
     },
     onSuccess: () => {
@@ -307,12 +307,12 @@ export function CropActivityManager({
               {activityBeingEdited ? "Update Activity" : "Add Activity"}
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-secondary border-primary/20 text-white">
+          <DialogContent className="bg-secondary border-primary/20 text-white max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-white">
+              <DialogTitle className="text-black font-space">
                 {activityBeingEdited ? "Update Activity" : "Add New Activity"}
               </DialogTitle>
-              <DialogDescription className="text-gray-400">
+              <DialogDescription className="text-gray-600">
                 {activityBeingEdited
                   ? "Update the details of this crop activity"
                   : "Record a new activity for your crop"}
@@ -320,13 +320,13 @@ export function CropActivityManager({
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-200">
+                <label className="text-sm font-medium text-gray-600">
                   Activity Type*
                 </label>
                 <select
                   value={activityType}
                   onChange={(e) => setActivityType(e.target.value)}
-                  className="w-full px-3 py-2 bg-secondary border border-primary/20 rounded-md text-white"
+                  className="w-full px-3 py-2 bg-secondary/80 border border-primary/30 rounded-md text-black focus:border-primary focus:ring-1 focus:ring-primary/50 focus:outline-none transition-colors"
                 >
                   <option value="">Select type</option>
                   <option value="Fertilizing">Fertilizing</option>
@@ -340,56 +340,56 @@ export function CropActivityManager({
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-200">
+                <label className="text-sm font-medium text-gray-600">
                   Date*
                 </label>
                 <input
                   type="date"
                   value={activityDate}
                   onChange={(e) => setActivityDate(e.target.value)}
-                  className="w-full px-3 py-2 bg-secondary border border-primary/20 rounded-md text-white"
+                  className="w-full px-3 py-2 bg-secondary/80 border border-primary/30 rounded-md text-black focus:border-primary focus:ring-1 focus:ring-primary/50 focus:outline-none transition-colors"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-200">
+                <label className="text-sm font-medium text-gray-600">
                   Description*
                 </label>
                 <textarea
                   value={activityDescription}
                   onChange={(e) => setActivityDescription(e.target.value)}
-                  className="w-full px-3 py-2 bg-secondary border border-primary/20 rounded-md text-white"
+                  className="w-full px-3 py-2 bg-secondary/80 border border-primary/30 rounded-md text-black focus:border-primary focus:ring-1 focus:ring-primary/50 focus:outline-none transition-colors resize-none"
                   rows={3}
                   placeholder="Describe what was done"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-200">
+                <label className="text-sm font-medium text-gray-600">
                   Cost
                 </label>
                 <input
                   type="text"
                   value={activityCost}
                   onChange={(e) => setActivityCost(e.target.value.toString())}
-                  className="w-full px-3 py-2 bg-secondary border border-primary/20 rounded-md text-white"
+                  className="w-full px-3 py-2 bg-secondary/80 border border-primary/30 rounded-md text-black focus:border-primary focus:ring-1 focus:ring-primary/50 focus:outline-none transition-colors"
                   placeholder="0.00"
                   step="0.01"
                   min="0"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-200">
+                <label className="text-sm font-medium text-gray-600">
                   Notes
                 </label>
                 <textarea
                   value={activityNotes}
                   onChange={(e) => setActivityNotes(e.target.value)}
-                  className="w-full px-3 py-2 bg-secondary border border-primary/20 rounded-md text-white"
+                  className="w-full px-3 py-2 bg-secondary/80 border border-primary/30 rounded-md text-black focus:border-primary focus:ring-1 focus:ring-primary/50 focus:outline-none transition-colors resize-none"
                   rows={2}
                   placeholder="Additional notes"
                 />
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -397,7 +397,7 @@ export function CropActivityManager({
                   setActivityBeingEdited(null);
                   setIsAddActivityDialogOpen(false);
                 }}
-                className="border-gray-500 text-gray-300"
+                className="border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 transition-colors"
               >
                 Cancel
               </Button>
@@ -407,6 +407,7 @@ export function CropActivityManager({
                   createActivityMutation.isPending ||
                   updateActivityMutation.isPending
                 }
+                className="bg-primary hover:bg-primary/90 text-secondary transition-colors"
               >
                 {createActivityMutation.isPending ||
                 updateActivityMutation.isPending ? (
