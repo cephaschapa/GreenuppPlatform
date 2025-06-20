@@ -40,6 +40,7 @@ import {
   History,
   Settings,
   MapPin,
+  Navigation,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
@@ -159,9 +160,146 @@ export default function WeatherPage() {
     from: subMonths(new Date(), 1),
     to: new Date(),
   });
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [hasAttemptedAutoDetect, setHasAttemptedAutoDetect] = useState(false);
+  const [detectedCoordinates, setDetectedCoordinates] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
 
   const { preferences, isLoading } = useWeatherPreferences();
   const { toast } = useToast();
+
+  // Auto-detect user's current location
+  const detectCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      toast({
+        title: "Location detection failed",
+        description: "Geolocation is not supported by your browser",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDetectingLocation(true);
+
+    try {
+      const position = await new Promise<GeolocationPosition>(
+        (resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000, // 1 minute cache
+          });
+        }
+      );
+
+      const { latitude, longitude } = position.coords;
+
+      // Store the coordinates
+      setDetectedCoordinates({ lat: latitude, lon: longitude });
+
+      // Use our server's reverse geocoding endpoint
+      const response = await fetch(
+        `/api/weather/reverse-geocode?lat=${latitude}&lon=${longitude}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch location data");
+      }
+
+      const data = await response.json();
+
+      if (data && data.name) {
+        const locationName = data.name;
+
+        // Set as active location immediately
+        setActiveLocation(locationName);
+
+        // Reset all data when changing location
+        setWeatherData(null);
+        setClimateData(null);
+        setCropRecommendations(null);
+        setHistoricalData(null);
+
+        toast({
+          title: "Location detected!",
+          description: `Weather data for ${locationName} is now loading`,
+        });
+
+        // Add to preferences if not already there
+        if (
+          preferences?.locations &&
+          !preferences.locations.includes(locationName)
+        ) {
+          // Note: This would typically update preferences through the preferences component
+          // For now, we'll just show a toast suggesting to save it
+          toast({
+            title: "Save this location?",
+            description: `Go to Preferences tab to save ${locationName} to your locations`,
+          });
+        }
+      } else {
+        throw new Error("Location not found");
+      }
+    } catch (error: any) {
+      console.error("Error detecting location:", error);
+
+      let errorMessage =
+        "Unable to determine your current location. Please add it manually.";
+
+      if (error.code === 1) {
+        errorMessage =
+          "Location access denied. Please allow location access in your browser settings.";
+      } else if (error.code === 2) {
+        errorMessage =
+          "Location unavailable. Please check your device's location services.";
+      } else if (error.code === 3) {
+        errorMessage = "Location request timed out. Please try again.";
+      }
+
+      // Only show error toast if this was a manual detection attempt
+      if (hasAttemptedAutoDetect) {
+        toast({
+          title: "Location detection failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsDetectingLocation(false);
+    }
+  };
+
+  // Auto-detect location on page load if no location is set
+  useEffect(() => {
+    if (
+      !activeLocation &&
+      !isLoading &&
+      !hasAttemptedAutoDetect &&
+      navigator.geolocation
+    ) {
+      setHasAttemptedAutoDetect(true);
+
+      // Check if we have permission to access location
+      navigator.permissions
+        ?.query({ name: "geolocation" })
+        .then((permissionStatus) => {
+          if (permissionStatus.state === "granted") {
+            // User has already granted permission, auto-detect
+            detectCurrentLocation();
+          }
+          // If permission is 'denied' or 'prompt', don't auto-detect to avoid annoying the user
+        })
+        .catch(() => {
+          // Permissions API not supported, don't auto-detect
+        });
+    }
+  }, [activeLocation, isLoading, hasAttemptedAutoDetect]);
 
   // Set first location as active when preferences load
   useEffect(() => {
@@ -500,7 +638,7 @@ export default function WeatherPage() {
                         Weather Location
                       </CardTitle>
                       <CardDescription>
-                        Select a location to view weather data
+                        Select a location or auto-detect your current position
                       </CardDescription>
                     </div>
                     {activeLocation && weatherData && (
@@ -518,41 +656,92 @@ export default function WeatherPage() {
                     <div className="flex justify-center py-4">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     </div>
-                  ) : !preferences?.locations ||
-                    preferences.locations.length === 0 ? (
-                    <div className="text-center py-4 text-muted-foreground">
-                      <p>No locations added yet.</p>
-                      <p className="text-sm">
-                        Go to the Preferences tab to add locations.
-                      </p>
-                    </div>
                   ) : (
-                    <div className="relative">
-                      <select
-                        className="w-full px-3 py-2 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        value={activeLocation || ""}
-                        onChange={(e) => {
-                          const newLocation = e.target.value;
-                          if (newLocation) {
-                            // Reset all data when changing location
-                            setWeatherData(null);
-                            setClimateData(null);
-                            setCropRecommendations(null);
-                            setHistoricalData(null);
-                            setActiveLocation(newLocation);
-                          }
-                        }}
-                      >
-                        <option value="" disabled>
-                          Select a location
-                        </option>
-                        {preferences.locations.map((location) => (
-                          <option key={location} value={location}>
-                            {location}
-                          </option>
-                        ))}
-                      </select>
-                      <MapPin className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <div className="space-y-4">
+                      {/* Auto-detect button */}
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <Button
+                          onClick={detectCurrentLocation}
+                          disabled={isDetectingLocation}
+                          className="flex-1 sm:flex-none"
+                          variant="outline"
+                        >
+                          {isDetectingLocation ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Detecting Location...
+                            </>
+                          ) : (
+                            <>
+                              <Navigation className="mr-2 h-4 w-4" />
+                              Auto-Detect My Location
+                            </>
+                          )}
+                        </Button>
+
+                        {activeLocation && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="h-4 w-4" />
+                            <span>Current: {activeLocation}</span>
+                            {detectedCoordinates && (
+                              <span className="text-xs opacity-75">
+                                ({detectedCoordinates.lat.toFixed(4)},{" "}
+                                {detectedCoordinates.lon.toFixed(4)})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Location dropdown */}
+                      {preferences?.locations &&
+                        preferences.locations.length > 0 && (
+                          <div className="relative">
+                            <label className="text-sm font-medium mb-2 block">
+                              Or select from saved locations:
+                            </label>
+                            <select
+                              className="w-full px-3 py-2 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                              value={activeLocation || ""}
+                              onChange={(e) => {
+                                const newLocation = e.target.value;
+                                if (newLocation) {
+                                  // Reset all data when changing location
+                                  setWeatherData(null);
+                                  setClimateData(null);
+                                  setCropRecommendations(null);
+                                  setHistoricalData(null);
+                                  setActiveLocation(newLocation);
+                                  // Clear detected coordinates when switching to saved location
+                                  setDetectedCoordinates(null);
+                                }
+                              }}
+                            >
+                              <option value="" disabled>
+                                Select a saved location
+                              </option>
+                              {preferences.locations.map((location) => (
+                                <option key={location} value={location}>
+                                  {location}
+                                </option>
+                              ))}
+                            </select>
+                            <MapPin className="absolute right-3 top-8 h-4 w-4 text-muted-foreground pointer-events-none" />
+                          </div>
+                        )}
+
+                      {/* No locations message */}
+                      {(!preferences?.locations ||
+                        preferences.locations.length === 0) && (
+                        <div className="text-center py-6 text-muted-foreground border rounded-lg bg-muted/30">
+                          <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p className="font-medium mb-1">No saved locations</p>
+                          <p className="text-sm">
+                            Use auto-detect or go to Preferences to add
+                            locations
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
