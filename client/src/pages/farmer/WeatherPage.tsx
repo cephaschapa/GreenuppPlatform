@@ -5,6 +5,7 @@ import { EnhancedWeatherDashboard } from "@/components/farmer/EnhancedWeatherDas
 import { WeatherAlertSystem } from "@/components/farmer/WeatherAlertSystem";
 import { useWeatherPreferences } from "@/hooks/use-weather-preferences";
 import RegionalSeedRecommendations from "@/components/RegionalSeedRecommendations";
+import { WeatherPreferences as WeatherPreferencesType } from "@shared/schema";
 import {
   Card,
   CardContent,
@@ -170,6 +171,66 @@ export default function WeatherPage() {
   const { preferences, isLoading } = useWeatherPreferences();
   const { toast } = useToast();
 
+  // Save current location to preferences
+  const saveLocation = async () => {
+    if (!activeLocation) {
+      toast({
+        title: "No location to save",
+        description: "Please detect or select a location first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (preferences?.locations?.includes(activeLocation)) {
+      toast({
+        title: "Location already saved",
+        description: `${activeLocation} is already in your saved locations`,
+      });
+      return;
+    }
+
+    try {
+      const currentLocations = preferences?.locations || [];
+      const updatedLocations = [...currentLocations, activeLocation];
+
+      const updateData = {
+        userId: preferences?.userId || 0,
+        locations: updatedLocations,
+        alertsEnabled: preferences?.alertsEnabled ?? true,
+        temperatureUnit: preferences?.temperatureUnit || "celsius",
+      };
+
+      const response = await fetch("/api/weather-preferences", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save location");
+      }
+
+      toast({
+        title: "Location saved!",
+        description: `${activeLocation} has been added to your saved locations`,
+      });
+
+      // Refresh preferences data
+      window.location.reload(); // Simple refresh to update the UI
+    } catch (error) {
+      console.error("Error saving location:", error);
+      toast({
+        title: "Failed to save location",
+        description: "Please try again or save it manually in Preferences",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Auto-detect user's current location
   const detectCurrentLocation = async () => {
     if (!navigator.geolocation) {
@@ -231,18 +292,8 @@ export default function WeatherPage() {
           description: `Weather data for ${locationName} is now loading`,
         });
 
-        // Add to preferences if not already there
-        if (
-          preferences?.locations &&
-          !preferences.locations.includes(locationName)
-        ) {
-          // Note: This would typically update preferences through the preferences component
-          // For now, we'll just show a toast suggesting to save it
-          toast({
-            title: "Save this location?",
-            description: `Go to Preferences tab to save ${locationName} to your locations`,
-          });
-        }
+        // Note: Users can now save the location using the "Save Location" button
+        // that appears next to the location display
       } else {
         throw new Error("Location not found");
       }
@@ -689,6 +740,22 @@ export default function WeatherPage() {
                                 {detectedCoordinates.lon.toFixed(4)})
                               </span>
                             )}
+                            {/* Save Location button - only show if location is detected but not saved */}
+                            {detectedCoordinates &&
+                              activeLocation &&
+                              preferences?.locations &&
+                              !preferences.locations.includes(
+                                activeLocation
+                              ) && (
+                                <Button
+                                  onClick={saveLocation}
+                                  size="sm"
+                                  variant="outline"
+                                  className="ml-2 h-6 px-2 text-xs"
+                                >
+                                  Save Location
+                                </Button>
+                              )}
                           </div>
                         )}
                       </div>
