@@ -94,7 +94,7 @@ export function WeatherPreferences() {
     const currentLocations = form.getValues("locations") || [];
     form.setValue(
       "locations",
-      currentLocations.filter((_, i) => i !== index),
+      currentLocations.filter((_, i) => i !== index)
     );
   };
 
@@ -114,11 +114,14 @@ export function WeatherPreferences() {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
-          // Use reverse geocoding to get city name from coordinates
+          // Use our server's reverse geocoding endpoint
           const { latitude, longitude } = position.coords;
           const response = await fetch(
-            `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${process.env.OPENWEATHER_API_KEY || process.env.VITE_OPENWEATHER_API_KEY}`,
-            { method: "GET" },
+            `/api/weather/reverse-geocode?lat=${latitude}&lon=${longitude}`,
+            {
+              method: "GET",
+              credentials: "include",
+            }
           );
 
           if (!response.ok) {
@@ -127,8 +130,8 @@ export function WeatherPreferences() {
 
           const data = await response.json();
 
-          if (data && data.length > 0) {
-            const locationName = data[0].name;
+          if (data && data.name) {
+            const locationName = data.name;
             const currentLocations = form.getValues("locations") || [];
 
             // Only add if not already in the list
@@ -168,7 +171,7 @@ export function WeatherPreferences() {
             "Please allow location access or enter your location manually",
           variant: "destructive",
         });
-      },
+      }
     );
   };
 
@@ -324,8 +327,9 @@ export function WeatherPreferences() {
                         <div className="text-xs text-muted-foreground">
                           Current locations: {JSON.stringify(field.value)}
                         </div>
-                        
-                        {Array.isArray(field.value) && field.value.length > 0 ? (
+
+                        {Array.isArray(field.value) &&
+                        field.value.length > 0 ? (
                           field.value.map((location, index) => (
                             <div
                               key={index}

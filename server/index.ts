@@ -98,11 +98,15 @@ app.use((req, res, next) => {
   }
 
   // Setup Vite in development or serve static files in production
-  if (app.get("env") === "development") {
+  const isDevelopment = process.env.NODE_ENV !== "production";
+
+  if (isDevelopment) {
     if (process.env.DEBUG_APP) {
-      logger.info("Setting up Vite for development");
+      logger.info(
+        "Development mode: API server only (frontend served by Vite on port 3000)"
+      );
     }
-    await setupVite(app, server);
+    // In development, only serve the API - frontend is handled by Vite dev server
   } else {
     if (process.env.DEBUG_APP) {
       logger.info("Setting up static serving for production");

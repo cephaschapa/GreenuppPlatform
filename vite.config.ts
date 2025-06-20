@@ -2,22 +2,9 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
 import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 export default defineConfig({
-  plugins: [
-    react(),
-    runtimeErrorOverlay(),
-    themePlugin(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer()
-          ),
-        ]
-      : []),
-  ],
+  plugins: [react(), themePlugin()],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -31,20 +18,20 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    watch: {
-      usePolling: true,
-      interval: 100,
-      ignored: ["**/node_modules/**", "**/dist/**"],
-    },
-    hmr: {
-      overlay: true,
-      protocol: "ws",
-      host: "localhost",
-      port: 5000,
-    },
-    fs: {
-      strict: false,
-      allow: [".."],
+    port: 3000,
+    proxy: {
+      // Proxy API calls to the Express server
+      "/api": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
+      },
+      // Proxy other server routes
+      "/uploads": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
+      },
     },
   },
+  // Remove server config since we're using middleware mode in Express
+  // The server configuration is handled in server/vite.ts
 });

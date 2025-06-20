@@ -65,10 +65,10 @@ railway link
 
 #### Required Variables (Must be set)
 
-| Variable         | Description                  | Example                               |
-| ---------------- | ---------------------------- | ------------------------------------- |
-| `DATABASE_URL`   | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
-| `SESSION_SECRET` | Secret key for sessions      | `your-super-secret-key-here`          |
+| Variable         | Description                  | Example                                               |
+| ---------------- | ---------------------------- | ----------------------------------------------------- |
+| `DATABASE_URL`   | PostgreSQL connection string | `postgresql://user:pass@host:5432/db?sslmode=require` |
+| `SESSION_SECRET` | Secret key for sessions      | `your-super-secret-key-here`                          |
 
 #### Optional Variables (Enable additional features)
 
@@ -99,8 +99,9 @@ railway link
    - Click "New Service" → "Database" → "PostgreSQL"
    - Railway will automatically provide the `DATABASE_URL`
 
-2. **Or use an external database:**
+2. **Or use an external database (Neon recommended):**
    - Set `DATABASE_URL` to your external PostgreSQL connection string
+   - **Important**: Include `?sslmode=require` for Neon databases
 
 #### Session Secret
 
@@ -175,30 +176,76 @@ PostgreSQL database (Neon recommended)
 npm install
 
 # Set up environment variables
-cp .env.example .env
-# Edit .env with your configuration
+# Create .env file or set environment variables directly
+DATABASE_URL=postgresql://username:password@host:port/database?sslmode=require
+SESSION_SECRET=your-super-secret-session-key-change-this-in-production
 
 # Set up database
 npm run db:push
 
-# Start development server
+# Start development servers
 npm run dev
 ```
+
+### Development Architecture
+
+The application uses a **separated client/server architecture** for optimal development:
+
+- **Frontend (Port 3001)**: Vite dev server with hot reload
+- **Backend (Port 5000)**: Express API server
+- **API Proxying**: Frontend automatically proxies `/api/*` requests to backend
+- **Hot Reload**: UI changes are instant, API changes require server restart
 
 ### Available Scripts
 
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run start:debug  # Start production server with debug logging
-npm run lint         # Run ESLint
-npm run lint:fix     # Fix ESLint issues
-npm run format       # Format code with Prettier
-npm run type-check   # Run TypeScript type checking
-npm run test         # Run tests
-npm run db:push      # Push database schema changes
+npm run dev              # Start both client and server
+npm run dev:client       # Start only Vite dev server (port 3001)
+npm run dev:server       # Start only Express API server (port 5000)
+npm run build            # Build for production
+npm run start            # Start production server
+npm run start:debug      # Start production server with debug logging
+npm run lint             # Run ESLint
+npm run lint:fix         # Fix ESLint issues
+npm run format           # Format code with Prettier
+npm run type-check       # Run TypeScript type checking
+npm run test             # Run tests
+npm run db:push          # Push database schema changes
+npm run db:studio        # Open Drizzle Studio (database GUI)
 ```
+
+### Environment Variables for Local Development
+
+**Option 1: PowerShell (Windows)**
+
+```powershell
+$env:DATABASE_URL = "postgresql://neondb_owner:password@ep-purple-dawn-a62j5zgs.us-west-2.aws.neon.tech/neondb?sslmode=require"
+$env:SESSION_SECRET = "your-super-secret-session-key-change-this-in-production"
+npm run dev
+```
+
+**Option 2: Create .env file**
+
+```bash
+# Create .env file in root directory
+DATABASE_URL=postgresql://neondb_owner:password@ep-purple-dawn-a62j5zgs.us-west-2.aws.neon.tech/neondb?sslmode=require
+SESSION_SECRET=your-super-secret-session-key-change-this-in-production
+```
+
+### Troubleshooting Local Development
+
+#### Database Connection Issues
+
+- **500 Error on Login**: Usually indicates database connection failure
+- **Check DATABASE_URL**: Ensure the connection string is correct
+- **Verify SSL Mode**: Neon requires `?sslmode=require`
+- **Test Connection**: Use `npm run db:studio` to test database connectivity
+
+#### Common Issues
+
+- **CORS Errors**: API calls are automatically proxied in development
+- **Port Conflicts**: Ensure ports 3001 and 5000 are available
+- **Environment Variables**: Make sure they're set in the current terminal session
 
 ## 🔍 Monitoring & Health Checks
 

@@ -19,31 +19,35 @@ Greenupp is a cutting-edge Progressive Web Application (PWA) that empowers farme
 ### Prerequisites
 
 - **Node.js** 18+ and npm
-- **PostgreSQL** database
+- **PostgreSQL** database (Neon, Railway, or local)
 - **API Keys** (see Environment Variables section)
 
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd greenupp
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Setup environment variables**
+
    ```bash
-   cp .env.example .env
-   # Edit .env with your configuration (see Environment Variables section)
+   # Create .env file with your configuration
+   # See Environment Variables section below
    ```
 
 4. **Setup database**
+
    ```bash
-   # Create PostgreSQL database
+   # Push schema to database
    npm run db:push
    ```
 
@@ -53,8 +57,10 @@ Greenupp is a cutting-edge Progressive Web Application (PWA) that empowers farme
    ```
 
 The application will be available at:
-- **Main site**: `http://localhost:5000`
-- **Dashboard**: `http://app.localhost:5000` (when authenticated)
+
+- **Frontend (Vite Dev Server)**: `http://localhost:3001`
+- **Backend API**: `http://localhost:5000`
+- **API calls are proxied** from frontend to backend automatically
 
 ## 🏗️ Architecture
 
@@ -70,6 +76,15 @@ The application will be available at:
 - **AI Integration**: OpenAI API + Anthropic Claude
 - **Blockchain**: Hyperledger Fabric (CropTrace)
 - **PWA**: Service Worker + Workbox
+
+### Development Setup
+
+The application uses a **separated client/server architecture** for optimal development experience:
+
+- **Client (Port 3001)**: Vite dev server with hot reload
+- **Server (Port 5000)**: Express API server
+- **API Proxying**: Frontend automatically proxies `/api/*` requests to backend
+- **Hot Reload**: UI changes don't restart the server, only API changes do
 
 ### Project Structure
 
@@ -94,15 +109,16 @@ greenupp/
 
 ## 🛠️ Environment Variables
 
-Create a `.env` file in the root directory with the following variables:
+### Required Environment Variables
 
-### Required
-```env
-# Database
-DATABASE_URL=postgresql://username:password@localhost:5432/greenupp
+Set these environment variables before starting the application:
+
+```bash
+# Database (Neon PostgreSQL recommended)
+DATABASE_URL=postgresql://username:password@host:port/database?sslmode=require
 
 # Session
-SESSION_SECRET=your-super-secret-session-key
+SESSION_SECRET=your-super-secret-session-key-change-this-in-production
 
 # OpenAI (for AI farming assistant)
 OPENAI_API_KEY=sk-your-openai-api-key
@@ -115,7 +131,8 @@ OPENWEATHER_API_KEY=your-openweather-api-key
 ```
 
 ### Optional (for full features)
-```env
+
+```bash
 # Stripe (for marketplace payments)
 STRIPE_SECRET_KEY=sk_test_your-stripe-secret-key
 VITE_STRIPE_PUBLIC_KEY=pk_test_your-stripe-public-key
@@ -129,75 +146,130 @@ VITE_STREAM_API_KEY=your-stream-api-key
 ANTHROPIC_API_KEY=sk-ant-your-anthropic-api-key
 ```
 
+### Setting Environment Variables
+
+**Option 1: PowerShell (Windows)**
+
+```powershell
+$env:DATABASE_URL = "postgresql://neondb_owner:password@ep-purple-dawn-a62j5zgs.us-west-2.aws.neon.tech/neondb?sslmode=require"
+$env:SESSION_SECRET = "your-super-secret-session-key-change-this-in-production"
+npm run dev
+```
+
+**Option 2: Create .env file**
+
+```bash
+# Create .env file in root directory
+DATABASE_URL=postgresql://neondb_owner:password@ep-purple-dawn-a62j5zgs.us-west-2.aws.neon.tech/neondb?sslmode=require
+SESSION_SECRET=your-super-secret-session-key-change-this-in-production
+```
+
 ## 📋 Available Scripts
 
 ### Development
+
 ```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run preview      # Preview production build
-npm run type-check   # Run TypeScript type checking
+npm run dev              # Start both client and server
+npm run dev:client       # Start only Vite dev server (port 3001)
+npm run dev:server       # Start only Express API server (port 5000)
+npm run build            # Build for production
+npm run preview          # Preview production build
+npm run type-check       # Run TypeScript type checking
 ```
 
 ### Database
+
 ```bash
-npm run db:push      # Push schema changes to database
-npm run db:studio    # Open Drizzle Studio (database GUI)
-npm run db:generate  # Generate migration files
+npm run db:push          # Push schema changes to database
+npm run db:studio        # Open Drizzle Studio (database GUI)
+npm run db:generate      # Generate migration files
 ```
 
 ### Testing & Quality
+
 ```bash
-npm run lint         # Run ESLint
-npm run lint:fix     # Fix ESLint issues
-npm run format       # Format code with Prettier
+npm run lint             # Run ESLint
+npm run lint:fix         # Fix ESLint issues
+npm run format           # Format code with Prettier
 ```
+
+## 🔧 Troubleshooting
+
+### Database Connection Issues
+
+If you encounter database connection errors:
+
+1. **Check DATABASE_URL**: Ensure the connection string is correct
+2. **Verify SSL Mode**: Neon requires `?sslmode=require`
+3. **Test Connection**: Use `npm run db:studio` to test database connectivity
+4. **Environment Variables**: Make sure they're set in the current terminal session
+
+### Common Issues
+
+- **500 Error on Login**: Usually indicates database connection failure
+- **CORS Errors**: API calls are automatically proxied in development
+- **Port Conflicts**: Ensure ports 3001 and 5000 are available
+
+### Development Tips
+
+- **Hot Reload**: UI changes are instant, API changes require server restart
+- **API Testing**: Use `http://localhost:5000/api/*` for direct API testing
+- **Database**: Use Drizzle Studio for database management
+- **Logs**: Check terminal output for detailed error messages
 
 ## 🌟 Core Features
 
 ### 🤖 AI-Powered Farming Assistant
+
 - **Smart Crop Recommendations**: AI-driven crop selection based on soil, climate, and market data
 - **Yield Predictions**: Machine learning models for accurate harvest forecasting
 - **Disease Detection**: Computer vision for plant health analysis
 - **Personalized Advice**: Context-aware farming recommendations
 
 ### 🌾 Farm Management
+
 - **Field Management**: Digital field mapping and crop tracking
 - **Task Scheduling**: Automated reminders and workflow management
 - **Weather Integration**: Real-time weather data and forecasting
 - **Resource Planning**: Inventory and resource optimization
 
 ### 🔗 Blockchain Traceability (CropTrace)
+
 - **Supply Chain Tracking**: End-to-end crop provenance
 - **Quality Verification**: Immutable quality records
 - **Consumer Trust**: Transparent product history
 - **Compliance**: Automated regulatory reporting
 
 ### 🛒 Marketplace
+
 - **B2B Trading**: Direct farmer-to-buyer connections
 - **Location-Based Discovery**: Proximity-based seller matching
 - **Secure Payments**: Stripe-powered transaction processing
 - **Review System**: Trust and reputation management
 
 ### 👥 Social Networking (Green Socials)
+
 - **Farmer Communities**: Knowledge sharing and collaboration
 - **Expert Network**: Access to agricultural specialists
 - **Discussion Forums**: Topic-based farming discussions
 - **Success Stories**: Peer learning and inspiration
 
 ### 📱 Mobile-First PWA
+
 - **Offline Capability**: Works without internet connection
 - **Push Notifications**: Real-time alerts and reminders
 - **Native-like Experience**: App-like interface and interactions
 - **Cross-Platform**: Works on all devices and platforms
 
 ### 🌤️ Weather & Climate
+
 - **Real-time Data**: Current weather conditions
 - **Forecasting**: 7-day weather predictions
 - **Climate Analysis**: Historical weather patterns
 - **Custom Alerts**: Weather-based notifications
 
 ### 📊 Analytics & Insights
+
 - **Performance Metrics**: Farm productivity analytics
 - **Market Intelligence**: Price trends and market analysis
 - **Predictive Analytics**: Data-driven decision support
@@ -208,25 +280,28 @@ npm run format       # Format code with Prettier
 ### Regular Tasks
 
 1. **Database Maintenance**
+
    ```bash
    # Backup database
    pg_dump greenupp > backup_$(date +%Y%m%d).sql
-   
+
    # Update schema
    npm run db:push
    ```
 
 2. **Dependency Updates**
+
    ```bash
    npm update
    npm audit fix
    ```
 
 3. **Log Monitoring**
+
    ```bash
    # Check application logs
    tail -f logs/app.log
-   
+
    # Monitor error rates
    grep "ERROR" logs/app.log | wc -l
    ```
@@ -234,11 +309,13 @@ npm run format       # Format code with Prettier
 ### Performance Optimization
 
 1. **Database Optimization**
+
    - Monitor slow queries
    - Update table statistics
    - Consider indexing for frequently accessed data
 
 2. **Frontend Optimization**
+
    - Bundle size analysis: `npm run build --analyze`
    - Image optimization
    - Code splitting and lazy loading
@@ -251,23 +328,27 @@ npm run format       # Format code with Prettier
 ## 📚 API Documentation
 
 ### Authentication Endpoints
+
 - `POST /api/register` - User registration
 - `POST /api/login` - User login
 - `POST /api/logout` - User logout
 - `GET /api/user` - Get current user
 
 ### Farm Management
+
 - `GET /api/fields` - List user fields
 - `POST /api/fields` - Create new field
 - `GET /api/crops` - List crops
 - `POST /api/crops` - Create new crop
 
 ### AI Services
+
 - `POST /api/crops/:id/predictions` - Generate yield predictions
 - `POST /api/plant-analyses` - Analyze plant images
 - `POST /api/farming-assistant/chat` - AI chat assistant
 
 ### Marketplace
+
 - `GET /api/marketplace/listings` - Browse listings
 - `POST /api/marketplace/listings` - Create listing
 - `GET /api/marketplace/sellers` - Find sellers
@@ -313,17 +394,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Production Deployment
 
 1. **Build the application**
+
    ```bash
    npm run build
    ```
 
 2. **Set production environment variables**
+
    ```bash
    export NODE_ENV=production
    export DATABASE_URL=your-production-db-url
    ```
 
 3. **Run database migrations**
+
    ```bash
    npm run db:push
    ```
@@ -350,11 +434,13 @@ CMD ["npm", "start"]
 ## 📊 Monitoring
 
 ### Health Checks
+
 - Database connectivity: `GET /api/health/db`
 - API status: `GET /api/health/status`
 - Service dependencies: `GET /api/health/services`
 
 ### Metrics
+
 - Response times
 - Error rates
 - User activity
@@ -364,4 +450,4 @@ CMD ["npm", "start"]
 
 **Built with ❤️ for the farming community**
 
-*Greenupp - Transforming agriculture through technology*
+_Greenupp - Transforming agriculture through technology_

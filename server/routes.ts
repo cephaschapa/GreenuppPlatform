@@ -710,6 +710,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reverse geocoding endpoint
+  app.get("/api/weather/reverse-geocode", isAuthenticated, async (req, res) => {
+    try {
+      const { lat, lon } = req.query;
+
+      if (!lat || !lon) {
+        return res
+          .status(400)
+          .json({ message: "Latitude and longitude parameters are required" });
+      }
+
+      const latitude = parseFloat(lat as string);
+      const longitude = parseFloat(lon as string);
+
+      if (isNaN(latitude) || isNaN(longitude)) {
+        return res
+          .status(400)
+          .json({ message: "Invalid latitude or longitude values" });
+      }
+
+      const { reverseGeocode } = await import("./weather");
+      const locationData = await reverseGeocode(latitude, longitude);
+
+      res.json(locationData);
+    } catch (error) {
+      console.error("Error reverse geocoding coordinates:", error);
+      if (
+        error instanceof Error &&
+        error.message === "OpenWeather API key not configured"
+      ) {
+        res.status(503).json({
+          message:
+            "Weather service is not properly configured. Please contact system administrator.",
+          details: "API key missing",
+        });
+      } else {
+        res
+          .status(500)
+          .json({ message: "Failed to reverse geocode coordinates" });
+      }
+    }
+  });
+
   // Crop recommendations based on weather and climate
   app.get("/api/crop-recommendations", isAuthenticated, async (req, res) => {
     try {
