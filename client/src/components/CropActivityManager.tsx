@@ -215,10 +215,10 @@ export function CropActivityManager({
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-xl font-medium text-white font-space">
+            <CardTitle className="text-xl font-medium text-black font-space">
               Activities for {crop.name}
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-gray-600">
               {crop.variety ? `Variety: ${crop.variety}` : ""}
               {crop.status ? ` • Status: ${crop.status}` : ""}
             </CardDescription>
@@ -247,18 +247,18 @@ export function CropActivityManager({
                     <Badge variant="outline" className="mr-2 bg-primary/20">
                       {activity.activityType}
                     </Badge>
-                    <span className="text-sm text-gray-300">
+                    <span className="text-sm text-gray-600">
                       {new Date(activity.activityDate).toLocaleDateString()}
                     </span>
                   </div>
-                  <p className="mt-1 text-white">{activity.description}</p>
+                  <p className="mt-1 text-black">{activity.description}</p>
                   {activity.cost && (
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-600 mt-1">
                       Cost: ${activity.cost}
                     </p>
                   )}
                   {activity.notes && (
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-600 mt-1">
                       {activity.notes}
                     </p>
                   )}
@@ -268,7 +268,7 @@ export function CropActivityManager({
                     variant="ghost"
                     size="icon"
                     onClick={() => handleEdit(activity)}
-                    className="h-8 w-8 text-gray-400 hover:text-primary"
+                    className="h-8 w-8 text-gray-600 hover:text-primary"
                   >
                     <Edit2 className="h-4 w-4" />
                   </Button>
@@ -276,7 +276,7 @@ export function CropActivityManager({
                     variant="ghost"
                     size="icon"
                     onClick={() => handleDelete(activity.id)}
-                    className="h-8 w-8 text-gray-400 hover:text-destructive"
+                    className="h-8 w-8 text-gray-white hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

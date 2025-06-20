@@ -115,7 +115,7 @@ export function CropDateManager({ crop, onClose }: CropDateManagerProps) {
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-xl font-medium text-white font-space">
+            <CardTitle className="text-xl font-medium text-black font-space">
               Manage Crop Timeline
             </CardTitle>
             <CardDescription className="text-black-400">
