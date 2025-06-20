@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { TopNavbar } from "./TopNavbar";
 import { PopoverAssistant } from "@/components/chat/PopoverAssistant";
+import { MobileBottomNav } from "./MobileBottomNav";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -40,6 +41,9 @@ export function DashboardLayout({
           </div>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
 
       {/* Popover AI Assistant */}
       <PopoverAssistant />

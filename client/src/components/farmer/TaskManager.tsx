@@ -53,6 +53,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { CheckedState } from "@radix-ui/react-checkbox";
 import { useAuth } from "@/hooks/use-auth";
+import { Loader2 } from "lucide-react";
 
 // Task priority colors
 const priorityColors = {
@@ -183,12 +184,14 @@ export function TaskManager() {
       <div className="flex justify-between items-center">
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>Add New Task</Button>
+            <Button className="mobile-btn-compact">Add New Task</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Create New Task</DialogTitle>
-              <DialogDescription>
+          <DialogContent className="sm:max-w-[425px] mobile-dialog">
+            <DialogHeader className="mobile-p-4">
+              <DialogTitle className="mobile-text-lg">
+                Create New Task
+              </DialogTitle>
+              <DialogDescription className="mobile-text-sm">
                 Add a new task to your schedule. Click save when you're done.
               </DialogDescription>
             </DialogHeader>
@@ -198,18 +201,22 @@ export function TaskManager() {
                   console.log("Form submitted, calling handleSubmit...");
                   form.handleSubmit(onSubmit)(e);
                 }}
-                className="space-y-4"
+                className="mobile-form mobile-p-4"
               >
                 <FormField
                   control={form.control}
                   name="title"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
+                    <FormItem className="mobile-form-group">
+                      <FormLabel className="mobile-text-sm">Title</FormLabel>
                       <FormControl>
-                        <Input placeholder="Task title" {...field} />
+                        <Input
+                          placeholder="Task title"
+                          {...field}
+                          className="mobile-input-group"
+                        />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="mobile-text-xs" />
                     </FormItem>
                   )}
                 />
@@ -217,17 +224,19 @@ export function TaskManager() {
                   control={form.control}
                   name="description"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
+                    <FormItem className="mobile-form-group">
+                      <FormLabel className="mobile-text-sm">
+                        Description
+                      </FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Task description"
-                          className="resize-none"
+                          className="resize-none mobile-input-group"
                           {...field}
                           value={field.value || ""}
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="mobile-text-xs" />
                     </FormItem>
                   )}
                 />
@@ -235,14 +244,14 @@ export function TaskManager() {
                   control={form.control}
                   name="priority"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Priority</FormLabel>
+                    <FormItem className="mobile-form-group">
+                      <FormLabel className="mobile-text-sm">Priority</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field?.value!}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="mobile-dropdown">
                             <SelectValue placeholder="Select priority" />
                           </SelectTrigger>
                         </FormControl>
@@ -252,7 +261,7 @@ export function TaskManager() {
                           <SelectItem value="high">High</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormMessage />
+                      <FormMessage className="mobile-text-xs" />
                     </FormItem>
                   )}
                 />
@@ -260,14 +269,14 @@ export function TaskManager() {
                   control={form.control}
                   name="dueDate"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Due Date</FormLabel>
+                    <FormItem className="flex flex-col mobile-form-group">
+                      <FormLabel className="mobile-text-sm">Due Date</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
                               variant={"outline"}
-                              className="w-full pl-3 text-left font-normal"
+                              className="w-full pl-3 text-left font-normal mobile-btn-compact"
                             >
                               {field.value ? (
                                 format(field.value, "PPP")
@@ -277,7 +286,10 @@ export function TaskManager() {
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
+                        <PopoverContent
+                          className="w-auto p-0 mobile-modal"
+                          align="start"
+                        >
                           <Calendar
                             mode="single"
                             selected={field.value}
@@ -289,12 +301,14 @@ export function TaskManager() {
                           />
                         </PopoverContent>
                       </Popover>
-                      <FormMessage />
+                      <FormMessage className="mobile-text-xs" />
                     </FormItem>
                   )}
                 />
-                <DialogFooter>
-                  <Button type="submit">Create Task</Button>
+                <DialogFooter className="mobile-p-4">
+                  <Button type="submit" className="mobile-btn-compact">
+                    Create Task
+                  </Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -303,37 +317,51 @@ export function TaskManager() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-6 w-full">
-          <TabsTrigger value="all">All Tasks</TabsTrigger>
-          <TabsTrigger value="calendar">Calendar</TabsTrigger>
-          <TabsTrigger value="priority">Priority</TabsTrigger>
-          <TabsTrigger value="range">Date Range</TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
+        <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full mobile-tabs">
+          <TabsTrigger value="all" className="mobile-tab">
+            All
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="mobile-tab">
+            Calendar
+          </TabsTrigger>
+          <TabsTrigger value="priority" className="mobile-tab">
+            Priority
+          </TabsTrigger>
+          <TabsTrigger value="range" className="mobile-tab">
+            Range
+          </TabsTrigger>
+          <TabsTrigger value="pending" className="mobile-tab">
+            Pending
+          </TabsTrigger>
+          <TabsTrigger value="completed" className="mobile-tab">
+            Done
+          </TabsTrigger>
         </TabsList>
 
         {/* Filter Controls */}
         <div className="mb-6 mt-4">
           {activeTab === "calendar" && (
-            <div className="p-4 border rounded-md">
-              <h3 className="font-medium mb-3">Select a date</h3>
+            <div className="mobile-filters">
+              <h3 className="font-medium mb-3 mobile-text-lg">Select a date</h3>
               <Calendar
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
-                className="rounded-md border"
+                className="rounded-md border mobile-date-picker"
               />
             </div>
           )}
 
           {activeTab === "priority" && (
-            <div className="p-4 border rounded-md">
-              <h3 className="font-medium mb-3">Select priority level</h3>
+            <div className="mobile-filters">
+              <h3 className="font-medium mb-3 mobile-text-lg">
+                Select priority level
+              </h3>
               <Select
                 value={selectedPriority}
                 onValueChange={setSelectedPriority}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full mobile-dropdown">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent>
@@ -346,16 +374,18 @@ export function TaskManager() {
           )}
 
           {activeTab === "range" && (
-            <div className="p-4 border rounded-md">
-              <h3 className="font-medium mb-3">Select date range</h3>
-              <div className="flex flex-col space-y-3">
+            <div className="mobile-filters">
+              <h3 className="font-medium mb-3 mobile-text-lg">
+                Select date range
+              </h3>
+              <div className="mobile-form-group">
                 <div>
                   <p className="text-sm mb-1">Start Date:</p>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant={"outline"}
-                        className="w-full justify-start text-left font-normal"
+                        className="w-full justify-start text-left font-normal mobile-btn-compact"
                       >
                         {dateRange?.from ? (
                           format(dateRange.from, "PPP")
@@ -364,7 +394,10 @@ export function TaskManager() {
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent
+                      className="w-auto p-0 mobile-modal"
+                      align="start"
+                    >
                       <Calendar
                         mode="single"
                         selected={dateRange?.from}
@@ -385,7 +418,7 @@ export function TaskManager() {
                     <PopoverTrigger asChild>
                       <Button
                         variant={"outline"}
-                        className="w-full justify-start text-left font-normal"
+                        className="w-full justify-start text-left font-normal mobile-btn-compact"
                       >
                         {dateRange?.to ? (
                           format(dateRange.to, "PPP")
@@ -394,7 +427,10 @@ export function TaskManager() {
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent
+                      className="w-auto p-0 mobile-modal"
+                      align="start"
+                    >
                       <Calendar
                         mode="single"
                         selected={dateRange?.to}
@@ -418,34 +454,39 @@ export function TaskManager() {
         </div>
 
         {/* Task List */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mobile-grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {isLoadingTasks ? (
-            <p>Loading tasks...</p>
+            <div className="mobile-loading">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="ml-2 mobile-text-sm">Loading tasks...</span>
+            </div>
           ) : filteredTasks().length === 0 ? (
             <div className="col-span-full text-center py-10">
-              <p className="text-muted-foreground">No tasks found</p>
+              <p className="text-muted-foreground mobile-text-lg">
+                No tasks found
+              </p>
             </div>
           ) : (
             filteredTasks().map((task) => (
               <Card
                 key={task.id}
                 className={cn(
-                  "overflow-hidden",
+                  "overflow-hidden mobile-task-card",
                   task.completed && "opacity-75"
                 )}
               >
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
+                <CardHeader className="pb-2 mobile-p-4">
+                  <div className="flex justify-between items-start mobile-action-buttons">
                     <CardTitle
                       className={cn(
-                        "text-lg",
+                        "mobile-text-lg",
                         task.completed && "line-through"
                       )}
                     >
                       {task.title}
                     </CardTitle>
                     <Badge
-                      className={`${
+                      className={`mobile-badge ${
                         priorityColors[
                           task.priority as keyof typeof priorityColors
                         ]
@@ -454,18 +495,21 @@ export function TaskManager() {
                       {task.priority}
                     </Badge>
                   </div>
-                  <CardDescription>
+                  <CardDescription className="mobile-text-sm">
                     Due: {format(new Date(task.dueDate), "PPP")}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="pb-2">
+                <CardContent className="pb-2 mobile-p-4">
                   <p
-                    className={cn("text-sm", task.completed && "line-through")}
+                    className={cn(
+                      "mobile-text-sm",
+                      task.completed && "line-through"
+                    )}
                   >
                     {task.description || "No description provided"}
                   </p>
                 </CardContent>
-                <CardFooter className="flex justify-between border-t pt-4">
+                <CardFooter className="flex justify-between border-t pt-4 mobile-p-4 mobile-action-buttons">
                   <div className="flex items-center">
                     <Checkbox
                       id={`task-complete-${task.id}`}
@@ -476,10 +520,11 @@ export function TaskManager() {
                         }
                       }}
                       disabled={task?.completed!}
+                      className="mobile-icon"
                     />
                     <label
                       htmlFor={`task-complete-${task.id}`}
-                      className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      className="ml-2 mobile-text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
                       {task.completed ? "Completed" : "Mark as complete"}
                     </label>
@@ -488,6 +533,7 @@ export function TaskManager() {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleDeleteTask(task.id)}
+                    className="mobile-btn-compact"
                   >
                     Delete
                   </Button>

@@ -726,67 +726,67 @@ export default function WeatherPage() {
     >
       <div className="gap-8 overflow-x-auto scrollbar-hide">
         <Tabs defaultValue="current" className="w-full">
-          <TabsList className="mb-4 flex w-full " role="tabslist">
+          <TabsList className="mb-4 flex w-full mobile-tabs" role="tabslist">
             <TabsTrigger
               value="current"
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-1.5 mobile-tab"
               role="tab"
             >
-              <Cloud className="h-4 w-4" />
+              <Cloud className="h-4 w-4 mobile-icon" />
               <span className="hidden sm:inline">Current Weather</span>
               <span className="sm:hidden">Current</span>
             </TabsTrigger>
             <TabsTrigger
               value="forecast"
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-1.5 mobile-tab"
               role="tab"
             >
-              <Calendar className="h-4 w-4" />
+              <Calendar className="h-4 w-4 mobile-icon" />
               <span className="hidden sm:inline">Forecast</span>
               <span className="sm:hidden">Forecast</span>
             </TabsTrigger>
             <TabsTrigger
               value="climate"
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-1.5 mobile-tab"
               role="tab"
             >
-              <BarChart4 className="h-4 w-4" />
+              <BarChart4 className="h-4 w-4 mobile-icon" />
               <span className="hidden sm:inline">Climate Analysis</span>
               <span className="sm:hidden">Climate</span>
             </TabsTrigger>
             <TabsTrigger
               value="recommendations"
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-1.5 mobile-tab"
               role="tab"
             >
-              <Sprout className="h-4 w-4" />
+              <Sprout className="h-4 w-4 mobile-icon" />
               <span className="hidden sm:inline">Crop Recommendations</span>
               <span className="sm:hidden">Crops</span>
             </TabsTrigger>
             <TabsTrigger
               value="alerts"
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-1.5 mobile-tab"
               role="tab"
             >
-              <AlertTriangle className="h-4 w-4" />
+              <AlertTriangle className="h-4 w-4 mobile-icon" />
               <span className="hidden sm:inline">Weather Alerts</span>
               <span className="sm:hidden">Alerts</span>
             </TabsTrigger>
             <TabsTrigger
               value="historical"
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-1.5 mobile-tab"
               role="tab"
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-4 w-4 mobile-icon" />
               <span className="hidden sm:inline">Historical Data</span>
               <span className="sm:hidden">History</span>
             </TabsTrigger>
             <TabsTrigger
               value="preferences"
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-1.5 mobile-tab"
               role="tab"
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-4 w-4 mobile-icon" />
               <span className="hidden sm:inline">Preferences</span>
               <span className="sm:hidden">Settings</span>
             </TabsTrigger>
@@ -796,69 +796,70 @@ export default function WeatherPage() {
             <div className="grid gap-6">
               {/* Location selector */}
               <Card>
-                <CardHeader className="pb-3">
-                  <div className="flex flex-row items-center justify-between">
+                <CardHeader className="pb-3 mobile-p-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mobile-spacing">
                     <div>
-                      <CardTitle className="text-xl">
+                      <CardTitle className="text-xl mobile-text-lg">
                         Weather Location
                       </CardTitle>
-                      <CardDescription>
+                      <CardDescription className="mobile-text-sm">
                         Select a location or auto-detect your current position
                       </CardDescription>
                     </div>
                     {activeLocation && weatherData && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 mobile-weather">
                         {getWeatherIcon(weatherData.current.condition)}
-                        <div className="hidden sm:block text-2xl font-semibold">
+                        <div className="text-xl sm:text-2xl font-semibold mobile-text-lg">
                           {formatTemperature(weatherData.current.temp)}
                         </div>
                       </div>
                     )}
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="mobile-p-4">
                   {isLoading ? (
-                    <div className="flex justify-center py-4">
+                    <div className="flex justify-center py-4 mobile-loading">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2 mobile-text-sm">Loading...</span>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="mobile-spacing">
                       {/* Auto-detect button */}
                       <div className="flex flex-col sm:flex-row gap-3">
                         <Button
                           onClick={detectCurrentLocation}
                           disabled={isDetectingLocation}
-                          className="flex-1 sm:flex-none"
+                          className="flex-1 sm:flex-none mobile-btn-compact"
                           variant="outline"
                         >
                           {isDetectingLocation ? (
                             <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin mobile-icon" />
                               Detecting Location...
                             </>
                           ) : (
                             <>
-                              <Navigation className="mr-2 h-4 w-4" />
+                              <Navigation className="mr-2 h-4 w-4 mobile-icon" />
                               Auto-Detect My Location
                             </>
                           )}
                         </Button>
 
                         {activeLocation && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <MapPin className="h-4 w-4" />
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-sm text-muted-foreground mobile-status">
+                            <MapPin className="h-4 w-4 mobile-icon" />
                             <div className="flex flex-col">
-                              <span>
+                              <span className="mobile-text-sm">
                                 Current: {extractCityName(activeLocation)}
                               </span>
                               {detectedLocationData?.geoPath && (
-                                <span className="text-xs opacity-75">
+                                <span className="text-xs opacity-75 mobile-text-xs">
                                   {detectedLocationData.geoPath}
                                 </span>
                               )}
                             </div>
                             {detectedCoordinates && (
-                              <span className="text-xs opacity-75">
+                              <span className="text-xs opacity-75 mobile-text-xs">
                                 ({detectedCoordinates.lat.toFixed(4)},{" "}
                                 {detectedCoordinates.lon.toFixed(4)})
                               </span>
@@ -874,7 +875,7 @@ export default function WeatherPage() {
                                   onClick={saveLocation}
                                   size="sm"
                                   variant="outline"
-                                  className="ml-2 h-6 px-2 text-xs"
+                                  className="ml-2 h-6 px-2 text-xs mobile-btn-compact"
                                 >
                                   Save Location
                                 </Button>
@@ -896,20 +897,20 @@ export default function WeatherPage() {
                               setSearchResults([]);
                             }
                           }}
-                          className="w-full"
+                          className="w-full mobile-input-group"
                         />
                         {isSearching && (
-                          <div className="text-xs text-muted-foreground mt-1">
+                          <div className="text-xs text-muted-foreground mt-1 mobile-text-xs">
                             Searching...
                           </div>
                         )}
                         {searchError && (
-                          <div className="text-xs text-destructive mt-1">
+                          <div className="text-xs text-destructive mt-1 mobile-text-xs">
                             {searchError}
                           </div>
                         )}
                         {searchResults.length > 0 && (
-                          <div className="border rounded-md bg-background mt-2 max-h-48 overflow-y-auto shadow-lg z-10">
+                          <div className="border rounded-md bg-background mt-2 max-h-48 overflow-y-auto shadow-lg z-10 mobile-search-results">
                             {searchResults.map((result, idx) => {
                               const cityName = extractCityName(
                                 result.name || result.display_name || ""
@@ -922,13 +923,13 @@ export default function WeatherPage() {
                               return (
                                 <div
                                   key={idx}
-                                  className="flex items-center justify-between px-3 py-2 hover:bg-muted cursor-pointer"
+                                  className="flex items-center justify-between px-3 py-2 hover:bg-muted cursor-pointer mobile-p-2"
                                 >
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">
+                                  <div className="flex flex-col flex-1 min-w-0">
+                                    <span className="font-medium mobile-text-sm truncate">
                                       {cityName}
                                     </span>
-                                    <span className="text-xs text-muted-foreground">
+                                    <span className="text-xs text-muted-foreground mobile-text-xs truncate">
                                       {displayName}
                                     </span>
                                   </div>
@@ -940,6 +941,7 @@ export default function WeatherPage() {
                                         result.name || result.display_name || ""
                                       )
                                     }
+                                    className="ml-2 flex-shrink-0 mobile-btn-compact"
                                   >
                                     Add
                                   </Button>
@@ -954,11 +956,11 @@ export default function WeatherPage() {
                       {preferences?.locations &&
                         preferences.locations.length > 0 && (
                           <div className="relative">
-                            <label className="text-sm font-medium mb-2 block">
+                            <label className="text-sm font-medium mb-2 block mobile-text-sm">
                               Or select from saved locations:
                             </label>
                             <select
-                              className="w-full px-3 py-2 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
+                              className="w-full px-3 py-2 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 mobile-dropdown"
                               value={activeLocation || ""}
                               onChange={(e) => {
                                 const newLocation = e.target.value;
@@ -987,17 +989,19 @@ export default function WeatherPage() {
                                 );
                               })}
                             </select>
-                            <MapPin className="absolute right-3 top-8 h-4 w-4 text-muted-foreground pointer-events-none" />
+                            <MapPin className="absolute right-3 top-8 h-4 w-4 text-muted-foreground pointer-events-none mobile-icon" />
                           </div>
                         )}
 
                       {/* No locations message */}
                       {(!preferences?.locations ||
                         preferences.locations.length === 0) && (
-                        <div className="text-center py-6 text-muted-foreground border rounded-lg bg-muted/30">
-                          <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                          <p className="font-medium mb-1">No saved locations</p>
-                          <p className="text-sm">
+                        <div className="text-center py-6 text-muted-foreground border rounded-lg bg-muted/30 mobile-p-4">
+                          <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50 mobile-icon" />
+                          <p className="font-medium mb-1 mobile-text-lg">
+                            No saved locations
+                          </p>
+                          <p className="text-sm mobile-text-sm">
                             Use auto-detect or go to Preferences to add
                             locations
                           </p>
@@ -1023,53 +1027,60 @@ export default function WeatherPage() {
 
           <TabsContent value="forecast">
             <Card>
-              <CardHeader>
-                <CardTitle>Weather Forecast</CardTitle>
-                <CardDescription>
+              <CardHeader className="mobile-p-4">
+                <CardTitle className="mobile-text-lg">
+                  Weather Forecast
+                </CardTitle>
+                <CardDescription className="mobile-text-sm">
                   {activeLocation
                     ? `5-day forecast for ${activeLocation}`
                     : "Select a location to view forecast"}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="mobile-p-4">
                 {!activeLocation ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>No location selected.</p>
-                    <p className="text-sm">
+                  <div className="text-center py-8 text-muted-foreground mobile-loading">
+                    <p className="mobile-text-lg">No location selected.</p>
+                    <p className="text-sm mobile-text-sm">
                       Choose a location from the Current Weather tab.
                     </p>
                   </div>
                 ) : loadingWeather ? (
-                  <div className="flex justify-center py-12">
+                  <div className="flex justify-center py-12 mobile-loading">
                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                    <span className="ml-2 mobile-text-sm">
+                      Loading forecast...
+                    </span>
                   </div>
                 ) : !weatherData?.forecast ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p>Forecast data not available for this location.</p>
+                  <div className="text-center py-8 text-muted-foreground mobile-loading">
+                    <p className="mobile-text-lg">
+                      Forecast data not available for this location.
+                    </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mobile-grid">
                     {weatherData.forecast.map((day, index) => (
                       <div
                         key={index}
-                        className="flex flex-col items-center p-4 border rounded-lg"
+                        className="flex flex-col items-center p-4 border rounded-lg mobile-weather"
                       >
-                        <div className="font-medium mb-2">
+                        <div className="font-medium mb-2 mobile-text-sm text-center">
                           {day.dayOfWeek}, {day.date}
                         </div>
                         <div className="text-3xl mb-3">
                           {getWeatherIcon(day.condition)}
                         </div>
-                        <div className="text-lg font-semibold">
+                        <div className="text-lg font-semibold mobile-text-lg">
                           {formatTemperature(day.temp.max)}
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-muted-foreground mobile-text-sm">
                           {formatTemperature(day.temp.min)}
                         </div>
-                        <div className="mt-2 text-sm">
+                        <div className="mt-2 text-sm mobile-text-sm text-center">
                           {day.description || day.condition}
                         </div>
-                        <div className="mt-1 text-xs text-muted-foreground">
+                        <div className="mt-1 text-xs text-muted-foreground mobile-text-xs">
                           Rain: {day.precipitation || 0}%
                         </div>
                       </div>

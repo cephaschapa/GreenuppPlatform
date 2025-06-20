@@ -19,7 +19,11 @@
 
 /* Farming assistant styling */
 .ai-gradient-bg {
-  background: linear-gradient(135deg, var(--green-700) 0%, var(--green-900) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--green-700) 0%,
+    var(--green-900) 100%
+  );
 }
 
 .user-message-glow:hover {
@@ -31,8 +35,8 @@
 @layer utilities {
   /* Hide scrollbar but keep functionality */
   .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none; /* Chrome, Safari and Opera */
@@ -41,23 +45,41 @@
 
 /* Animation keyframes */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 @keyframes slideInUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Animation classes */
@@ -155,21 +177,26 @@
 
   body {
     @apply antialiased bg-background text-foreground;
-    font-family: 'Space Grotesk', sans-serif;
-    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    font-family: "Space Grotesk", sans-serif;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
     -webkit-tap-highlight-color: transparent;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Space Grotesk', sans-serif;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Space Grotesk", sans-serif;
   }
 
   .font-space {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: "Space Grotesk", sans-serif;
   }
 
   .font-mono {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: "JetBrains Mono", monospace;
   }
 
   /* Improved Scrollbar for Desktop */
@@ -177,31 +204,31 @@
     ::-webkit-scrollbar {
       width: 10px;
     }
-    
+
     /* Light mode scrollbar */
     ::-webkit-scrollbar-track {
       background: #f5f5f5;
     }
-    
+
     ::-webkit-scrollbar-thumb {
       background: rgba(0, 204, 102, 0.3);
       border-radius: 5px;
     }
-    
+
     ::-webkit-scrollbar-thumb:hover {
       background: rgba(0, 204, 102, 0.5);
     }
-    
+
     /* Dark mode scrollbar */
     .dark ::-webkit-scrollbar-track {
       background: #1a1a1a;
     }
-    
+
     .dark ::-webkit-scrollbar-thumb {
       background: rgba(0, 204, 102, 0.3);
       border-radius: 5px;
     }
-    
+
     .dark ::-webkit-scrollbar-thumb:hover {
       background: rgba(0, 204, 102, 0.5);
     }
@@ -225,16 +252,17 @@
       transform: translateY(0px);
     }
   }
-  
+
   @keyframes pulse-glow {
-    0%, 100% {
+    0%,
+    100% {
       box-shadow: 0 0 15px 0 rgba(0, 204, 102, 0.4);
     }
     50% {
       box-shadow: 0 0 25px 5px rgba(0, 204, 102, 0.6);
     }
   }
-  
+
   @keyframes rotate-slow {
     from {
       transform: rotate(0deg);
@@ -247,14 +275,14 @@
 
 @layer components {
   .tech-grid-bg {
-    background-image: radial-gradient(#00CC66 1px, transparent 1px);
+    background-image: radial-gradient(#00cc66 1px, transparent 1px);
     background-size: 20px 20px;
   }
-  
+
   .glow-effect {
     animation: pulse-glow 3s infinite ease-in-out;
   }
-  
+
   .rotate-element {
     animation: rotate-slow 15s linear infinite;
   }
@@ -263,23 +291,23 @@
   .mobile-container {
     @apply px-4 sm:px-6 md:px-8;
   }
-  
+
   .section-spacing {
     @apply py-10 sm:py-16 md:py-20;
   }
-  
+
   .mobile-text-base {
     @apply text-sm sm:text-base;
   }
-  
+
   .mobile-heading {
     @apply text-xl sm:text-2xl md:text-3xl;
   }
-  
+
   .mobile-subheading {
     @apply text-lg sm:text-xl;
   }
-  
+
   /* Mobile TabsList optimization */
   @media (max-width: 640px) {
     [role="tabslist"] {
@@ -290,11 +318,11 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
-    
+
     [role="tabslist"]::-webkit-scrollbar {
       display: none;
     }
-    
+
     [role="tabslist"] [role="tab"] {
       flex: 0 0 auto;
       min-width: auto;
@@ -303,13 +331,297 @@
       padding-right: 0.75rem;
     }
   }
-  
+
   /* Safe area insets for modern mobile devices */
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
-  
+
   .safe-top {
     padding-top: env(safe-area-inset-top, 0);
+  }
+
+  /* Enhanced Mobile Optimizations */
+  @media (max-width: 768px) {
+    /* Touch-friendly button sizes */
+    button,
+    .btn {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Better touch targets for interactive elements */
+    input,
+    select,
+    textarea {
+      min-height: 44px;
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+
+    /* Improved card spacing on mobile */
+    .card {
+      @apply p-4 sm:p-6;
+    }
+
+    /* Better grid layouts for mobile */
+    .mobile-grid {
+      @apply grid-cols-1 gap-4;
+    }
+
+    /* Mobile-friendly table layouts */
+    .mobile-table {
+      @apply block overflow-x-auto;
+    }
+
+    .mobile-table table {
+      @apply min-w-full;
+    }
+
+    /* Mobile-optimized form layouts */
+    .mobile-form {
+      @apply space-y-4;
+    }
+
+    .mobile-form .form-field {
+      @apply space-y-2;
+    }
+
+    /* Better mobile navigation */
+    .mobile-nav {
+      @apply fixed bottom-0 left-0 right-0 bg-background border-t border-border safe-bottom;
+      z-index: 50;
+    }
+
+    /* Mobile-optimized dialogs */
+    .mobile-dialog {
+      @apply w-full max-w-none mx-4;
+    }
+
+    /* Mobile-friendly data tables */
+    .mobile-data-table {
+      @apply block overflow-x-auto -mx-4 px-4;
+    }
+
+    /* Mobile-optimized charts */
+    .mobile-chart {
+      @apply h-64 sm:h-80;
+    }
+
+    /* Better mobile spacing */
+    .mobile-spacing {
+      @apply space-y-4 sm:space-y-6;
+    }
+
+    /* Mobile-optimized text sizes */
+    .mobile-text-sm {
+      @apply text-xs sm:text-sm;
+    }
+
+    .mobile-text-lg {
+      @apply text-base sm:text-lg;
+    }
+
+    /* Mobile-friendly icons */
+    .mobile-icon {
+      @apply w-5 h-5 sm:w-6 sm:h-6;
+    }
+
+    /* Mobile-optimized badges */
+    .mobile-badge {
+      @apply text-xs px-2 py-1;
+    }
+
+    /* Better mobile loading states */
+    .mobile-loading {
+      @apply flex items-center justify-center py-8;
+    }
+
+    /* Mobile-optimized search results */
+    .mobile-search-results {
+      @apply max-h-64 overflow-y-auto;
+    }
+
+    /* Mobile-friendly date pickers */
+    .mobile-date-picker {
+      @apply w-full;
+    }
+
+    /* Mobile-optimized filters */
+    .mobile-filters {
+      @apply space-y-3 p-4 border rounded-lg;
+    }
+
+    /* Better mobile task cards */
+    .mobile-task-card {
+      @apply p-4 space-y-3;
+    }
+
+    /* Mobile-optimized weather display */
+    .mobile-weather {
+      @apply text-center space-y-2;
+    }
+
+    /* Mobile-friendly crop recommendations */
+    .mobile-crop-card {
+      @apply p-4 space-y-3 border rounded-lg;
+    }
+
+    /* Mobile-optimized alerts */
+    .mobile-alert {
+      @apply p-4 space-y-2;
+    }
+
+    /* Better mobile forms */
+    .mobile-form-group {
+      @apply space-y-2;
+    }
+
+    /* Mobile-friendly action buttons */
+    .mobile-action-buttons {
+      @apply flex gap-2 flex-wrap;
+    }
+
+    /* Mobile-optimized status indicators */
+    .mobile-status {
+      @apply flex items-center gap-2 text-sm;
+    }
+
+    /* Better mobile data visualization */
+    .mobile-chart-container {
+      @apply h-48 sm:h-64;
+    }
+
+    /* Mobile-friendly navigation tabs */
+    .mobile-tabs {
+      @apply flex overflow-x-auto scrollbar-hide;
+    }
+
+    .mobile-tabs .tab {
+      @apply flex-shrink-0 px-3 py-2;
+    }
+
+    /* Mobile-optimized modals */
+    .mobile-modal {
+      @apply w-full max-w-none mx-4 max-h-[90vh] overflow-y-auto;
+    }
+
+    /* Better mobile input groups */
+    .mobile-input-group {
+      @apply space-y-2;
+    }
+
+    /* Mobile-friendly tooltips */
+    .mobile-tooltip {
+      @apply text-xs;
+    }
+
+    /* Mobile-optimized progress indicators */
+    .mobile-progress {
+      @apply h-2;
+    }
+
+    /* Better mobile list layouts */
+    .mobile-list {
+      @apply space-y-2;
+    }
+
+    /* Mobile-friendly dropdowns */
+    .mobile-dropdown {
+      @apply w-full;
+    }
+
+    /* Mobile-optimized image displays */
+    .mobile-image {
+      @apply w-full h-auto rounded-lg;
+    }
+
+    /* Better mobile spacing utilities */
+    .mobile-p-2 {
+      @apply p-2 sm:p-3;
+    }
+
+    .mobile-p-4 {
+      @apply p-3 sm:p-4;
+    }
+
+    .mobile-p-6 {
+      @apply p-4 sm:p-6;
+    }
+
+    .mobile-m-2 {
+      @apply m-2 sm:m-3;
+    }
+
+    .mobile-m-4 {
+      @apply m-3 sm:m-4;
+    }
+
+    .mobile-gap-2 {
+      @apply gap-2 sm:gap-3;
+    }
+
+    .mobile-gap-4 {
+      @apply gap-3 sm:gap-4;
+    }
+
+    .mobile-gap-6 {
+      @apply gap-4 sm:gap-6;
+    }
+  }
+
+  /* Mobile-specific improvements for very small screens */
+  @media (max-width: 480px) {
+    /* Even more compact layouts */
+    .mobile-compact {
+      @apply p-3 space-y-2;
+    }
+
+    /* Smaller text for very small screens */
+    .mobile-text-xs {
+      @apply text-xs;
+    }
+
+    /* Compact buttons */
+    .mobile-btn-compact {
+      @apply px-3 py-2 text-sm;
+    }
+
+    /* Compact cards */
+    .mobile-card-compact {
+      @apply p-3;
+    }
+
+    /* Compact forms */
+    .mobile-form-compact {
+      @apply space-y-3;
+    }
+
+    /* Compact tables */
+    .mobile-table-compact {
+      @apply text-xs;
+    }
+
+    /* Compact navigation */
+    .mobile-nav-compact {
+      @apply px-2;
+    }
+  }
+
+  /* Landscape mobile optimizations */
+  @media (max-width: 768px) and (orientation: landscape) {
+    /* Better use of horizontal space */
+    .mobile-landscape {
+      @apply flex-row gap-4;
+    }
+
+    /* Landscape-optimized grids */
+    .mobile-landscape-grid {
+      @apply grid-cols-2 gap-3;
+    }
+
+    /* Landscape-friendly forms */
+    .mobile-landscape-form {
+      @apply grid grid-cols-2 gap-3;
+    }
   }
 }
