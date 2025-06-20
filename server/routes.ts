@@ -769,12 +769,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .json({ message: "Query must be at least 2 characters long" });
       }
 
-      // Import the geocodeLocation function
-      const { geocodeLocation } = await import("./weather");
-
       // For search functionality, we need to get multiple results
-      // Since the current geocodeLocation function only returns 1 result,
-      // we'll use the OpenWeather Geocoding API directly for search
+      // We'll use the OpenWeather Geocoding API directly for search
       if (!process.env.OPENWEATHER_API_KEY) {
         return res.status(503).json({
           message:
@@ -796,16 +792,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       if (response.data && Array.isArray(response.data)) {
-        const results = response.data.map((item: any) => ({
-          name: item.name,
-          country: item.country,
-          state: item.state,
-          lat: item.lat,
-          lon: item.lon,
-          display_name: `${item.name}${item.state ? `, ${item.state}` : ""}${
-            item.country ? `, ${item.country}` : ""
-          }`,
-        }));
+        const results = response.data.map((item: any) => {
+          // Build geographic hierarchy
+          const geoParts = [];
+          if (item.name) geoParts.push(item.name);
+          if (item.state) geoParts.push(item.state);
+          if (item.country) geoParts.push(item.country);
+
+          const geoPath = geoParts.join(", ");
+
+          return {
+            name: item.name,
+            country: item.country,
+            state: item.state,
+            county: item.county,
+            district: item.district,
+            city: item.city,
+            village: item.village,
+            town: item.town,
+            lat: item.lat,
+            lon: item.lon,
+            geoPath,
+            display_name: `${item.name}${item.state ? `, ${item.state}` : ""}${
+              item.country ? `, ${item.country}` : ""
+            }`,
+          };
+        });
 
         res.json({ results });
       } else {

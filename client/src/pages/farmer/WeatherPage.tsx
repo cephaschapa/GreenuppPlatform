@@ -168,6 +168,7 @@ export default function WeatherPage() {
     lat: number;
     lon: number;
   } | null>(null);
+  const [detectedLocationData, setDetectedLocationData] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -321,6 +322,9 @@ export default function WeatherPage() {
       if (data && data.name) {
         const fullLocationName = data.name;
         const locationName = extractCityName(fullLocationName);
+
+        // Store the full location data for display
+        setDetectedLocationData(data);
 
         // Set as active location immediately
         setActiveLocation(locationName);
@@ -843,9 +847,16 @@ export default function WeatherPage() {
                         {activeLocation && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <MapPin className="h-4 w-4" />
-                            <span>
-                              Current: {extractCityName(activeLocation)}
-                            </span>
+                            <div className="flex flex-col">
+                              <span>
+                                Current: {extractCityName(activeLocation)}
+                              </span>
+                              {detectedLocationData?.geoPath && (
+                                <span className="text-xs opacity-75">
+                                  {detectedLocationData.geoPath}
+                                </span>
+                              )}
+                            </div>
                             {detectedCoordinates && (
                               <span className="text-xs opacity-75">
                                 ({detectedCoordinates.lat.toFixed(4)},{" "}
@@ -903,12 +914,24 @@ export default function WeatherPage() {
                               const cityName = extractCityName(
                                 result.name || result.display_name || ""
                               );
+                              const displayName =
+                                result.geoPath ||
+                                result.display_name ||
+                                result.name ||
+                                "";
                               return (
                                 <div
                                   key={idx}
                                   className="flex items-center justify-between px-3 py-2 hover:bg-muted cursor-pointer"
                                 >
-                                  <span>{cityName}</span>
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">
+                                      {cityName}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {displayName}
+                                    </span>
+                                  </div>
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -946,8 +969,9 @@ export default function WeatherPage() {
                                   setCropRecommendations(null);
                                   setHistoricalData(null);
                                   setActiveLocation(newLocation);
-                                  // Clear detected coordinates when switching to saved location
+                                  // Clear detected coordinates and location data when switching to saved location
                                   setDetectedCoordinates(null);
+                                  setDetectedLocationData(null);
                                 }
                               }}
                             >

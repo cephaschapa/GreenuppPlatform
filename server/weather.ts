@@ -17,6 +17,13 @@ interface GeoLocation {
   lon: number;
   name: string;
   country: string;
+  state?: string;
+  county?: string;
+  district?: string;
+  city?: string;
+  village?: string;
+  town?: string;
+  geoPath?: string; // Full geographic hierarchy
 }
 
 interface WeatherData {
@@ -208,11 +215,27 @@ export async function reverseGeocode(
 
     if (response.data && response.data.length > 0) {
       const result = response.data[0];
+
+      // Build geographic hierarchy
+      const geoParts = [];
+      if (result.name) geoParts.push(result.name);
+      if (result.state) geoParts.push(result.state);
+      if (result.country) geoParts.push(result.country);
+
+      const geoPath = geoParts.join(", ");
+
       return {
         lat: result.lat,
         lon: result.lon,
         name: result.name,
         country: result.country,
+        state: result.state,
+        county: result.county,
+        district: result.district,
+        city: result.city,
+        village: result.village,
+        town: result.town,
+        geoPath,
       };
     } else {
       throw new Error("Location not found");
@@ -224,9 +247,9 @@ export async function reverseGeocode(
 }
 
 /**
- * Geocode a location string to coordinates
+ * Geocode a location string to coordinates and geographic details
  */
-async function geocodeLocation(location: string): Promise<GeoLocation> {
+export async function geocodeLocation(location: string): Promise<GeoLocation> {
   try {
     // Check if we need to use the API key
     if (!OPENWEATHER_API_KEY) {
@@ -243,11 +266,27 @@ async function geocodeLocation(location: string): Promise<GeoLocation> {
 
     if (response.data && response.data.length > 0) {
       const result = response.data[0];
+
+      // Build geographic hierarchy
+      const geoParts = [];
+      if (result.name) geoParts.push(result.name);
+      if (result.state) geoParts.push(result.state);
+      if (result.country) geoParts.push(result.country);
+
+      const geoPath = geoParts.join(", ");
+
       return {
         lat: result.lat,
         lon: result.lon,
         name: result.name,
         country: result.country,
+        state: result.state,
+        county: result.county,
+        district: result.district,
+        city: result.city,
+        village: result.village,
+        town: result.town,
+        geoPath,
       };
     } else {
       throw new Error("Location not found");
