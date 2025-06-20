@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { WeatherPreferences } from "@/components/farmer/WeatherPreferences";
+import { EnhancedWeatherDashboard } from "@/components/farmer/EnhancedWeatherDashboard";
+import { WeatherAlertSystem } from "@/components/farmer/WeatherAlertSystem";
 import { useWeatherPreferences } from "@/hooks/use-weather-preferences";
 import RegionalSeedRecommendations from "@/components/RegionalSeedRecommendations";
 import {
@@ -180,7 +182,7 @@ export default function WeatherPage() {
       setLoadingWeather(true);
       try {
         const response = await fetch(
-          `/api/weather?location=${encodeURIComponent(activeLocation)}`,
+          `/api/weather?location=${encodeURIComponent(activeLocation)}`
         );
 
         // Handle different response statuses
@@ -193,7 +195,7 @@ export default function WeatherPage() {
             errorData.message?.includes("API key")
           ) {
             throw new Error(
-              "API key issue - Weather service temporarily unavailable",
+              "API key issue - Weather service temporarily unavailable"
             );
           } else if (response.status === 401) {
             throw new Error("Authentication required to access weather data");
@@ -252,7 +254,7 @@ export default function WeatherPage() {
     setLoadingClimate(true);
     try {
       const response = await fetch(
-        `/api/weather/climate?location=${encodeURIComponent(activeLocation)}`,
+        `/api/weather/climate?location=${encodeURIComponent(activeLocation)}`
       );
 
       // Handle different response statuses
@@ -262,7 +264,7 @@ export default function WeatherPage() {
         // Check for specific API key issues
         if (response.status === 500 && errorData.message?.includes("API key")) {
           throw new Error(
-            "API key issue - Climate service temporarily unavailable",
+            "API key issue - Climate service temporarily unavailable"
           );
         } else if (response.status === 401) {
           throw new Error("Authentication required to access climate data");
@@ -297,7 +299,9 @@ export default function WeatherPage() {
     setLoadingRecommendations(true);
     try {
       const response = await fetch(
-        `/api/crop-recommendations?location=${encodeURIComponent(activeLocation)}`,
+        `/api/crop-recommendations?location=${encodeURIComponent(
+          activeLocation
+        )}`
       );
 
       // Handle different response statuses
@@ -307,11 +311,11 @@ export default function WeatherPage() {
         // Check for specific API key issues
         if (response.status === 500 && errorData.message?.includes("API key")) {
           throw new Error(
-            "API key issue - Crop recommendation service temporarily unavailable",
+            "API key issue - Crop recommendation service temporarily unavailable"
           );
         } else if (response.status === 401) {
           throw new Error(
-            "Authentication required to access crop recommendations",
+            "Authentication required to access crop recommendations"
           );
         } else {
           throw new Error("Failed to fetch crop recommendations");
@@ -347,7 +351,9 @@ export default function WeatherPage() {
       const endDate = format(dateRange.to, "yyyy-MM-dd");
 
       const response = await fetch(
-        `/api/weather/historical?location=${encodeURIComponent(activeLocation)}&startDate=${startDate}&endDate=${endDate}`,
+        `/api/weather/historical?location=${encodeURIComponent(
+          activeLocation
+        )}&startDate=${startDate}&endDate=${endDate}`
       );
 
       // Handle different response statuses
@@ -357,7 +363,7 @@ export default function WeatherPage() {
         // Check for specific API key issues
         if (response.status === 500 && errorData.message?.includes("API key")) {
           throw new Error(
-            "API key issue - Historical weather data temporarily unavailable",
+            "API key issue - Historical weather data temporarily unavailable"
           );
         } else if (response.status === 401) {
           throw new Error("Authentication required to access historical data");
@@ -455,6 +461,15 @@ export default function WeatherPage() {
               <span className="sm:hidden">Crops</span>
             </TabsTrigger>
             <TabsTrigger
+              value="alerts"
+              className="flex items-center gap-1.5"
+              role="tab"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              <span className="hidden sm:inline">Weather Alerts</span>
+              <span className="sm:hidden">Alerts</span>
+            </TabsTrigger>
+            <TabsTrigger
               value="historical"
               className="flex items-center gap-1.5"
               role="tab"
@@ -468,7 +483,7 @@ export default function WeatherPage() {
               className="flex items-center gap-1.5"
               role="tab"
             >
-              <AlertTriangle className="h-4 w-4" />
+              <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">Preferences</span>
               <span className="sm:hidden">Settings</span>
             </TabsTrigger>
@@ -481,8 +496,12 @@ export default function WeatherPage() {
                 <CardHeader className="pb-3">
                   <div className="flex flex-row items-center justify-between">
                     <div>
-                      <CardTitle className="text-xl">Weather Location</CardTitle>
-                      <CardDescription>Select a location to view weather data</CardDescription>
+                      <CardTitle className="text-xl">
+                        Weather Location
+                      </CardTitle>
+                      <CardDescription>
+                        Select a location to view weather data
+                      </CardDescription>
                     </div>
                     {activeLocation && weatherData && (
                       <div className="flex items-center gap-2">
@@ -499,16 +518,19 @@ export default function WeatherPage() {
                     <div className="flex justify-center py-4">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     </div>
-                  ) : !preferences?.locations || preferences.locations.length === 0 ? (
+                  ) : !preferences?.locations ||
+                    preferences.locations.length === 0 ? (
                     <div className="text-center py-4 text-muted-foreground">
                       <p>No locations added yet.</p>
-                      <p className="text-sm">Go to the Preferences tab to add locations.</p>
+                      <p className="text-sm">
+                        Go to the Preferences tab to add locations.
+                      </p>
                     </div>
                   ) : (
                     <div className="relative">
                       <select
                         className="w-full px-3 py-2 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        value={activeLocation || ''}
+                        value={activeLocation || ""}
                         onChange={(e) => {
                           const newLocation = e.target.value;
                           if (newLocation) {
@@ -521,7 +543,9 @@ export default function WeatherPage() {
                           }
                         }}
                       >
-                        <option value="" disabled>Select a location</option>
+                        <option value="" disabled>
+                          Select a location
+                        </option>
                         {preferences.locations.map((location) => (
                           <option key={location} value={location}>
                             {location}
@@ -534,161 +558,15 @@ export default function WeatherPage() {
                 </CardContent>
               </Card>
 
-              {/* Weather Alerts if present */}
-              {weatherData?.alerts && weatherData.alerts.length > 0 && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Weather Alerts for {activeLocation}</AlertTitle>
-                  <AlertDescription>
-                    <ScrollArea className="h-[100px] mt-2">
-                      {weatherData.alerts.map((alert, index) => (
-                        <div
-                          key={index}
-                          className="mb-2 pb-2 border-b border-destructive/20 last:border-0"
-                        >
-                          <div className="font-semibold">{alert.event}</div>
-                          <div className="text-sm">{alert.description}</div>
-                        </div>
-                      ))}
-                    </ScrollArea>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Current weather */}
+              {/* Enhanced Weather Dashboard */}
               {activeLocation && (
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle className="text-xl">
-                        Current Weather in {activeLocation}
-                      </CardTitle>
-                      <CardDescription>
-                        {weatherData?.current
-                          ? `Updated ${new Date(weatherData?.current?.timestamp * 1000).toLocaleTimeString()}`
-                          : "Loading weather data..."}
-                      </CardDescription>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleRefreshWeather}
-                      disabled={loadingWeather}
-                    >
-                      {loadingWeather ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <RefreshCw className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
-                    {loadingWeather ? (
-                      <div className="flex justify-center py-12">
-                        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                      </div>
-                    ) : !weatherData ? (
-                      <div className="text-center py-8 space-y-4">
-                        <div className="flex justify-center">
-                          <AlertTriangle className="h-12 w-12 text-yellow-500" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-lg">
-                            Weather data unavailable
-                          </p>
-                          <p className="text-muted-foreground">
-                            The system cannot retrieve weather data at this
-                            time.
-                          </p>
-                          <p className="text-muted-foreground mt-2">
-                            This may be due to an API key configuration issue.
-                            Please contact support.
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="flex flex-col items-center justify-center p-6 bg-primary/5 rounded-lg">
-                          <div className="text-6xl font-bold mb-2">
-                            {formatTemperature(weatherData.current.temp)}
-                          </div>
-                          <div className="text-xl text-muted-foreground">
-                            {weatherData.current.description ||
-                              weatherData.current.condition}
-                          </div>
-                          <div className="mt-4 flex items-center gap-2">
-                            {getWeatherIcon(weatherData.current.condition)}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="flex flex-col items-center p-4 bg-primary/5 rounded-lg">
-                            <Thermometer className="h-8 w-8 mb-2 text-red-500" />
-                            <div className="text-sm text-muted-foreground">
-                              Feels Like
-                            </div>
-                            <div className="text-xl font-semibold">
-                              {formatTemperature(
-                                weatherData.current.feelsLike ||
-                                  weatherData.current.temp,
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col items-center p-4 bg-primary/5 rounded-lg">
-                            <Droplets className="h-8 w-8 mb-2 text-blue-500" />
-                            <div className="text-sm text-muted-foreground">
-                              Humidity
-                            </div>
-                            <div className="text-xl font-semibold">
-                              {weatherData.current.humidity}%
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col items-center p-4 bg-primary/5 rounded-lg">
-                            <Wind className="h-8 w-8 mb-2 text-teal-500" />
-                            <div className="text-sm text-muted-foreground">
-                              Wind
-                            </div>
-                            <div className="text-xl font-semibold">
-                              {weatherData.current.windSpeed} km/h
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col items-center p-4 bg-primary/5 rounded-lg">
-                            <Cloud className="h-8 w-8 mb-2 text-gray-500" />
-                            <div className="text-sm text-muted-foreground">
-                              Cloud Cover
-                            </div>
-                            <div className="text-xl font-semibold">
-                              {weatherData.current.cloudCover || 0}%
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col items-center p-4 bg-primary/5 rounded-lg">
-                            <Umbrella className="h-8 w-8 mb-2 text-indigo-500" />
-                            <div className="text-sm text-muted-foreground">
-                              Pressure
-                            </div>
-                            <div className="text-xl font-semibold">
-                              {weatherData.current.pressure} hPa
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col items-center p-4 bg-primary/5 rounded-lg">
-                            <Sun className="h-8 w-8 mb-2 text-orange-500" />
-                            <div className="text-sm text-muted-foreground">
-                              UV Index
-                            </div>
-                            <div className="text-xl font-semibold">
-                              {weatherData.current.uv || 0}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <EnhancedWeatherDashboard
+                  weatherData={weatherData}
+                  preferences={preferences}
+                  loading={loadingWeather}
+                  onRefresh={handleRefreshWeather}
+                  activeLocation={activeLocation}
+                />
               )}
             </div>
           </TabsContent>
@@ -812,7 +690,7 @@ export default function WeatherPage() {
                                       <div className="flex items-center justify-center h-8 w-8">
                                         <span className="font-medium">
                                           {climateData.soilConditions.ph.toFixed(
-                                            1,
+                                            1
                                           )}
                                         </span>
                                       </div>
@@ -828,8 +706,8 @@ export default function WeatherPage() {
                                         {climateData.soilConditions.ph < 5.5
                                           ? "Acidic"
                                           : climateData.soilConditions.ph > 7.5
-                                            ? "Alkaline"
-                                            : "Neutral"}
+                                          ? "Alkaline"
+                                          : "Neutral"}
                                       </div>
                                     </div>
                                   </div>
@@ -839,7 +717,7 @@ export default function WeatherPage() {
                                       <div className="flex items-center justify-center h-8 w-8">
                                         <span className="font-medium">
                                           {climateData.soilConditions.moisture.toFixed(
-                                            0,
+                                            0
                                           )}
                                           %
                                         </span>
@@ -857,9 +735,9 @@ export default function WeatherPage() {
                                         20
                                           ? "Dry"
                                           : climateData.soilConditions
-                                                .moisture > 60
-                                            ? "Wet"
-                                            : "Moderate"}
+                                              .moisture > 60
+                                          ? "Wet"
+                                          : "Moderate"}
                                       </div>
                                     </div>
                                   </div>
@@ -1039,8 +917,8 @@ export default function WeatherPage() {
                                       {climateData.growingSeasonLength > 270
                                         ? "Long growing season suitable for multiple harvests and heat-loving crops."
                                         : climateData.growingSeasonLength > 180
-                                          ? "Average growing season suitable for most common crops."
-                                          : "Short growing season - focus on cold-tolerant and fast-maturing crops."}
+                                        ? "Average growing season suitable for most common crops."
+                                        : "Short growing season - focus on cold-tolerant and fast-maturing crops."}
                                     </div>
                                   </div>
                                 </div>
@@ -1090,12 +968,12 @@ export default function WeatherPage() {
                                           </td>
                                           <td className="px-4 py-2 text-center">
                                             {formatTemperature(
-                                              month.averageTemp,
+                                              month.averageTemp
                                             )}
                                           </td>
                                           <td className="px-4 py-2 text-center">
                                             {month.averagePrecipitation.toFixed(
-                                              1,
+                                              1
                                             )}{" "}
                                             mm
                                           </td>
@@ -1103,7 +981,7 @@ export default function WeatherPage() {
                                             {month.growingDegreeDays.toFixed(0)}
                                           </td>
                                         </tr>
-                                      ),
+                                      )
                                     )}
                                   </tbody>
                                 </table>
@@ -1273,6 +1151,90 @@ export default function WeatherPage() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="alerts">
+            <div className="grid gap-6">
+              {/* Weather Alert System */}
+              {activeLocation && weatherData && (
+                <WeatherAlertSystem
+                  currentWeather={{
+                    temp: weatherData.current.temp,
+                    humidity: weatherData.current.humidity,
+                    windSpeed: weatherData.current.windSpeed,
+                    uv: weatherData.current.uv,
+                    precipitation: weatherData.forecast[0]?.precipitation || 0,
+                  }}
+                  location={activeLocation}
+                />
+              )}
+
+              {/* API Weather Alerts */}
+              {weatherData?.alerts && weatherData.alerts.length > 0 && (
+                <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
+                  <CardHeader>
+                    <CardTitle className="text-red-800 dark:text-red-200 flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5" />
+                      Official Weather Alerts
+                    </CardTitle>
+                    <CardDescription className="text-red-700 dark:text-red-300">
+                      Severe weather alerts from meteorological services
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-64">
+                      {weatherData.alerts.map((alert, index) => (
+                        <div
+                          key={index}
+                          className="mb-4 p-4 bg-white/50 dark:bg-white/10 rounded-lg"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <Badge variant="destructive">
+                              {alert.severity}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground">
+                              {new Date(
+                                alert.start * 1000
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <h4 className="font-semibold mb-1">{alert.event}</h4>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {alert.description}
+                          </p>
+                          <div className="text-xs text-muted-foreground">
+                            <span className="font-medium">From:</span>{" "}
+                            {alert.senderName}
+                          </div>
+                        </div>
+                      ))}
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Alert History and Statistics */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <History className="h-5 w-5" />
+                    Alert History
+                  </CardTitle>
+                  <CardDescription>
+                    Track your weather alert activity and patterns
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Alert history and statistics coming soon</p>
+                    <p className="text-sm">
+                      Track alert triggers and response times
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="historical">
