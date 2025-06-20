@@ -55,6 +55,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DateRange } from "react-day-picker";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { format, subMonths } from "date-fns";
+import { Input } from "@/components/ui/input";
 
 interface WeatherData {
   location: string;
@@ -167,9 +168,48 @@ export default function WeatherPage() {
     lat: number;
     lon: number;
   } | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const { preferences, isLoading } = useWeatherPreferences();
   const { toast } = useToast();
+
+  // Extract city name from full location string
+  const extractCityName = (fullLocation: string): string => {
+    const suffixes = [
+      "District",
+      "City",
+      "Town",
+      "Village",
+      "Municipality",
+      "Province",
+      "State",
+      "County",
+      "Region",
+      "Area",
+      "Zone",
+      "Territory",
+      "Department",
+      "Prefecture",
+    ];
+
+    let cityName = fullLocation;
+
+    // Remove common suffixes
+    for (const suffix of suffixes) {
+      const regex = new RegExp(`\\s+${suffix}$`, "i");
+      cityName = cityName.replace(regex, "");
+    }
+
+    // Also handle cases with commas (e.g., "Lusaka, Central Province")
+    if (cityName.includes(",")) {
+      cityName = cityName.split(",")[0].trim();
+    }
+
+    return cityName.trim();
+  };
 
   // Save current location to preferences
   const saveLocation = async () => {
@@ -182,17 +222,20 @@ export default function WeatherPage() {
       return;
     }
 
-    if (preferences?.locations?.includes(activeLocation)) {
+    // Use the extracted city name for saving
+    const cityName = extractCityName(activeLocation);
+
+    if (preferences?.locations?.includes(cityName)) {
       toast({
         title: "Location already saved",
-        description: `${activeLocation} is already in your saved locations`,
+        description: `${cityName} is already in your saved locations`,
       });
       return;
     }
 
     try {
       const currentLocations = preferences?.locations || [];
-      const updatedLocations = [...currentLocations, activeLocation];
+      const updatedLocations = [...currentLocations, cityName];
 
       const updateData = {
         userId: preferences?.userId || 0,
@@ -216,7 +259,7 @@ export default function WeatherPage() {
 
       toast({
         title: "Location saved!",
-        description: `${activeLocation} has been added to your saved locations`,
+        description: `${cityName} has been added to your saved locations`,
       });
 
       // Refresh preferences data
@@ -276,7 +319,8 @@ export default function WeatherPage() {
       const data = await response.json();
 
       if (data && data.name) {
-        const locationName = data.name;
+        const fullLocationName = data.name;
+        const locationName = extractCityName(fullLocationName);
 
         // Set as active location immediately
         setActiveLocation(locationName);
@@ -605,6 +649,72 @@ export default function WeatherPage() {
     }
   };
 
+  // Search for locations using geocoding API
+  const searchLocations = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setSearchError(null);
+      return;
+    }
+    setIsSearching(true);
+    setSearchError(null);
+    try {
+      const res = await fetch(
+        `/api/weather/geocode?query=${encodeURIComponent(query)}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch location suggestions");
+      const data = await res.json();
+      setSearchResults(data.results || []);
+    } catch (err: any) {
+      setSearchError(err.message || "Error searching locations");
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Add a searched location to preferences
+  const addSearchedLocation = async (locationName: string) => {
+    const cityName = extractCityName(locationName);
+    if (preferences?.locations?.includes(cityName)) {
+      toast({
+        title: "Location already saved",
+        description: `${cityName} is already in your saved locations`,
+      });
+      return;
+    }
+    try {
+      const currentLocations = preferences?.locations || [];
+      const updatedLocations = [...currentLocations, cityName];
+      const updateData = {
+        userId: preferences?.userId || 0,
+        locations: updatedLocations,
+        alertsEnabled: preferences?.alertsEnabled ?? true,
+        temperatureUnit: preferences?.temperatureUnit || "celsius",
+      };
+      const response = await fetch("/api/weather-preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(updateData),
+      });
+      if (!response.ok) throw new Error("Failed to save location");
+      toast({
+        title: "Location saved!",
+        description: `${cityName} has been added to your saved locations`,
+      });
+      setSearchQuery("");
+      setSearchResults([]);
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: "Failed to save location",
+        description: "Please try again or save it manually in Preferences",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <DashboardLayout
       title="Weather Services"
@@ -733,7 +843,9 @@ export default function WeatherPage() {
                         {activeLocation && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <MapPin className="h-4 w-4" />
-                            <span>Current: {activeLocation}</span>
+                            <span>
+                              Current: {extractCityName(activeLocation)}
+                            </span>
                             {detectedCoordinates && (
                               <span className="text-xs opacity-75">
                                 ({detectedCoordinates.lat.toFixed(4)},{" "}
@@ -745,7 +857,7 @@ export default function WeatherPage() {
                               activeLocation &&
                               preferences?.locations &&
                               !preferences.locations.includes(
-                                activeLocation
+                                extractCityName(activeLocation)
                               ) && (
                                 <Button
                                   onClick={saveLocation}
@@ -756,6 +868,61 @@ export default function WeatherPage() {
                                   Save Location
                                 </Button>
                               )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Location search bar */}
+                      <div className="mb-4">
+                        <Input
+                          placeholder="Search for a city or location..."
+                          value={searchQuery}
+                          onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            if (e.target.value.length > 2) {
+                              searchLocations(e.target.value);
+                            } else {
+                              setSearchResults([]);
+                            }
+                          }}
+                          className="w-full"
+                        />
+                        {isSearching && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Searching...
+                          </div>
+                        )}
+                        {searchError && (
+                          <div className="text-xs text-destructive mt-1">
+                            {searchError}
+                          </div>
+                        )}
+                        {searchResults.length > 0 && (
+                          <div className="border rounded-md bg-background mt-2 max-h-48 overflow-y-auto shadow-lg z-10">
+                            {searchResults.map((result, idx) => {
+                              const cityName = extractCityName(
+                                result.name || result.display_name || ""
+                              );
+                              return (
+                                <div
+                                  key={idx}
+                                  className="flex items-center justify-between px-3 py-2 hover:bg-muted cursor-pointer"
+                                >
+                                  <span>{cityName}</span>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      addSearchedLocation(
+                                        result.name || result.display_name || ""
+                                      )
+                                    }
+                                  >
+                                    Add
+                                  </Button>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
@@ -787,11 +954,14 @@ export default function WeatherPage() {
                               <option value="" disabled>
                                 Select a saved location
                               </option>
-                              {preferences.locations.map((location) => (
-                                <option key={location} value={location}>
-                                  {location}
-                                </option>
-                              ))}
+                              {preferences.locations.map((location) => {
+                                const cityName = extractCityName(location);
+                                return (
+                                  <option key={cityName} value={cityName}>
+                                    {cityName}
+                                  </option>
+                                );
+                              })}
                             </select>
                             <MapPin className="absolute right-3 top-8 h-4 w-4 text-muted-foreground pointer-events-none" />
                           </div>
@@ -818,7 +988,7 @@ export default function WeatherPage() {
               {activeLocation && (
                 <EnhancedWeatherDashboard
                   weatherData={weatherData}
-                  preferences={preferences}
+                  preferences={preferences ?? null}
                   loading={loadingWeather}
                   onRefresh={handleRefreshWeather}
                   activeLocation={activeLocation}

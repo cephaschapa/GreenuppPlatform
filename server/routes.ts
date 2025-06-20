@@ -753,6 +753,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Forward geocoding endpoint for location search
+  app.get("/api/weather/geocode", isAuthenticated, async (req, res) => {
+    try {
+      const { query } = req.query;
+
+      if (!query) {
+        return res.status(400).json({ message: "Query parameter is required" });
+      }
+
+      const searchQuery = query as string;
+      if (searchQuery.length < 2) {
+        return res
+          .status(400)
+          .json({ message: "Query must be at least 2 characters long" });
+      }
+
+      // Import the geocodeLocation function
+      const { geocodeLocation } = await import("./weather");
+
+      // For search functionality, we need to get multiple results
+      // Since the current geocodeLocation function only returns 1 result,
+      // we'll use the OpenWeather Geocoding API directly for search
+      if (!process.env.OPENWEATHER_API_KEY) {
+        return res.status(503).json({
+          message:
+            "Weather service is not properly configured. Please contact system administrator.",
+          details: "API key missing",
+        });
+      }
+
+      const axios = (await import("axios")).default;
+      const response = await axios.get(
+        "http://api.openweathermap.org/geo/1.0/direct",
+        {
+          params: {
+            q: searchQuery,
+            limit: 10, // Get up to 10 results
+            appid: process.env.OPENWEATHER_API_KEY,
+          },
+        }
+      );
+
+      if (response.data && Array.isArray(response.data)) {
+        const results = response.data.map((item: any) => ({
+          name: item.name,
+          country: item.country,
+          state: item.state,
+          lat: item.lat,
+          lon: item.lon,
+          display_name: `${item.name}${item.state ? `, ${item.state}` : ""}${
+            item.country ? `, ${item.country}` : ""
+          }`,
+        }));
+
+        res.json({ results });
+      } else {
+        res.json({ results: [] });
+      }
+    } catch (error: any) {
+      console.error("Error geocoding location:", error);
+
+      if (error.response?.status === 401) {
+        res.status(503).json({
+          message:
+            "Weather service is not properly configured. Please contact system administrator.",
+          details: "API key invalid",
+        });
+      } else if (error.response?.status === 429) {
+        res.status(429).json({
+          message: "Too many requests. Please try again later.",
+        });
+      } else {
+        res.status(500).json({
+          message: "Failed to search locations",
+          details: error.message,
+        });
+      }
+    }
+  });
+
   // Crop recommendations based on weather and climate
   app.get("/api/crop-recommendations", isAuthenticated, async (req, res) => {
     try {
