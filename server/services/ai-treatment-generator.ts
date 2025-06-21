@@ -69,7 +69,7 @@ export class AITreatmentGenerator {
   async generateTreatmentPlan(
     analysis: PlantAnalysis,
     availableProducts: TreatmentProduct[],
-    location?: { latitude?: number; longitude?: number; climate?: string },
+    location?: { location?: string },
     userPreferences?: { organicOnly?: boolean; budget?: number }
   ): Promise<AITreatmentPlan> {
     if (!this.openai) {
@@ -84,21 +84,25 @@ export class AITreatmentGenerator {
         userPreferences
       );
 
+      // Generate treatment plan using OpenAI
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: `You are an expert agricultural consultant with deep knowledge of plant diseases, treatment methods, and sustainable farming practices. You provide personalized, practical treatment plans that consider local conditions, safety, and cost-effectiveness. Always respond with valid JSON that matches the specified schema.`,
+            content: `You are an expert agricultural consultant specializing in plant disease treatment. 
+            Create detailed, practical treatment plans for farmers. 
+            Consider the specific disease, plant type, and local conditions when making recommendations.
+            
+            Always respond with valid JSON in the exact format specified.`,
           },
           {
             role: "user",
             content: prompt,
           },
         ],
-        temperature: 0.3,
         max_tokens: 2000,
-        response_format: { type: "json_object" },
+        temperature: 0.3,
       });
 
       const content = response.choices[0]?.message?.content;
@@ -119,7 +123,7 @@ export class AITreatmentGenerator {
   private buildPrompt(
     analysis: PlantAnalysis,
     availableProducts: TreatmentProduct[],
-    location?: { latitude?: number; longitude?: number; climate?: string },
+    location?: { location?: string },
     userPreferences?: { organicOnly?: boolean; budget?: number }
   ): string {
     const productsInfo = availableProducts
@@ -151,7 +155,7 @@ ANALYSIS DATA:
 LOCATION CONTEXT:
 ${
   location
-    ? `- Climate: ${location.climate || "Unknown"}`
+    ? `- Climate: ${location.location || "Unknown"}`
     : "- Climate: Unknown"
 }
 

@@ -2645,10 +2645,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stepId = parseInt(req.params.stepId);
       const { isCompleted, completedDate } = req.body;
 
-      const step = await storage.updateTreatmentStep(stepId, {
-        isCompleted,
-        completedDate,
-      });
+      // Convert completedDate to Date object if it's a string
+      const updateData: any = { isCompleted };
+      if (completedDate) {
+        updateData.completedDate = new Date(completedDate);
+      }
+
+      const step = await storage.updateTreatmentStep(stepId, updateData);
 
       if (!step) {
         return res.status(404).json({ error: "Treatment step not found" });
@@ -2876,7 +2879,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let treatmentSteps: any[] = [];
 
         // Try AI generation first if enabled and available
-        if (useAI && aiTreatmentGenerator.openai) {
+        if (useAI && aiTreatmentGenerator) {
           try {
             console.log("Generating AI-powered treatment plan...");
 
@@ -2884,17 +2887,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             let location;
             if (analysis.fieldId) {
               const field = await storage.getField(analysis.fieldId);
-              if (field?.locationId) {
-                const fieldLocation = await storage.getLocation(
-                  field.locationId
-                );
-                if (fieldLocation) {
-                  location = {
-                    latitude: fieldLocation.latitude,
-                    longitude: fieldLocation.longitude,
-                    climate: fieldLocation.climate,
-                  };
-                }
+              if (field?.location) {
+                // Parse location string to extract coordinates if available
+                // For now, we'll use the location string as climate context
+                location = {
+                  location: field.location,
+                };
               }
             }
 
