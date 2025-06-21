@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { TreatmentPlanMarketplace } from "./TreatmentPlanMarketplace";
 
 interface CollapsibleTreatmentPlanProps {
   analysisId: number;
@@ -586,6 +587,14 @@ export function CollapsibleTreatmentPlan({
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Marketplace Integration */}
+          {treatmentPlan.marketplaceLinks && (
+            <TreatmentPlanMarketplace
+              marketplaceLinks={treatmentPlan.marketplaceLinks}
+              diseaseName={diseaseDetected}
+            />
           )}
         </div>
       )}

@@ -2949,6 +2949,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
               recommendations: aiPlan.recommendations,
               warnings: aiPlan.warnings,
               costEstimate: aiPlan.costEstimate,
+              marketplaceLinks: {
+                products: recommendedProducts.map((product) => ({
+                  productId: product.id,
+                  name: product.name,
+                  marketplaceUrl: `/marketplace/products?search=${encodeURIComponent(
+                    product.name
+                  )}`,
+                  dealerUrl: `/marketplace/dealers?product=${encodeURIComponent(
+                    product.name
+                  )}`,
+                })),
+                expertConsultation: {
+                  chatUrl: `/chat/experts?topic=${encodeURIComponent(
+                    analysis.diseaseDetected || "plant disease"
+                  )}`,
+                  expertListUrl: `/marketplace/experts?specialty=plant-disease`,
+                },
+              },
             };
 
             return res.status(201).json(completePlan);
@@ -3068,6 +3086,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           analysis: analysis,
           recommendedProducts: recommendedProducts,
           aiGenerated: false,
+          marketplaceLinks: {
+            products: recommendedProducts.map((product) => ({
+              productId: product.id,
+              name: product.name,
+              marketplaceUrl: `/marketplace/products?search=${encodeURIComponent(
+                product.name
+              )}`,
+              dealerUrl: `/marketplace/dealers?product=${encodeURIComponent(
+                product.name
+              )}`,
+            })),
+            expertConsultation: {
+              chatUrl: `/chat/experts?topic=${encodeURIComponent(
+                analysis.diseaseDetected || "plant disease"
+              )}`,
+              expertListUrl: `/marketplace/experts?specialty=plant-disease`,
+            },
+          },
         };
 
         res.status(201).json(completePlan);

@@ -4,16 +4,20 @@ import { PlantAnalysis } from "@shared/schema";
 interface TreatmentProduct {
   id: number;
   name: string;
-  description?: string;
+  description?: string | null;
   productType: string;
-  activeIngredient?: string;
-  applicationRate?: string;
-  safetyClass?: string;
-  reEntryInterval?: string;
-  price?: number;
-  priceUnit?: string;
-  targetDiseases: string[];
-  targetCrops: string[];
+  activeIngredient?: string | null;
+  applicationRate?: string | null;
+  safetyClass?: string | null;
+  reEntryInterval?: number | null;
+  preHarvestInterval?: number | null;
+  price?: string | null;
+  priceUnit?: string | null;
+  targetDiseases: string[] | null;
+  targetCrops: string[] | null;
+  organic?: boolean | null;
+  availability?: string | null;
+  manufacturer?: string | null;
 }
 
 interface AITreatmentPlan {
@@ -248,12 +252,15 @@ Consider the following:
         );
 
         if (matchedProduct) {
-          enhancedStep.activeIngredient = matchedProduct.activeIngredient;
+          enhancedStep.activeIngredient =
+            matchedProduct.activeIngredient ?? undefined;
           enhancedStep.dosage =
             step.dosage ||
             matchedProduct.applicationRate ||
             "Follow manufacturer instructions";
-          enhancedStep.cost = step.cost || matchedProduct.price || 0;
+          enhancedStep.cost =
+            step.cost ||
+            (matchedProduct.price ? parseFloat(matchedProduct.price) : 0);
           enhancedStep.costUnit =
             step.costUnit || matchedProduct.priceUnit || "USD";
         }
