@@ -63,6 +63,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { ChangePasswordForm } from "@/components/auth/ChangePasswordForm";
 
 // Define form schemas with additional validation
 const profileUserSchema = insertUserSchema
@@ -489,6 +490,7 @@ export default function ProfilePage() {
                               placeholder="Year your farm was established"
                               disabled={!editMode}
                               {...field}
+                              value={field.value || ""}
                             />
                           </FormControl>
                           <FormMessage />
@@ -605,6 +607,7 @@ export default function ProfilePage() {
                               placeholder="Your phone number"
                               disabled={!editMode}
                               {...field}
+                              value={field.value || ""}
                             />
                           </FormControl>
                           <FormMessage />
@@ -624,6 +627,7 @@ export default function ProfilePage() {
                               className="min-h-[120px]"
                               disabled={!editMode}
                               {...field}
+                              value={field.value || ""}
                             />
                           </FormControl>
                           <FormMessage />
@@ -678,7 +682,9 @@ export default function ProfilePage() {
                   </Avatar>
 
                   <Badge variant="outline" className="bg-primary/10">
-                    {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)}
+                    {user?.role
+                      ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+                      : "User"}
                   </Badge>
 
                   <p className="text-xs text-muted-foreground">
@@ -782,19 +788,7 @@ export default function ProfilePage() {
                       Manage your account security options and password settings
                     </p>
 
-                    <Button
-                      variant="outline"
-                      className="gap-2"
-                      onClick={() => {
-                        toast({
-                          title: "Feature Coming Soon",
-                          description:
-                            "Password change functionality will be available soon.",
-                        });
-                      }}
-                    >
-                      Change Password
-                    </Button>
+                    <ChangePasswordForm />
                   </div>
                 </div>
               </div>
