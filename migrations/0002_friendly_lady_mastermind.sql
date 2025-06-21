@@ -1,0 +1,394 @@
+CREATE TYPE "public"."chat_message_status" AS ENUM('sent', 'delivered', 'read');--> statement-breakpoint
+CREATE TYPE "public"."chat_room_type" AS ENUM('direct', 'group');--> statement-breakpoint
+CREATE TYPE "public"."listing_status" AS ENUM('active', 'pending', 'sold', 'expired', 'suspended');--> statement-breakpoint
+CREATE TYPE "public"."notification_status" AS ENUM('unread', 'read', 'archived');--> statement-breakpoint
+CREATE TYPE "public"."notification_type" AS ENUM('weather_alert', 'task_reminder', 'market_price_alert', 'system_notification', 'message', 'crop_update');--> statement-breakpoint
+CREATE TYPE "public"."product_category" AS ENUM('seeds', 'fertilizers', 'pesticides', 'equipment', 'tools', 'irrigation', 'livestock', 'feed', 'produce', 'grains', 'fruits', 'vegetables', 'dairy', 'meat', 'services', 'other');--> statement-breakpoint
+CREATE TYPE "public"."product_condition" AS ENUM('new', 'like_new', 'good', 'fair', 'poor');--> statement-breakpoint
+CREATE TABLE "ai_assistant_messages" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"role" text NOT NULL,
+	"content" text NOT NULL,
+	"context_data" jsonb,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"session_id" text NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "cart_items" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"cart_id" integer NOT NULL,
+	"listing_id" integer NOT NULL,
+	"quantity" integer DEFAULT 1 NOT NULL,
+	"price" numeric(10, 2) NOT NULL,
+	"price_unit" text,
+	"notes" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "carts" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"status" text DEFAULT 'active' NOT NULL,
+	"subtotal" numeric(10, 2) DEFAULT '0' NOT NULL,
+	"shipping" numeric(10, 2) DEFAULT '0',
+	"tax" numeric(10, 2) DEFAULT '0',
+	"total" numeric(10, 2) DEFAULT '0' NOT NULL,
+	"payment_provider" text,
+	"payment_intent_id" text,
+	"payment_status" text,
+	"payment_date" timestamp
+);
+--> statement-breakpoint
+CREATE TABLE "chat_messages" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"room_id" integer NOT NULL,
+	"sender_id" integer NOT NULL,
+	"content" text NOT NULL,
+	"status" "chat_message_status" DEFAULT 'sent' NOT NULL,
+	"sent_at" timestamp DEFAULT now() NOT NULL,
+	"media" jsonb,
+	"reply_to_id" integer,
+	"is_edited" boolean DEFAULT false NOT NULL,
+	"is_deleted" boolean DEFAULT false NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "chat_room_members" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"room_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"joined_at" timestamp DEFAULT now() NOT NULL,
+	"last_read_at" timestamp DEFAULT now() NOT NULL,
+	"is_admin" boolean DEFAULT false NOT NULL,
+	"nickname" text,
+	"is_muted" boolean DEFAULT false NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "chat_rooms" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" text,
+	"type" "chat_room_type" DEFAULT 'direct' NOT NULL,
+	"created_by_id" integer NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"last_message_at" timestamp DEFAULT now() NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "crop_trace_events" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"crop_id" integer NOT NULL,
+	"event_type" text NOT NULL,
+	"description" text NOT NULL,
+	"event_date" timestamp DEFAULT now() NOT NULL,
+	"performed_by" integer NOT NULL,
+	"input_materials" text,
+	"output_quantity" numeric(10, 2),
+	"output_unit" text,
+	"blockchain_tx_id" text,
+	"blockchain_tx_hash" text,
+	"attachments" text[],
+	"metadata" jsonb,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "crop_yield_predictions" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"crop_id" integer NOT NULL,
+	"predicted_yield" numeric(10, 2),
+	"yield_unit" text DEFAULT 'kg',
+	"confidence_level" numeric(5, 2),
+	"factors_considered" jsonb,
+	"prediction_date" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "farmer_tasks" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"title" text NOT NULL,
+	"description" text,
+	"due_date" date NOT NULL,
+	"completed" boolean DEFAULT false,
+	"priority" text DEFAULT 'medium',
+	"related_crop_id" integer,
+	"related_field_id" integer,
+	"notify_before" integer,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "locations" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"country" text NOT NULL,
+	"region" text NOT NULL,
+	"city" text NOT NULL,
+	"neighborhood" text,
+	"postal_code" text,
+	"latitude" numeric(10, 7),
+	"longitude" numeric(10, 7),
+	"formatted_address" text,
+	"place_id" text,
+	"h3_index_8" text,
+	"h3_index_9" text,
+	"h3_index_10" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "marketplace_favorites" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"listing_id" integer NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "marketplace_listings" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"seller_id" integer NOT NULL,
+	"title" text NOT NULL,
+	"description" text NOT NULL,
+	"category" text NOT NULL,
+	"subcategory" text,
+	"price" numeric(10, 2) NOT NULL,
+	"price_currency" text DEFAULT 'USD' NOT NULL,
+	"price_unit" text,
+	"quantity" numeric(10, 2),
+	"quantity_unit" text,
+	"condition" text,
+	"location_id" integer,
+	"contact_phone" text,
+	"delivery_available" boolean DEFAULT false,
+	"is_negotiable" boolean DEFAULT false,
+	"is_featured" boolean DEFAULT false,
+	"expires_at" timestamp,
+	"status" text DEFAULT 'active' NOT NULL,
+	"images" text[],
+	"views" integer DEFAULT 0 NOT NULL,
+	"favorite_count" integer DEFAULT 0 NOT NULL,
+	"tags" text[],
+	"source_crop_id" integer,
+	"traceability_qr_code" text,
+	"certifications" text[],
+	"blockchain_verified" boolean DEFAULT false,
+	"traceability_batch_id" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "marketplace_messages" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"listing_id" integer,
+	"sender_id" integer NOT NULL,
+	"recipient_id" integer NOT NULL,
+	"message" text NOT NULL,
+	"read" boolean DEFAULT false,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "marketplace_reviews" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"listing_id" integer,
+	"seller_id" integer NOT NULL,
+	"reviewer_id" integer NOT NULL,
+	"rating" integer NOT NULL,
+	"review" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "notification_settings" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"email_enabled" boolean DEFAULT true,
+	"push_enabled" boolean DEFAULT true,
+	"weather_alerts" boolean DEFAULT true,
+	"task_reminders" boolean DEFAULT true,
+	"market_price_alerts" boolean DEFAULT false,
+	"system_notifications" boolean DEFAULT true,
+	"message_notifications" boolean DEFAULT true,
+	"social_likes" boolean DEFAULT true,
+	"social_comments" boolean DEFAULT true,
+	"social_follows" boolean DEFAULT true,
+	"social_mentions" boolean DEFAULT true,
+	"social_saves" boolean DEFAULT true,
+	"email_frequency" text DEFAULT 'instant',
+	"email_digest_day" integer,
+	"email_digest_time" integer,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "notifications" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"type" text NOT NULL,
+	"title" text NOT NULL,
+	"message" text NOT NULL,
+	"data" jsonb,
+	"status" text DEFAULT 'unread' NOT NULL,
+	"action_url" text,
+	"expires_at" timestamp,
+	"sent_via_email" boolean DEFAULT false,
+	"email_sent_at" timestamp,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "plant_analyses" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"image_data" text NOT NULL,
+	"plant_type" text,
+	"field_id" integer,
+	"crop_id" integer,
+	"analysis_date" timestamp DEFAULT now() NOT NULL,
+	"disease_detected" text,
+	"disease_probability" numeric(5, 2),
+	"disease_description" text,
+	"health_status" text NOT NULL,
+	"health_score" integer NOT NULL,
+	"nutrient_deficiencies" text,
+	"nutrient_excess" text,
+	"recommendations" text,
+	"additional_observations" text,
+	"notes" text,
+	"treatment_plan_id" integer,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "treatment_plans" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"analysis_id" integer NOT NULL,
+	"title" text NOT NULL,
+	"description" text,
+	"disease_type" text NOT NULL,
+	"severity" text NOT NULL,
+	"estimated_duration" integer,
+	"status" text DEFAULT 'active' NOT NULL,
+	"start_date" timestamp DEFAULT now() NOT NULL,
+	"end_date" timestamp,
+	"notes" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "treatment_products" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" text NOT NULL,
+	"active_ingredient" text,
+	"product_type" text NOT NULL,
+	"target_diseases" text[],
+	"target_crops" text[],
+	"application_rate" text,
+	"safety_class" text,
+	"re_entry_interval" integer,
+	"pre_harvest_interval" integer,
+	"organic" boolean DEFAULT false,
+	"description" text,
+	"manufacturer" text,
+	"price" numeric(10, 2),
+	"price_unit" text,
+	"availability" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "treatment_progress" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"treatment_step_id" integer NOT NULL,
+	"application_date" timestamp DEFAULT now() NOT NULL,
+	"applied_dosage" text,
+	"weather_conditions" text,
+	"observations" text,
+	"effectiveness" integer,
+	"photos" text[],
+	"notes" text,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "treatment_steps" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"treatment_plan_id" integer NOT NULL,
+	"step_number" integer NOT NULL,
+	"title" text NOT NULL,
+	"description" text NOT NULL,
+	"treatment_type" text NOT NULL,
+	"product_name" text,
+	"active_ingredient" text,
+	"dosage" text,
+	"application_method" text,
+	"frequency" text,
+	"duration" integer,
+	"safety_notes" text,
+	"cost" numeric(10, 2),
+	"cost_unit" text,
+	"is_completed" boolean DEFAULT false,
+	"completed_date" timestamp,
+	"notes" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "weather_preferences" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"locations" text[],
+	"alerts_enabled" boolean DEFAULT true,
+	"temperature_unit" text DEFAULT 'celsius',
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+ALTER TABLE "crops" ADD COLUMN "field_size" text;--> statement-breakpoint
+ALTER TABLE "crops" ADD COLUMN "size_unit" text DEFAULT 'hectares';--> statement-breakpoint
+ALTER TABLE "crops" ADD COLUMN "batch_id" text;--> statement-breakpoint
+ALTER TABLE "crops" ADD COLUMN "seed_source" text;--> statement-breakpoint
+ALTER TABLE "crops" ADD COLUMN "seed_variety" text;--> statement-breakpoint
+ALTER TABLE "crops" ADD COLUMN "organic_certified" boolean DEFAULT false;--> statement-breakpoint
+ALTER TABLE "crops" ADD COLUMN "certification_id" text;--> statement-breakpoint
+ALTER TABLE "crops" ADD COLUMN "blockchain_tx_id" text;--> statement-breakpoint
+ALTER TABLE "crops" ADD COLUMN "traceability_qr_code" text;--> statement-breakpoint
+ALTER TABLE "ai_assistant_messages" ADD CONSTRAINT "ai_assistant_messages_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_cart_id_carts_id_fk" FOREIGN KEY ("cart_id") REFERENCES "public"."carts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_listing_id_marketplace_listings_id_fk" FOREIGN KEY ("listing_id") REFERENCES "public"."marketplace_listings"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "carts" ADD CONSTRAINT "carts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_room_id_chat_rooms_id_fk" FOREIGN KEY ("room_id") REFERENCES "public"."chat_rooms"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_sender_id_users_id_fk" FOREIGN KEY ("sender_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "chat_room_members" ADD CONSTRAINT "chat_room_members_room_id_chat_rooms_id_fk" FOREIGN KEY ("room_id") REFERENCES "public"."chat_rooms"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "chat_room_members" ADD CONSTRAINT "chat_room_members_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "chat_rooms" ADD CONSTRAINT "chat_rooms_created_by_id_users_id_fk" FOREIGN KEY ("created_by_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "crop_trace_events" ADD CONSTRAINT "crop_trace_events_crop_id_crops_id_fk" FOREIGN KEY ("crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "crop_trace_events" ADD CONSTRAINT "crop_trace_events_performed_by_users_id_fk" FOREIGN KEY ("performed_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "crop_yield_predictions" ADD CONSTRAINT "crop_yield_predictions_crop_id_crops_id_fk" FOREIGN KEY ("crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "farmer_tasks" ADD CONSTRAINT "farmer_tasks_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "farmer_tasks" ADD CONSTRAINT "farmer_tasks_related_crop_id_crops_id_fk" FOREIGN KEY ("related_crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "farmer_tasks" ADD CONSTRAINT "farmer_tasks_related_field_id_fields_id_fk" FOREIGN KEY ("related_field_id") REFERENCES "public"."fields"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "marketplace_favorites" ADD CONSTRAINT "marketplace_favorites_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "marketplace_favorites" ADD CONSTRAINT "marketplace_favorites_listing_id_marketplace_listings_id_fk" FOREIGN KEY ("listing_id") REFERENCES "public"."marketplace_listings"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "marketplace_listings" ADD CONSTRAINT "marketplace_listings_seller_id_users_id_fk" FOREIGN KEY ("seller_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "marketplace_listings" ADD CONSTRAINT "marketplace_listings_location_id_locations_id_fk" FOREIGN KEY ("location_id") REFERENCES "public"."locations"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "marketplace_listings" ADD CONSTRAINT "marketplace_listings_source_crop_id_crops_id_fk" FOREIGN KEY ("source_crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "marketplace_messages" ADD CONSTRAINT "marketplace_messages_listing_id_marketplace_listings_id_fk" FOREIGN KEY ("listing_id") REFERENCES "public"."marketplace_listings"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "marketplace_messages" ADD CONSTRAINT "marketplace_messages_sender_id_users_id_fk" FOREIGN KEY ("sender_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "marketplace_messages" ADD CONSTRAINT "marketplace_messages_recipient_id_users_id_fk" FOREIGN KEY ("recipient_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "marketplace_reviews" ADD CONSTRAINT "marketplace_reviews_listing_id_marketplace_listings_id_fk" FOREIGN KEY ("listing_id") REFERENCES "public"."marketplace_listings"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "marketplace_reviews" ADD CONSTRAINT "marketplace_reviews_seller_id_users_id_fk" FOREIGN KEY ("seller_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "marketplace_reviews" ADD CONSTRAINT "marketplace_reviews_reviewer_id_users_id_fk" FOREIGN KEY ("reviewer_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "notification_settings" ADD CONSTRAINT "notification_settings_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "plant_analyses" ADD CONSTRAINT "plant_analyses_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "plant_analyses" ADD CONSTRAINT "plant_analyses_field_id_fields_id_fk" FOREIGN KEY ("field_id") REFERENCES "public"."fields"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "plant_analyses" ADD CONSTRAINT "plant_analyses_crop_id_crops_id_fk" FOREIGN KEY ("crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "treatment_plans" ADD CONSTRAINT "treatment_plans_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "treatment_plans" ADD CONSTRAINT "treatment_plans_analysis_id_plant_analyses_id_fk" FOREIGN KEY ("analysis_id") REFERENCES "public"."plant_analyses"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "treatment_progress" ADD CONSTRAINT "treatment_progress_treatment_step_id_treatment_steps_id_fk" FOREIGN KEY ("treatment_step_id") REFERENCES "public"."treatment_steps"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "treatment_steps" ADD CONSTRAINT "treatment_steps_treatment_plan_id_treatment_plans_id_fk" FOREIGN KEY ("treatment_plan_id") REFERENCES "public"."treatment_plans"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "weather_preferences" ADD CONSTRAINT "weather_preferences_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

@@ -60,6 +60,7 @@ import { eq } from "drizzle-orm";
 // that's already declared in auth.ts
 
 import multer from "multer";
+import { aiTreatmentGenerator } from "./services/ai-treatment-generator";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to handle subdomain routing
@@ -2176,11 +2177,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(401).json({ message: "Not authenticated" });
         }
 
+        console.log("Fetching plant analyses for user:", req.user.id);
+
         const analyses = await storage.getPlantAnalyses(req.user.id);
+        console.log("Found analyses:", analyses.length);
+
         res.json(analyses);
       } catch (error) {
         console.error("Error fetching plant analyses:", error);
-        res.status(500).json({ message: "Failed to retrieve plant analyses" });
+        console.error("Error details:", {
+          message: error instanceof Error ? error.message : "Unknown error",
+          stack: error instanceof Error ? error.stack : undefined,
+          user: req.user?.id,
+        });
+        res.status(500).json({
+          message: "Failed to retrieve plant analyses",
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
       }
     }
   );
@@ -2317,6 +2330,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Image data is required" });
         }
 
+        // Ensure imageData is a string after validation
+        const imageDataString = String(imageData);
+
         // Validate field and crop IDs if provided
         if (fieldId) {
           const field = await storage.getField(parseInt(fieldId));
@@ -2349,14 +2365,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Analyze the image
         const analysisResult = await analyzePlantImage(
-          imageData,
+          imageDataString,
           plantType,
           notes
         );
 
         // Create the database record
         const plantAnalysisData = createPlantAnalysis(
-          imageData,
+          imageDataString,
           analysisResult,
           req.user.id,
           plantType,
@@ -2428,6 +2444,638 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error("Error deleting plant analysis:", error);
         res.status(500).json({ message: "Failed to delete plant analysis" });
+      }
+    }
+  );
+
+  // Treatment Plan routes
+  app.get("/api/treatment-plans/analysis/:analysisId", async (req, res) => {
+    try {
+      const analysisId = parseInt(req.params.analysisId);
+      const plan = await storage.getTreatmentPlanByAnalysis(analysisId);
+
+      if (!plan) {
+        return res.status(404).json({ error: "Treatment plan not found" });
+      }
+
+      res.json(plan);
+    } catch (error) {
+      console.error("Error fetching treatment plan:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/treatment-plans", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const {
+        analysisId,
+        title,
+        description,
+        diseaseType,
+        severity,
+        estimatedDuration,
+      } = req.body;
+
+      const planData = {
+        userId: req.user.id,
+        analysisId,
+        title,
+        description,
+        diseaseType,
+        severity,
+        estimatedDuration,
+      };
+
+      const plan = await storage.createTreatmentPlan(planData);
+      res.status(201).json(plan);
+    } catch (error) {
+      console.error("Error creating treatment plan:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/treatment-plans/:planId", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const planId = parseInt(req.params.planId);
+      const plan = await storage.getTreatmentPlan(planId);
+
+      if (!plan) {
+        return res.status(404).json({ error: "Treatment plan not found" });
+      }
+
+      // Ensure the plan belongs to the authenticated user
+      if (plan.userId !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      res.json(plan);
+    } catch (error) {
+      console.error("Error fetching treatment plan:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.put("/api/treatment-plans/:planId", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const planId = parseInt(req.params.planId);
+      const updateData = req.body;
+
+      // First check if the plan exists and belongs to the user
+      const existingPlan = await storage.getTreatmentPlan(planId);
+      if (!existingPlan) {
+        return res.status(404).json({ error: "Treatment plan not found" });
+      }
+
+      if (existingPlan.userId !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const plan = await storage.updateTreatmentPlan(planId, updateData);
+
+      res.json(plan);
+    } catch (error) {
+      console.error("Error updating treatment plan:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete(
+    "/api/treatment-plans/:planId",
+    isAuthenticated,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ message: "Not authenticated" });
+        }
+
+        const planId = parseInt(req.params.planId);
+
+        // First check if the plan exists and belongs to the user
+        const existingPlan = await storage.getTreatmentPlan(planId);
+        if (!existingPlan) {
+          return res.status(404).json({ error: "Treatment plan not found" });
+        }
+
+        if (existingPlan.userId !== req.user.id) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+
+        const success = await storage.deleteTreatmentPlan(planId);
+
+        res.json({ message: "Treatment plan deleted successfully" });
+      } catch (error) {
+        console.error("Error deleting treatment plan:", error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    }
+  );
+
+  app.get("/api/treatment-plans/:planId/steps", async (req, res) => {
+    try {
+      const planId = parseInt(req.params.planId);
+      const steps = await storage.getTreatmentSteps(planId);
+      res.json(steps);
+    } catch (error) {
+      console.error("Error fetching treatment steps:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/treatment-plans/:planId/steps", async (req, res) => {
+    try {
+      const planId = parseInt(req.params.planId);
+      const {
+        title,
+        description,
+        treatmentType,
+        productName,
+        activeIngredient,
+        dosage,
+        applicationMethod,
+        frequency,
+        duration,
+        safetyNotes,
+        cost,
+        costUnit,
+      } = req.body;
+
+      // Get current step count
+      const existingSteps = await storage.getTreatmentSteps(planId);
+      const stepNumber = existingSteps.length + 1;
+
+      const stepData = {
+        treatmentPlanId: planId,
+        stepNumber,
+        title,
+        description,
+        treatmentType,
+        productName,
+        activeIngredient,
+        dosage,
+        applicationMethod,
+        frequency,
+        duration,
+        safetyNotes,
+        cost,
+        costUnit,
+      };
+
+      const step = await storage.createTreatmentStep(stepData);
+      res.status(201).json(step);
+    } catch (error) {
+      console.error("Error creating treatment step:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/treatment-steps/:stepId", async (req, res) => {
+    try {
+      const stepId = parseInt(req.params.stepId);
+      const { isCompleted, completedDate } = req.body;
+
+      const step = await storage.updateTreatmentStep(stepId, {
+        isCompleted,
+        completedDate,
+      });
+
+      if (!step) {
+        return res.status(404).json({ error: "Treatment step not found" });
+      }
+
+      res.json(step);
+    } catch (error) {
+      console.error("Error updating treatment step:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/treatment-steps/:stepId", async (req, res) => {
+    try {
+      const stepId = parseInt(req.params.stepId);
+      const step = await storage.getTreatmentStep(stepId);
+
+      if (!step) {
+        return res.status(404).json({ error: "Treatment step not found" });
+      }
+
+      res.json(step);
+    } catch (error) {
+      console.error("Error fetching treatment step:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.put("/api/treatment-steps/:stepId", async (req, res) => {
+    try {
+      const stepId = parseInt(req.params.stepId);
+      const updateData = req.body;
+
+      const step = await storage.updateTreatmentStep(stepId, updateData);
+
+      if (!step) {
+        return res.status(404).json({ error: "Treatment step not found" });
+      }
+
+      res.json(step);
+    } catch (error) {
+      console.error("Error updating treatment step:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/treatment-steps/:stepId", async (req, res) => {
+    try {
+      const stepId = parseInt(req.params.stepId);
+      const success = await storage.deleteTreatmentStep(stepId);
+
+      if (!success) {
+        return res.status(404).json({ error: "Treatment step not found" });
+      }
+
+      res.json({ message: "Treatment step deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting treatment step:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/treatment-plans/:planId/progress", async (req, res) => {
+    try {
+      const planId = parseInt(req.params.planId);
+      const progress = await storage.getTreatmentProgress(planId);
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching treatment progress:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/treatment-steps/:stepId/progress", async (req, res) => {
+    try {
+      const stepId = parseInt(req.params.stepId);
+      const {
+        appliedDosage,
+        weatherConditions,
+        observations,
+        effectiveness,
+        notes,
+      } = req.body;
+
+      const progressData = {
+        treatmentStepId: stepId,
+        appliedDosage,
+        weatherConditions,
+        observations,
+        effectiveness,
+        notes,
+      };
+
+      const progress = await storage.createTreatmentProgress(progressData);
+      res.status(201).json(progress);
+    } catch (error) {
+      console.error("Error creating treatment progress:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/treatment-products", async (req, res) => {
+    try {
+      const { disease, crop } = req.query;
+      const products = await storage.getTreatmentProducts(
+        disease as string,
+        crop as string
+      );
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching treatment products:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/treatment-products", async (req, res) => {
+    try {
+      const productData = req.body;
+      const product = await storage.createTreatmentProduct(productData);
+      res.status(201).json(product);
+    } catch (error) {
+      console.error("Error creating treatment product:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/treatment-products/:productId", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.productId);
+      const product = await storage.getTreatmentProduct(productId);
+
+      if (!product) {
+        return res.status(404).json({ error: "Treatment product not found" });
+      }
+
+      res.json(product);
+    } catch (error) {
+      console.error("Error fetching treatment product:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.put("/api/treatment-products/:productId", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.productId);
+      const updateData = req.body;
+
+      const product = await storage.updateTreatmentProduct(
+        productId,
+        updateData
+      );
+
+      if (!product) {
+        return res.status(404).json({ error: "Treatment product not found" });
+      }
+
+      res.json(product);
+    } catch (error) {
+      console.error("Error updating treatment product:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/treatment-products/:productId", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.productId);
+      const success = await storage.deleteTreatmentProduct(productId);
+
+      if (!success) {
+        return res.status(404).json({ error: "Treatment product not found" });
+      }
+
+      res.json({ message: "Treatment product deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting treatment product:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Auto-generate treatment plan from analysis
+  app.post(
+    "/api/treatment-plans/generate",
+    isAuthenticated,
+    async (req, res) => {
+      try {
+        if (!req.user) {
+          return res.status(401).json({ message: "Not authenticated" });
+        }
+
+        const { analysisId, useAI = true } = req.body;
+
+        if (!analysisId) {
+          return res.status(400).json({ error: "Analysis ID is required" });
+        }
+
+        // Get the plant analysis
+        const analysis = await storage.getPlantAnalysis(analysisId);
+        if (!analysis) {
+          return res.status(404).json({ error: "Plant analysis not found" });
+        }
+
+        // Ensure the analysis belongs to the authenticated user
+        if (analysis.userId !== req.user.id) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+
+        // Check if a treatment plan already exists for this analysis
+        const existingPlan = await storage.getTreatmentPlanByAnalysis(
+          analysisId
+        );
+        if (existingPlan) {
+          return res.status(409).json({
+            error: "Treatment plan already exists for this analysis",
+            plan: existingPlan,
+          });
+        }
+
+        // Get recommended treatment products based on detected disease
+        const recommendedProducts = await storage.getTreatmentProducts(
+          analysis.diseaseDetected || undefined,
+          analysis.plantType || undefined
+        );
+
+        let planData: any;
+        let treatmentSteps: any[] = [];
+
+        // Try AI generation first if enabled and available
+        if (useAI && aiTreatmentGenerator.openai) {
+          try {
+            console.log("Generating AI-powered treatment plan...");
+
+            // Get user's location if available
+            let location;
+            if (analysis.fieldId) {
+              const field = await storage.getField(analysis.fieldId);
+              if (field?.locationId) {
+                const fieldLocation = await storage.getLocation(
+                  field.locationId
+                );
+                if (fieldLocation) {
+                  location = {
+                    latitude: fieldLocation.latitude,
+                    longitude: fieldLocation.longitude,
+                    climate: fieldLocation.climate,
+                  };
+                }
+              }
+            }
+
+            // Generate AI treatment plan
+            const aiPlan = await aiTreatmentGenerator.generateTreatmentPlan(
+              analysis,
+              recommendedProducts,
+              location
+            );
+
+            // Create the treatment plan from AI response
+            planData = {
+              userId: req.user.id,
+              analysisId: analysisId,
+              title: aiPlan.title,
+              description: aiPlan.description,
+              diseaseType: analysis.diseaseDetected || "Unknown",
+              severity: aiPlan.severity,
+              estimatedDuration: aiPlan.estimatedDuration,
+            };
+
+            const plan = await storage.createTreatmentPlan(planData);
+
+            // Create treatment steps from AI response
+            for (const aiStep of aiPlan.steps) {
+              const stepData = {
+                treatmentPlanId: plan.id,
+                stepNumber: aiStep.stepNumber,
+                title: aiStep.title,
+                description: aiStep.description,
+                treatmentType: aiStep.treatmentType,
+                productName: aiStep.productName,
+                activeIngredient: aiStep.activeIngredient,
+                dosage: aiStep.dosage,
+                applicationMethod: aiStep.applicationMethod,
+                frequency: aiStep.frequency,
+                duration: aiStep.duration,
+                safetyNotes: aiStep.safetyNotes,
+                cost: aiStep.cost.toString(),
+                costUnit: aiStep.costUnit,
+              };
+
+              const step = await storage.createTreatmentStep(stepData);
+              treatmentSteps.push(step);
+            }
+
+            // Return the complete AI-generated treatment plan
+            const completePlan = {
+              ...plan,
+              steps: treatmentSteps,
+              analysis: analysis,
+              recommendedProducts: recommendedProducts,
+              aiGenerated: true,
+              recommendations: aiPlan.recommendations,
+              warnings: aiPlan.warnings,
+              costEstimate: aiPlan.costEstimate,
+            };
+
+            return res.status(201).json(completePlan);
+          } catch (aiError) {
+            console.error(
+              "AI generation failed, falling back to rule-based:",
+              aiError
+            );
+            // Fall back to rule-based generation
+          }
+        }
+
+        // Rule-based generation (fallback or when AI is disabled)
+        console.log("Generating rule-based treatment plan...");
+
+        // Generate treatment plan title
+        const planTitle = `Treatment Plan for ${
+          analysis.diseaseDetected || "Plant Disease"
+        }`;
+
+        // Determine severity based on disease probability
+        let severity = "low";
+        if (analysis.diseaseProbability) {
+          const probability = parseFloat(
+            analysis.diseaseProbability.toString()
+          );
+          if (probability > 0.7) severity = "high";
+          else if (probability > 0.4) severity = "medium";
+        }
+
+        // Estimate duration based on disease type and severity
+        let estimatedDuration = 14; // default 2 weeks
+        if (analysis.diseaseDetected) {
+          const disease = analysis.diseaseDetected.toLowerCase();
+          if (disease.includes("blight") || disease.includes("rot")) {
+            estimatedDuration = 21; // 3 weeks for serious diseases
+          } else if (disease.includes("mildew") || disease.includes("spot")) {
+            estimatedDuration = 10; // 10 days for fungal issues
+          }
+        }
+
+        // Create the treatment plan
+        planData = {
+          userId: req.user.id,
+          analysisId: analysisId,
+          title: planTitle,
+          description: `Automatically generated treatment plan for ${
+            analysis.diseaseDetected || "detected disease"
+          } in ${analysis.plantType || "plant"}. Health score: ${
+            analysis.healthScore
+          }/100.`,
+          diseaseType: analysis.diseaseDetected || "Unknown",
+          severity: severity,
+          estimatedDuration: estimatedDuration,
+        };
+
+        const plan = await storage.createTreatmentPlan(planData);
+
+        // Auto-generate treatment steps based on recommended products
+        if (recommendedProducts.length > 0) {
+          for (let i = 0; i < Math.min(recommendedProducts.length, 3); i++) {
+            const product = recommendedProducts[i];
+            const stepData = {
+              treatmentPlanId: plan.id,
+              stepNumber: i + 1,
+              title: `Apply ${product.name}`,
+              description: `Apply ${product.name} to treat ${
+                analysis.diseaseDetected || "the detected disease"
+              }. ${product.description || ""}`,
+              treatmentType: product.productType || "chemical",
+              productName: product.name,
+              activeIngredient: product.activeIngredient,
+              dosage:
+                product.applicationRate || "Follow manufacturer instructions",
+              applicationMethod: "Spray application",
+              frequency: "Every 7-10 days",
+              duration: 7,
+              safetyNotes: `Safety class: ${
+                product.safetyClass || "Unknown"
+              }. Re-entry interval: ${product.reEntryInterval || "24"} hours.`,
+              cost: (product.price || 0).toString(),
+              costUnit: product.priceUnit || "USD",
+            };
+
+            const step = await storage.createTreatmentStep(stepData);
+            treatmentSteps.push(step);
+          }
+        } else {
+          // Create a generic treatment step if no products are found
+          const genericStep = {
+            treatmentPlanId: plan.id,
+            stepNumber: 1,
+            title: "General Treatment",
+            description:
+              "Apply appropriate fungicide or pesticide based on the detected disease. Consult with a local agricultural expert for specific product recommendations.",
+            treatmentType: "chemical",
+            productName: "Recommended fungicide/pesticide",
+            activeIngredient: "Consult product label",
+            dosage: "Follow manufacturer instructions",
+            applicationMethod: "Spray application",
+            frequency: "Every 7-10 days",
+            duration: 7,
+            safetyNotes:
+              "Always follow safety instructions on product label. Wear protective equipment.",
+            cost: "0",
+            costUnit: "USD",
+          };
+
+          const step = await storage.createTreatmentStep(genericStep);
+          treatmentSteps.push(step);
+        }
+
+        // Return the complete treatment plan with steps
+        const completePlan = {
+          ...plan,
+          steps: treatmentSteps,
+          analysis: analysis,
+          recommendedProducts: recommendedProducts,
+          aiGenerated: false,
+        };
+
+        res.status(201).json(completePlan);
+      } catch (error) {
+        console.error("Error auto-generating treatment plan:", error);
+        res.status(500).json({ error: "Internal server error" });
       }
     }
   );

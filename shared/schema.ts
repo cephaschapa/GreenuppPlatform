@@ -1,4 +1,16 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, pgEnum, date, decimal, primaryKey } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  jsonb,
+  pgEnum,
+  date,
+  decimal,
+  primaryKey,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -10,7 +22,7 @@ export const UserRole = {
   ADMIN: "admin",
 } as const;
 
-export type UserRoleType = typeof UserRole[keyof typeof UserRole];
+export type UserRoleType = (typeof UserRole)[keyof typeof UserRole];
 
 // User schema
 export const users = pgTable("users", {
@@ -29,7 +41,9 @@ export const users = pgTable("users", {
 // Farmer profiles table (extends user info for farmers)
 export const farmerProfiles = pgTable("farmer_profiles", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   farmName: text("farm_name"),
   farmLocation: text("farm_location"),
   farmSize: text("farm_size"),
@@ -54,17 +68,19 @@ export const insertUserSchema = createInsertSchema(users).pick({
 });
 
 // Extended validation for registration
-export const registerUserSchema = insertUserSchema.extend({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string(),
-  terms: z.boolean().refine(val => val === true, {
-    message: "You must agree to the terms and conditions"
+export const registerUserSchema = insertUserSchema
+  .extend({
+    email: z.string().email("Please enter a valid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string(),
+    terms: z.boolean().refine((val) => val === true, {
+      message: "You must agree to the terms and conditions",
+    }),
   })
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"]
-});
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 // Login schema
 export const loginUserSchema = z.object({
@@ -74,7 +90,9 @@ export const loginUserSchema = z.object({
 });
 
 // Schema for farmer profile
-export const insertFarmerProfileSchema = createInsertSchema(farmerProfiles).pick({
+export const insertFarmerProfileSchema = createInsertSchema(
+  farmerProfiles
+).pick({
   farmName: true,
   farmLocation: true,
   farmSize: true,
@@ -120,16 +138,25 @@ export type ContactInquiry = typeof contactForm.$inferSelect;
 // Crop Management System
 
 // Crop status enum
-export const cropStatusEnum = pgEnum('crop_status', ['planning', 'planted', 'growing', 'harvesting', 'completed', 'failed']);
+export const cropStatusEnum = pgEnum("crop_status", [
+  "planning",
+  "planted",
+  "growing",
+  "harvesting",
+  "completed",
+  "failed",
+]);
 
 // Field management table
 export const fields = pgTable("fields", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   name: text("name").notNull(),
   location: text("location"),
   size: decimal("size", { precision: 10, scale: 2 }),
-  sizeUnit: text("size_unit").default('hectares'),
+  sizeUnit: text("size_unit").default("hectares"),
   soilType: text("soil_type"),
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -139,19 +166,21 @@ export const fields = pgTable("fields", {
 // Crop management table with traceability fields
 export const crops = pgTable("crops", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   name: text("name").notNull(),
   variety: text("variety"),
-  status: text("status").notNull().default('planning'),
+  status: text("status").notNull().default("planning"),
   fieldId: integer("field_id").references(() => fields.id),
   fieldSize: text("field_size"), // Area under this specific crop
-  sizeUnit: text("size_unit").default('hectares'), // Unit for the field size
+  sizeUnit: text("size_unit").default("hectares"), // Unit for the field size
   plantingDate: date("planting_date"),
   expectedHarvestDate: date("expected_harvest_date"),
   actualHarvestDate: date("actual_harvest_date"),
   expectedYield: decimal("expected_yield", { precision: 10, scale: 2 }),
   actualYield: decimal("actual_yield", { precision: 10, scale: 2 }),
-  yieldUnit: text("yield_unit").default('kg'),
+  yieldUnit: text("yield_unit").default("kg"),
   notes: text("notes"),
   // CropTrace fields
   batchId: text("batch_id"), // Unique identifier for this crop batch
@@ -168,7 +197,9 @@ export const crops = pgTable("crops", {
 // Crop activities table (for tracking tasks, treatments, etc.)
 export const cropActivities = pgTable("crop_activities", {
   id: serial("id").primaryKey(),
-  cropId: integer("crop_id").notNull().references(() => crops.id),
+  cropId: integer("crop_id")
+    .notNull()
+    .references(() => crops.id),
   activityType: text("activity_type").notNull(), // e.g., fertilizing, pest control, irrigation
   activityDate: date("activity_date").notNull(),
   description: text("description").notNull(),
@@ -191,20 +222,24 @@ export const insertCropSchema = createInsertSchema(crops).omit({
   updatedAt: true,
 });
 
-export const insertCropActivitySchema = createInsertSchema(cropActivities).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+export const insertCropActivitySchema = createInsertSchema(cropActivities).omit(
+  {
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+);
 
 // Crop management types
 // Weather preferences for farmers
 export const weatherPreferences = pgTable("weather_preferences", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   locations: text("locations").array(),
   alertsEnabled: boolean("alerts_enabled").default(true),
-  temperatureUnit: text("temperature_unit").default('celsius'),
+  temperatureUnit: text("temperature_unit").default("celsius"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -212,12 +247,14 @@ export const weatherPreferences = pgTable("weather_preferences", {
 // Farmer tasks and reminders
 export const farmerTasks = pgTable("farmer_tasks", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   title: text("title").notNull(),
   description: text("description"),
   dueDate: date("due_date").notNull(),
   completed: boolean("completed").default(false),
-  priority: text("priority").default('medium'), // low, medium, high
+  priority: text("priority").default("medium"), // low, medium, high
   relatedCropId: integer("related_crop_id").references(() => crops.id),
   relatedFieldId: integer("related_field_id").references(() => fields.id),
   notifyBefore: integer("notify_before"), // days before due date to notify
@@ -228,9 +265,11 @@ export const farmerTasks = pgTable("farmer_tasks", {
 // Crop yield predictions
 export const cropYieldPredictions = pgTable("crop_yield_predictions", {
   id: serial("id").primaryKey(),
-  cropId: integer("crop_id").notNull().references(() => crops.id),
+  cropId: integer("crop_id")
+    .notNull()
+    .references(() => crops.id),
   predictedYield: decimal("predicted_yield", { precision: 10, scale: 2 }),
-  yieldUnit: text("yield_unit").default('kg'),
+  yieldUnit: text("yield_unit").default("kg"),
   confidenceLevel: decimal("confidence_level", { precision: 5, scale: 2 }), // 0-100%
   factorsConsidered: jsonb("factors_considered").$type<Record<string, any>>(), // weather, soil, etc.
   predictionDate: timestamp("prediction_date").notNull().defaultNow(),
@@ -239,7 +278,9 @@ export const cropYieldPredictions = pgTable("crop_yield_predictions", {
 });
 
 // Create schemas for new tables
-export const insertWeatherPreferencesSchema = createInsertSchema(weatherPreferences).omit({
+export const insertWeatherPreferencesSchema = createInsertSchema(
+  weatherPreferences
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -251,7 +292,9 @@ export const insertFarmerTaskSchema = createInsertSchema(farmerTasks).omit({
   updatedAt: true,
 });
 
-export const insertCropYieldPredictionSchema = createInsertSchema(cropYieldPredictions).omit({
+export const insertCropYieldPredictionSchema = createInsertSchema(
+  cropYieldPredictions
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -265,11 +308,15 @@ export type InsertCropActivity = z.infer<typeof insertCropActivitySchema>;
 export type CropActivity = typeof cropActivities.$inferSelect;
 
 // New types for farmer features
-export type InsertWeatherPreferences = z.infer<typeof insertWeatherPreferencesSchema>;
+export type InsertWeatherPreferences = z.infer<
+  typeof insertWeatherPreferencesSchema
+>;
 export type WeatherPreferences = typeof weatherPreferences.$inferSelect;
 export type InsertFarmerTask = z.infer<typeof insertFarmerTaskSchema>;
 export type FarmerTask = typeof farmerTasks.$inferSelect;
-export type InsertCropYieldPrediction = z.infer<typeof insertCropYieldPredictionSchema>;
+export type InsertCropYieldPrediction = z.infer<
+  typeof insertCropYieldPredictionSchema
+>;
 export type CropYieldPrediction = typeof cropYieldPredictions.$inferSelect;
 
 // Note: CropTrace events table is defined below in the marketplace section
@@ -277,14 +324,19 @@ export type CropYieldPrediction = typeof cropYieldPredictions.$inferSelect;
 // Plant Disease Analysis
 export const plantAnalyses = pgTable("plant_analyses", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   imageData: text("image_data").notNull(), // Base64 encoded image
   plantType: text("plant_type"),
   fieldId: integer("field_id").references(() => fields.id),
   cropId: integer("crop_id").references(() => crops.id),
   analysisDate: timestamp("analysis_date").notNull().defaultNow(),
   diseaseDetected: text("disease_detected"),
-  diseaseProbability: decimal("disease_probability", { precision: 5, scale: 2 }),
+  diseaseProbability: decimal("disease_probability", {
+    precision: 5,
+    scale: 2,
+  }),
   diseaseDescription: text("disease_description"),
   healthStatus: text("health_status").notNull(),
   healthScore: integer("health_score").notNull(),
@@ -293,74 +345,209 @@ export const plantAnalyses = pgTable("plant_analyses", {
   recommendations: text("recommendations"),
   additionalObservations: text("additional_observations"),
   notes: text("notes"),
+  // Treatment plan reference - will be set after treatment plan is created
+  // treatmentPlanId: integer("treatment_plan_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const insertPlantAnalysisSchema = createInsertSchema(plantAnalyses).omit({
+// Treatment Plans for plant diseases
+export const treatmentPlans = pgTable("treatment_plans", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  analysisId: integer("analysis_id")
+    .notNull()
+    .references(() => plantAnalyses.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  diseaseType: text("disease_type").notNull(),
+  severity: text("severity").notNull(), // mild, moderate, severe
+  estimatedDuration: integer("estimated_duration"), // in days
+  status: text("status").notNull().default("active"), // active, completed, cancelled
+  startDate: timestamp("start_date").notNull().defaultNow(),
+  endDate: timestamp("end_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Treatment Steps within a plan
+export const treatmentSteps = pgTable("treatment_steps", {
+  id: serial("id").primaryKey(),
+  treatmentPlanId: integer("treatment_plan_id")
+    .notNull()
+    .references(() => treatmentPlans.id),
+  stepNumber: integer("step_number").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  treatmentType: text("treatment_type").notNull(), // chemical, organic, cultural, biological
+  productName: text("product_name"),
+  activeIngredient: text("active_ingredient"),
+  dosage: text("dosage"), // e.g., "2ml per liter"
+  applicationMethod: text("application_method"), // spray, soil drench, foliar, etc.
+  frequency: text("frequency"), // daily, weekly, bi-weekly, etc.
+  duration: integer("duration"), // number of applications
+  safetyNotes: text("safety_notes"),
+  cost: decimal("cost", { precision: 10, scale: 2 }),
+  costUnit: text("cost_unit"), // per application, total, etc.
+  isCompleted: boolean("is_completed").default(false),
+  completedDate: timestamp("completed_date"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Treatment Progress Tracking
+export const treatmentProgress = pgTable("treatment_progress", {
+  id: serial("id").primaryKey(),
+  treatmentStepId: integer("treatment_step_id")
+    .notNull()
+    .references(() => treatmentSteps.id),
+  applicationDate: timestamp("application_date").notNull().defaultNow(),
+  appliedDosage: text("applied_dosage"),
+  weatherConditions: text("weather_conditions"),
+  observations: text("observations"),
+  effectiveness: integer("effectiveness"), // 1-5 scale
+  photos: text("photos").array(), // Base64 encoded images
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Product Recommendations for treatments
+export const treatmentProducts = pgTable("treatment_products", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  activeIngredient: text("active_ingredient"),
+  productType: text("product_type").notNull(), // fungicide, insecticide, herbicide, fertilizer, etc.
+  targetDiseases: text("target_diseases").array(),
+  targetCrops: text("target_crops").array(),
+  applicationRate: text("application_rate"),
+  safetyClass: text("safety_class"), // I, II, III, IV
+  reEntryInterval: integer("re_entry_interval"), // hours
+  preHarvestInterval: integer("pre_harvest_interval"), // days
+  organic: boolean("organic").default(false),
+  description: text("description"),
+  manufacturer: text("manufacturer"),
+  price: decimal("price", { precision: 10, scale: 2 }),
+  priceUnit: text("price_unit"), // per liter, per kg, etc.
+  availability: text("availability"), // local, regional, national
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertPlantAnalysisSchema = createInsertSchema(plantAnalyses).omit(
+  {
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  }
+);
+
+export type InsertPlantAnalysis = z.infer<typeof insertPlantAnalysisSchema>;
+export type PlantAnalysis = typeof plantAnalyses.$inferSelect;
+
+// Treatment Plan schemas
+export const insertTreatmentPlanSchema = createInsertSchema(
+  treatmentPlans
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export type InsertPlantAnalysis = z.infer<typeof insertPlantAnalysisSchema>;
-export type PlantAnalysis = typeof plantAnalyses.$inferSelect;
+export const insertTreatmentStepSchema = createInsertSchema(
+  treatmentSteps
+).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTreatmentProgressSchema = createInsertSchema(
+  treatmentProgress
+).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTreatmentProductSchema = createInsertSchema(
+  treatmentProducts
+).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertTreatmentPlan = z.infer<typeof insertTreatmentPlanSchema>;
+export type TreatmentPlan = typeof treatmentPlans.$inferSelect;
+export type InsertTreatmentStep = z.infer<typeof insertTreatmentStepSchema>;
+export type TreatmentStep = typeof treatmentSteps.$inferSelect;
+export type InsertTreatmentProgress = z.infer<
+  typeof insertTreatmentProgressSchema
+>;
+export type TreatmentProgress = typeof treatmentProgress.$inferSelect;
+export type InsertTreatmentProduct = z.infer<
+  typeof insertTreatmentProductSchema
+>;
+export type TreatmentProduct = typeof treatmentProducts.$inferSelect;
 
 // Marketplace Schema
 
 // Product categories enum
 // Notification types enum
-export const notificationTypeEnum = pgEnum('notification_type', [
-  'weather_alert',
-  'task_reminder',
-  'market_price_alert',
-  'system_notification',
-  'message',
-  'crop_update'
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "weather_alert",
+  "task_reminder",
+  "market_price_alert",
+  "system_notification",
+  "message",
+  "crop_update",
 ]);
 
 // Notification status enum
-export const notificationStatusEnum = pgEnum('notification_status', [
-  'unread',
-  'read',
-  'archived'
+export const notificationStatusEnum = pgEnum("notification_status", [
+  "unread",
+  "read",
+  "archived",
 ]);
 
-export const productCategoryEnum = pgEnum('product_category', [
-  'seeds', 
-  'fertilizers', 
-  'pesticides',
-  'equipment',
-  'tools',
-  'irrigation',
-  'livestock',
-  'feed',
-  'produce',
-  'grains',
-  'fruits',
-  'vegetables',
-  'dairy',
-  'meat',
-  'services',
-  'other'
+export const productCategoryEnum = pgEnum("product_category", [
+  "seeds",
+  "fertilizers",
+  "pesticides",
+  "equipment",
+  "tools",
+  "irrigation",
+  "livestock",
+  "feed",
+  "produce",
+  "grains",
+  "fruits",
+  "vegetables",
+  "dairy",
+  "meat",
+  "services",
+  "other",
 ]);
 
 // Product condition enum
-export const productConditionEnum = pgEnum('product_condition', [
-  'new',
-  'like_new',
-  'good',
-  'fair',
-  'poor'
+export const productConditionEnum = pgEnum("product_condition", [
+  "new",
+  "like_new",
+  "good",
+  "fair",
+  "poor",
 ]);
 
 // Listing status enum
-export const listingStatusEnum = pgEnum('listing_status', [
-  'active',
-  'pending',
-  'sold',
-  'expired',
-  'suspended'
+export const listingStatusEnum = pgEnum("listing_status", [
+  "active",
+  "pending",
+  "sold",
+  "expired",
+  "suspended",
 ]);
 
 // Location table for precise geo-tracking
@@ -368,7 +555,7 @@ export const locations = pgTable("locations", {
   id: serial("id").primaryKey(),
   country: text("country").notNull(),
   region: text("region").notNull(), // state/province
-  city: text("city").notNull(),     // city/municipality
+  city: text("city").notNull(), // city/municipality
   neighborhood: text("neighborhood"), // optional neighborhood
   postalCode: text("postal_code"),
   latitude: decimal("latitude", { precision: 10, scale: 7 }),
@@ -387,11 +574,15 @@ export const locations = pgTable("locations", {
 // Crop trace events table for blockchain traceability
 export const cropTraceEvents = pgTable("crop_trace_events", {
   id: serial("id").primaryKey(),
-  cropId: integer("crop_id").notNull().references(() => crops.id),
+  cropId: integer("crop_id")
+    .notNull()
+    .references(() => crops.id),
   eventType: text("event_type").notNull(), // planting, fertilizing, harvesting, processing, packaging, shipping, etc.
   description: text("description").notNull(),
   eventDate: timestamp("event_date").notNull().defaultNow(),
-  performedBy: integer("performed_by").notNull().references(() => users.id),
+  performedBy: integer("performed_by")
+    .notNull()
+    .references(() => users.id),
   inputMaterials: text("input_materials"), // fertilizers, pesticides, etc.
   outputQuantity: decimal("output_quantity", { precision: 10, scale: 2 }),
   outputUnit: text("output_unit"), // kg, lb, units, etc.
@@ -405,13 +596,15 @@ export const cropTraceEvents = pgTable("crop_trace_events", {
 
 export const marketplaceListings = pgTable("marketplace_listings", {
   id: serial("id").primaryKey(),
-  sellerId: integer("seller_id").notNull().references(() => users.id),
+  sellerId: integer("seller_id")
+    .notNull()
+    .references(() => users.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
   category: text("category").notNull(),
   subcategory: text("subcategory"),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  priceCurrency: text("price_currency").notNull().default('USD'),
+  priceCurrency: text("price_currency").notNull().default("USD"),
   priceUnit: text("price_unit"), // per kg, per ton, per unit, etc.
   quantity: decimal("quantity", { precision: 10, scale: 2 }),
   quantityUnit: text("quantity_unit"), // kg, ton, unit, etc.
@@ -425,7 +618,7 @@ export const marketplaceListings = pgTable("marketplace_listings", {
   isFeatured: boolean("is_featured").default(false),
   expiresAt: timestamp("expires_at"),
   // Removing deliveryRadius and deliveryRadiusUnit as they don't exist in the database
-  status: text("status").notNull().default('active'),
+  status: text("status").notNull().default("active"),
   images: text("images").array(), // Array of image URLs or Base64
   views: integer("views").notNull().default(0),
   favoriteCount: integer("favorite_count").notNull().default(0),
@@ -445,8 +638,12 @@ export const marketplaceListings = pgTable("marketplace_listings", {
 export const marketplaceReviews = pgTable("marketplace_reviews", {
   id: serial("id").primaryKey(),
   listingId: integer("listing_id").references(() => marketplaceListings.id),
-  sellerId: integer("seller_id").notNull().references(() => users.id),
-  reviewerId: integer("reviewer_id").notNull().references(() => users.id),
+  sellerId: integer("seller_id")
+    .notNull()
+    .references(() => users.id),
+  reviewerId: integer("reviewer_id")
+    .notNull()
+    .references(() => users.id),
   rating: integer("rating").notNull(), // 1-5 stars
   review: text("review"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -456,8 +653,12 @@ export const marketplaceReviews = pgTable("marketplace_reviews", {
 // Marketplace favorites/saved listings
 export const marketplaceFavorites = pgTable("marketplace_favorites", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  listingId: integer("listing_id").notNull().references(() => marketplaceListings.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  listingId: integer("listing_id")
+    .notNull()
+    .references(() => marketplaceListings.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -465,8 +666,12 @@ export const marketplaceFavorites = pgTable("marketplace_favorites", {
 export const marketplaceMessages = pgTable("marketplace_messages", {
   id: serial("id").primaryKey(),
   listingId: integer("listing_id").references(() => marketplaceListings.id),
-  senderId: integer("sender_id").notNull().references(() => users.id),
-  recipientId: integer("recipient_id").notNull().references(() => users.id),
+  senderId: integer("sender_id")
+    .notNull()
+    .references(() => users.id),
+  recipientId: integer("recipient_id")
+    .notNull()
+    .references(() => users.id),
   message: text("message").notNull(),
   read: boolean("read").default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -479,7 +684,9 @@ export const insertLocationSchema = createInsertSchema(locations).omit({
   updatedAt: true,
 });
 
-export const insertMarketplaceListingSchema = createInsertSchema(marketplaceListings)
+export const insertMarketplaceListingSchema = createInsertSchema(
+  marketplaceListings
+)
   .omit({
     id: true,
     createdAt: true,
@@ -489,39 +696,44 @@ export const insertMarketplaceListingSchema = createInsertSchema(marketplaceList
   })
   .extend({
     // Allow 'true'/'false' strings to be parsed as booleans
-    isNegotiable: z.union([
-      z.boolean(),
-      z.string().transform(val => val === 'true')
-    ]).optional(),
-    isFeatured: z.union([
-      z.boolean(),
-      z.string().transform(val => val === 'true')
-    ]).optional(),
-    deliveryAvailable: z.union([
-      z.boolean(),
-      z.string().transform(val => val === 'true')
-    ]).optional(),
+    isNegotiable: z
+      .union([z.boolean(), z.string().transform((val) => val === "true")])
+      .optional(),
+    isFeatured: z
+      .union([z.boolean(), z.string().transform((val) => val === "true")])
+      .optional(),
+    deliveryAvailable: z
+      .union([z.boolean(), z.string().transform((val) => val === "true")])
+      .optional(),
   });
 
-export const insertMarketplaceReviewSchema = createInsertSchema(marketplaceReviews).omit({
+export const insertMarketplaceReviewSchema = createInsertSchema(
+  marketplaceReviews
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const insertMarketplaceFavoriteSchema = createInsertSchema(marketplaceFavorites).omit({
+export const insertMarketplaceFavoriteSchema = createInsertSchema(
+  marketplaceFavorites
+).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertMarketplaceMessageSchema = createInsertSchema(marketplaceMessages).omit({
+export const insertMarketplaceMessageSchema = createInsertSchema(
+  marketplaceMessages
+).omit({
   id: true,
   createdAt: true,
   read: true,
 });
 
 // CropTrace schemas
-export const insertCropTraceEventSchema = createInsertSchema(cropTraceEvents).omit({
+export const insertCropTraceEventSchema = createInsertSchema(
+  cropTraceEvents
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -532,13 +744,21 @@ export const insertCropTraceEventSchema = createInsertSchema(cropTraceEvents).om
 // Export marketplace types
 export type InsertLocation = z.infer<typeof insertLocationSchema>;
 export type Location = typeof locations.$inferSelect;
-export type InsertMarketplaceListing = z.infer<typeof insertMarketplaceListingSchema>;
+export type InsertMarketplaceListing = z.infer<
+  typeof insertMarketplaceListingSchema
+>;
 export type MarketplaceListing = typeof marketplaceListings.$inferSelect;
-export type InsertMarketplaceReview = z.infer<typeof insertMarketplaceReviewSchema>;
+export type InsertMarketplaceReview = z.infer<
+  typeof insertMarketplaceReviewSchema
+>;
 export type MarketplaceReview = typeof marketplaceReviews.$inferSelect;
-export type InsertMarketplaceFavorite = z.infer<typeof insertMarketplaceFavoriteSchema>;
+export type InsertMarketplaceFavorite = z.infer<
+  typeof insertMarketplaceFavoriteSchema
+>;
 export type MarketplaceFavorite = typeof marketplaceFavorites.$inferSelect;
-export type InsertMarketplaceMessage = z.infer<typeof insertMarketplaceMessageSchema>;
+export type InsertMarketplaceMessage = z.infer<
+  typeof insertMarketplaceMessageSchema
+>;
 export type MarketplaceMessage = typeof marketplaceMessages.$inferSelect;
 
 // CropTrace types
@@ -548,12 +768,16 @@ export type CropTraceEvent = typeof cropTraceEvents.$inferSelect;
 // Cart schemas
 export const carts = pgTable("carts", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   status: text("status").notNull().default("active"), // active, checkout, completed, abandoned
   // Store totals for quick reference and to preserve prices if listing prices change later
-  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull().default("0"),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 })
+    .notNull()
+    .default("0"),
   shipping: decimal("shipping", { precision: 10, scale: 2 }).default("0"),
   tax: decimal("tax", { precision: 10, scale: 2 }).default("0"),
   total: decimal("total", { precision: 10, scale: 2 }).notNull().default("0"),
@@ -567,8 +791,12 @@ export const carts = pgTable("carts", {
 // Cart items schema
 export const cartItems = pgTable("cart_items", {
   id: serial("id").primaryKey(),
-  cartId: integer("cart_id").notNull().references(() => carts.id),
-  listingId: integer("listing_id").notNull().references(() => marketplaceListings.id),
+  cartId: integer("cart_id")
+    .notNull()
+    .references(() => carts.id),
+  listingId: integer("listing_id")
+    .notNull()
+    .references(() => marketplaceListings.id),
   quantity: integer("quantity").notNull().default(1),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // Price at time of adding to cart
   priceUnit: text("price_unit"), // The unit (per kg, per bag, etc.)
@@ -594,7 +822,7 @@ export const insertCartItemSchema = createInsertSchema(cartItems)
     createdAt: true,
     updatedAt: true,
     cartId: true, // Server will handle this
-    price: true,  // Server will get this from the listing
+    price: true, // Server will get this from the listing
     priceUnit: true, // Server will get this from the listing
   })
   .required({
@@ -611,13 +839,15 @@ export type CartItem = typeof cartItems.$inferSelect;
 // Notifications system
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   type: text("type").notNull(),
   title: text("title").notNull(),
   message: text("message").notNull(),
   data: jsonb("data").$type<Record<string, any>>(), // Additional data specific to notification type
-  status: text("status").notNull().default('unread'),
-  actionUrl: text("action_url"), // Optional URL user can navigate to 
+  status: text("status").notNull().default("unread"),
+  actionUrl: text("action_url"), // Optional URL user can navigate to
   expiresAt: timestamp("expires_at"), // When this notification should expire/auto-archive
   sentViaEmail: boolean("sent_via_email").default(false), // Tracking if email was sent
   emailSentAt: timestamp("email_sent_at"), // When the email was sent
@@ -625,10 +855,12 @@ export const notifications = pgTable("notifications", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-// Notification settings 
+// Notification settings
 export const notificationSettings = pgTable("notification_settings", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   emailEnabled: boolean("email_enabled").default(true),
   pushEnabled: boolean("push_enabled").default(true),
   weatherAlerts: boolean("weather_alerts").default(true),
@@ -643,7 +875,7 @@ export const notificationSettings = pgTable("notification_settings", {
   socialMentions: boolean("social_mentions").default(true),
   socialSaves: boolean("social_saves").default(true),
   // Email settings
-  emailFrequency: text("email_frequency").default('instant'), // instant, daily, weekly
+  emailFrequency: text("email_frequency").default("instant"), // instant, daily, weekly
   emailDigestDay: integer("email_digest_day"), // day of week for weekly digests (0-6)
   emailDigestTime: integer("email_digest_time"), // hour of day for digests (0-23)
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -660,7 +892,9 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
   updatedAt: true,
 });
 
-export const insertNotificationSettingsSchema = createInsertSchema(notificationSettings).omit({
+export const insertNotificationSettingsSchema = createInsertSchema(
+  notificationSettings
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -669,19 +903,27 @@ export const insertNotificationSettingsSchema = createInsertSchema(notificationS
 // Notification types
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
-export type InsertNotificationSettings = z.infer<typeof insertNotificationSettingsSchema>;
+export type InsertNotificationSettings = z.infer<
+  typeof insertNotificationSettingsSchema
+>;
 export type NotificationSettings = typeof notificationSettings.$inferSelect;
 
 // Chat related enums
-export const chatMessageStatusEnum = pgEnum('chat_message_status', ['sent', 'delivered', 'read']);
-export const chatRoomTypeEnum = pgEnum('chat_room_type', ['direct', 'group']);
+export const chatMessageStatusEnum = pgEnum("chat_message_status", [
+  "sent",
+  "delivered",
+  "read",
+]);
+export const chatRoomTypeEnum = pgEnum("chat_room_type", ["direct", "group"]);
 
 // Chat rooms table
 export const chatRooms = pgTable("chat_rooms", {
   id: serial("id").primaryKey(),
   name: text("name"),
-  type: chatRoomTypeEnum("type").notNull().default('direct'),
-  createdById: integer("created_by_id").notNull().references(() => users.id),
+  type: chatRoomTypeEnum("type").notNull().default("direct"),
+  createdById: integer("created_by_id")
+    .notNull()
+    .references(() => users.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   lastMessageAt: timestamp("last_message_at").notNull().defaultNow(),
@@ -691,8 +933,12 @@ export const chatRooms = pgTable("chat_rooms", {
 // Chat room members junction table
 export const chatRoomMembers = pgTable("chat_room_members", {
   id: serial("id").primaryKey(),
-  roomId: integer("room_id").notNull().references(() => chatRooms.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  roomId: integer("room_id")
+    .notNull()
+    .references(() => chatRooms.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   joinedAt: timestamp("joined_at").notNull().defaultNow(),
   lastReadAt: timestamp("last_read_at").notNull().defaultNow(),
   isAdmin: boolean("is_admin").notNull().default(false),
@@ -703,13 +949,17 @@ export const chatRoomMembers = pgTable("chat_room_members", {
 // Chat messages table
 export const chatMessages = pgTable("chat_messages", {
   id: serial("id").primaryKey(),
-  roomId: integer("room_id").notNull().references(() => chatRooms.id),
-  senderId: integer("sender_id").notNull().references(() => users.id),
+  roomId: integer("room_id")
+    .notNull()
+    .references(() => chatRooms.id),
+  senderId: integer("sender_id")
+    .notNull()
+    .references(() => users.id),
   content: text("content").notNull(),
-  status: chatMessageStatusEnum("status").notNull().default('sent'),
+  status: chatMessageStatusEnum("status").notNull().default("sent"),
   sentAt: timestamp("sent_at").notNull().defaultNow(),
   media: jsonb("media"),
-  replyToId: integer("reply_to_id").references(() => chatMessages.id),
+  replyToId: integer("reply_to_id"),
   isEdited: boolean("is_edited").notNull().default(false),
   isDeleted: boolean("is_deleted").notNull().default(false),
 });
@@ -722,7 +972,9 @@ export const insertChatRoomSchema = createInsertSchema(chatRooms).omit({
   lastMessageAt: true,
 });
 
-export const insertChatRoomMemberSchema = createInsertSchema(chatRoomMembers).omit({
+export const insertChatRoomMemberSchema = createInsertSchema(
+  chatRoomMembers
+).omit({
   id: true,
   joinedAt: true,
   lastReadAt: true,
@@ -746,7 +998,9 @@ export type ChatMessage = typeof chatMessages.$inferSelect;
 // AI Assistant chat messages
 export const aiAssistantMessages = pgTable("ai_assistant_messages", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   role: text("role").notNull(), // 'user', 'assistant', or 'system'
   content: text("content").notNull(),
   contextData: jsonb("context_data").$type<Record<string, any>>(), // Store context like crops, soil type, etc.
@@ -754,10 +1008,14 @@ export const aiAssistantMessages = pgTable("ai_assistant_messages", {
   sessionId: text("session_id").notNull(), // Group messages by conversation session
 });
 
-export const insertAiAssistantMessageSchema = createInsertSchema(aiAssistantMessages).omit({
+export const insertAiAssistantMessageSchema = createInsertSchema(
+  aiAssistantMessages
+).omit({
   id: true,
   createdAt: true,
 });
 
-export type InsertAiAssistantMessage = z.infer<typeof insertAiAssistantMessageSchema>;
+export type InsertAiAssistantMessage = z.infer<
+  typeof insertAiAssistantMessageSchema
+>;
 export type AiAssistantMessage = typeof aiAssistantMessages.$inferSelect;

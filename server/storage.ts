@@ -19,6 +19,14 @@ import {
   type InsertCropYieldPrediction,
   type PlantAnalysis,
   type InsertPlantAnalysis,
+  type TreatmentPlan,
+  type InsertTreatmentPlan,
+  type TreatmentStep,
+  type InsertTreatmentStep,
+  type TreatmentProgress,
+  type InsertTreatmentProgress,
+  type TreatmentProduct,
+  type InsertTreatmentProduct,
   // Marketplace types
   type Location,
   type InsertLocation,
@@ -41,12 +49,24 @@ import {
   farmerTasks,
   cropYieldPredictions,
   plantAnalyses,
-  // Marketplace tables
+  treatmentPlans,
+  treatmentSteps,
+  treatmentProgress,
+  treatmentProducts,
   locations,
   marketplaceListings,
   marketplaceReviews,
   marketplaceFavorites,
   marketplaceMessages,
+  cropTraceEvents,
+  carts,
+  cartItems,
+  notifications,
+  notificationSettings,
+  chatRooms,
+  chatRoomMembers,
+  chatMessages,
+  aiAssistantMessages,
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -166,6 +186,49 @@ export interface IStorage {
   ): Promise<PlantAnalysis | undefined>;
   deletePlantAnalysis(id: number): Promise<boolean>;
 
+  // Treatment Plan methods
+  getTreatmentPlanByAnalysis(
+    analysisId: number
+  ): Promise<TreatmentPlan | undefined>;
+  getTreatmentPlan(id: number): Promise<TreatmentPlan | undefined>;
+  createTreatmentPlan(data: InsertTreatmentPlan): Promise<TreatmentPlan>;
+  updateTreatmentPlan(
+    id: number,
+    data: Partial<TreatmentPlan>
+  ): Promise<TreatmentPlan | undefined>;
+  deleteTreatmentPlan(id: number): Promise<boolean>;
+
+  // Treatment Step methods
+  getTreatmentSteps(planId: number): Promise<TreatmentStep[]>;
+  getTreatmentStep(id: number): Promise<TreatmentStep | undefined>;
+  createTreatmentStep(data: InsertTreatmentStep): Promise<TreatmentStep>;
+  updateTreatmentStep(
+    id: number,
+    data: Partial<TreatmentStep>
+  ): Promise<TreatmentStep | undefined>;
+  deleteTreatmentStep(id: number): Promise<boolean>;
+
+  // Treatment Progress methods
+  getTreatmentProgress(planId: number): Promise<TreatmentProgress[]>;
+  createTreatmentProgress(
+    data: InsertTreatmentProgress
+  ): Promise<TreatmentProgress>;
+
+  // Treatment Product methods
+  getTreatmentProducts(
+    disease?: string,
+    crop?: string
+  ): Promise<TreatmentProduct[]>;
+  getTreatmentProduct(id: number): Promise<TreatmentProduct | undefined>;
+  createTreatmentProduct(
+    data: InsertTreatmentProduct
+  ): Promise<TreatmentProduct>;
+  updateTreatmentProduct(
+    id: number,
+    data: Partial<TreatmentProduct>
+  ): Promise<TreatmentProduct | undefined>;
+  deleteTreatmentProduct(id: number): Promise<boolean>;
+
   // Marketplace Location management
   getLocations(): Promise<Location[]>;
   getLocation(id: number): Promise<Location | undefined>;
@@ -190,7 +253,7 @@ export interface IStorage {
     condition?: string;
     status?: string;
     locationId?: number;
-    radius?: number; // km from location
+    radius?: number;
     sortBy?: string;
     limit?: number;
     offset?: number;
@@ -823,10 +886,18 @@ export class DatabaseStorage implements IStorage {
 
   // Plant analysis methods
   async getPlantAnalyses(userId: number): Promise<PlantAnalysis[]> {
-    return db
-      .select()
-      .from(plantAnalyses)
-      .where(eq(plantAnalyses.userId, userId));
+    try {
+      console.log("Storage: Getting plant analyses for userId:", userId);
+      const result = await db
+        .select()
+        .from(plantAnalyses)
+        .where(eq(plantAnalyses.userId, userId));
+      console.log("Storage: Found", result.length, "analyses");
+      return result;
+    } catch (error) {
+      console.error("Storage: Error in getPlantAnalyses:", error);
+      throw error;
+    }
   }
 
   async getPlantAnalysisByField(fieldId: number): Promise<PlantAnalysis[]> {
@@ -1018,7 +1089,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       if (whereConditions.length > 0) {
-        query = query.where(and(...whereConditions));
+        query = query.where(and(...whereConditions)) as any;
       }
 
       // Apply sorting
@@ -1028,40 +1099,48 @@ export class DatabaseStorage implements IStorage {
 
         switch (field) {
           case "price":
-            query = isDesc
-              ? query.orderBy(desc(marketplaceListings.price))
-              : query.orderBy(asc(marketplaceListings.price));
+            if (isDesc) {
+              query = query.orderBy(desc(marketplaceListings.price)) as any;
+            } else {
+              query = query.orderBy(asc(marketplaceListings.price)) as any;
+            }
             break;
           case "createdAt":
-            query = isDesc
-              ? query.orderBy(desc(marketplaceListings.createdAt))
-              : query.orderBy(asc(marketplaceListings.createdAt));
+            if (isDesc) {
+              query = query.orderBy(desc(marketplaceListings.createdAt)) as any;
+            } else {
+              query = query.orderBy(asc(marketplaceListings.createdAt)) as any;
+            }
             break;
           case "title":
-            query = isDesc
-              ? query.orderBy(desc(marketplaceListings.title))
-              : query.orderBy(asc(marketplaceListings.title));
+            if (isDesc) {
+              query = query.orderBy(desc(marketplaceListings.title)) as any;
+            } else {
+              query = query.orderBy(asc(marketplaceListings.title)) as any;
+            }
             break;
           case "views":
-            query = isDesc
-              ? query.orderBy(desc(marketplaceListings.views))
-              : query.orderBy(asc(marketplaceListings.views));
+            if (isDesc) {
+              query = query.orderBy(desc(marketplaceListings.views)) as any;
+            } else {
+              query = query.orderBy(asc(marketplaceListings.views)) as any;
+            }
             break;
           default:
             // Default sorting by most recent
-            query = query.orderBy(desc(marketplaceListings.createdAt));
+            query = query.orderBy(desc(marketplaceListings.createdAt)) as any;
         }
       } else {
         // Default sorting by most recent
-        query = query.orderBy(desc(marketplaceListings.createdAt));
+        query = query.orderBy(desc(marketplaceListings.createdAt)) as any;
       }
 
       // Apply pagination
       if (params.limit !== undefined) {
-        query = query.limit(params.limit);
+        query = query.limit(params.limit) as any;
 
         if (params.offset !== undefined) {
-          query = query.offset(params.offset);
+          query = query.offset(params.offset) as any;
         }
       }
     }
@@ -1445,11 +1524,11 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (whereConditions.length > 0) {
-      query = query.where(and(...whereConditions));
+      query = query.where(and(...whereConditions)) as any;
     }
 
     // Sort by date (newest first)
-    query = query.orderBy(desc(marketplaceMessages.createdAt));
+    query = query.orderBy(desc(marketplaceMessages.createdAt)) as any;
 
     return await query;
   }
@@ -1527,7 +1606,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createPlantAnalysis(data: InsertPlantAnalysis): Promise<PlantAnalysis> {
-    const [analysis] = await db
+    const result = await db
       .insert(plantAnalyses)
       .values({
         ...data,
@@ -1544,7 +1623,7 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
 
-    return analysis;
+    return result[0];
   }
 
   async updatePlantAnalysis(
@@ -1570,6 +1649,268 @@ export class DatabaseStorage implements IStorage {
       return true;
     } catch (error) {
       console.error("Error deleting plant analysis:", error);
+      return false;
+    }
+  }
+
+  // Treatment Plan methods
+  async getTreatmentPlanByAnalysis(
+    analysisId: number
+  ): Promise<TreatmentPlan | undefined> {
+    try {
+      const [plan] = await db
+        .select()
+        .from(treatmentPlans)
+        .where(eq(treatmentPlans.analysisId, analysisId));
+      return plan;
+    } catch (error) {
+      console.error("Error fetching treatment plan by analysis:", error);
+      return undefined;
+    }
+  }
+
+  async getTreatmentPlan(id: number): Promise<TreatmentPlan | undefined> {
+    try {
+      const [plan] = await db
+        .select()
+        .from(treatmentPlans)
+        .where(eq(treatmentPlans.id, id));
+      return plan;
+    } catch (error) {
+      console.error("Error fetching treatment plan:", error);
+      return undefined;
+    }
+  }
+
+  async createTreatmentPlan(data: InsertTreatmentPlan): Promise<TreatmentPlan> {
+    try {
+      const result = await db
+        .insert(treatmentPlans)
+        .values({
+          ...data,
+          status: data.status || "active",
+        })
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error("Error creating treatment plan:", error);
+      throw error;
+    }
+  }
+
+  async updateTreatmentPlan(
+    id: number,
+    data: Partial<TreatmentPlan>
+  ): Promise<TreatmentPlan | undefined> {
+    try {
+      const [plan] = await db
+        .update(treatmentPlans)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(eq(treatmentPlans.id, id))
+        .returning();
+      return plan;
+    } catch (error) {
+      console.error("Error updating treatment plan:", error);
+      return undefined;
+    }
+  }
+
+  async deleteTreatmentPlan(id: number): Promise<boolean> {
+    try {
+      await db.delete(treatmentPlans).where(eq(treatmentPlans.id, id));
+      return true;
+    } catch (error) {
+      console.error("Error deleting treatment plan:", error);
+      return false;
+    }
+  }
+
+  // Treatment Step methods
+  async getTreatmentSteps(planId: number): Promise<TreatmentStep[]> {
+    try {
+      return db
+        .select()
+        .from(treatmentSteps)
+        .where(eq(treatmentSteps.treatmentPlanId, planId));
+    } catch (error) {
+      console.error("Error fetching treatment steps:", error);
+      return [];
+    }
+  }
+
+  async getTreatmentStep(id: number): Promise<TreatmentStep | undefined> {
+    try {
+      const [step] = await db
+        .select()
+        .from(treatmentSteps)
+        .where(eq(treatmentSteps.id, id));
+      return step;
+    } catch (error) {
+      console.error("Error fetching treatment step:", error);
+      return undefined;
+    }
+  }
+
+  async createTreatmentStep(data: InsertTreatmentStep): Promise<TreatmentStep> {
+    try {
+      const result = await db
+        .insert(treatmentSteps)
+        .values({
+          ...data,
+        })
+        .returning();
+      return result[0];
+    } catch (error) {
+      console.error("Error creating treatment step:", error);
+      throw error;
+    }
+  }
+
+  async updateTreatmentStep(
+    id: number,
+    data: Partial<TreatmentStep>
+  ): Promise<TreatmentStep | undefined> {
+    try {
+      const [step] = await db
+        .update(treatmentSteps)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(eq(treatmentSteps.id, id))
+        .returning();
+      return step;
+    } catch (error) {
+      console.error("Error updating treatment step:", error);
+      return undefined;
+    }
+  }
+
+  async deleteTreatmentStep(id: number): Promise<boolean> {
+    try {
+      await db.delete(treatmentSteps).where(eq(treatmentSteps.id, id));
+      return true;
+    } catch (error) {
+      console.error("Error deleting treatment step:", error);
+      return false;
+    }
+  }
+
+  // Treatment Progress methods
+  async getTreatmentProgress(planId: number): Promise<TreatmentProgress[]> {
+    try {
+      return db
+        .select()
+        .from(treatmentProgress)
+        .where(eq(treatmentProgress.treatmentStepId, planId));
+    } catch (error) {
+      console.error("Error fetching treatment progress:", error);
+      return [];
+    }
+  }
+
+  async createTreatmentProgress(
+    data: InsertTreatmentProgress
+  ): Promise<TreatmentProgress> {
+    try {
+      const [progress] = await db
+        .insert(treatmentProgress)
+        .values(data)
+        .returning();
+      return progress;
+    } catch (error) {
+      console.error("Error creating treatment progress:", error);
+      throw error;
+    }
+  }
+
+  // Treatment Product methods
+  async getTreatmentProducts(
+    disease?: string,
+    crop?: string
+  ): Promise<TreatmentProduct[]> {
+    try {
+      let query = db.select().from(treatmentProducts);
+
+      if (disease && disease !== "Unknown") {
+        // Use proper PostgreSQL array syntax
+        query = query.where(
+          sql`${treatmentProducts.targetDiseases} @> ARRAY[${disease}]::text[]`
+        ) as any;
+      }
+
+      if (crop && crop !== "Unknown") {
+        // Use proper PostgreSQL array syntax
+        query = query.where(
+          sql`${treatmentProducts.targetCrops} @> ARRAY[${crop}]::text[]`
+        ) as any;
+      }
+
+      return query;
+    } catch (error) {
+      console.error("Error fetching treatment products:", error);
+      // Return empty array if table doesn't exist yet or query fails
+      return [];
+    }
+  }
+
+  async getTreatmentProduct(id: number): Promise<TreatmentProduct | undefined> {
+    try {
+      const [product] = await db
+        .select()
+        .from(treatmentProducts)
+        .where(eq(treatmentProducts.id, id));
+      return product;
+    } catch (error) {
+      console.error("Error fetching treatment product:", error);
+      return undefined;
+    }
+  }
+
+  async createTreatmentProduct(
+    data: InsertTreatmentProduct
+  ): Promise<TreatmentProduct> {
+    try {
+      const [product] = await db
+        .insert(treatmentProducts)
+        .values(data)
+        .returning();
+      return product;
+    } catch (error) {
+      console.error("Error creating treatment product:", error);
+      throw error;
+    }
+  }
+
+  async updateTreatmentProduct(
+    id: number,
+    data: Partial<TreatmentProduct>
+  ): Promise<TreatmentProduct | undefined> {
+    try {
+      const [product] = await db
+        .update(treatmentProducts)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(eq(treatmentProducts.id, id))
+        .returning();
+      return product;
+    } catch (error) {
+      console.error("Error updating treatment product:", error);
+      return undefined;
+    }
+  }
+
+  async deleteTreatmentProduct(id: number): Promise<boolean> {
+    try {
+      await db.delete(treatmentProducts).where(eq(treatmentProducts.id, id));
+      return true;
+    } catch (error) {
+      console.error("Error deleting treatment product:", error);
       return false;
     }
   }
