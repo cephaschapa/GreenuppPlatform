@@ -13,6 +13,7 @@ import {
   Settings,
   User,
   ChevronRight,
+  ChevronDown,
   Menu,
   X,
   LogOut,
@@ -48,6 +49,7 @@ export function Sidebar() {
   const { user, logoutMutation } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAppSubdomain, setIsAppSubdomain] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   // Temporarily using 0 as notification count was moved to TopNavbar
   const notificationCount = 0;
 
@@ -55,6 +57,37 @@ export function Sidebar() {
     // Check if we're on app subdomain
     setIsAppSubdomain(window.location.hostname.startsWith("app."));
   }, []);
+
+  // Toggle expanded state for items with submenus
+  const toggleExpanded = (itemTitle: string) => {
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemTitle)) {
+        newSet.delete(itemTitle);
+      } else {
+        newSet.add(itemTitle);
+      }
+      return newSet;
+    });
+  };
+
+  // Check if an item should be expanded by default
+  const shouldBeExpanded = (item: NavItem) => {
+    if (!item.subItems) return false;
+    return item.subItems.some((subItem) => subItem.active);
+  };
+
+  // Initialize expanded items based on active subitems
+  useEffect(() => {
+    const newExpandedItems = new Set<string>();
+    const currentNavItems = getNavItems();
+    currentNavItems.forEach((item) => {
+      if (shouldBeExpanded(item)) {
+        newExpandedItems.add(item.title);
+      }
+    });
+    setExpandedItems(newExpandedItems);
+  }, [location]);
 
   const farmerNavItems = [
     {
@@ -109,6 +142,16 @@ export function Sidebar() {
           title: "All Products",
           href: "/dashboard/marketplace",
           active: location === "/dashboard/marketplace",
+        },
+        {
+          title: "Orders",
+          href: "/dashboard/orders",
+          active: location === "/dashboard/orders",
+        },
+        {
+          title: "Inventory",
+          href: "/dashboard/inventory",
+          active: location === "/dashboard/inventory",
         },
         {
           title: "Expert Directory",
@@ -522,32 +565,84 @@ export function Sidebar() {
               <div className="flex-1 overflow-y-auto">
                 <div className="space-y-1 pb-6">
                   {navItems.map((item, index) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={cn(
-                        "flex items-center justify-between px-2 py-2 rounded-md transition-colors animate-scale-in",
-                        item.active
-                          ? "bg-primary/20 text-primary"
-                          : "text-foreground hover:bg-primary/10"
-                      )}
-                      style={{ animationDelay: `${index * 0.05}s` }}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        {item.icon}
-                        <span>{item.title}</span>
-                      </div>
-                      {/* {item.title === "Chat" && chatUnreadCount > 0 && (
-                        <Badge
-                          variant="destructive"
-                          className="h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full"
+                    <div key={item.href}>
+                      <div
+                        className={cn(
+                          "flex items-center justify-between px-2 py-2 rounded-md transition-colors animate-scale-in cursor-pointer",
+                          item.active
+                            ? "bg-primary/20 text-primary"
+                            : "text-foreground hover:bg-primary/10"
+                        )}
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                        onClick={() => {
+                          if (item.subItems) {
+                            toggleExpanded(item.title);
+                          } else {
+                            setIsMobileMenuOpen(false);
+                          }
+                        }}
+                      >
+                        <Link
+                          href={item.href}
+                          className="flex items-center gap-2.5 flex-1"
+                          onClick={(e) => {
+                            if (item.subItems) {
+                              e.preventDefault();
+                            } else {
+                              setIsMobileMenuOpen(false);
+                            }
+                          }}
                         >
-                          {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
-                        </Badge>
-                      )} */}
-                      {/* Social notifications moved to top navbar */}
-                    </Link>
+                          {item.icon}
+                          <span>{item.title}</span>
+                        </Link>
+                        <div className="flex items-center">
+                          {item.subItems && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 hover:bg-primary/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleExpanded(item.title);
+                              }}
+                            >
+                              {expandedItems.has(item.title) ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Mobile submenu items */}
+                      {item.subItems && expandedItems.has(item.title) && (
+                        <div className="ml-6 mt-1 space-y-1">
+                          {item.subItems.map((subItem, subIndex) => (
+                            <Link
+                              key={subItem.href}
+                              href={subItem.href}
+                              className={cn(
+                                "flex items-center px-2 py-2 rounded-md transition-colors text-sm animate-scale-in",
+                                subItem.active
+                                  ? "bg-primary/10 text-primary"
+                                  : "text-foreground hover:bg-primary/5"
+                              )}
+                              style={{
+                                animationDelay: `${
+                                  (index + 1) * 0.05 + subIndex * 0.02
+                                }s`,
+                              }}
+                              onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                              <span>{subItem.title}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -591,38 +686,81 @@ export function Sidebar() {
         <ScrollArea className="flex-1 py-4">
           <nav className="space-y-1 px-2">
             {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center justify-between px-3 py-2 rounded-md transition-colors",
-                  item.active
-                    ? "bg-primary/20 text-primary"
-                    : "text-muted-foreground hover:text-sidebar-foreground hover:bg-primary/10"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  {item.icon}
-                  <span>{item.title}</span>
-                </div>
-                <div className="flex items-center">
-                  {/* {item.title === "Chat" && chatUnreadCount > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="h-5 w-5 mr-1 flex items-center justify-center p-0 text-[10px] rounded-full"
-                    >
-                      {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
-                    </Badge>
-                  )} */}
-                  {/* Social notifications moved to top navbar */}
-                  <ChevronRight
-                    className={cn(
-                      "h-4 w-4 opacity-0 transition-opacity",
-                      item.active && "opacity-100"
+              <div key={item.href}>
+                <div
+                  className={cn(
+                    "flex items-center justify-between px-3 py-2 rounded-md transition-colors cursor-pointer",
+                    item.active
+                      ? "bg-primary/20 text-primary"
+                      : "text-muted-foreground hover:text-sidebar-foreground hover:bg-primary/10"
+                  )}
+                  onClick={() => {
+                    if (item.subItems) {
+                      toggleExpanded(item.title);
+                    }
+                  }}
+                >
+                  <Link
+                    href={item.href}
+                    className="flex items-center gap-3 flex-1"
+                    onClick={(e) => {
+                      if (item.subItems) {
+                        e.preventDefault();
+                      }
+                    }}
+                  >
+                    {item.icon}
+                    <span>{item.title}</span>
+                  </Link>
+                  <div className="flex items-center">
+                    {item.subItems && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 hover:bg-primary/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleExpanded(item.title);
+                        }}
+                      >
+                        {expandedItems.has(item.title) ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </Button>
                     )}
-                  />
+                    {!item.subItems && (
+                      <ChevronRight
+                        className={cn(
+                          "h-4 w-4 opacity-0 transition-opacity",
+                          item.active && "opacity-100"
+                        )}
+                      />
+                    )}
+                  </div>
                 </div>
-              </Link>
+
+                {/* Submenu items */}
+                {item.subItems && expandedItems.has(item.title) && (
+                  <div className="ml-6 mt-1 space-y-1">
+                    {item.subItems.map((subItem) => (
+                      <Link
+                        key={subItem.href}
+                        href={subItem.href}
+                        className={cn(
+                          "flex items-center px-3 py-2 rounded-md transition-colors text-sm",
+                          subItem.active
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:text-sidebar-foreground hover:bg-primary/5"
+                        )}
+                      >
+                        <span>{subItem.title}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </nav>
         </ScrollArea>

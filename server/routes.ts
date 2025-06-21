@@ -3357,5 +3357,200 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Inventory Management Routes
+
+  // Get inventory for a specific listing
+  app.get("/api/inventory/:listingId", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const listingId = parseInt(req.params.listingId);
+      if (isNaN(listingId)) {
+        return res.status(400).json({ message: "Invalid listing ID" });
+      }
+
+      // Verify the listing belongs to the authenticated user
+      const listing = await storage.getMarketplaceListing(listingId);
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+
+      if (listing.sellerId !== req.user.id) {
+        return res.status(403).json({
+          message: "You don't have permission to access this inventory",
+        });
+      }
+
+      const inventory = await storage.getInventory(listingId);
+      if (!inventory) {
+        // Create default inventory if it doesn't exist
+        const defaultInventory = {
+          listingId,
+          quantity: 0,
+          reservedQuantity: 0,
+          availableQuantity: 0,
+          lowStockThreshold: 5,
+          lastUpdated: new Date(),
+        };
+        const newInventory = await storage.createInventory(defaultInventory);
+        return res.json(newInventory);
+      }
+
+      res.json(inventory);
+    } catch (error) {
+      console.error("Error fetching inventory:", error);
+      res.status(500).json({ message: "Failed to retrieve inventory" });
+    }
+  });
+
+  // Update inventory for a listing
+  app.patch("/api/inventory/:listingId", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const listingId = parseInt(req.params.listingId);
+      if (isNaN(listingId)) {
+        return res.status(400).json({ message: "Invalid listing ID" });
+      }
+
+      // Verify the listing belongs to the authenticated user
+      const listing = await storage.getMarketplaceListing(listingId);
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+
+      if (listing.sellerId !== req.user.id) {
+        return res.status(403).json({
+          message: "You don't have permission to update this inventory",
+        });
+      }
+
+      const { quantity, lowStockThreshold } = req.body;
+
+      // Validate input
+      if (quantity !== undefined && (isNaN(quantity) || quantity < 0)) {
+        return res.status(400).json({ message: "Invalid quantity" });
+      }
+
+      if (
+        lowStockThreshold !== undefined &&
+        (isNaN(lowStockThreshold) || lowStockThreshold < 0)
+      ) {
+        return res.status(400).json({ message: "Invalid low stock threshold" });
+      }
+
+      // Get current inventory
+      let inventory = await storage.getInventory(listingId);
+
+      if (!inventory) {
+        // Create new inventory if it doesn't exist
+        const newInventoryData = {
+          listingId,
+          quantity: quantity || 0,
+          reservedQuantity: 0,
+          availableQuantity: quantity || 0,
+          lowStockThreshold: lowStockThreshold || 5,
+          lastUpdated: new Date(),
+        };
+        inventory = await storage.createInventory(newInventoryData);
+      } else {
+        // Update existing inventory
+        const updateData: any = { lastUpdated: new Date() };
+
+        if (quantity !== undefined) {
+          updateData.quantity = quantity;
+          updateData.availableQuantity =
+            quantity - (inventory.reservedQuantity || 0);
+        }
+
+        if (lowStockThreshold !== undefined) {
+          updateData.lowStockThreshold = lowStockThreshold;
+        }
+
+        inventory = await storage.updateInventory(listingId, updateData);
+      }
+
+      res.json(inventory);
+    } catch (error) {
+      console.error("Error updating inventory:", error);
+      res.status(500).json({ message: "Failed to update inventory" });
+    }
+  });
+
+  // Create inventory for a listing
+  app.post("/api/inventory", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { listingId, quantity, lowStockThreshold } = req.body;
+
+      if (!listingId) {
+        return res.status(400).json({ message: "Listing ID is required" });
+      }
+
+      // Verify the listing belongs to the authenticated user
+      const listing = await storage.getMarketplaceListing(listingId);
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+
+      if (listing.sellerId !== req.user.id) {
+        return res.status(403).json({
+          message:
+            "You don't have permission to create inventory for this listing",
+        });
+      }
+
+      // Check if inventory already exists
+      const existingInventory = await storage.getInventory(listingId);
+      if (existingInventory) {
+        return res
+          .status(409)
+          .json({ message: "Inventory already exists for this listing" });
+      }
+
+      const inventoryData = {
+        listingId,
+        quantity: quantity || 0,
+        reservedQuantity: 0,
+        availableQuantity: quantity || 0,
+        lowStockThreshold: lowStockThreshold || 5,
+        lastUpdated: new Date(),
+      };
+
+      const newInventory = await storage.createInventory(inventoryData);
+      res.status(201).json(newInventory);
+    } catch (error) {
+      console.error("Error creating inventory:", error);
+      res.status(500).json({ message: "Failed to create inventory" });
+    }
+  });
+
+  // Get all inventory for a seller
+  app.get("/api/inventory", isAuthenticated, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const inventory = await storage.getInventoryBySeller(req.user.id);
+      res.json(inventory);
+    } catch (error) {
+      console.error("Error fetching seller inventory:", error);
+      res.status(500).json({ message: "Failed to retrieve inventory" });
+    }
+  });
+
+  // Catch-all route for API errors - must be after all API routes
+  app.use("/api/*", (req, res) => {
+    res.status(404).json({ message: "API endpoint not found" });
+  });
+
   return httpServer;
 }

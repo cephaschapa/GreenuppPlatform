@@ -40,8 +40,8 @@ import {
   type InsertMarketplaceMessage,
   // Database tables
   users,
+  sessions,
   farmerProfiles,
-  contactForm,
   fields,
   crops,
   cropActivities,
@@ -49,15 +49,24 @@ import {
   farmerTasks,
   cropYieldPredictions,
   plantAnalyses,
-  treatmentPlans,
-  treatmentSteps,
-  treatmentProgress,
-  treatmentProducts,
   locations,
   marketplaceListings,
   marketplaceReviews,
   marketplaceFavorites,
   marketplaceMessages,
+  chatMessages,
+  aiAssistantMessages,
+  orders as ordersTable,
+  orderItems as orderItemsTable,
+  inventory as inventoryTable,
+  deliveries as deliveriesTable,
+  orderStatusHistory as orderStatusHistoryTable,
+  deliveryStatusHistory as deliveryStatusHistoryTable,
+  contactForm,
+  treatmentPlans,
+  treatmentSteps,
+  treatmentProgress,
+  treatmentProducts,
   cropTraceEvents,
   carts,
   cartItems,
@@ -65,8 +74,6 @@ import {
   notificationSettings,
   chatRooms,
   chatRoomMembers,
-  chatMessages,
-  aiAssistantMessages,
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -321,6 +328,73 @@ export interface IStorage {
 
   // For session storage
   sessionStore: session.Store;
+
+  // Order Management Methods
+  createOrder(orderData: {
+    userId: number;
+    items: Array<{
+      listingId: number;
+      quantity: number;
+      unitPrice: number;
+    }>;
+    shippingAddress?: string;
+    billingAddress?: string;
+    paymentMethod?: string;
+  }): Promise<any>;
+
+  getOrder(orderId: number): Promise<any>;
+
+  getBuyerOrders(userId: number): Promise<any[]>;
+
+  getSellerOrders(sellerId: number): Promise<any[]>;
+
+  updateOrderStatus(
+    orderId: number,
+    status: string,
+    notes?: string,
+    updatedBy?: number
+  ): Promise<any>;
+
+  // Inventory Management Methods
+  getInventory(listingId: number): Promise<any>;
+
+  createInventory(
+    listingId: number,
+    quantity: number,
+    lowStockThreshold: number
+  ): Promise<any>;
+
+  updateInventory(
+    listingId: number,
+    updateData: { quantity?: number; lowStockThreshold?: number }
+  ): Promise<any>;
+
+  reserveInventory(listingId: number, quantity: number): Promise<boolean>;
+
+  releaseInventory(listingId: number, quantity: number): Promise<boolean>;
+
+  getInventoryBySeller(sellerId: number): Promise<any[]>;
+
+  // Delivery Management Methods
+  createDelivery(deliveryData: {
+    orderId: number;
+    deliveryMethod: string;
+    deliveryAddress?: string;
+    deliveryInstructions?: string;
+    trackingNumber?: string;
+    carrier?: string;
+  }): Promise<any>;
+
+  getDelivery(orderId: number): Promise<any>;
+
+  getDeliveryById(deliveryId: number): Promise<any>;
+
+  updateDeliveryStatus(
+    deliveryId: number,
+    status: string,
+    location?: string,
+    notes?: string
+  ): Promise<any>;
 }
 
 // PostgreSQL implementation
@@ -451,10 +525,9 @@ export class DatabaseStorage implements IStorage {
       .insert(contactForm)
       .values({
         ...data,
-        newsletter: data.newsletter || false,
+        createdAt: new Date(),
       })
       .returning();
-
     return inquiry;
   }
 
@@ -1274,7 +1347,7 @@ export class DatabaseStorage implements IStorage {
       .values({
         ...listingData,
         status: listingData.status || "active",
-        priceCurrency: listingData.priceCurrency || "USD",
+        priceCurrency: listingData.priceCurrency || "ZMW",
         views: 0,
         favoriteCount: 0, // Initialize favorite count to zero
       })
@@ -1913,6 +1986,365 @@ export class DatabaseStorage implements IStorage {
       console.error("Error deleting treatment product:", error);
       return false;
     }
+  }
+
+  // Order Management Methods
+  async createOrder(orderData: {
+    userId: number;
+    items: Array<{
+      listingId: number;
+      quantity: number;
+      unitPrice: number;
+    }>;
+    shippingAddress?: string;
+    billingAddress?: string;
+    paymentMethod?: string;
+  }) {
+    const orderNumber = `ORD-${Date.now()}-${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+
+    // Calculate total amount
+    const totalAmount = orderData.items.reduce(
+      (sum, item) => sum + item.quantity * item.unitPrice,
+      0
+    );
+
+    // Create order
+    const [order] = await db
+      .insert(ordersTable)
+      .values({
+        userId: orderData.userId,
+        sellerId: 0, // Will be set from first item
+        orderNumber,
+        totalAmount: totalAmount.toString(),
+        currency: "ZMW",
+        shippingAddress: orderData.shippingAddress,
+        billingAddress: orderData.billingAddress,
+        paymentMethod: orderData.paymentMethod,
+      })
+      .returning();
+
+    // Get seller ID from first item
+    const firstListing = await this.getMarketplaceListing(
+      orderData.items[0].listingId
+    );
+    if (firstListing) {
+      await db
+        .update(ordersTable)
+        .set({ sellerId: firstListing.sellerId })
+        .where(eq(ordersTable.id, order.id));
+    }
+
+    // Create order items
+    const orderItemsData = orderData.items.map((item) => ({
+      orderId: order.id,
+      listingId: item.listingId,
+      quantity: item.quantity.toString(),
+      unitPrice: item.unitPrice.toString(),
+      totalPrice: (item.quantity * item.unitPrice).toString(),
+      currency: "ZMW",
+    }));
+
+    await db.insert(orderItemsTable).values(orderItemsData);
+
+    // Update inventory (reserve quantities)
+    for (const item of orderData.items) {
+      await this.reserveInventory(item.listingId, item.quantity);
+    }
+
+    return this.getOrder(order.id);
+  }
+
+  async getOrder(orderId: number) {
+    const order = await db
+      .select()
+      .from(ordersTable)
+      .where(eq(ordersTable.id, orderId))
+      .limit(1);
+    if (order.length === 0) return null;
+
+    const orderItems = await db
+      .select()
+      .from(orderItemsTable)
+      .where(eq(orderItemsTable.orderId, orderId));
+    const statusHistory = await db
+      .select()
+      .from(orderStatusHistoryTable)
+      .where(eq(orderStatusHistoryTable.orderId, orderId));
+
+    return {
+      ...order[0],
+      items: orderItems,
+      statusHistory,
+    };
+  }
+
+  async getBuyerOrders(userId: number) {
+    const userOrders = await db
+      .select()
+      .from(ordersTable)
+      .where(eq(ordersTable.userId, userId));
+
+    const ordersWithItems = await Promise.all(
+      userOrders.map(async (order) => {
+        const items = await db
+          .select()
+          .from(orderItemsTable)
+          .where(eq(orderItemsTable.orderId, order.id));
+        return { ...order, items };
+      })
+    );
+
+    return ordersWithItems;
+  }
+
+  async getSellerOrders(sellerId: number) {
+    const sellerOrders = await db
+      .select()
+      .from(ordersTable)
+      .where(eq(ordersTable.sellerId, sellerId));
+
+    const ordersWithItems = await Promise.all(
+      sellerOrders.map(async (order) => {
+        const items = await db
+          .select()
+          .from(orderItemsTable)
+          .where(eq(orderItemsTable.orderId, order.id));
+        return { ...order, items };
+      })
+    );
+
+    return ordersWithItems;
+  }
+
+  async updateOrderStatus(
+    orderId: number,
+    status: string,
+    notes?: string,
+    updatedBy?: number
+  ) {
+    // Update order status
+    await db
+      .update(ordersTable)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(ordersTable.id, orderId));
+
+    // Add status history
+    await db.insert(orderStatusHistoryTable).values({
+      orderId,
+      status,
+      notes,
+      updatedBy,
+    });
+
+    return this.getOrder(orderId);
+  }
+
+  // Inventory Management Methods
+  async getInventory(listingId: number) {
+    const inventory = await db
+      .select()
+      .from(inventoryTable)
+      .where(eq(inventoryTable.listingId, listingId))
+      .limit(1);
+    return inventory.length > 0 ? inventory[0] : null;
+  }
+
+  async createInventory(
+    listingId: number,
+    quantity: number,
+    lowStockThreshold: number = 5
+  ) {
+    const [inventoryRecord] = await db
+      .insert(inventoryTable)
+      .values({
+        listingId,
+        quantity: quantity.toString(),
+        availableQuantity: quantity.toString(),
+        lowStockThreshold: lowStockThreshold.toString(),
+      })
+      .returning();
+
+    return inventoryRecord;
+  }
+
+  async updateInventory(
+    listingId: number,
+    updateData: { quantity?: number; lowStockThreshold?: number }
+  ) {
+    const currentInventory = await this.getInventory(listingId);
+
+    if (!currentInventory) {
+      return this.createInventory(
+        listingId,
+        updateData.quantity || 0,
+        updateData.lowStockThreshold || 5
+      );
+    }
+
+    const newQuantity =
+      updateData.quantity !== undefined
+        ? updateData.quantity
+        : parseFloat(currentInventory.quantity);
+    const newLowStockThreshold =
+      updateData.lowStockThreshold !== undefined
+        ? updateData.lowStockThreshold
+        : parseFloat(currentInventory.lowStockThreshold);
+    const reservedQuantity = parseFloat(currentInventory.reservedQuantity);
+    const availableQuantity = newQuantity - reservedQuantity;
+
+    const [updatedInventory] = await db
+      .update(inventoryTable)
+      .set({
+        quantity: newQuantity.toString(),
+        availableQuantity: availableQuantity.toString(),
+        lowStockThreshold: newLowStockThreshold.toString(),
+        lastUpdated: new Date(),
+      })
+      .where(eq(inventoryTable.listingId, listingId))
+      .returning();
+
+    return updatedInventory;
+  }
+
+  async reserveInventory(listingId: number, quantity: number) {
+    const currentInventory = await this.getInventory(listingId);
+    if (!currentInventory) return false;
+
+    const currentReserved = parseFloat(currentInventory.reservedQuantity);
+    const currentAvailable = parseFloat(currentInventory.availableQuantity);
+
+    if (currentAvailable < quantity) return false;
+
+    const newReserved = currentReserved + quantity;
+    const newAvailable = currentAvailable - quantity;
+
+    await db
+      .update(inventoryTable)
+      .set({
+        reservedQuantity: newReserved.toString(),
+        availableQuantity: newAvailable.toString(),
+        lastUpdated: new Date(),
+      })
+      .where(eq(inventoryTable.listingId, listingId));
+
+    return true;
+  }
+
+  async releaseInventory(listingId: number, quantity: number) {
+    const currentInventory = await this.getInventory(listingId);
+    if (!currentInventory) return false;
+
+    const currentReserved = parseFloat(currentInventory.reservedQuantity);
+    const currentAvailable = parseFloat(currentInventory.availableQuantity);
+
+    const newReserved = Math.max(0, currentReserved - quantity);
+    const newAvailable = currentAvailable + (currentReserved - newReserved);
+
+    await db
+      .update(inventoryTable)
+      .set({
+        reservedQuantity: newReserved.toString(),
+        availableQuantity: newAvailable.toString(),
+        lastUpdated: new Date(),
+      })
+      .where(eq(inventoryTable.listingId, listingId));
+
+    return true;
+  }
+
+  async getInventoryBySeller(sellerId: number) {
+    // Get all listings by the seller
+    const listings = await this.getMarketplaceListingsBySeller(sellerId);
+
+    // Get inventory for each listing
+    const inventoryWithListings = await Promise.all(
+      listings.map(async (listing) => {
+        const inventory = await this.getInventory(listing.id);
+        return {
+          ...inventory,
+          listing,
+        };
+      })
+    );
+
+    return inventoryWithListings.filter((item) => item.id); // Only return items with inventory
+  }
+
+  // Delivery Management Methods
+  async createDelivery(deliveryData: {
+    orderId: number;
+    deliveryMethod: string;
+    deliveryAddress?: string;
+    deliveryInstructions?: string;
+    trackingNumber?: string;
+    carrier?: string;
+  }) {
+    const [delivery] = await db
+      .insert(deliveriesTable)
+      .values({
+        orderId: deliveryData.orderId,
+        deliveryMethod: deliveryData.deliveryMethod,
+        deliveryAddress: deliveryData.deliveryAddress,
+        deliveryInstructions: deliveryData.deliveryInstructions,
+        trackingNumber: deliveryData.trackingNumber,
+        carrier: deliveryData.carrier,
+      })
+      .returning();
+
+    return delivery;
+  }
+
+  async getDelivery(orderId: number) {
+    const delivery = await db
+      .select()
+      .from(deliveriesTable)
+      .where(eq(deliveriesTable.orderId, orderId))
+      .limit(1);
+    if (delivery.length === 0) return null;
+
+    const statusHistory = await db
+      .select()
+      .from(deliveryStatusHistoryTable)
+      .where(eq(deliveryStatusHistoryTable.deliveryId, delivery[0].id));
+
+    return {
+      ...delivery[0],
+      statusHistory,
+    };
+  }
+
+  async getDeliveryById(deliveryId: number) {
+    const delivery = await db
+      .select()
+      .from(deliveriesTable)
+      .where(eq(deliveriesTable.id, deliveryId))
+      .limit(1);
+    return delivery.length > 0 ? delivery[0] : null;
+  }
+
+  async updateDeliveryStatus(
+    deliveryId: number,
+    status: string,
+    location?: string,
+    notes?: string
+  ) {
+    // Update delivery status
+    await db
+      .update(deliveriesTable)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(deliveriesTable.id, deliveryId));
+
+    // Add status history
+    await db.insert(deliveryStatusHistoryTable).values({
+      deliveryId,
+      status,
+      location,
+      notes,
+    });
+
+    return this.getDeliveryById(deliveryId);
   }
 }
 

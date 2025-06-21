@@ -1,4 +1,5 @@
 import React from "react";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,16 +38,36 @@ interface TreatmentPlanMarketplaceProps {
 export const TreatmentPlanMarketplace: React.FC<
   TreatmentPlanMarketplaceProps
 > = ({ marketplaceLinks, diseaseName = "plant disease" }) => {
+  const [, setLocation] = useLocation();
+
   const handleViewMarketplace = (url: string) => {
-    window.open(url, "_blank");
+    // If it's an internal URL, navigate to it
+    if (url.startsWith("/dashboard/") || url.startsWith("/")) {
+      setLocation(url);
+    } else {
+      // If it's an external URL, open in new tab
+      window.open(url, "_blank");
+    }
   };
 
   const handleChatWithExpert = () => {
-    window.open(marketplaceLinks.expertConsultation.chatUrl, "_blank");
+    // Navigate to the expert directory for chat
+    setLocation("/dashboard/experts");
   };
 
   const handleFindExperts = () => {
-    window.open(marketplaceLinks.expertConsultation.expertListUrl, "_blank");
+    // Navigate to the expert directory
+    setLocation("/dashboard/experts");
+  };
+
+  const handleFindDealers = () => {
+    // Navigate to the dealer directory
+    setLocation("/dashboard/dealers");
+  };
+
+  const handleBrowseMarketplace = () => {
+    // Navigate to the main marketplace
+    setLocation("/dashboard/marketplace");
   };
 
   return (
@@ -76,9 +97,7 @@ export const TreatmentPlanMarketplace: React.FC<
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() =>
-                      handleViewMarketplace(product.marketplaceUrl)
-                    }
+                    onClick={() => handleBrowseMarketplace()}
                     className="flex items-center gap-1"
                   >
                     <Store className="h-4 w-4" />
@@ -87,7 +106,7 @@ export const TreatmentPlanMarketplace: React.FC<
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleViewMarketplace(product.dealerUrl)}
+                    onClick={() => handleFindDealers()}
                     className="flex items-center gap-1"
                   >
                     <MapPin className="h-4 w-4" />
@@ -186,20 +205,16 @@ export const TreatmentPlanMarketplace: React.FC<
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Button
               variant="outline"
-              onClick={() =>
-                handleViewMarketplace(
-                  "/marketplace/products?category=pesticides"
-                )
-              }
+              onClick={() => handleBrowseMarketplace()}
               className="flex items-center gap-2"
             >
               <Store className="h-4 w-4" />
-              Browse All Pesticides
+              Browse Marketplace
             </Button>
 
             <Button
               variant="outline"
-              onClick={() => handleViewMarketplace("/marketplace/dealers")}
+              onClick={() => handleFindDealers()}
               className="flex items-center gap-2"
             >
               <MapPin className="h-4 w-4" />
@@ -208,7 +223,7 @@ export const TreatmentPlanMarketplace: React.FC<
 
             <Button
               variant="outline"
-              onClick={() => handleViewMarketplace("/marketplace/experts")}
+              onClick={() => handleFindExperts()}
               className="flex items-center gap-2"
             >
               <Users className="h-4 w-4" />
@@ -217,7 +232,7 @@ export const TreatmentPlanMarketplace: React.FC<
 
             <Button
               variant="outline"
-              onClick={() => handleViewMarketplace("/chat/experts")}
+              onClick={() => handleChatWithExpert()}
               className="flex items-center gap-2"
             >
               <MessageCircle className="h-4 w-4" />

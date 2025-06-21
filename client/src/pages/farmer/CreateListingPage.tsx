@@ -531,7 +531,10 @@ export default function CreateListingPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="USD">ZMW</SelectItem>
+                            <SelectItem value="ZMW">
+                              ZMW (Zambian Kwacha)
+                            </SelectItem>
+                            <SelectItem value="USD">USD (US Dollar)</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

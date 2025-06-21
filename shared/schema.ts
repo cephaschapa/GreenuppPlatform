@@ -604,7 +604,7 @@ export const marketplaceListings = pgTable("marketplace_listings", {
   category: text("category").notNull(),
   subcategory: text("subcategory"),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  priceCurrency: text("price_currency").notNull().default("USD"),
+  priceCurrency: text("price_currency").notNull().default("ZMW"),
   priceUnit: text("price_unit"), // per kg, per ton, per unit, etc.
   quantity: decimal("quantity", { precision: 10, scale: 2 }),
   quantityUnit: text("quantity_unit"), // kg, ton, unit, etc.
@@ -1019,3 +1019,114 @@ export type InsertAiAssistantMessage = z.infer<
   typeof insertAiAssistantMessageSchema
 >;
 export type AiAssistantMessage = typeof aiAssistantMessages.$inferSelect;
+
+// Order Management Tables
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  sellerId: integer("seller_id")
+    .notNull()
+    .references(() => users.id),
+  orderNumber: text("order_number").notNull().unique(),
+  status: text("status").notNull().default("pending"), // pending, confirmed, processing, shipped, delivered, cancelled, refunded
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("ZMW"),
+  shippingAddress: text("shipping_address"),
+  billingAddress: text("billing_address"),
+  paymentMethod: text("payment_method"), // stripe, metatron_pay, cash_on_delivery
+  paymentStatus: text("payment_status").notNull().default("pending"), // pending, paid, failed, refunded
+  paymentIntentId: text("payment_intent_id"),
+  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).default(
+    "0"
+  ),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default("0"),
+  notes: text("notes"),
+  estimatedDeliveryDate: timestamp("estimated_delivery_date"),
+  actualDeliveryDate: timestamp("actual_delivery_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const orderItems = pgTable("order_items", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  listingId: integer("listing_id")
+    .notNull()
+    .references(() => marketplaceListings.id),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("ZMW"),
+  status: text("status").notNull().default("pending"), // pending, confirmed, shipped, delivered, cancelled
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const orderStatusHistory = pgTable("order_status_history", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  status: text("status").notNull(),
+  notes: text("notes"),
+  updatedBy: integer("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Inventory Management
+export const inventory = pgTable("inventory", {
+  id: serial("id").primaryKey(),
+  listingId: integer("listing_id")
+    .notNull()
+    .references(() => marketplaceListings.id, { onDelete: "cascade" }),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
+  reservedQuantity: decimal("reserved_quantity", {
+    precision: 10,
+    scale: 2,
+  }).default("0"),
+  availableQuantity: decimal("available_quantity", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
+  lowStockThreshold: decimal("low_stock_threshold", {
+    precision: 10,
+    scale: 2,
+  }).default("5"),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+});
+
+// Delivery Management
+export const deliveries = pgTable("deliveries", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  deliveryMethod: text("delivery_method").notNull(), // pickup, delivery, shipping
+  deliveryAddress: text("delivery_address"),
+  deliveryInstructions: text("delivery_instructions"),
+  trackingNumber: text("tracking_number"),
+  carrier: text("carrier"), // courier company name
+  estimatedDeliveryDate: timestamp("estimated_delivery_date"),
+  actualDeliveryDate: timestamp("actual_delivery_date"),
+  status: text("status").notNull().default("pending"), // pending, in_transit, delivered, failed
+  deliveryCost: decimal("delivery_cost", { precision: 10, scale: 2 }).default(
+    "0"
+  ),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const deliveryStatusHistory = pgTable("delivery_status_history", {
+  id: serial("id").primaryKey(),
+  deliveryId: integer("delivery_id")
+    .notNull()
+    .references(() => deliveries.id, { onDelete: "cascade" }),
+  status: text("status").notNull(),
+  location: text("location"),
+  notes: text("notes"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});

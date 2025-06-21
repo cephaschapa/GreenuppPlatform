@@ -50,6 +50,8 @@ import NotificationsPage from "@/pages/farmer/NotificationsPage";
 import NotificationSettingsPage from "@/pages/farmer/NotificationSettingsPage";
 import ExpertDirectoryPage from "@/pages/farmer/ExpertDirectoryPage";
 import DealerDirectoryPage from "@/pages/farmer/DealerDirectoryPage";
+import OrdersPage from "./pages/farmer/OrdersPage";
+import InventoryPage from "./pages/farmer/InventoryPage";
 
 function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
   const { user, isLoading } = useAuth();
@@ -103,6 +105,8 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
           path="/marketplace/:id"
           component={MarketplaceDetailPage}
         />
+        <ProtectedRoute path="/orders" component={OrdersPage} />
+        <ProtectedRoute path="/inventory" component={InventoryPage} />
         <ProtectedRoute path="/experts" component={ExpertDirectoryPage} />
         <ProtectedRoute path="/dealers" component={DealerDirectoryPage} />
 
@@ -203,6 +207,8 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
         path="/dashboard/marketplace/:id"
         component={MarketplaceDetailPage}
       />
+      <ProtectedRoute path="/dashboard/orders" component={OrdersPage} />
+      <ProtectedRoute path="/dashboard/inventory" component={InventoryPage} />
       <ProtectedRoute
         path="/dashboard/experts"
         component={ExpertDirectoryPage}
