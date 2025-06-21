@@ -41,10 +41,28 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Save, UserCircle, Edit, X } from "lucide-react";
+import {
+  Loader2,
+  Save,
+  UserCircle,
+  Edit,
+  X,
+  CheckCircle,
+  AlertCircle,
+  MapPin,
+  Calendar,
+  Phone,
+  Mail,
+  Crop,
+  TrendingUp,
+  Award,
+  Shield,
+  Settings,
+} from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 
 // Define form schemas with additional validation
 const profileUserSchema = insertUserSchema
@@ -94,13 +112,70 @@ export default function ProfilePage() {
     },
   });
 
+  // Fetch statistics for the profile
+  const { data: stats } = useQuery({
+    queryKey: ["/api/stats"],
+    queryFn: async () => {
+      try {
+        const [fieldsRes, cropsRes, tasksRes] = await Promise.all([
+          fetch("/api/fields"),
+          fetch("/api/crops"),
+          fetch("/api/tasks"),
+        ]);
+
+        const fields = fieldsRes.ok ? await fieldsRes.json() : [];
+        const crops = cropsRes.ok ? await cropsRes.json() : [];
+        const tasks = tasksRes.ok ? await tasksRes.json() : [];
+
+        return {
+          totalFields: fields.length,
+          totalCrops: crops.length,
+          activeTasks: tasks.filter((task: any) => !task.completed).length,
+          completedTasks: tasks.filter((task: any) => task.completed).length,
+        };
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+        return {
+          totalFields: 0,
+          totalCrops: 0,
+          activeTasks: 0,
+          completedTasks: 0,
+        };
+      }
+    },
+  });
+
+  // Calculate profile completion percentage
+  const calculateProfileCompletion = () => {
+    if (!farmerProfile || !user) return 0;
+
+    const requiredFields = [
+      farmerProfile.farmName,
+      farmerProfile.farmLocation,
+      farmerProfile.farmSize,
+      farmerProfile.farmType,
+      farmerProfile.contactPhone,
+      farmerProfile.bio,
+      user.firstName,
+      user.lastName,
+      user.email,
+    ];
+
+    const completedFields = requiredFields.filter(
+      (field) => field && field.toString().trim() !== ""
+    ).length;
+    return Math.round((completedFields / requiredFields.length) * 100);
+  };
+
+  const profileCompletion = calculateProfileCompletion();
+
   // Setup form
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(
       z.object({
         ...profileUserSchema.shape,
         ...extendedFarmerProfileSchema.omit({ mainCrops: true }).shape,
-      }),
+      })
     ),
     defaultValues: {
       firstName: user?.firstName || "",
@@ -171,9 +246,9 @@ export default function ProfilePage() {
           contactPhone: data.contactPhone,
           mainCrops,
           establishedYear: data.establishedYear
-            ? parseInt(data.establishedYear)
+            ? parseInt(data.establishedYear.toString())
             : null,
-        },
+        }
       );
 
       if (!profileUpdateResponse.ok) {
@@ -244,10 +319,103 @@ export default function ProfilePage() {
       title="Profile"
       description="View and edit your profile information"
     >
+      {/* Profile Completion Indicator */}
+      <div className="mb-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                {profileCompletion === 100 ? (
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-amber-600" />
+                )}
+                <div>
+                  <h3 className="font-medium">Profile Completion</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {profileCompletion === 100
+                      ? "Your profile is complete!"
+                      : "Complete your profile to unlock all features"}
+                  </p>
+                </div>
+              </div>
+              <Badge
+                variant={profileCompletion === 100 ? "default" : "secondary"}
+              >
+                {profileCompletion}%
+              </Badge>
+            </div>
+            <Progress value={profileCompletion} className="h-2" />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Statistics Cards */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <MapPin className="h-4 w-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Fields</p>
+                  <p className="text-2xl font-bold">{stats.totalFields}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Crop className="h-4 w-4 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Crops</p>
+                  <p className="text-2xl font-bold">{stats.totalCrops}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 rounded-lg">
+                  <TrendingUp className="h-4 w-4 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Active Tasks</p>
+                  <p className="text-2xl font-bold">{stats.activeTasks}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Award className="h-4 w-4 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Completed</p>
+                  <p className="text-2xl font-bold">{stats.completedTasks}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile" className="mt-6">
@@ -632,6 +800,183 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-6">
+          <div className="space-y-6">
+            {/* Notification Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  Notification Settings
+                </CardTitle>
+                <CardDescription>
+                  Manage how you receive notifications and alerts
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Email Notifications</p>
+                    <p className="text-sm text-muted-foreground">
+                      Receive updates via email
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      toast({
+                        title: "Feature Coming Soon",
+                        description:
+                          "Email notification settings will be available soon.",
+                      });
+                    }}
+                  >
+                    Configure
+                  </Button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Push Notifications</p>
+                    <p className="text-sm text-muted-foreground">
+                      Receive real-time alerts
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      toast({
+                        title: "Feature Coming Soon",
+                        description:
+                          "Push notification settings will be available soon.",
+                      });
+                    }}
+                  >
+                    Configure
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Privacy Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Privacy & Security
+                </CardTitle>
+                <CardDescription>
+                  Manage your privacy and security settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Profile Visibility</p>
+                    <p className="text-sm text-muted-foreground">
+                      Control who can see your profile
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      toast({
+                        title: "Feature Coming Soon",
+                        description: "Privacy settings will be available soon.",
+                      });
+                    }}
+                  >
+                    Configure
+                  </Button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Two-Factor Authentication</p>
+                    <p className="text-sm text-muted-foreground">
+                      Add an extra layer of security
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      toast({
+                        title: "Feature Coming Soon",
+                        description:
+                          "Two-factor authentication will be available soon.",
+                      });
+                    }}
+                  >
+                    Enable
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Data Export */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Data Management</CardTitle>
+                <CardDescription>
+                  Export your data or manage your account
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Export Data</p>
+                    <p className="text-sm text-muted-foreground">
+                      Download a copy of your data
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      toast({
+                        title: "Feature Coming Soon",
+                        description:
+                          "Data export functionality will be available soon.",
+                      });
+                    }}
+                  >
+                    Export
+                  </Button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-destructive">
+                      Delete Account
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Permanently delete your account and data
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      toast({
+                        title: "Account Deletion",
+                        description:
+                          "This action cannot be undone. Please contact support for account deletion.",
+                        variant: "destructive",
+                      });
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </DashboardLayout>

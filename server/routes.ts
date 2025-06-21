@@ -3394,7 +3394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lowStockThreshold: 5,
           lastUpdated: new Date(),
         };
-        const newInventory = await storage.createInventory(defaultInventory);
+        const newInventory = await storage.createInventory(listingId, 0, 5);
         return res.json(newInventory);
       }
 
@@ -3456,7 +3456,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lowStockThreshold: lowStockThreshold || 5,
           lastUpdated: new Date(),
         };
-        inventory = await storage.createInventory(newInventoryData);
+        inventory = await storage.createInventory(
+          listingId,
+          quantity || 0,
+          lowStockThreshold || 5
+        );
       } else {
         // Update existing inventory
         const updateData: any = { lastUpdated: new Date() };
@@ -3464,7 +3468,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (quantity !== undefined) {
           updateData.quantity = quantity;
           updateData.availableQuantity =
-            quantity - (inventory.reservedQuantity || 0);
+            quantity - (parseFloat(inventory.reservedQuantity) || 0);
         }
 
         if (lowStockThreshold !== undefined) {
@@ -3524,7 +3528,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastUpdated: new Date(),
       };
 
-      const newInventory = await storage.createInventory(inventoryData);
+      const newInventory = await storage.createInventory(
+        listingId,
+        quantity || 0,
+        lowStockThreshold || 5
+      );
       res.status(201).json(newInventory);
     } catch (error) {
       console.error("Error creating inventory:", error);
