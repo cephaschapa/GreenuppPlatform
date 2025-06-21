@@ -48,6 +48,8 @@ import CropTraceabilityPage from "@/pages/farmer/CropTraceabilityPage";
 import ListCropOnMarketplace from "@/pages/farmer/ListCropOnMarketplace";
 import NotificationsPage from "@/pages/farmer/NotificationsPage";
 import NotificationSettingsPage from "@/pages/farmer/NotificationSettingsPage";
+import ExpertDirectoryPage from "@/pages/farmer/ExpertDirectoryPage";
+import DealerDirectoryPage from "@/pages/farmer/DealerDirectoryPage";
 
 function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
   const { user, isLoading } = useAuth();
@@ -101,6 +103,8 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
           path="/marketplace/:id"
           component={MarketplaceDetailPage}
         />
+        <ProtectedRoute path="/experts" component={ExpertDirectoryPage} />
+        <ProtectedRoute path="/dealers" component={DealerDirectoryPage} />
 
         {/* CropTrace routes - without /dashboard prefix on app subdomain */}
         <ProtectedRoute
@@ -198,6 +202,14 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
       <ProtectedRoute
         path="/dashboard/marketplace/:id"
         component={MarketplaceDetailPage}
+      />
+      <ProtectedRoute
+        path="/dashboard/experts"
+        component={ExpertDirectoryPage}
+      />
+      <ProtectedRoute
+        path="/dashboard/dealers"
+        component={DealerDirectoryPage}
       />
 
       {/* CropTrace routes on main domain - with /dashboard prefix */}

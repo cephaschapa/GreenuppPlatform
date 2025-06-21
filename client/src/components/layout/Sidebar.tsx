@@ -104,6 +104,23 @@ export function Sidebar() {
       mobileIcon: <ShoppingBag className="h-6 w-6" />,
       active: location.startsWith("/dashboard/marketplace"),
       showInMobileNav: true,
+      subItems: [
+        {
+          title: "All Products",
+          href: "/dashboard/marketplace",
+          active: location === "/dashboard/marketplace",
+        },
+        {
+          title: "Expert Directory",
+          href: "/dashboard/experts",
+          active: location === "/dashboard/experts",
+        },
+        {
+          title: "Dealer Directory",
+          href: "/dashboard/dealers",
+          active: location === "/dashboard/dealers",
+        },
+      ],
     },
     {
       title: "Predictions",
@@ -319,6 +336,11 @@ export function Sidebar() {
     mobileIcon: React.ReactNode;
     active: boolean;
     showInMobileNav: boolean;
+    subItems?: {
+      title: string;
+      href: string;
+      active: boolean;
+    }[];
   };
 
   // Create modified nav items for the current subdomain
