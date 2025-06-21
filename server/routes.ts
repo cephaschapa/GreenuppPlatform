@@ -2458,6 +2458,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Treatment plan not found" });
       }
 
+      // Get the analysis to add marketplace links
+      const analysis = await storage.getPlantAnalysis(analysisId);
+      if (analysis) {
+        // Get recommended treatment products based on detected disease
+        const recommendedProducts = await storage.getTreatmentProducts(
+          analysis.diseaseDetected || undefined,
+          analysis.plantType || undefined
+        );
+
+        // Add marketplace links to the response
+        const planWithMarketplace = {
+          ...plan,
+          marketplaceLinks: {
+            products: recommendedProducts.map((product) => ({
+              productId: product.id,
+              name: product.name,
+              marketplaceUrl: `/marketplace/products?search=${encodeURIComponent(
+                product.name
+              )}`,
+              dealerUrl: `/marketplace/dealers?product=${encodeURIComponent(
+                product.name
+              )}`,
+            })),
+            expertConsultation: {
+              chatUrl: `/chat/experts?topic=${encodeURIComponent(
+                analysis.diseaseDetected || "plant disease"
+              )}`,
+              expertListUrl: `/marketplace/experts?specialty=plant-disease`,
+            },
+          },
+        };
+
+        return res.json(planWithMarketplace);
+      }
+
       res.json(plan);
     } catch (error) {
       console.error("Error fetching treatment plan:", error);

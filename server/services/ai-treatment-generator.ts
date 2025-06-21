@@ -114,7 +114,19 @@ export class AITreatmentGenerator {
         throw new Error("No response from AI service");
       }
 
-      const aiPlan = JSON.parse(content) as AITreatmentPlan;
+      // Clean the response to extract JSON from markdown formatting
+      let jsonContent = content.trim();
+
+      // Remove markdown code blocks if present
+      if (jsonContent.startsWith("```json")) {
+        jsonContent = jsonContent
+          .replace(/^```json\s*/, "")
+          .replace(/\s*```$/, "");
+      } else if (jsonContent.startsWith("```")) {
+        jsonContent = jsonContent.replace(/^```\s*/, "").replace(/\s*```$/, "");
+      }
+
+      const aiPlan = JSON.parse(jsonContent) as AITreatmentPlan;
 
       // Validate and enhance the AI response
       return this.validateAndEnhancePlan(aiPlan, analysis, availableProducts);
