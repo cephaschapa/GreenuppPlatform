@@ -3,6 +3,7 @@ import { Sidebar } from "./Sidebar";
 import { TopNavbar } from "./TopNavbar";
 import { PopoverAssistant } from "@/components/chat/PopoverAssistant";
 import { MobileBottomNav } from "./MobileBottomNav";
+import { MobileSidebar } from "./MobileSidebar";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -21,6 +22,7 @@ export function DashboardLayout({
     <div className="min-h-screen bg-background text-foreground">
       <Sidebar />
       <TopNavbar title={title} description={description} />
+      <MobileSidebar />
 
       {/* Main content with padding adjustments for mobile */}
       <div className="md:pl-64">

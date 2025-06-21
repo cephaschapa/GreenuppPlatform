@@ -1,0 +1,378 @@
+import { useState } from "react";
+import { Link, useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import {
+  LayoutDashboard,
+  TractorIcon,
+  CalendarDays,
+  ClipboardList,
+  Cloud,
+  Sparkles,
+  Settings,
+  User,
+  ChevronRight,
+  ChevronDown,
+  Menu,
+  X,
+  LogOut,
+  Bell,
+  Home,
+  MoreHorizontal,
+  Sprout,
+  ShoppingBag,
+  ShoppingCart,
+  ShieldCheck,
+  Users,
+  Grid,
+  Brain,
+  MessageSquare,
+  FileText,
+  BarChart3,
+} from "lucide-react";
+import greenuppLogo from "@/assets/greenupp-full-logo.png";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { UserRole } from "@shared/schema";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+
+export function MobileSidebar() {
+  const [location] = useLocation();
+  const { user, logoutMutation } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  // Toggle expanded state for items with submenus
+  const toggleExpanded = (itemTitle: string) => {
+    setExpandedItems((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemTitle)) {
+        newSet.delete(itemTitle);
+      } else {
+        newSet.add(itemTitle);
+      }
+      return newSet;
+    });
+  };
+
+  // Get navigation items based on user role
+  const getNavItems = () => {
+    if (user?.role === UserRole.SUPPLIER) {
+      return [
+        {
+          title: "Fields & Crops",
+          href: "/dashboard/fields",
+          icon: <TractorIcon className="h-5 w-5" />,
+          active: location === "/dashboard/fields",
+        },
+        {
+          title: "Tasks",
+          href: "/dashboard/tasks",
+          icon: <ClipboardList className="h-5 w-5" />,
+          active: location === "/dashboard/tasks",
+        },
+        {
+          title: "Orders",
+          href: "/dashboard/orders",
+          icon: <ShoppingCart className="h-5 w-5" />,
+          active: location === "/dashboard/orders",
+        },
+        {
+          title: "Inventory",
+          href: "/dashboard/inventory",
+          icon: <Grid className="h-5 w-5" />,
+          active: location === "/dashboard/inventory",
+        },
+        {
+          title: "Expert Directory",
+          href: "/dashboard/experts",
+          icon: <Users className="h-5 w-5" />,
+          active: location === "/dashboard/experts",
+        },
+        {
+          title: "Dealer Directory",
+          href: "/dashboard/dealers",
+          icon: <ShoppingBag className="h-5 w-5" />,
+          active: location === "/dashboard/dealers",
+        },
+        {
+          title: "Predictions",
+          href: "/dashboard/predictions",
+          icon: <Sparkles className="h-5 w-5" />,
+          active: location === "/dashboard/predictions",
+        },
+        {
+          title: "AI Farming Assistant",
+          href: "/dashboard/farming-assistant",
+          icon: <Brain className="h-5 w-5" />,
+          active: location === "/dashboard/farming-assistant",
+        },
+        {
+          title: "Stream Chat",
+          href: "/dashboard/stream-chat",
+          icon: <MessageSquare className="h-5 w-5" />,
+          active: location === "/dashboard/stream-chat",
+        },
+        {
+          title: "Verify Products",
+          href: "/trace",
+          icon: <ShieldCheck className="h-5 w-5" />,
+          active: location === "/trace",
+        },
+        {
+          title: "AI Knowledge Base",
+          href: "/ai-knowledge-base",
+          icon: <FileText className="h-5 w-5" />,
+          active: location === "/ai-knowledge-base",
+        },
+        {
+          title: "Profile",
+          href: "/dashboard/profile",
+          icon: <User className="h-5 w-5" />,
+          active: location === "/dashboard/profile",
+        },
+        {
+          title: "Settings",
+          href: "/dashboard/settings",
+          icon: <Settings className="h-5 w-5" />,
+          active: location === "/dashboard/settings",
+        },
+      ];
+    } else if (user?.role === UserRole.BUYER) {
+      return [
+        {
+          title: "Orders",
+          href: "/dashboard/orders",
+          icon: <ShoppingCart className="h-5 w-5" />,
+          active: location === "/dashboard/orders",
+        },
+        {
+          title: "Expert Directory",
+          href: "/dashboard/experts",
+          icon: <Users className="h-5 w-5" />,
+          active: location === "/dashboard/experts",
+        },
+        {
+          title: "Dealer Directory",
+          href: "/dashboard/dealers",
+          icon: <ShoppingBag className="h-5 w-5" />,
+          active: location === "/dashboard/dealers",
+        },
+        {
+          title: "AI Farming Assistant",
+          href: "/dashboard/farming-assistant",
+          icon: <Brain className="h-5 w-5" />,
+          active: location === "/dashboard/farming-assistant",
+        },
+        {
+          title: "Stream Chat",
+          href: "/dashboard/stream-chat",
+          icon: <MessageSquare className="h-5 w-5" />,
+          active: location === "/dashboard/stream-chat",
+        },
+        {
+          title: "Verify Products",
+          href: "/trace",
+          icon: <ShieldCheck className="h-5 w-5" />,
+          active: location === "/trace",
+        },
+        {
+          title: "AI Knowledge Base",
+          href: "/ai-knowledge-base",
+          icon: <FileText className="h-5 w-5" />,
+          active: location === "/ai-knowledge-base",
+        },
+        {
+          title: "Profile",
+          href: "/dashboard/profile",
+          icon: <User className="h-5 w-5" />,
+          active: location === "/dashboard/profile",
+        },
+        {
+          title: "Settings",
+          href: "/dashboard/settings",
+          icon: <Settings className="h-5 w-5" />,
+          active: location === "/dashboard/settings",
+        },
+      ];
+    } else {
+      // Default farmer navigation
+      return [
+        {
+          title: "Fields & Crops",
+          href: "/dashboard/fields",
+          icon: <TractorIcon className="h-5 w-5" />,
+          active: location === "/dashboard/fields",
+        },
+        {
+          title: "Tasks",
+          href: "/dashboard/tasks",
+          icon: <ClipboardList className="h-5 w-5" />,
+          active: location === "/dashboard/tasks",
+        },
+        {
+          title: "Orders",
+          href: "/dashboard/orders",
+          icon: <ShoppingCart className="h-5 w-5" />,
+          active: location === "/dashboard/orders",
+        },
+        {
+          title: "Inventory",
+          href: "/dashboard/inventory",
+          icon: <Grid className="h-5 w-5" />,
+          active: location === "/dashboard/inventory",
+        },
+        {
+          title: "Expert Directory",
+          href: "/dashboard/experts",
+          icon: <Users className="h-5 w-5" />,
+          active: location === "/dashboard/experts",
+        },
+        {
+          title: "Dealer Directory",
+          href: "/dashboard/dealers",
+          icon: <ShoppingBag className="h-5 w-5" />,
+          active: location === "/dashboard/dealers",
+        },
+        {
+          title: "Predictions",
+          href: "/dashboard/predictions",
+          icon: <Sparkles className="h-5 w-5" />,
+          active: location === "/dashboard/predictions",
+        },
+        {
+          title: "AI Farming Assistant",
+          href: "/dashboard/farming-assistant",
+          icon: <Brain className="h-5 w-5" />,
+          active: location === "/dashboard/farming-assistant",
+        },
+        {
+          title: "Stream Chat",
+          href: "/dashboard/stream-chat",
+          icon: <MessageSquare className="h-5 w-5" />,
+          active: location === "/dashboard/stream-chat",
+        },
+        {
+          title: "Verify Products",
+          href: "/trace",
+          icon: <ShieldCheck className="h-5 w-5" />,
+          active: location === "/trace",
+        },
+        {
+          title: "AI Knowledge Base",
+          href: "/ai-knowledge-base",
+          icon: <FileText className="h-5 w-5" />,
+          active: location === "/ai-knowledge-base",
+        },
+        {
+          title: "Profile",
+          href: "/dashboard/profile",
+          icon: <User className="h-5 w-5" />,
+          active: location === "/dashboard/profile",
+        },
+        {
+          title: "Settings",
+          href: "/dashboard/settings",
+          icon: <Settings className="h-5 w-5" />,
+          active: location === "/dashboard/settings",
+        },
+      ];
+    }
+  };
+
+  const navItems = getNavItems();
+
+  return (
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="md:hidden fixed top-4 right-4 z-50 bg-background/80 backdrop-blur border border-border"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-80 p-0">
+        <SheetHeader className="p-6 border-b">
+          <div className="flex items-center gap-3">
+            <img src={greenuppLogo} alt="Greenupp Logo" className="h-8" />
+            <div>
+              <SheetTitle className="text-left">Menu</SheetTitle>
+              <SheetDescription className="text-left">
+                {user?.role
+                  ? `${
+                      user.role.charAt(0).toUpperCase() + user.role.slice(1)
+                    } Dashboard`
+                  : "Dashboard"}
+              </SheetDescription>
+            </div>
+          </div>
+        </SheetHeader>
+
+        <ScrollArea className="flex-1 py-4">
+          <nav className="space-y-1 px-4">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors",
+                  item.active
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+                onClick={() => setIsOpen(false)}
+              >
+                {item.icon}
+                <span className="font-medium">{item.title}</span>
+              </Link>
+            ))}
+          </nav>
+        </ScrollArea>
+
+        <div className="p-4 border-t">
+          <div className="flex items-center gap-3 mb-4">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={user?.profileImage || undefined} />
+              <AvatarFallback>
+                {user?.firstName?.[0] || user?.username?.[0] || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm truncate">
+                {user?.firstName} {user?.lastName}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user?.email}
+              </p>
+            </div>
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => {
+              logoutMutation.mutate();
+              setIsOpen(false);
+            }}
+            disabled={logoutMutation.isPending}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            {logoutMutation.isPending ? "Signing out..." : "Sign Out"}
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}

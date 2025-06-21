@@ -1,37 +1,54 @@
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FarmerProfile, Field, Crop, FarmerTask } from "@shared/schema";
-import { Loader2, TractorIcon, Leaf, Calendar, ClipboardList, Cloud, Sparkles, ChevronRight } from "lucide-react";
+import {
+  Loader2,
+  TractorIcon,
+  Leaf,
+  Calendar,
+  ClipboardList,
+  Cloud,
+  Sparkles,
+  ChevronRight,
+} from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 
 export default function DashboardOverview() {
   // Fetch farmer profile
-  const { data: farmerProfile, isLoading: profileLoading } = useQuery<FarmerProfile>({
-    queryKey: ['/api/farmer-profile'],
-    queryFn: async () => {
-      try {
-        const response = await fetch('/api/farmer-profile');
-        if (!response.ok) {
-          throw new Error("Failed to fetch profile");
+  const { data: farmerProfile, isLoading: profileLoading } =
+    useQuery<FarmerProfile>({
+      queryKey: ["/api/farmer-profile"],
+      queryFn: async () => {
+        try {
+          const response = await fetch("/api/farmer-profile");
+          if (!response.ok) {
+            throw new Error("Failed to fetch profile");
+          }
+          return await response.json();
+        } catch (error) {
+          console.error("Error fetching profile:", error);
+          return null;
         }
-        return await response.json();
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        return null;
-      }
-    }
-  });
-  
+      },
+    });
+
   // Fetch fields
   const { data: fields, isLoading: fieldsLoading } = useQuery<Field[]>({
-    queryKey: ['/api/fields'],
+    queryKey: ["/api/fields"],
     queryFn: async () => {
       try {
-        const response = await fetch('/api/fields');
+        const response = await fetch("/api/fields");
         if (!response.ok) {
           throw new Error("Failed to fetch fields");
         }
@@ -40,15 +57,15 @@ export default function DashboardOverview() {
         console.error("Error fetching fields:", error);
         return [];
       }
-    }
+    },
   });
-  
+
   // Fetch crops
   const { data: crops, isLoading: cropsLoading } = useQuery<Crop[]>({
-    queryKey: ['/api/crops'],
+    queryKey: ["/api/crops"],
     queryFn: async () => {
       try {
-        const response = await fetch('/api/crops');
+        const response = await fetch("/api/crops");
         if (!response.ok) {
           throw new Error("Failed to fetch crops");
         }
@@ -57,15 +74,15 @@ export default function DashboardOverview() {
         console.error("Error fetching crops:", error);
         return [];
       }
-    }
+    },
   });
-  
+
   // Fetch tasks
   const { data: tasks, isLoading: tasksLoading } = useQuery<FarmerTask[]>({
-    queryKey: ['/api/tasks'],
+    queryKey: ["/api/tasks"],
     queryFn: async () => {
       try {
-        const response = await fetch('/api/tasks');
+        const response = await fetch("/api/tasks");
         if (!response.ok) {
           throw new Error("Failed to fetch tasks");
         }
@@ -74,20 +91,20 @@ export default function DashboardOverview() {
         console.error("Error fetching tasks:", error);
         return [];
       }
-    }
+    },
   });
-  
+
   // Get counts
   const fieldCount = fields?.length || 0;
   const cropCount = crops?.length || 0;
-  const pendingTaskCount = tasks?.filter(task => !task.completed).length || 0;
-  
+  const pendingTaskCount = tasks?.filter((task) => !task.completed).length || 0;
+
   // Weather data
   const { data: weatherData, isLoading: weatherLoading } = useQuery({
-    queryKey: ['/api/weather'],
+    queryKey: ["/api/weather"],
     queryFn: async () => {
       try {
-        const response = await fetch('/api/weather');
+        const response = await fetch("/api/weather");
         if (!response.ok) {
           throw new Error("Failed to fetch weather");
         }
@@ -96,38 +113,47 @@ export default function DashboardOverview() {
         console.error("Error fetching weather:", error);
         return null;
       }
-    }
+    },
   });
-  
+
   // Check if any section is loading
-  const isLoading = profileLoading || fieldsLoading || cropsLoading || tasksLoading || weatherLoading;
-  
+  const isLoading =
+    profileLoading ||
+    fieldsLoading ||
+    cropsLoading ||
+    tasksLoading ||
+    weatherLoading;
+
   // Helper to format date
   const formatDate = (dateStr: string | Date | null | undefined) => {
     if (!dateStr) return "Not set";
     return new Date(dateStr).toLocaleDateString();
   };
-  
+
   // Filter crops by status
   const getActiveGrowingCrops = () => {
-    return crops?.filter(crop => crop.status === 'growing' || crop.status === 'planted') || [];
+    return (
+      crops?.filter(
+        (crop) => crop.status === "growing" || crop.status === "planted"
+      ) || []
+    );
   };
-  
+
   // Get upcoming tasks (next 7 days)
   const getUpcomingTasks = () => {
     if (!tasks) return [];
-    
+
     const today = new Date();
     const nextWeek = new Date();
     nextWeek.setDate(today.getDate() + 7);
-    
+
     return tasks
-      .filter(task => {
+      .filter((task) => {
         if (task.completed) return false;
-        
+
         const dueDate = task.dueDate ? new Date(task.dueDate) : null;
         if (!dueDate) return false;
-        
+
         return dueDate >= today && dueDate <= nextWeek;
       })
       .sort((a, b) => {
@@ -137,7 +163,7 @@ export default function DashboardOverview() {
       })
       .slice(0, 5);
   };
-  
+
   return (
     <DashboardLayout
       title={`Welcome, ${farmerProfile?.farmName || "Farmer"}`}
@@ -148,254 +174,345 @@ export default function DashboardOverview() {
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="space-y-8">
-          {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="space-y-6 md:space-y-8">
+          {/* Stats Overview - Mobile optimized grid */}
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <Card className="bg-card border-muted hover:border-primary/30 transition-colors">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <TractorIcon className="h-5 w-5 text-primary" />
-                  Fields
+              <CardHeader className="pb-2 px-4 py-3">
+                <CardTitle className="text-base md:text-lg font-medium flex items-center gap-2">
+                  <TractorIcon className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                  <span className="hidden sm:inline">Fields</span>
+                  <span className="sm:hidden">Fields</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{fieldCount}</div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Total registered fields
+              <CardContent className="px-4 pb-3">
+                <div className="text-2xl md:text-3xl font-bold">
+                  {fieldCount}
+                </div>
+                <p className="text-xs md:text-sm text-muted-foreground mt-1">
+                  Total fields
                 </p>
               </CardContent>
-              <CardFooter className="pt-0">
+              <CardFooter className="pt-0 px-4 pb-3">
                 <Link href="/dashboard/fields">
-                  <Button variant="ghost" size="sm" className="w-full justify-between">
-                    View Fields
-                    <ChevronRight className="h-4 w-4" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-between text-xs md:text-sm"
+                  >
+                    <span className="hidden sm:inline">View Fields</span>
+                    <span className="sm:hidden">View</span>
+                    <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
                   </Button>
                 </Link>
               </CardFooter>
             </Card>
-            
+
             <Card className="bg-card border-muted hover:border-green-500/30 transition-colors">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <Leaf className="h-5 w-5 text-green-500 dark:text-green-400" />
-                  Crops
+              <CardHeader className="pb-2 px-4 py-3">
+                <CardTitle className="text-base md:text-lg font-medium flex items-center gap-2">
+                  <Leaf className="h-4 w-4 md:h-5 md:w-5 text-green-500 dark:text-green-400" />
+                  <span className="hidden sm:inline">Crops</span>
+                  <span className="sm:hidden">Crops</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{cropCount}</div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Active crops ({getActiveGrowingCrops().length} growing)
+              <CardContent className="px-4 pb-3">
+                <div className="text-2xl md:text-3xl font-bold">
+                  {cropCount}
+                </div>
+                <p className="text-xs md:text-sm text-muted-foreground mt-1">
+                  {getActiveGrowingCrops().length} growing
                 </p>
               </CardContent>
-              <CardFooter className="pt-0">
+              <CardFooter className="pt-0 px-4 pb-3">
                 <Link href="/dashboard/fields">
-                  <Button variant="ghost" size="sm" className="w-full justify-between">
-                    Manage Crops
-                    <ChevronRight className="h-4 w-4" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-between text-xs md:text-sm"
+                  >
+                    <span className="hidden sm:inline">Manage Crops</span>
+                    <span className="sm:hidden">Manage</span>
+                    <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
                   </Button>
                 </Link>
               </CardFooter>
             </Card>
-            
+
             <Card className="bg-card border-muted hover:border-blue-500/30 transition-colors">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <ClipboardList className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-                  Tasks
+              <CardHeader className="pb-2 px-4 py-3">
+                <CardTitle className="text-base md:text-lg font-medium flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4 md:h-5 md:w-5 text-blue-500 dark:text-blue-400" />
+                  <span className="hidden sm:inline">Tasks</span>
+                  <span className="sm:hidden">Tasks</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{pendingTaskCount}</div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Pending tasks
+              <CardContent className="px-4 pb-3">
+                <div className="text-2xl md:text-3xl font-bold">
+                  {pendingTaskCount}
+                </div>
+                <p className="text-xs md:text-sm text-muted-foreground mt-1">
+                  Pending
                 </p>
               </CardContent>
-              <CardFooter className="pt-0">
+              <CardFooter className="pt-0 px-4 pb-3">
                 <Link href="/dashboard/tasks">
-                  <Button variant="ghost" size="sm" className="w-full justify-between">
-                    View Tasks
-                    <ChevronRight className="h-4 w-4" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-between text-xs md:text-sm"
+                  >
+                    <span className="hidden sm:inline">View Tasks</span>
+                    <span className="sm:hidden">View</span>
+                    <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
                   </Button>
                 </Link>
               </CardFooter>
             </Card>
-            
+
             <Card className="bg-card border-muted hover:border-sky-500/30 transition-colors">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
-                  <Cloud className="h-5 w-5 text-sky-500 dark:text-sky-400" />
-                  Weather
+              <CardHeader className="pb-2 px-4 py-3">
+                <CardTitle className="text-base md:text-lg font-medium flex items-center gap-2">
+                  <Cloud className="h-4 w-4 md:h-5 md:w-5 text-sky-500 dark:text-sky-400" />
+                  <span className="hidden sm:inline">Weather</span>
+                  <span className="sm:hidden">Weather</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 pb-3">
                 {weatherData ? (
                   <>
-                    <div className="text-3xl font-bold">
+                    <div className="text-2xl md:text-3xl font-bold">
                       {weatherData.current.temp}°C
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {weatherData.location} - {weatherData.current.condition}
+                    <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">
+                      {weatherData.current.condition}
                     </p>
                   </>
                 ) : (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Weather data unavailable
+                  <p className="text-xs md:text-sm text-muted-foreground mt-1">
+                    Unavailable
                   </p>
                 )}
               </CardContent>
-              <CardFooter className="pt-0">
+              <CardFooter className="pt-0 px-4 pb-3">
                 <Link href="/dashboard/weather">
-                  <Button variant="ghost" size="sm" className="w-full justify-between">
-                    Weather Details
-                    <ChevronRight className="h-4 w-4" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-between text-xs md:text-sm"
+                  >
+                    <span className="hidden sm:inline">Weather Details</span>
+                    <span className="sm:hidden">Details</span>
+                    <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
                   </Button>
                 </Link>
               </CardFooter>
             </Card>
           </div>
-          
-          {/* Quick Access Sections */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* Quick Access Sections - Mobile optimized */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {/* Upcoming Tasks */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-xl">Upcoming Tasks</CardTitle>
-                <CardDescription>Tasks due in the next 7 days</CardDescription>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg md:text-xl">
+                  Upcoming Tasks
+                </CardTitle>
+                <CardDescription className="text-sm">
+                  Tasks due in the next 7 days
+                </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 pb-3">
                 {getUpcomingTasks().length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2 md:space-y-3">
                     {getUpcomingTasks().map((task) => (
-                      <div key={task.id} className="p-3 border border-border rounded-lg flex justify-between items-center hover:border-muted transition-colors">
-                        <div>
-                          <h4 className="font-medium">{task.title}</h4>
-                          <p className="text-sm text-muted-foreground">
+                      <div
+                        key={task.id}
+                        className="p-3 border border-border rounded-lg flex justify-between items-center hover:border-muted transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm md:text-base truncate">
+                            {task.title}
+                          </h4>
+                          <p className="text-xs md:text-sm text-muted-foreground">
                             Due: {formatDate(task.dueDate)}
                           </p>
                         </div>
-                        <Badge variant={
-                          task.priority === 'high'
-                            ? 'destructive'
-                            : task.priority === 'medium'
-                              ? 'warning'
-                              : 'info'
-                        }>
-                          {task.priority ? task.priority.charAt(0).toUpperCase() + task.priority.slice(1) : 'Normal'}
+                        <Badge
+                          variant={
+                            task.priority === "high"
+                              ? "destructive"
+                              : task.priority === "medium"
+                              ? "warning"
+                              : "info"
+                          }
+                          className="ml-2 text-xs"
+                        >
+                          {task.priority
+                            ? task.priority.charAt(0).toUpperCase() +
+                              task.priority.slice(1)
+                            : "Normal"}
                         </Badge>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-6 text-muted-foreground">
-                    <p>No upcoming tasks for the next 7 days.</p>
+                    <p className="text-sm">
+                      No upcoming tasks for the next 7 days.
+                    </p>
                   </div>
                 )}
               </CardContent>
-              <CardFooter>
+              <CardFooter className="px-4 pb-4">
                 <Link href="/dashboard/tasks">
-                  <Button variant="outline" className="w-full">View All Tasks</Button>
+                  <Button variant="outline" className="w-full text-sm">
+                    View All Tasks
+                  </Button>
                 </Link>
               </CardFooter>
             </Card>
-            
+
             {/* Active Crops */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-xl">Active Crops</CardTitle>
-                <CardDescription>Currently growing crops</CardDescription>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg md:text-xl">
+                  Active Crops
+                </CardTitle>
+                <CardDescription className="text-sm">
+                  Currently growing crops
+                </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 pb-3">
                 {getActiveGrowingCrops().length > 0 ? (
-                  <div className="space-y-3">
-                    {getActiveGrowingCrops().slice(0, 5).map((crop) => (
-                      <div key={crop.id} className="p-3 border border-border rounded-lg hover:border-muted transition-colors">
-                        <div className="flex justify-between">
-                          <h4 className="font-medium">{crop.name} {crop.variety ? `(${crop.variety})` : ''}</h4>
-                          <Badge variant="success">
-                            {crop.status.charAt(0).toUpperCase() + crop.status.slice(1)}
-                          </Badge>
+                  <div className="space-y-2 md:space-y-3">
+                    {getActiveGrowingCrops()
+                      .slice(0, 5)
+                      .map((crop) => (
+                        <div
+                          key={crop.id}
+                          className="p-3 border border-border rounded-lg hover:border-muted transition-colors"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm md:text-base truncate">
+                                {crop.name}{" "}
+                                {crop.variety ? `(${crop.variety})` : ""}
+                              </h4>
+                            </div>
+                            <Badge variant="success" className="ml-2 text-xs">
+                              {crop.status.charAt(0).toUpperCase() +
+                                crop.status.slice(1)}
+                            </Badge>
+                          </div>
+                          <div className="mt-1 text-xs md:text-sm text-muted-foreground grid grid-cols-1 md:grid-cols-2 gap-1 md:gap-2">
+                            <p>Planted: {formatDate(crop.plantingDate)}</p>
+                            <p>
+                              Est. Harvest:{" "}
+                              {formatDate(
+                                crop.expectedHarvestDate || crop.plantingDate
+                              )}
+                            </p>
+                          </div>
                         </div>
-                        <div className="mt-1 text-sm text-muted-foreground grid grid-cols-2 gap-2">
-                          <p>Planted: {formatDate(crop.plantingDate)}</p>
-                          <p>Est. Harvest: {formatDate(crop.expectedHarvestDate || crop.plantingDate)}</p>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 ) : (
                   <div className="text-center py-6 text-muted-foreground">
-                    <p>No active crops currently growing.</p>
+                    <p className="text-sm">
+                      No active crops currently growing.
+                    </p>
                   </div>
                 )}
               </CardContent>
-              <CardFooter>
+              <CardFooter className="px-4 pb-4">
                 <Link href="/dashboard/fields">
-                  <Button variant="outline" className="w-full">Manage Crops</Button>
+                  <Button variant="outline" className="w-full text-sm">
+                    Manage Crops
+                  </Button>
                 </Link>
               </CardFooter>
             </Card>
           </div>
-          
-          {/* AI Insights and Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* AI Insights and Quick Actions - Mobile optimized */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {/* AI Insights */}
             <Card className="border-primary/30 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-background to-primary/10 z-0"></div>
-              <CardHeader className="relative z-10">
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
+              <CardHeader className="relative z-10 pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+                  <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                   AI-Powered Insights
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-sm">
                   Get intelligent predictions for your crops
                 </CardDescription>
               </CardHeader>
-              <CardContent className="relative z-10">
+              <CardContent className="relative z-10 px-4 pb-3">
                 <p className="text-sm mb-4">
-                  Use our AI technology to predict crop yields, analyze soil conditions,
-                  and get recommendations based on weather patterns.
+                  Use our AI technology to predict crop yields, analyze soil
+                  conditions, and get recommendations based on weather patterns.
                 </p>
               </CardContent>
-              <CardFooter className="relative z-10">
+              <CardFooter className="relative z-10 px-4 pb-4">
                 <Link href="/dashboard/predictions">
-                  <Button className="w-full">Generate Predictions</Button>
+                  <Button className="w-full text-sm">
+                    Generate Predictions
+                  </Button>
                 </Link>
               </CardFooter>
             </Card>
-            
+
             {/* Quick Links */}
             <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg md:text-xl">
+                  Quick Actions
+                </CardTitle>
+                <CardDescription className="text-sm">
                   Common tasks and actions
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-3">
-                <Link href="/dashboard/fields">
-                  <Button variant="outline" className="w-full justify-start gap-2">
-                    <TractorIcon className="h-4 w-4" />
-                    Add Field
-                  </Button>
-                </Link>
-                <Link href="/dashboard/tasks">
-                  <Button variant="outline" className="w-full justify-start gap-2">
-                    <ClipboardList className="h-4 w-4" />
-                    New Task
-                  </Button>
-                </Link>
-                <Link href="/dashboard/weather">
-                  <Button variant="outline" className="w-full justify-start gap-2">
-                    <Cloud className="h-4 w-4" />
-                    Weather
-                  </Button>
-                </Link>
-                <Link href="/dashboard/predictions">
-                  <Button variant="outline" className="w-full justify-start gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    Predictions
-                  </Button>
-                </Link>
+              <CardContent className="px-4 pb-3">
+                <div className="grid grid-cols-2 gap-2 md:gap-3">
+                  <Link href="/dashboard/fields">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2 text-xs md:text-sm h-10 md:h-11"
+                    >
+                      <TractorIcon className="h-3 w-3 md:h-4 md:w-4" />
+                      Add Field
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard/tasks">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2 text-xs md:text-sm h-10 md:h-11"
+                    >
+                      <ClipboardList className="h-3 w-3 md:h-4 md:w-4" />
+                      New Task
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard/weather">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2 text-xs md:text-sm h-10 md:h-11"
+                    >
+                      <Cloud className="h-3 w-3 md:h-4 md:w-4" />
+                      Weather
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard/predictions">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2 text-xs md:text-sm h-10 md:h-11"
+                    >
+                      <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
+                      Predictions
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           </div>
