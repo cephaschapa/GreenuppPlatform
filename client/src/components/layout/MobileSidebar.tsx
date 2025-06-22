@@ -45,10 +45,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-export function MobileSidebar() {
+interface MobileSidebarProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   // Toggle expanded state for items with submenus
@@ -292,16 +296,7 @@ export function MobileSidebar() {
   const navItems = getNavItems();
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="md:hidden fixed top-4 right-4 z-50 bg-background/80 backdrop-blur border border-border"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-      </SheetTrigger>
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-80 p-0">
         <SheetHeader className="p-6 border-b">
           <div className="flex items-center gap-3">
@@ -331,7 +326,7 @@ export function MobileSidebar() {
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
-                onClick={() => setIsOpen(false)}
+                onClick={() => onOpenChange(false)}
               >
                 {item.icon}
                 <span className="font-medium">{item.title}</span>
@@ -364,7 +359,7 @@ export function MobileSidebar() {
             className="w-full"
             onClick={() => {
               logoutMutation.mutate();
-              setIsOpen(false);
+              onOpenChange(false);
             }}
             disabled={logoutMutation.isPending}
           >

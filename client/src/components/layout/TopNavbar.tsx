@@ -17,13 +17,19 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import greenuppLogo from "@/assets/greenupp-full-logo.png";
 
 interface TopNavbarProps {
   title: string;
   description?: string;
+  onAvatarClick?: () => void;
 }
 
-export function TopNavbar({ title, description }: TopNavbarProps) {
+export function TopNavbar({
+  title,
+  description,
+  onAvatarClick,
+}: TopNavbarProps) {
   const { user } = useAuth();
   const [location] = useLocation();
   const { toast } = useToast();
@@ -49,17 +55,40 @@ export function TopNavbar({ title, description }: TopNavbarProps) {
 
   return (
     <div className="fixed right-0 md:right-0 z-40 h-14 md:h-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border flex items-center px-4 md:px-6 top-0 left-0 md:left-64">
-      {/* Mobile: Compact title and actions */}
+      {/* Mobile: Avatar on left, Logo in center */}
       <div className="md:hidden flex items-center justify-between w-full">
-        <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold truncate max-w-32">{title}</h1>
-          {user?.role && (
-            <Badge variant="secondary" className="text-xs">
-              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-            </Badge>
-          )}
+        {/* Left: Avatar (clickable for sidebar) */}
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-0 h-10 w-10 rounded-full"
+            onClick={onAvatarClick}
+          >
+            <Avatar className="h-10 w-10 border-2 border-primary/20">
+              <AvatarImage src={user?.profileImage || undefined} />
+              <AvatarFallback className="text-sm bg-primary/20 text-primary font-medium">
+                {(user && (user.firstName?.[0] || user.username?.[0])) || "U"}
+              </AvatarFallback>
+            </Avatar>
+          </Button>
         </div>
 
+        {/* Center: GreenUpp Logo */}
+        <div className="flex-1 flex justify-center">
+          <Link href="/dashboard" className="flex items-center">
+            <img
+              src={greenuppLogo}
+              alt="Greenupp Logo"
+              className="h-8 md:h-10"
+            />
+            <span className="absolute -top-1 right-1 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full font-semibold">
+              BETA
+            </span>
+          </Link>
+        </div>
+
+        {/* Right: Actions */}
         <div className="flex items-center gap-2">
           {/* Mobile notification bell */}
           <div className="md:hidden">

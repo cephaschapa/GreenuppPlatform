@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { TopNavbar } from "./TopNavbar";
 import { PopoverAssistant } from "@/components/chat/PopoverAssistant";
@@ -18,11 +18,20 @@ export function DashboardLayout({
   description,
   styles,
 }: DashboardLayoutProps) {
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Sidebar />
-      <TopNavbar title={title} description={description} />
-      <MobileSidebar />
+      <TopNavbar
+        title={title}
+        description={description}
+        onAvatarClick={() => setIsMobileSidebarOpen(true)}
+      />
+      <MobileSidebar
+        isOpen={isMobileSidebarOpen}
+        onOpenChange={setIsMobileSidebarOpen}
+      />
 
       {/* Main content with padding adjustments for mobile */}
       <div className="md:pl-64">
