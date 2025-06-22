@@ -270,45 +270,220 @@ function setupSearchRoutes(app: Express) {
           ) {
             suggestions.add(listing.category);
           }
+
+          // Add brand/manufacturer if available
+          if (
+            listing.brand &&
+            listing.brand.toLowerCase().includes(searchTerm)
+          ) {
+            suggestions.add(listing.brand);
+          }
         });
       } catch (error) {
         logger.error("Error getting marketplace suggestions:", error);
       }
 
-      // Add common agricultural terms
+      // Add common agricultural terms and categories
       const commonTerms = [
-        "fertilizer",
-        "pesticide",
-        "irrigation",
-        "harvest",
-        "seeds",
+        // Crops
         "maize",
         "corn",
         "wheat",
         "soybeans",
-        "tools",
-        "equipment",
+        "rice",
+        "potatoes",
+        "tomatoes",
+        "beans",
+        "peas",
+        "cabbage",
+        "lettuce",
+        "spinach",
+        "carrots",
+        "onions",
+        "garlic",
+        "peppers",
+        "cucumbers",
+
+        // Equipment and Tools
+        "tractor",
+        "plow",
+        "harvester",
+        "irrigation",
+        "sprinkler",
+        "seeder",
+        "planter",
+        "fertilizer",
+        "pesticide",
+        "herbicide",
+        "fungicide",
+        "sprayer",
+        "spreader",
+
+        // Farming Activities
+        "planting",
+        "harvesting",
+        "irrigation",
+        "fertilizing",
+        "pest control",
+        "weeding",
+        "pruning",
+        "grafting",
+        "transplanting",
+        "soil preparation",
+        "crop rotation",
+
+        // Soil and Nutrients
+        "soil",
+        "compost",
+        "manure",
+        "nitrogen",
+        "phosphorus",
+        "potassium",
         "organic",
+        "ph",
+        "drainage",
+        "mulch",
+        "cover crop",
+        "green manure",
+
+        // Weather and Climate
+        "weather",
+        "rainfall",
+        "temperature",
+        "humidity",
+        "drought",
+        "flood",
+        "frost",
+        "climate",
+        "season",
+        "growing season",
+        "frost date",
+
+        // Pests and Diseases
         "pest",
         "disease",
-        "soil",
-        "weather",
-        "crop",
+        "fungus",
+        "bacteria",
+        "virus",
+        "insect",
+        "weed",
+        "mold",
+        "blight",
+        "rot",
+        "mildew",
+        "rust",
+        "spot",
+        "wilt",
+
+        // Marketplace Categories
+        "seeds",
+        "fertilizers",
+        "pesticides",
+        "equipment",
+        "tools",
+        "machinery",
+        "irrigation systems",
+        "greenhouse",
+        "storage",
+        "processing",
+        "transport",
+
+        // Business Terms
+        "supplier",
+        "dealer",
+        "wholesale",
+        "retail",
+        "bulk",
+        "organic",
+        "certified",
+        "premium",
+        "quality",
+        "brand",
+        "manufacturer",
+        "distributor",
+
+        // Common Actions
+        "buy",
+        "sell",
+        "rent",
+        "hire",
+        "consult",
+        "advice",
+        "training",
+        "service",
+        "maintenance",
+        "repair",
+        "installation",
+        "delivery",
       ];
 
       commonTerms.forEach((term) => {
+        if (term.includes(searchTerm) || term.startsWith(searchTerm)) {
+          suggestions.add(term);
+        }
+      });
+
+      // Add location-based suggestions if user has location data
+      const locations = [
+        "lusaka",
+        "kitwe",
+        "ndola",
+        "kabwe",
+        "chipata",
+        "livingstone",
+        "solwezi",
+        "mazabuka",
+        "kafue",
+        "choma",
+        "mongu",
+        "kasama",
+        "mufulira",
+        "luanshya",
+      ];
+
+      locations.forEach((location) => {
+        if (location.includes(searchTerm)) {
+          suggestions.add(location);
+        }
+      });
+
+      // Add seasonal suggestions
+      const seasonalTerms = [
+        "planting season",
+        "harvest season",
+        "rainy season",
+        "dry season",
+        "spring",
+        "summer",
+        "autumn",
+        "winter",
+        "growing season",
+      ];
+
+      seasonalTerms.forEach((term) => {
         if (term.includes(searchTerm)) {
           suggestions.add(term);
         }
       });
 
-      // Convert to array and limit results
+      // Convert to array and sort by relevance
       const results = Array.from(suggestions)
+        .map((suggestion) => {
+          // Calculate relevance score
+          let score = 0;
+          if (suggestion.startsWith(searchTerm)) score += 10;
+          if (suggestion.includes(searchTerm)) score += 5;
+          if (suggestion.length <= searchTerm.length + 3) score += 3;
+
+          return {
+            text: suggestion,
+            type: "suggestion",
+            score,
+          };
+        })
+        .sort((a, b) => b.score - a.score)
         .slice(0, limitNum)
-        .map((suggestion) => ({
-          text: suggestion,
-          type: "suggestion",
-        }));
+        .map(({ text, type }) => ({ text, type }));
 
       res.json(results);
     } catch (error) {

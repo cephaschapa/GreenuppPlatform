@@ -24,6 +24,7 @@ import {
   FileText,
   Star,
   Heart,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,6 +88,8 @@ export function GlobalSearchDrawer({
   const inputRef = useRef<HTMLInputElement>(null);
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const [showTypeahead, setShowTypeahead] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
 
   const {
     searchQuery,
@@ -125,13 +128,78 @@ export function GlobalSearchDrawer({
     }
   };
 
+  // Highlight matching text in suggestions
+  const highlightText = (text: string, query: string) => {
+    if (!query) return text;
+    const regex = new RegExp(`(${query})`, "gi");
+    const parts = text.split(regex);
+    return parts.map((part, index) =>
+      regex.test(part) ? (
+        <span key={index} className="bg-primary/20 font-semibold">
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
+
   // Handle result selection
   const handleResultSelect = (result: SearchResult) => {
     saveRecentSearch(searchQuery);
     setLocation(result.url);
     onOpenChange(false);
     setSearchQuery("");
+    setShowTypeahead(false);
   };
+
+  // Handle suggestion selection
+  const handleSuggestionSelect = (suggestion: string) => {
+    setSearchQuery(suggestion);
+    handleSearch(suggestion);
+    setShowTypeahead(false);
+    setSelectedSuggestionIndex(-1);
+  };
+
+  // Handle keyboard navigation for typeahead
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showTypeahead || suggestions.length === 0) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) =>
+          prev < suggestions.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) =>
+          prev > 0 ? prev - 1 : suggestions.length - 1
+        );
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (selectedSuggestionIndex >= 0) {
+          handleSuggestionSelect(suggestions[selectedSuggestionIndex].text);
+        } else {
+          handleSearch(searchQuery);
+        }
+        break;
+      case "Escape":
+        setShowTypeahead(false);
+        setSelectedSuggestionIndex(-1);
+        break;
+    }
+  };
+
+  // Show typeahead when there are suggestions and query is long enough
+  useEffect(() => {
+    setShowTypeahead(
+      searchQuery.length >= 2 && suggestions.length > 0 && !isLoading
+    );
+    setSelectedSuggestionIndex(-1);
+  }, [searchQuery, suggestions, isLoading]);
 
   // Focus input when drawer opens
   useEffect(() => {
@@ -144,7 +212,7 @@ export function GlobalSearchDrawer({
 
   // Handle keyboard shortcuts
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
       // Cmd/Ctrl + K to open search
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
@@ -157,8 +225,8 @@ export function GlobalSearchDrawer({
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", handleGlobalKeyDown);
+    return () => document.removeEventListener("keydown", handleGlobalKeyDown);
   }, [open, onOpenChange]);
 
   // Transform API results to include icons
@@ -186,7 +254,7 @@ export function GlobalSearchDrawer({
         </SheetHeader>
 
         <div className="space-y-4">
-          {/* Search Input */}
+          {/* Search Input with Typeahead */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -194,11 +262,7 @@ export function GlobalSearchDrawer({
               placeholder="Search marketplace, fields, crops, tasks, users..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleSearch(searchQuery);
-                }
-              }}
+              onKeyDown={handleKeyDown}
               className="pl-10 pr-10"
             />
             {searchQuery && (
@@ -206,10 +270,69 @@ export function GlobalSearchDrawer({
                 variant="ghost"
                 size="sm"
                 className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                onClick={() => setSearchQuery("")}
+                onClick={() => {
+                  setSearchQuery("");
+                  setShowTypeahead(false);
+                  setSelectedSuggestionIndex(-1);
+                }}
               >
                 <X className="h-3 w-3" />
               </Button>
+            )}
+
+            {/* Typeahead Suggestions */}
+            {showTypeahead && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                <div className="p-2">
+                  <div className="text-xs font-medium text-muted-foreground mb-2 px-2 flex items-center justify-between">
+                    <span>Suggestions</span>
+                    {isLoading && (
+                      <div className="flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span className="text-xs">Loading...</span>
+                      </div>
+                    )}
+                  </div>
+                  {isLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <span className="text-sm text-muted-foreground">
+                        Finding suggestions...
+                      </span>
+                    </div>
+                  ) : suggestions.length > 0 ? (
+                    suggestions.map((suggestion, index) => (
+                      <div
+                        key={index}
+                        className={cn(
+                          "flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors",
+                          index === selectedSuggestionIndex
+                            ? "bg-primary/10 border border-primary/20"
+                            : "hover:bg-muted"
+                        )}
+                        onClick={() => handleSuggestionSelect(suggestion.text)}
+                      >
+                        <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm">
+                            {highlightText(suggestion.text, searchQuery)}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {suggestion.type}
+                          </div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-muted-foreground">
+                        No suggestions found
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </div>
 
@@ -271,7 +394,7 @@ export function GlobalSearchDrawer({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium truncate">
-                            {result.title}
+                            {highlightText(result.title, searchQuery)}
                           </h4>
                           <Badge variant="secondary" className="text-xs">
                             {result.type}
@@ -279,7 +402,7 @@ export function GlobalSearchDrawer({
                         </div>
                         {result.description && (
                           <p className="text-sm text-muted-foreground truncate">
-                            {result.description}
+                            {highlightText(result.description, searchQuery)}
                           </p>
                         )}
                         {result.metadata && (
@@ -455,6 +578,39 @@ export function GlobalSearchDrawer({
                         {term}
                       </Button>
                     ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Search Tips */}
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Search Tips</h3>
+                  <div className="space-y-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        ⌘K
+                      </Badge>
+                      <span>Quick search from anywhere</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        ↑↓
+                      </Badge>
+                      <span>Navigate suggestions with arrow keys</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        Enter
+                      </Badge>
+                      <span>Select suggestion or search</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        Esc
+                      </Badge>
+                      <span>Close search</span>
+                    </div>
                   </div>
                 </div>
               </div>
