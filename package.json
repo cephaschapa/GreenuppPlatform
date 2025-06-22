@@ -89,6 +89,7 @@
     "font-awesome": "^4.7.0",
     "framer-motion": "^11.18.2",
     "h3-js": "^4.2.1",
+    "html5-qrcode": "^2.3.8",
     "idb": "^8.0.2",
     "input-otp": "^1.2.4",
     "ioredis": "^5.6.1",

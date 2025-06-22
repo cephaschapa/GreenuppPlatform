@@ -52,6 +52,7 @@ import ExpertDirectoryPage from "@/pages/farmer/ExpertDirectoryPage";
 import DealerDirectoryPage from "@/pages/farmer/DealerDirectoryPage";
 import OrdersPage from "./pages/farmer/OrdersPage";
 import InventoryPage from "./pages/farmer/InventoryPage";
+import ProductVerificationPage from "./pages/farmer/ProductVerificationPage";
 
 function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
   const { user, isLoading } = useAuth();
@@ -118,6 +119,10 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
         <ProtectedRoute
           path="/marketplace/list-crop"
           component={ListCropOnMarketplace}
+        />
+        <ProtectedRoute
+          path="/verification"
+          component={ProductVerificationPage}
         />
 
         {/* Notification routes - without /dashboard prefix on app subdomain */}
@@ -226,6 +231,10 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
       <ProtectedRoute
         path="/dashboard/marketplace/list-crop"
         component={ListCropOnMarketplace}
+      />
+      <ProtectedRoute
+        path="/dashboard/verification"
+        component={ProductVerificationPage}
       />
 
       {/* Notification routes on main domain - with /dashboard prefix */}

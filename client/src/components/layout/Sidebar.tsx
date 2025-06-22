@@ -131,6 +131,14 @@ export function Sidebar() {
       showInMobileNav: true,
     },
     {
+      title: "Product Verification",
+      href: "/dashboard/verification",
+      icon: <ShieldCheck className="h-5 w-5" />,
+      mobileIcon: <ShieldCheck className="h-6 w-6" />,
+      active: location === "/dashboard/verification",
+      showInMobileNav: true,
+    },
+    {
       title: "Shop",
       href: "/dashboard/marketplace",
       icon: <ShoppingBag className="h-5 w-5" />,
@@ -173,14 +181,7 @@ export function Sidebar() {
       active: location === "/dashboard/predictions",
       showInMobileNav: false,
     },
-    // {
-    //   title: "Calendar",
-    //   href: "/dashboard/calendar",
-    //   icon: <CalendarDays className="h-5 w-5" />,
-    //   mobileIcon: <CalendarDays className="h-6 w-6" />,
-    //   active: location === "/dashboard/calendar",
-    //   showInMobileNav: false,
-    // },
+
     {
       title: "Profile",
       href: "/dashboard/profile",
@@ -195,14 +196,6 @@ export function Sidebar() {
       icon: <Settings className="h-5 w-5" />,
       mobileIcon: <Settings className="h-6 w-6" />,
       active: location === "/dashboard/settings",
-      showInMobileNav: false,
-    },
-    {
-      title: "Verify Products",
-      href: "/trace",
-      icon: <ShieldCheck className="h-5 w-5" />,
-      mobileIcon: <ShieldCheck className="h-6 w-6" />,
-      active: location === "/trace",
       showInMobileNav: false,
     },
     {
