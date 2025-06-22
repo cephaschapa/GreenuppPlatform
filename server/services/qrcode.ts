@@ -5,6 +5,21 @@ import QRCode from "qrcode";
  */
 export class QRCodeService {
   /**
+   * Get the base URL for the frontend
+   * @returns The frontend URL
+   */
+  private getFrontendUrl(): string {
+    // In production, use the actual deployed URL
+    if (process.env.NODE_ENV === "production") {
+      // Use the actual deployed domain
+      return "https://greenupp-platform.railway.app";
+    }
+
+    // In development, use localhost
+    return process.env.FRONTEND_URL || "http://localhost:3000";
+  }
+
+  /**
    * Generate a QR code image for crop traceability
    * @param data The data to encode in the QR code
    * @returns A base64 encoded string of the QR code image
@@ -43,9 +58,9 @@ export class QRCodeService {
     cropId: number,
     batchId: string
   ): Promise<string> {
-    const traceUrl = `${
-      process.env.FRONTEND_URL || "http://localhost:3000"
-    }/dashboard/verification?batch=${batchId}&cropId=${cropId}`;
+    const baseUrl = this.getFrontendUrl();
+    const traceUrl = `${baseUrl}/dashboard/verification?batch=${batchId}&cropId=${cropId}`;
+    console.log(`[QRCode] Generating crop trace QR code for URL: ${traceUrl}`);
     return this.generateQRCode(traceUrl);
   }
 
@@ -59,9 +74,9 @@ export class QRCodeService {
     listingId: number,
     batchId: string
   ): Promise<string> {
-    const traceUrl = `${
-      process.env.FRONTEND_URL || "http://localhost:3000"
-    }/dashboard/verification?batch=${batchId}&listing=${listingId}`;
+    const baseUrl = this.getFrontendUrl();
+    const traceUrl = `${baseUrl}/dashboard/verification?batch=${batchId}&listing=${listingId}`;
+    console.log(`[QRCode] Generating marketplace QR code for URL: ${traceUrl}`);
     return this.generateQRCode(traceUrl);
   }
 }

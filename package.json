@@ -25,7 +25,8 @@
     "type-check": "tsc --noEmit",
     "clean": "rimraf dist node_modules/.cache",
     "prebuild": "npm run clean",
-    "generate-qr": "tsx scripts/generate-qr-codes.js"
+    "generate-qr": "tsx scripts/generate-qr-codes.js",
+    "regenerate-qr": "tsx scripts/regenerate-qr-codes.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
