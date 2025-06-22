@@ -197,7 +197,7 @@ export function PopoverAssistant() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-24 right-2 z-50">
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button className="h-14 w-14 p-0 rounded-full shadow-lg hover:shadow-xl transition-all">

@@ -29,6 +29,7 @@ import {
   MessageSquare,
   FileText,
   BarChart3,
+  SquareDashedBottom,
 } from "lucide-react";
 import greenuppLogo from "@/assets/greenupp-full-logo.png";
 import { cn } from "@/lib/utils";
@@ -72,6 +73,12 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
   const getNavItems = () => {
     if (user?.role === UserRole.SUPPLIER) {
       return [
+        {
+          title: "Overview",
+          href: "/dashboard",
+          icon: <SquareDashedBottom className="h-5 w-5" />,
+          active: location === "/dashboard",
+        },
         {
           title: "Fields & Crops",
           href: "/dashboard/fields",
@@ -212,6 +219,12 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
       // Default farmer navigation
       return [
         {
+          title: "Overview",
+          href: "/dashboard",
+          icon: <SquareDashedBottom className="h-5 w-5" />,
+          active: location === "/dashboard",
+        },
+        {
           title: "Fields & Crops",
           href: "/dashboard/fields",
           icon: <TractorIcon className="h-5 w-5" />,
@@ -327,7 +340,7 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
           </div>
         </SheetHeader>
 
-        <ScrollArea className="flex-1 py-4">
+        <ScrollArea className="flex-1 py-4 overflow-y-auto">
           <nav className="space-y-1 px-4">
             {navItems.map((item) => (
               <Link
