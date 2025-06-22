@@ -444,34 +444,6 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-30 h-24 bg-sidebar text-sidebar-foreground border-t border-primary/20 flex items-center justify-around px-1 safe-bottom">
-        {mobileNavItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex flex-col items-center justify-center gap-1 w-full h-full px-1 relative",
-              item.active ? "text-primary" : "text-muted-foreground"
-            )}
-          >
-            {/* {item.title === "Chat" && chatUnreadCount > 0 && (
-              <Badge
-                variant="destructive"
-                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] rounded-full"
-              >
-                {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
-              </Badge>
-            )} */}
-            {/* Social notifications moved to top navbar */}
-            {item.mobileIcon}
-            <span className="text-xs line-clamp-1 text-center max-w-[70px]">
-              {item.title}
-            </span>
-          </Link>
-        ))}
-      </div>
-
       {/* Desktop Sidebar */}
       <div className="hidden md:flex h-screen flex-col bg-sidebar text-sidebar-foreground border-r border-primary/20 w-64 fixed top-0 left-0">
         <div className="p-6">
