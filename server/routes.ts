@@ -20,6 +20,7 @@ import { testEmailRouter } from "./routes/test-email-notifications";
 import publicEmailTestRouter from "./routes/test-public-email-notifications";
 import streamChatRoutes from "./routes/stream-chat-routes";
 import farmingAssistantRoutes from "./routes/farming-assistant";
+import searchRoutes from "./routes/search";
 import { setWebSocketNotifier } from "./services/websocket-notifier";
 import fetch from "node-fetch";
 
@@ -100,6 +101,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up marketplace routes
   setupMarketplaceRoutes(app);
+
+  // Set up search routes
+  searchRoutes(app);
 
   // Set up cart routes
   app.use("/api/cart", cartRoutes);

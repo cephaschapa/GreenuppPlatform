@@ -97,7 +97,19 @@ function setupMarketplaceRoutes(app: Express) {
   // Get all marketplace listings
   app.get("/api/marketplace/listings", async (req, res) => {
     try {
-      const { category, query, priceMin, priceMax, sellerId } = req.query;
+      const {
+        category,
+        query,
+        search,
+        priceMin,
+        priceMax,
+        sellerId,
+        condition,
+        status,
+        sortBy,
+        limit,
+        offset,
+      } = req.query;
 
       let sellerIdParam: number | undefined;
       if (sellerId) {
@@ -107,7 +119,7 @@ function setupMarketplaceRoutes(app: Express) {
         }
       }
 
-      // Basic filters for now, can be expanded later
+      // Build filters object
       const filters: Record<string, any> = {};
 
       if (category && category !== "all") {
@@ -117,14 +129,14 @@ function setupMarketplaceRoutes(app: Express) {
       if (priceMin) {
         const min = parseFloat(priceMin as string);
         if (!isNaN(min)) {
-          filters.priceMin = min;
+          filters.minPrice = min;
         }
       }
 
       if (priceMax) {
         const max = parseFloat(priceMax as string);
         if (!isNaN(max)) {
-          filters.priceMax = max;
+          filters.maxPrice = max;
         }
       }
 
@@ -132,8 +144,35 @@ function setupMarketplaceRoutes(app: Express) {
         filters.sellerId = sellerIdParam;
       }
 
-      if (query) {
-        filters.query = query;
+      // Handle search query - support both 'query' and 'search' parameters
+      if (query || search) {
+        filters.search = query || search;
+      }
+
+      if (condition) {
+        filters.condition = condition;
+      }
+
+      if (status) {
+        filters.status = status;
+      }
+
+      if (sortBy) {
+        filters.sortBy = sortBy;
+      }
+
+      if (limit) {
+        const limitNum = parseInt(limit as string);
+        if (!isNaN(limitNum)) {
+          filters.limit = limitNum;
+        }
+      }
+
+      if (offset) {
+        const offsetNum = parseInt(offset as string);
+        if (!isNaN(offsetNum)) {
+          filters.offset = offsetNum;
+        }
       }
 
       const listings = await storage.getMarketplaceListings(filters);
@@ -142,6 +181,59 @@ function setupMarketplaceRoutes(app: Express) {
     } catch (error) {
       logger.error("Error fetching marketplace listings:", error);
       res.status(500).json({ message: "Failed to retrieve listings" });
+    }
+  });
+
+  // Get search suggestions for autocomplete
+  app.get("/api/marketplace/search/suggestions", async (req, res) => {
+    try {
+      const { query, limit = "10" } = req.query;
+
+      if (!query || typeof query !== "string") {
+        return res.json([]);
+      }
+
+      const limitNum = parseInt(limit as string);
+      const searchTerm = query.toLowerCase();
+
+      // Get all listings for suggestions
+      const allListings = await storage.getMarketplaceListings();
+
+      // Create suggestions from titles and categories
+      const suggestions = new Set<string>();
+
+      allListings.forEach((listing) => {
+        // Add title words that match the search term
+        if (listing.title) {
+          const titleWords = listing.title.toLowerCase().split(/\s+/);
+          titleWords.forEach((word) => {
+            if (word.startsWith(searchTerm) && word.length > 2) {
+              suggestions.add(word);
+            }
+          });
+        }
+
+        // Add category if it matches
+        if (
+          listing.category &&
+          listing.category.toLowerCase().includes(searchTerm)
+        ) {
+          suggestions.add(listing.category);
+        }
+      });
+
+      // Convert to array and limit results
+      const results = Array.from(suggestions)
+        .slice(0, limitNum)
+        .map((suggestion) => ({
+          text: suggestion,
+          type: "suggestion",
+        }));
+
+      res.json(results);
+    } catch (error) {
+      logger.error("Error fetching search suggestions:", error);
+      res.status(500).json({ message: "Failed to retrieve suggestions" });
     }
   });
 
@@ -164,7 +256,9 @@ function setupMarketplaceRoutes(app: Express) {
 
       // Optional category filter
       const categoryFilter =
-        category && category !== "all" ? (category as string) : undefined;
+        category && category !== "all"
+          ? { category: category as string }
+          : undefined;
 
       const listings = await storage.getMarketplaceListingsByLocation(
         lat,
@@ -185,29 +279,21 @@ function setupMarketplaceRoutes(app: Express) {
     "/api/marketplace/listings/by-seller-location/:sellerId",
     async (req, res) => {
       try {
-        const { latitude, longitude, distance } = req.query;
+        const { distance } = req.query;
         const sellerId = parseInt(req.params.sellerId);
 
         if (isNaN(sellerId)) {
           throw new ValidationError("Invalid seller ID");
         }
 
-        if (!latitude || !longitude) {
-          throw new ValidationError("Latitude and longitude are required");
-        }
-
-        const lat = parseFloat(latitude as string);
-        const lon = parseFloat(longitude as string);
         const dist = distance ? parseFloat(distance as string) : 50; // Default 50km radius
 
-        if (isNaN(lat) || isNaN(lon) || isNaN(dist)) {
-          throw new ValidationError("Invalid coordinates or distance");
+        if (isNaN(dist)) {
+          throw new ValidationError("Invalid distance");
         }
 
         const listings = await storage.getMarketplaceListingsBySellerLocation(
           sellerId,
-          lat,
-          lon,
           dist
         );
 
@@ -262,16 +348,7 @@ function setupMarketplaceRoutes(app: Express) {
   app.post(
     "/api/marketplace/listings",
     isAuthenticated,
-    (req, res, next) => {
-      upload.array("images", 5)(req, res, (err) => {
-        if (err) {
-          logger.error("Multer error:", err);
-          next(new ValidationError("File upload error"));
-          return;
-        }
-        next();
-      });
-    },
+    upload.array("images", 5),
     async (req, res, next) => {
       try {
         // Debug logging
@@ -290,13 +367,11 @@ function setupMarketplaceRoutes(app: Express) {
 
         // Process files if any
         let images: string[] = [];
-        const files = req.files as
-          | { [fieldname: string]: Express.Multer.File[] }
-          | undefined;
+        const files = req.files as Express.Multer.File[] | undefined;
 
-        if (files && files.images && files.images.length > 0) {
+        if (files && files.length > 0) {
           // Convert Buffer to base64 string for storage
-          images = files.images.map((file) => {
+          images = files.map((file) => {
             const base64 = file.buffer.toString("base64");
             return `data:${file.mimetype};base64,${base64}`;
           });
@@ -328,24 +403,7 @@ function setupMarketplaceRoutes(app: Express) {
   app.patch(
     "/api/marketplace/listings/:id",
     isAuthenticated,
-    (req, res, next) => {
-      logger.info("Starting marketplace listings PATCH handler");
-
-      // Wrap multer in try/catch to prevent server crashes
-      try {
-        upload(req, res, (err) => {
-          if (err) {
-            logger.error("Multer error:", err);
-            next(new ValidationError("File upload error"));
-            return;
-          }
-          next();
-        });
-      } catch (error) {
-        logger.error("Critical error in file upload middleware:", error);
-        next(new DatabaseError("Server error processing file upload"));
-      }
-    },
+    upload.array("images", 5),
     async (req, res, next) => {
       try {
         if (!req.user) {
@@ -371,13 +429,11 @@ function setupMarketplaceRoutes(app: Express) {
 
         // Process files if any
         let images: string[] = [];
-        const files = req.files as
-          | { [fieldname: string]: Express.Multer.File[] }
-          | undefined;
+        const files = req.files as Express.Multer.File[] | undefined;
 
-        if (files && files.images && files.images.length > 0) {
+        if (files && files.length > 0) {
           // Convert Buffer to base64 string for storage
-          images = files.images.map((file) => {
+          images = files.map((file) => {
             const base64 = file.buffer.toString("base64");
             return `data:${file.mimetype};base64,${base64}`;
           });
