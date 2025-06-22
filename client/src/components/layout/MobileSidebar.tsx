@@ -299,17 +299,30 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-80 p-0">
         <SheetHeader className="p-6 border-b">
-          <div className="flex items-center gap-3">
-            <img src={greenuppLogo} alt="Greenupp Logo" className="h-8" />
-            <div>
-              <SheetTitle className="text-left">Menu</SheetTitle>
-              <SheetDescription className="text-left">
-                {user?.role
-                  ? `${
-                      user.role.charAt(0).toUpperCase() + user.role.slice(1)
-                    } Dashboard`
-                  : "Dashboard"}
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16 border-2 border-primary/20">
+              <AvatarImage src={user?.profileImage || undefined} />
+              <AvatarFallback className="text-lg font-semibold bg-primary/20 text-primary">
+                {(user && (user.firstName?.[0] || user.username?.[0])) || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <SheetTitle className="text-left text-lg font-semibold truncate">
+                {user?.firstName} {user?.lastName}
+              </SheetTitle>
+              <SheetDescription className="text-left text-sm text-muted-foreground truncate">
+                @{user?.username}
               </SheetDescription>
+              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <span className="font-medium text-foreground">0</span>
+                  <span>Following</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="font-medium text-foreground">0</span>
+                  <span>Followers</span>
+                </div>
+              </div>
             </div>
           </div>
         </SheetHeader>
@@ -336,23 +349,6 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
         </ScrollArea>
 
         <div className="p-4 border-t">
-          <div className="flex items-center gap-3 mb-4">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={user?.profileImage || undefined} />
-              <AvatarFallback>
-                {user?.firstName?.[0] || user?.username?.[0] || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">
-                {user?.firstName} {user?.lastName}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {user?.email}
-              </p>
-            </div>
-          </div>
-
           <Button
             variant="outline"
             size="sm"

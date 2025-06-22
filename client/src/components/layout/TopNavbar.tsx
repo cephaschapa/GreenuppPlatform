@@ -82,9 +82,6 @@ export function TopNavbar({
               alt="Greenupp Logo"
               className="h-8 md:h-10"
             />
-            <span className="absolute -top-1 right-1 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full font-semibold">
-              BETA
-            </span>
           </Link>
         </div>
 
