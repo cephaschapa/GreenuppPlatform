@@ -1,5 +1,4 @@
-// In a production environment, we would use a library like 'qrcode'
-// For this implementation, we'll simulate QR code generation
+import QRCode from "qrcode";
 
 /**
  * Service for generating QR codes for crop traceability
@@ -11,37 +10,58 @@ export class QRCodeService {
    * @returns A base64 encoded string of the QR code image
    */
   async generateQRCode(data: string): Promise<string> {
-    // In a real implementation, we would use the qrcode library:
-    // const QRCode = require('qrcode');
-    // const qrCodeDataUrl = await QRCode.toDataURL(data);
-    // return qrCodeDataUrl;
-    
-    console.log(`[QRCode] Generating QR code for data: ${data}`);
-    
-    // For the mock implementation, we'll just return a placeholder base64 image
-    // In the real implementation, we would use the qrcode library to generate a real QR code
-    return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYA...(simulated QR code image data)';
+    try {
+      console.log(`[QRCode] Generating QR code for data: ${data}`);
+
+      // Generate QR code as data URL
+      const qrCodeDataUrl = await QRCode.toDataURL(data, {
+        errorCorrectionLevel: "M",
+        type: "image/png",
+        margin: 1,
+        color: {
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
+        width: 256,
+      });
+
+      console.log(`[QRCode] Successfully generated QR code`);
+      return qrCodeDataUrl;
+    } catch (error) {
+      console.error("[QRCode] Error generating QR code:", error);
+      throw new Error("Failed to generate QR code");
+    }
   }
-  
+
   /**
    * Generate a QR code for a specific crop batch
    * @param cropId The ID of the crop
    * @param batchId The batch ID
    * @returns A base64 encoded string of the QR code image
    */
-  async generateCropTraceQRCode(cropId: number, batchId: string): Promise<string> {
-    const traceUrl = `https://greenupp.com/trace/${batchId}?cropId=${cropId}`;
+  async generateCropTraceQRCode(
+    cropId: number,
+    batchId: string
+  ): Promise<string> {
+    const traceUrl = `${
+      process.env.FRONTEND_URL || "http://localhost:3000"
+    }/dashboard/verification?batch=${batchId}&cropId=${cropId}`;
     return this.generateQRCode(traceUrl);
   }
-  
+
   /**
    * Generate a QR code for a marketplace listing
    * @param listingId The ID of the listing
    * @param batchId The batch ID for traceability
    * @returns A base64 encoded string of the QR code image
    */
-  async generateMarketplaceQRCode(listingId: number, batchId: string): Promise<string> {
-    const traceUrl = `https://greenupp.com/marketplace/trace/${batchId}?listing=${listingId}`;
+  async generateMarketplaceQRCode(
+    listingId: number,
+    batchId: string
+  ): Promise<string> {
+    const traceUrl = `${
+      process.env.FRONTEND_URL || "http://localhost:3000"
+    }/dashboard/verification?batch=${batchId}&listing=${listingId}`;
     return this.generateQRCode(traceUrl);
   }
 }

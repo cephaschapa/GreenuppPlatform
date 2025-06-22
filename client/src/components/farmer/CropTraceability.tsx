@@ -1,21 +1,50 @@
-import React, { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, FileCheck, ShieldCheck, AlertTriangle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import type { Crop, CropTraceEvent } from '@shared/schema';
+import React, { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, FileCheck, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { Crop, CropTraceEvent } from "@shared/schema";
 
 // Schema for adding a new trace event
 const traceEventSchema = z.object({
@@ -40,18 +69,23 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
 
   // Fetch crop details
   const { data: crop, isLoading: isLoadingCrop } = useQuery<Crop>({
-    queryKey: ['/api/crops', cropId],
+    queryKey: ["/api/crops", cropId],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/crops/${cropId}`);
+      const response = await apiRequest("GET", `/api/crops/${cropId}`);
       return await response.json();
     },
   });
 
   // Fetch trace events
-  const { data: events, isLoading: isLoadingEvents } = useQuery<CropTraceEvent[]>({
-    queryKey: ['/crops', cropId, 'trace', 'events'],
+  const { data: events, isLoading: isLoadingEvents } = useQuery<
+    CropTraceEvent[]
+  >({
+    queryKey: ["/api/croptrace", cropId, "trace", "events"],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/crops/${cropId}/trace/events`);
+      const response = await apiRequest(
+        "GET",
+        `/api/croptrace/crops/${cropId}/trace/events`
+      );
       return await response.json();
     },
     enabled: !!cropId,
@@ -59,9 +93,12 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
 
   // Fetch trace history (includes blockchain data)
   const { data: history, isLoading: isLoadingHistory } = useQuery({
-    queryKey: ['/crops', cropId, 'trace', 'history'],
+    queryKey: ["/api/croptrace", cropId, "trace", "history"],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/crops/${cropId}/trace/history`);
+      const response = await apiRequest(
+        "GET",
+        `/api/croptrace/crops/${cropId}/trace/history`
+      );
       return await response.json();
     },
     enabled: !!cropId,
@@ -70,11 +107,15 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
   // Mutation to initialize traceability
   const initializeMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', `/crops/${cropId}/trace/initialize`, {
-        name: crop?.name,
-        variety: crop?.variety,
-        status: crop?.status,
-      });
+      const response = await apiRequest(
+        "POST",
+        `/api/croptrace/crops/${cropId}/trace/initialize`,
+        {
+          name: crop?.name,
+          variety: crop?.variety,
+          status: crop?.status,
+        }
+      );
       return await response.json();
     },
     onSuccess: () => {
@@ -83,17 +124,22 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
         description: "This crop is now tracked on the blockchain!",
       });
       // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/crops', cropId] });
-      queryClient.invalidateQueries({ queryKey: ['/crops', cropId, 'trace', 'events'] });
-      queryClient.invalidateQueries({ queryKey: ['/crops', cropId, 'trace', 'history'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/crops", cropId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/croptrace", cropId, "trace", "events"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/croptrace", cropId, "trace", "history"],
+      });
     },
     onError: (error) => {
       toast({
         title: "Initialization Failed",
-        description: "Could not initialize blockchain traceability. Please try again.",
+        description:
+          "Could not initialize blockchain traceability. Please try again.",
         variant: "destructive",
       });
-    }
+    },
   });
 
   // Mutation to add a trace event
@@ -102,10 +148,16 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
       // Convert numeric string inputs to numbers
       const formattedData = {
         ...data,
-        outputQuantity: data.outputQuantity ? parseFloat(data.outputQuantity) : undefined,
+        outputQuantity: data.outputQuantity
+          ? parseFloat(data.outputQuantity)
+          : undefined,
       };
-      
-      const response = await apiRequest('POST', `/crops/${cropId}/trace/events`, formattedData);
+
+      const response = await apiRequest(
+        "POST",
+        `/api/croptrace/crops/${cropId}/trace/events`,
+        formattedData
+      );
       return await response.json();
     },
     onSuccess: () => {
@@ -114,10 +166,14 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
         description: "The event has been recorded on the blockchain!",
       });
       setIsAddEventOpen(false);
-      
+
       // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['/crops', cropId, 'trace', 'events'] });
-      queryClient.invalidateQueries({ queryKey: ['/crops', cropId, 'trace', 'history'] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/croptrace", cropId, "trace", "events"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/croptrace", cropId, "trace", "history"],
+      });
     },
     onError: (error) => {
       toast({
@@ -125,7 +181,7 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
         description: "Could not record the event. Please try again.",
         variant: "destructive",
       });
-    }
+    },
   });
 
   // Form setup for adding events
@@ -172,17 +228,29 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
             Blockchain Traceability
           </CardTitle>
           <CardDescription>
-            Track your crop's journey on the blockchain for enhanced transparency and trust
+            Track your crop's journey on the blockchain for enhanced
+            transparency and trust
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
             <div className="flex justify-between items-center">
               <div>
-                <p className="font-semibold">{crop.name} {crop.variety ? `(${crop.variety})` : ''}</p>
-                <p className="text-sm text-muted-foreground">Status: {crop.status}</p>
+                <p className="font-semibold">
+                  {crop.name} {crop.variety ? `(${crop.variety})` : ""}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Status: {crop.status}
+                </p>
               </div>
-              <Badge variant={crop.batchId ? "secondary" : "outline"} className={crop.batchId ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100" : ""}>
+              <Badge
+                variant={crop.batchId ? "secondary" : "outline"}
+                className={
+                  crop.batchId
+                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+                    : ""
+                }
+              >
                 {crop.batchId ? "Blockchain Enabled" : "Not Tracked"}
               </Badge>
             </div>
@@ -196,16 +264,20 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                   </div>
                   <div>
                     <p className="text-muted-foreground">Transaction ID:</p>
-                    <p className="font-mono text-xs truncate">{crop.blockchainTxId || 'N/A'}</p>
+                    <p className="font-mono text-xs truncate">
+                      {crop.blockchainTxId || "N/A"}
+                    </p>
                   </div>
                 </div>
-                
+
                 {crop.traceabilityQrCode && (
                   <div className="mt-2 text-center">
-                    <p className="text-sm text-muted-foreground mb-2">Traceability QR Code:</p>
-                    <img 
-                      src={crop.traceabilityQrCode} 
-                      alt="Traceability QR Code" 
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Traceability QR Code:
+                    </p>
+                    <img
+                      src={crop.traceabilityQrCode}
+                      alt="Traceability QR Code"
                       className="h-32 w-32 mx-auto border rounded-md"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
@@ -217,8 +289,10 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
             ) : (
               <div className="text-center py-6">
                 <FileCheck className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                <p className="mb-4">This crop is not yet tracked on the blockchain.</p>
-                <Button 
+                <p className="mb-4">
+                  This crop is not yet tracked on the blockchain.
+                </p>
+                <Button
                   onClick={() => initializeMutation.mutate()}
                   disabled={initializeMutation.isPending}
                 >
@@ -243,7 +317,7 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="verification">Verification</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="events" className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">Crop Events</h3>
@@ -251,7 +325,7 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                 Record New Event
               </Button>
             </div>
-            
+
             {isLoadingEvents ? (
               <div className="flex items-center justify-center p-4">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -265,19 +339,23 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                       <CardHeader className="py-3">
                         <div className="flex justify-between">
                           <div>
-                            <CardTitle className="text-base">{event.eventType}</CardTitle>
+                            <CardTitle className="text-base">
+                              {event.eventType}
+                            </CardTitle>
                             <CardDescription className="text-xs">
-                              {new Date(event.eventDate).toLocaleDateString()} at {new Date(event.eventDate).toLocaleTimeString()}
+                              {new Date(event.eventDate).toLocaleDateString()}{" "}
+                              at{" "}
+                              {new Date(event.eventDate).toLocaleTimeString()}
                             </CardDescription>
                           </div>
                           <Badge variant="secondary" className="h-fit">
-                            {event.blockchainTxId ? 'Verified' : 'Pending'}
+                            {event.blockchainTxId ? "Verified" : "Pending"}
                           </Badge>
                         </div>
                       </CardHeader>
                       <CardContent className="py-2">
                         <p className="text-sm">{event.description}</p>
-                        
+
                         {(event.inputMaterials || event.outputQuantity) && (
                           <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                             {event.inputMaterials && (
@@ -289,7 +367,7 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                             {event.outputQuantity && (
                               <div>
                                 <span className="font-semibold">Output: </span>
-                                {event.outputQuantity} {event.outputUnit || ''}
+                                {event.outputQuantity} {event.outputUnit || ""}
                               </div>
                             )}
                           </div>
@@ -298,7 +376,7 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                       <CardFooter className="py-2 text-xs">
                         <span className="text-muted-foreground">TX: </span>
                         <code className="ml-1 font-mono truncate">
-                          {event.blockchainTxId || 'Processing...'}
+                          {event.blockchainTxId || "Processing..."}
                         </code>
                       </CardFooter>
                     </div>
@@ -308,25 +386,23 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
             ) : (
               <div className="text-center py-6 border rounded-md bg-muted/30">
                 <p className="text-muted-foreground">No events recorded yet.</p>
-                <Button 
-                  variant="link" 
-                  onClick={() => setIsAddEventOpen(true)}
-                >
+                <Button variant="link" onClick={() => setIsAddEventOpen(true)}>
                   Record your first event
                 </Button>
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="verification" className="space-y-4">
             <h3 className="text-lg font-semibold">Blockchain Verification</h3>
-            
+
             {isLoadingHistory ? (
               <div className="flex items-center justify-center p-4">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 <span className="ml-2">Loading blockchain data...</span>
               </div>
-            ) : history?.blockchainHistory && history.blockchainHistory.length > 0 ? (
+            ) : history?.blockchainHistory &&
+              history.blockchainHistory.length > 0 ? (
               <div className="space-y-4">
                 <div className="rounded-md border bg-muted/30 p-4">
                   <h4 className="font-semibold mb-2">Verification Status</h4>
@@ -335,34 +411,48 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                     <span>All transactions verified on blockchain</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Anyone can verify this crop's authenticity by scanning the QR code or entering the batch ID
+                    Anyone can verify this crop's authenticity by scanning the
+                    QR code or entering the batch ID
                   </p>
                 </div>
-                
+
                 <div className="space-y-2">
                   <h4 className="font-semibold">Blockchain Transactions</h4>
-                  {history.blockchainHistory.map((entry: any, index: number) => (
-                    <div key={index} className="rounded-md border p-3 text-sm">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-semibold">{entry.action}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(entry.timestamp).toLocaleString()}
-                          </p>
+                  {history.blockchainHistory.map(
+                    (entry: any, index: number) => (
+                      <div
+                        key={index}
+                        className="rounded-md border p-3 text-sm"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-semibold">{entry.action}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(entry.timestamp).toLocaleString()}
+                            </p>
+                          </div>
+                          <Badge variant="outline" className="h-fit">
+                            TX
+                          </Badge>
                         </div>
-                        <Badge variant="outline" className="h-fit">TX</Badge>
+                        <div className="mt-2">
+                          <p className="text-xs text-muted-foreground">
+                            Transaction ID:
+                          </p>
+                          <code className="text-xs font-mono">
+                            {entry.txId}
+                          </code>
+                        </div>
                       </div>
-                      <div className="mt-2">
-                        <p className="text-xs text-muted-foreground">Transaction ID:</p>
-                        <code className="text-xs font-mono">{entry.txId}</code>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               </div>
             ) : (
               <div className="text-center py-6 border rounded-md bg-muted/30">
-                <p className="text-muted-foreground">No blockchain data available yet.</p>
+                <p className="text-muted-foreground">
+                  No blockchain data available yet.
+                </p>
                 <p className="text-sm text-muted-foreground mt-1">
                   Record events to create a blockchain history for this crop.
                 </p>
@@ -378,10 +468,11 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
           <DialogHeader>
             <DialogTitle>Record Trace Event</DialogTitle>
             <DialogDescription>
-              Record an event in this crop's lifecycle. This information will be stored on the blockchain for verification.
+              Record an event in this crop's lifecycle. This information will be
+              stored on the blockchain for verification.
             </DialogDescription>
           </DialogHeader>
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -390,7 +481,10 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Event Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select event type" />
@@ -399,7 +493,9 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                       <SelectContent>
                         <SelectItem value="planting">Planting</SelectItem>
                         <SelectItem value="fertilizing">Fertilizing</SelectItem>
-                        <SelectItem value="pesticide_application">Pesticide Application</SelectItem>
+                        <SelectItem value="pesticide_application">
+                          Pesticide Application
+                        </SelectItem>
                         <SelectItem value="irrigation">Irrigation</SelectItem>
                         <SelectItem value="weeding">Weeding</SelectItem>
                         <SelectItem value="harvesting">Harvesting</SelectItem>
@@ -413,7 +509,7 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="description"
@@ -421,8 +517,8 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="Describe the event in detail..." 
+                      <Textarea
+                        placeholder="Describe the event in detail..."
                         className="resize-none"
                         {...field}
                       />
@@ -431,7 +527,7 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                   </FormItem>
                 )}
               />
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -440,8 +536,8 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                     <FormItem>
                       <FormLabel>Input Materials (Optional)</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="e.g., Fertilizer name, seeds" 
+                        <Input
+                          placeholder="e.g., Fertilizer name, seeds"
                           {...field}
                         />
                       </FormControl>
@@ -449,7 +545,7 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                     </FormItem>
                   )}
                 />
-                
+
                 <div className="grid grid-cols-2 gap-2">
                   <FormField
                     control={form.control}
@@ -458,9 +554,9 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                       <FormItem>
                         <FormLabel>Quantity (Optional)</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="e.g., 500" 
+                          <Input
+                            type="number"
+                            placeholder="e.g., 500"
                             {...field}
                           />
                         </FormControl>
@@ -468,14 +564,17 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="outputUnit"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Unit (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Unit" />
@@ -498,19 +597,16 @@ export default function CropTraceability({ cropId }: CropTraceabilityProps) {
                   />
                 </div>
               </div>
-              
+
               <DialogFooter>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setIsAddEventOpen(false)}
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit"
-                  disabled={addEventMutation.isPending}
-                >
+                <Button type="submit" disabled={addEventMutation.isPending}>
                   {addEventMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

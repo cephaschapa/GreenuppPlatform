@@ -22,6 +22,7 @@ import {
   MapPin,
   Clock,
   BarChart3,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +57,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { QRCodeScanner } from "@/components/QRCodeScanner";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { CropDetailsDialog } from "@/components/farmer/CropDetailsDialog";
 
 interface Crop {
   id: number;
@@ -113,6 +115,8 @@ export default function ProductVerificationPage() {
   const [verificationResult, setVerificationResult] =
     useState<VerificationResult | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [selectedCrop, setSelectedCrop] = useState<Crop | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
   // Fetch user's crops that have begun production
   const { data: crops, isLoading: isLoadingCrops } = useQuery<Crop[]>({
@@ -282,6 +286,14 @@ export default function ProductVerificationPage() {
     }
   };
 
+  const handleCardClick = (item: Crop | MarketplaceListing) => {
+    const isCrop = "name" in item;
+    if (isCrop) {
+      setSelectedCrop(item);
+      setIsDetailsDialogOpen(true);
+    }
+  };
+
   return (
     <DashboardLayout title="Product Verification">
       <div className="container max-w-7xl py-6 space-y-6">
@@ -358,43 +370,45 @@ export default function ProductVerificationPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Product Details</h4>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Name:</span>{" "}
-                      {verificationResult.crop.name}
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Batch ID:</span>{" "}
-                      {verificationResult.crop.batchId}
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Status:</span>{" "}
-                      {verificationResult.crop.status}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <span className="font-medium">
+                    {verificationResult.allVerified
+                      ? "All checks passed"
+                      : "Some issues found"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Product Details</h4>
+                    <div className="space-y-1 text-sm">
+                      <p>
+                        <span className="font-medium">Name:</span>{" "}
+                        {verificationResult.crop.name}
+                      </p>
+                      <p>
+                        <span className="font-medium">Variety:</span>{" "}
+                        {verificationResult.crop.variety || "Not specified"}
+                      </p>
+                      <p>
+                        <span className="font-medium">Status:</span>{" "}
+                        {verificationResult.crop.status}
+                      </p>
                     </div>
                   </div>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Verification Status</h4>
-                  <div className="flex items-center gap-2">
-                    {verificationResult.allVerified ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    ) : (
-                      <AlertTriangle className="h-5 w-5 text-red-500" />
-                    )}
-                    <span
-                      className={
-                        verificationResult.allVerified
-                          ? "text-green-700 dark:text-green-300"
-                          : "text-red-700 dark:text-red-300"
-                      }
-                    >
-                      {verificationResult.allVerified
-                        ? "All transactions verified"
-                        : "Some transactions unverified"}
-                    </span>
+                  <div>
+                    <h4 className="font-medium mb-2">Blockchain Status</h4>
+                    <div className="space-y-1 text-sm">
+                      <p>
+                        <span className="font-medium">Batch ID:</span>{" "}
+                        {verificationResult.crop.batchId}
+                      </p>
+                      <p>
+                        <span className="font-medium">Transactions:</span>{" "}
+                        {verificationResult.blockchainHistory.length}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -426,7 +440,8 @@ export default function ProductVerificationPage() {
                 return (
                   <Card
                     key={item.id}
-                    className="overflow-hidden hover:shadow-lg transition-shadow"
+                    className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => handleCardClick(item)}
                   >
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
@@ -495,7 +510,10 @@ export default function ProductVerificationPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleVerification(batchId!)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleVerification(batchId!);
+                              }}
                               className="flex-1"
                             >
                               <ShieldCheck className="h-3 w-3 mr-1" />
@@ -503,7 +521,11 @@ export default function ProductVerificationPage() {
                             </Button>
                             <Dialog>
                               <DialogTrigger asChild>
-                                <Button variant="outline" size="sm">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
                                   <QrCode className="h-3 w-3" />
                                 </Button>
                               </DialogTrigger>
@@ -552,6 +574,21 @@ export default function ProductVerificationPage() {
                             </Dialog>
                           </>
                         )}
+                        {!isScannable && isCrop && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCrop(item);
+                              setIsDetailsDialogOpen(true);
+                            }}
+                            className="flex-1"
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            View Details
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -574,7 +611,8 @@ export default function ProductVerificationPage() {
                     return (
                       <div
                         key={item.id}
-                        className="p-4 hover:bg-muted/50 transition-colors"
+                        className="p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => handleCardClick(item)}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -603,11 +641,13 @@ export default function ProductVerificationPage() {
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                              {isCrop ? item.variety : item.description}
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {isCrop ? item.variety : item.category}
                             </p>
                             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                              <span>Batch: {batchId || "Not available"}</span>
+                              <span>
+                                Batch ID: {batchId || "Not available"}
+                              </span>
                               <span>
                                 Created:{" "}
                                 {new Date(item.createdAt).toLocaleDateString()}
@@ -619,12 +659,29 @@ export default function ProductVerificationPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleVerification(batchId!)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleVerification(batchId!);
+                                }}
                               >
                                 <ShieldCheck className="h-3 w-3 mr-1" />
                                 Verify
                               </Button>
                             )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isCrop) {
+                                  setSelectedCrop(item);
+                                  setIsDetailsDialogOpen(true);
+                                }
+                              }}
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              Details
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -675,6 +732,16 @@ export default function ProductVerificationPage() {
               </CardContent>
             </Card>
           )}
+
+        {/* Crop Details Dialog */}
+        <CropDetailsDialog
+          crop={selectedCrop}
+          isOpen={isDetailsDialogOpen}
+          onClose={() => {
+            setIsDetailsDialogOpen(false);
+            setSelectedCrop(null);
+          }}
+        />
       </div>
     </DashboardLayout>
   );
