@@ -12,7 +12,7 @@ export class QRCodeService {
     // In production, use the actual deployed URL
     if (process.env.NODE_ENV === "production") {
       // Use the actual deployed domain
-      return "https://greenupp-platform.railway.app";
+      return "https://greenuppplatform-production.up.railway.app";
     }
 
     // In development, use localhost

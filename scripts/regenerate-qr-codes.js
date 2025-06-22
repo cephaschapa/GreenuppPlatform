@@ -64,7 +64,7 @@ async function regenerateQRCodesForExistingCrops() {
         "\n🎉 QR codes have been updated with correct production URLs!"
       );
       console.log(
-        "📱 New QR codes will now link to: https://greenupp-platform.railway.app/dashboard/verification"
+        "📱 New QR codes will now link to: https://greenuppplatform-production.up.railway.app/dashboard/verification"
       );
     }
   } catch (error) {
