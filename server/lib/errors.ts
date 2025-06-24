@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 
 // Base error class for our application
 export class AppError extends Error {
@@ -43,7 +43,8 @@ export class DatabaseError extends AppError {
 export const errorHandler = (
   err: Error | AppError,
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ) => {
   // Default to 500 if not an AppError
   const statusCode = err instanceof AppError ? 500 : 500;
@@ -67,9 +68,4 @@ export const errorHandler = (
       stack: err.stack,
     }),
   });
-
-  // In development, throw the error for debugging
-  if (process.env.NODE_ENV === "development") {
-    throw err;
-  }
 };

@@ -106,11 +106,15 @@ export class WeatherController {
 
   static async getPreferences(req: Request, res: Response) {
     try {
-      const prefs = await WeatherModel.getWeatherPreferences(req.user!.id);
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const prefs = await WeatherModel.getWeatherPreferences(req.user.id);
       if (!prefs) {
         return res.json({
           id: 0,
-          userId: req.user!.id,
+          userId: req.user.id,
           locations: [],
           alertsEnabled: true,
           temperatureUnit: "celsius",
@@ -129,13 +133,17 @@ export class WeatherController {
 
   static async createPreferences(req: Request, res: Response) {
     try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       // Check if preferences already exist
-      const existing = await WeatherModel.getWeatherPreferences(req.user!.id);
+      const existing = await WeatherModel.getWeatherPreferences(req.user.id);
       const prefsData = insertWeatherPreferencesSchema.parse(req.body);
       if (existing) {
         // Update
         const updated = await WeatherModel.updateWeatherPreferences(
-          req.user!.id,
+          req.user.id,
           prefsData
         );
         return res.json(updated);
@@ -143,7 +151,7 @@ export class WeatherController {
         // Create
         const created = await WeatherModel.createWeatherPreferences({
           ...prefsData,
-          userId: req.user!.id,
+          userId: req.user.id,
         });
         return res.status(201).json(created);
       }
@@ -162,15 +170,19 @@ export class WeatherController {
 
   static async updatePreferences(req: Request, res: Response) {
     try {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       // Check if preferences exist, create if not
-      const prefs = await WeatherModel.getWeatherPreferences(req.user!.id);
+      const prefs = await WeatherModel.getWeatherPreferences(req.user.id);
       const prefsData = insertWeatherPreferencesSchema
         .partial()
         .parse(req.body);
       if (!prefs) {
         // Create new
         const created = await WeatherModel.createWeatherPreferences({
-          userId: req.user!.id,
+          userId: req.user.id,
           ...prefsData,
           locations: prefsData.locations || [],
           alertsEnabled: prefsData.alertsEnabled ?? true,
@@ -180,7 +192,7 @@ export class WeatherController {
       }
       // Update existing
       const updated = await WeatherModel.updateWeatherPreferences(
-        req.user!.id,
+        req.user.id,
         prefsData
       );
       if (!updated) {

@@ -6,6 +6,7 @@ import cropRoutes from "./crops.js";
 import fieldCropRoutes from "./field-crops.js";
 import taskRoutes from "./tasks.js";
 import weatherRoutes from "./weather.js";
+import weatherPreferencesRoutes from "./weather-preferences.js";
 import plantAnalysesRoutes from "./plant-analyses.js";
 import productVerificationRoutes from "./product-verification.js";
 import { setupMarketplaceRoutes } from "./marketplace-mvc.js";
@@ -43,7 +44,7 @@ export function registerMvcRoutes(app: Express): void {
   app.use("/api/weather", weatherRoutes);
 
   // Weather preferences routes (separate endpoint to match client expectations)
-  app.use("/api/weather-preferences", weatherRoutes);
+  app.use("/api/weather-preferences", weatherPreferencesRoutes);
 
   // Plant analysis/diagnosis routes
   app.use("/api/plant-analyses", plantAnalysesRoutes);
