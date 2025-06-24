@@ -1099,6 +1099,16 @@ export const inventory = pgTable("inventory", {
   lastUpdated: timestamp("last_updated").defaultNow(),
 });
 
+// Create insert schema for inventory
+export const insertInventorySchema = createInsertSchema(inventory).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+// Inventory types
+export type InsertInventory = z.infer<typeof insertInventorySchema>;
+export type Inventory = typeof inventory.$inferSelect;
+
 // Delivery Management
 export const deliveries = pgTable("deliveries", {
   id: serial("id").primaryKey(),

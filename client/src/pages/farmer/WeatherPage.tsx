@@ -182,7 +182,7 @@ export default function WeatherPage() {
     const suffixes = [
       "District",
       "City",
-      "Town",
+
       "Village",
       "Municipality",
       "Province",

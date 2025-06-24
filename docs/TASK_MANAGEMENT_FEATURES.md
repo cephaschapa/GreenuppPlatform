@@ -267,17 +267,29 @@ CREATE TABLE task_notifications (
 
 ## API Endpoints
 
-### Task Management
+### Task Management (MVC Architecture)
+
+All `/api/tasks` endpoints are now handled by the new MVC architecture:
+
+- **Controller:** `server/controllers/TaskController.ts`
+- **Model:** `server/models/TaskModel.ts`
+- **Routes:** `server/routes/tasks.ts` (registered via `registerMvcRoutes`)
 
 ```
 GET    /api/tasks                    # List all tasks
 POST   /api/tasks                    # Create new task
 GET    /api/tasks/:id                # Get task details
-PUT    /api/tasks/:id                # Update task
+PATCH  /api/tasks/:id                # Update task
 DELETE /api/tasks/:id                # Delete task
-PATCH  /api/tasks/:id/status         # Update task status
 POST   /api/tasks/:id/complete       # Mark task as complete
+GET    /api/tasks/date/:date         # Get tasks by date
+GET    /api/tasks/range/:startDate/:endDate # Get tasks by date range
+GET    /api/tasks/priority/:priority # Get tasks by priority
+GET    /api/tasks/crops/:cropId      # Get tasks by crop ID
+GET    /api/tasks/fields/:fieldId    # Get tasks by field ID
 ```
+
+> **Note:** The old monolithic task routes have been removed from `server/routes.ts`. All task management is now handled by the MVC structure for better maintainability, separation of concerns, and scalability.
 
 ### Task Templates
 
