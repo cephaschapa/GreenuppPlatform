@@ -42,6 +42,9 @@ export function registerMvcRoutes(app: Express): void {
   // Weather routes (current, historical, climate, geocode, preferences)
   app.use("/api/weather", weatherRoutes);
 
+  // Weather preferences routes (separate endpoint to match client expectations)
+  app.use("/api/weather-preferences", weatherRoutes);
+
   // Plant analysis/diagnosis routes
   app.use("/api/plant-analyses", plantAnalysesRoutes);
 
@@ -125,6 +128,24 @@ export function registerMvcRoutes(app: Express): void {
           "PATCH /api/tasks/:id": "Update task",
           "POST /api/tasks/:id/complete": "Complete task",
           "DELETE /api/tasks/:id": "Delete task",
+        },
+        weather: {
+          "GET /api/weather": "Get weather data for location",
+          "GET /api/weather/historical": "Get historical weather data",
+          "GET /api/weather/climate": "Get climate data for location",
+          "GET /api/weather/reverse-geocode":
+            "Reverse geocoding (coordinates to address)",
+          "GET /api/weather/geocode":
+            "Forward geocoding (address to coordinates)",
+          "GET /api/weather/preferences": "Get weather preferences",
+          "POST /api/weather/preferences": "Create weather preferences",
+          "PATCH /api/weather/preferences": "Update weather preferences",
+          "GET /api/weather-preferences":
+            "Get weather preferences (alternative endpoint)",
+          "POST /api/weather-preferences":
+            "Create weather preferences (alternative endpoint)",
+          "PATCH /api/weather-preferences":
+            "Update weather preferences (alternative endpoint)",
         },
         plantAnalyses: {
           "GET /api/plant-analyses":
