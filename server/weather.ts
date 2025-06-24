@@ -206,8 +206,8 @@ export async function reverseGeocode(
 
     const response = await axios.get(`${OPENWEATHER_GEO_URL}/reverse`, {
       params: {
-        lat: lat,
-        lon: lon,
+        lat,
+        lon,
         limit: 1,
         appid: OPENWEATHER_API_KEY,
       },
@@ -434,7 +434,7 @@ export async function getHistoricalWeatherData(
 
     // Due to API limitations, we'll need to make a request for each day
     const dates: Array<Date> = [];
-    let currentDate = new Date(startDate);
+    const currentDate = new Date(startDate);
 
     while (currentDate <= endDate) {
       dates.push(new Date(currentDate));

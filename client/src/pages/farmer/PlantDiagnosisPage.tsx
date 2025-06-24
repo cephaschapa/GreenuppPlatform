@@ -247,7 +247,7 @@ const PlantDiagnosisPage = () => {
     }
 
     uploadAnalysis({
-      imageData: imageData,
+      imageData,
       plantType: selectedPlantType || undefined,
       fieldId:
         selectedField === "none" ? undefined : selectedField || undefined,

@@ -1,17 +1,21 @@
 import { Request, Response, Router } from "express";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db";
-import { 
-  carts, 
-  cartItems, 
-  marketplaceListings, 
-  insertCartSchema, 
-  insertCartItemSchema, 
-  type Cart, 
-  type CartItem 
+import {
+  carts,
+  cartItems,
+  marketplaceListings,
+  insertCartItemSchema,
+  type Cart,
 } from "../../shared/schema";
-import { createStripePaymentIntent, confirmStripePayment } from "../payment/stripe";
-import { createMetatronPayIntent, verifyMetatronPayment } from "../payment/metatronPay";
+import {
+  createStripePaymentIntent,
+  confirmStripePayment,
+} from "../payment/stripe";
+import {
+  createMetatronPayIntent,
+  verifyMetatronPayment,
+} from "../payment/metatronPay";
 
 // Create a new router
 const router = Router();
@@ -28,7 +32,10 @@ function isAuthenticated(req: Request, res: Response, next: Function) {
  * Get active or checkout cart for current user
  * If no cart is found, create one
  */
-async function getOrCreateCart(userId: number, includeCheckout: boolean = false): Promise<Cart> {
+async function getOrCreateCart(
+  userId: number,
+  includeCheckout: boolean = false
+): Promise<Cart> {
   // Always prioritize active carts first
   const [activeCart] = await db
     .select()
@@ -39,16 +46,18 @@ async function getOrCreateCart(userId: number, includeCheckout: boolean = false)
     console.log(`Found active cart for user ${userId}, id: ${activeCart.id}`);
     return activeCart;
   }
-  
+
   // Only check for checkout carts if explicitly requested
   if (includeCheckout) {
     const [checkoutCart] = await db
       .select()
       .from(carts)
       .where(and(eq(carts.userId, userId), eq(carts.status, "checkout")));
-      
+
     if (checkoutCart) {
-      console.log(`Found checkout cart for user ${userId}, id: ${checkoutCart.id}`);
+      console.log(
+        `Found checkout cart for user ${userId}, id: ${checkoutCart.id}`
+      );
       return checkoutCart;
     }
   }
@@ -57,13 +66,13 @@ async function getOrCreateCart(userId: number, includeCheckout: boolean = false)
   console.log(`Creating new cart for user ${userId}`);
   const [newCart] = await db
     .insert(carts)
-    .values({ 
-      userId, 
+    .values({
+      userId,
       status: "active",
       subtotal: "0",
       shipping: "0",
       tax: "0",
-      total: "0"
+      total: "0",
     })
     .returning();
 
@@ -102,36 +111,41 @@ async function updateCartTotals(cartId: number): Promise<void> {
 router.get("/", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
-    
+
     // Get or create the user's cart - include checkout status carts
     const cart = await getOrCreateCart(userId, true);
-    
+
     // Get cart items with their listings
     const rawItems = await db
       .select({
         item: cartItems,
-        listing: marketplaceListings
+        listing: marketplaceListings,
       })
       .from(cartItems)
-      .leftJoin(marketplaceListings, eq(cartItems.listingId, marketplaceListings.id))
+      .leftJoin(
+        marketplaceListings,
+        eq(cartItems.listingId, marketplaceListings.id)
+      )
       .where(eq(cartItems.cartId, cart.id));
-    
+
     // Transform data to match frontend expectations
-    const items = rawItems.map(row => {
+    const items = rawItems.map((row) => {
       return {
         ...row.item,
-        listing: row.listing // Add the listing property in the expected format
+        listing: row.listing, // Add the listing property in the expected format
       };
     });
-    
-    console.log(`GET /api/cart - Found cart with status: ${cart.status}, id: ${cart.id}, items: ${items.length}`);
-    
+
+    console.log(
+      `GET /api/cart - Found cart with status: ${cart.status}, id: ${cart.id}, items: ${items.length}`
+    );
+
     // Create a modified response format to work with the frontend
     const cartWithItems = {
       ...cart,
-      items
+      items,
     };
-      
+
     // Return cart with items directly embedded
     res.status(200).json(cartWithItems);
   } catch (error) {
@@ -145,38 +159,37 @@ router.post("/items", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
     const validateResult = insertCartItemSchema.safeParse(req.body);
-    
+
     if (!validateResult.success) {
-      return res.status(400).json({ 
-        message: "Invalid cart item data", 
-        errors: validateResult.error.errors 
+      return res.status(400).json({
+        message: "Invalid cart item data",
+        errors: validateResult.error.errors,
       });
     }
-    
+
     const { listingId, quantity, notes } = validateResult.data;
-    
+
     // Get listing to verify it exists and get price
     const [listing] = await db
       .select()
       .from(marketplaceListings)
       .where(eq(marketplaceListings.id, listingId));
-      
+
     if (!listing) {
       return res.status(404).json({ message: "Listing not found" });
     }
-    
+
     // Get or create the user's cart
     const cart = await getOrCreateCart(userId);
-    
+
     // Check if item already exists in cart
     const [existingItem] = await db
       .select()
       .from(cartItems)
-      .where(and(
-        eq(cartItems.cartId, cart.id),
-        eq(cartItems.listingId, listingId)
-      ));
-      
+      .where(
+        and(eq(cartItems.cartId, cart.id), eq(cartItems.listingId, listingId))
+      );
+
     if (existingItem) {
       // Update quantity if item already exists
       const [updatedItem] = await db
@@ -184,17 +197,17 @@ router.post("/items", isAuthenticated, async (req, res) => {
         .set({
           quantity: existingItem.quantity + (quantity || 1),
           notes,
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(cartItems.id, existingItem.id))
         .returning();
-        
+
       // Update cart totals
       await updateCartTotals(cart.id);
-      
+
       return res.status(200).json(updatedItem);
     }
-    
+
     // Add new item to cart
     const [newItem] = await db
       .insert(cartItems)
@@ -204,13 +217,13 @@ router.post("/items", isAuthenticated, async (req, res) => {
         quantity: quantity || 1,
         price: listing.price.toString(),
         priceUnit: listing.priceUnit,
-        notes
+        notes,
       })
       .returning();
-      
+
     // Update cart totals
     await updateCartTotals(cart.id);
-    
+
     res.status(201).json(newItem);
   } catch (error) {
     console.error("Error adding item to cart:", error);
@@ -223,58 +236,57 @@ router.put("/items/:id", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
     const itemId = parseInt(req.params.id);
-    
+
     if (isNaN(itemId)) {
       return res.status(400).json({ message: "Invalid item ID" });
     }
-    
+
     const { quantity } = req.body;
-    
-    if (typeof quantity !== 'number' || quantity < 1) {
-      return res.status(400).json({ message: "Quantity must be a positive number" });
+
+    if (typeof quantity !== "number" || quantity < 1) {
+      return res
+        .status(400)
+        .json({ message: "Quantity must be a positive number" });
     }
-    
+
     // Get the item first to check which cart it belongs to
     const [item] = await db
       .select()
       .from(cartItems)
       .where(eq(cartItems.id, itemId));
-    
+
     if (!item) {
       return res.status(404).json({ message: "Item not found" });
     }
-    
+
     // Now get the correct cart (could be active or checkout)
     const [userCart] = await db
       .select()
       .from(carts)
-      .where(and(
-        eq(carts.id, item.cartId),
-        eq(carts.userId, userId)
-      ));
-    
+      .where(and(eq(carts.id, item.cartId), eq(carts.userId, userId)));
+
     if (!userCart) {
       return res.status(404).json({ message: "Cart not found" });
     }
-    
+
     // Check if the item belongs to user's cart
     if (item.cartId !== userCart.id) {
       return res.status(404).json({ message: "Item not found in your cart" });
     }
-    
+
     // Update the item quantity
     const [updatedItem] = await db
       .update(cartItems)
       .set({
         quantity,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(cartItems.id, itemId))
       .returning();
-      
+
     // Update cart totals
     await updateCartTotals(userCart.id);
-    
+
     res.status(200).json(updatedItem);
   } catch (error) {
     console.error("Error updating cart item:", error);
@@ -287,47 +299,42 @@ router.delete("/items/:id", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
     const itemId = parseInt(req.params.id);
-    
+
     if (isNaN(itemId)) {
       return res.status(400).json({ message: "Invalid item ID" });
     }
-    
+
     // Get the item first to check which cart it belongs to
     const [item] = await db
       .select()
       .from(cartItems)
       .where(eq(cartItems.id, itemId));
-    
+
     if (!item) {
       return res.status(404).json({ message: "Item not found" });
     }
-    
+
     // Now get the correct cart (could be active or checkout)
     const [userCart] = await db
       .select()
       .from(carts)
-      .where(and(
-        eq(carts.id, item.cartId),
-        eq(carts.userId, userId)
-      ));
-    
+      .where(and(eq(carts.id, item.cartId), eq(carts.userId, userId)));
+
     if (!userCart) {
       return res.status(404).json({ message: "Cart not found" });
     }
-    
+
     // Check if the item belongs to user's cart
     if (item.cartId !== userCart.id) {
       return res.status(404).json({ message: "Item not found in your cart" });
     }
-    
+
     // Delete the item
-    await db
-      .delete(cartItems)
-      .where(eq(cartItems.id, itemId));
-      
+    await db.delete(cartItems).where(eq(cartItems.id, itemId));
+
     // Update cart totals
     await updateCartTotals(userCart.id);
-    
+
     res.status(200).json({ message: "Item removed from cart" });
   } catch (error) {
     console.error("Error removing item from cart:", error);
@@ -339,35 +346,29 @@ router.delete("/items/:id", isAuthenticated, async (req, res) => {
 router.delete("/clear", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
-    
+
     // Get user's active cart
     const [userCart] = await db
       .select()
       .from(carts)
-      .where(and(
-        eq(carts.userId, userId),
-        eq(carts.status, "active")
-      ));
-      
+      .where(and(eq(carts.userId, userId), eq(carts.status, "active")));
+
     if (!userCart) {
       // If no active cart, check if there's a checkout cart
       const [checkoutCart] = await db
         .select()
         .from(carts)
-        .where(and(
-          eq(carts.userId, userId),
-          eq(carts.status, "checkout")
-        ));
-        
+        .where(and(eq(carts.userId, userId), eq(carts.status, "checkout")));
+
       if (checkoutCart) {
         // Reset the checkout cart to active and empty it
-        console.log(`Reset checkout cart ${checkoutCart.id} to active and empty it`);
-        
+        console.log(
+          `Reset checkout cart ${checkoutCart.id} to active and empty it`
+        );
+
         // Delete all items
-        await db
-          .delete(cartItems)
-          .where(eq(cartItems.cartId, checkoutCart.id));
-          
+        await db.delete(cartItems).where(eq(cartItems.cartId, checkoutCart.id));
+
         // Reset cart status and totals
         await db
           .update(carts)
@@ -379,21 +380,21 @@ router.delete("/clear", isAuthenticated, async (req, res) => {
             total: "0",
             paymentProvider: null,
             paymentIntentId: null,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .where(eq(carts.id, checkoutCart.id));
-          
-        return res.status(200).json({ message: "Checkout cart cleared and reset to active" });
+
+        return res
+          .status(200)
+          .json({ message: "Checkout cart cleared and reset to active" });
       }
-      
+
       return res.status(404).json({ message: "No active cart found" });
     }
-    
+
     // Delete all items from active cart
-    await db
-      .delete(cartItems)
-      .where(eq(cartItems.cartId, userCart.id));
-      
+    await db.delete(cartItems).where(eq(cartItems.cartId, userCart.id));
+
     // Reset cart totals
     await db
       .update(carts)
@@ -402,10 +403,10 @@ router.delete("/clear", isAuthenticated, async (req, res) => {
         shipping: "0",
         tax: "0",
         total: "0",
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(carts.id, userCart.id));
-      
+
     res.status(200).json({ message: "Cart cleared" });
   } catch (error) {
     console.error("Error clearing cart:", error);
@@ -417,44 +418,43 @@ router.delete("/clear", isAuthenticated, async (req, res) => {
 router.post("/checkout", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
-    
+
     // Get user's active cart
     const [userCart] = await db
       .select()
       .from(carts)
-      .where(and(
-        eq(carts.userId, userId),
-        eq(carts.status, "active")
-      ));
-      
+      .where(and(eq(carts.userId, userId), eq(carts.status, "active")));
+
     if (!userCart) {
       return res.status(404).json({ message: "No active cart found" });
     }
-    
+
     // Get cart items to verify cart isn't empty
     const items = await db
       .select()
       .from(cartItems)
       .where(eq(cartItems.cartId, userCart.id));
-      
+
     if (items.length === 0) {
-      return res.status(400).json({ message: "Cannot checkout with empty cart" });
+      return res
+        .status(400)
+        .json({ message: "Cannot checkout with empty cart" });
     }
-    
+
     // Set cart status to checkout
     const [updatedCart] = await db
       .update(carts)
       .set({
         status: "checkout",
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(carts.id, userCart.id))
       .returning();
-      
+
     res.status(200).json({
       message: "Checkout process started",
       cart: updatedCart,
-      items
+      items,
     });
   } catch (error) {
     console.error("Error starting checkout:", error);
@@ -466,46 +466,47 @@ router.post("/checkout", isAuthenticated, async (req, res) => {
 router.post("/payment/stripe", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
-    
+
     // Get user's cart in checkout status
     const [userCart] = await db
       .select()
       .from(carts)
-      .where(and(
-        eq(carts.userId, userId),
-        eq(carts.status, "checkout")
-      ));
-      
+      .where(and(eq(carts.userId, userId), eq(carts.status, "checkout")));
+
     if (!userCart) {
-      return res.status(404).json({ message: "No cart in checkout status found" });
+      return res
+        .status(404)
+        .json({ message: "No cart in checkout status found" });
     }
-    
+
     // Get cart items
     const items = await db
       .select()
       .from(cartItems)
       .where(eq(cartItems.cartId, userCart.id));
-    
+
     if (items.length === 0) {
-      return res.status(400).json({ message: "Cannot create payment intent with empty cart" });
+      return res
+        .status(400)
+        .json({ message: "Cannot create payment intent with empty cart" });
     }
-    
+
     // Create Stripe payment intent
     const paymentIntent = await createStripePaymentIntent(userCart, items);
-    
+
     // Update cart with payment information
     await db
       .update(carts)
       .set({
         paymentProvider: "stripe",
         paymentIntentId: paymentIntent.paymentIntentId,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(carts.id, userCart.id));
-    
+
     res.status(200).json({
       clientSecret: paymentIntent.clientSecret,
-      amount: paymentIntent.amount
+      amount: paymentIntent.amount,
     });
   } catch (error) {
     console.error("Error creating Stripe payment intent:", error);
@@ -517,47 +518,48 @@ router.post("/payment/stripe", isAuthenticated, async (req, res) => {
 router.post("/payment/metatron", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
-    
+
     // Get user's cart in checkout status
     const [userCart] = await db
       .select()
       .from(carts)
-      .where(and(
-        eq(carts.userId, userId),
-        eq(carts.status, "checkout")
-      ));
-      
+      .where(and(eq(carts.userId, userId), eq(carts.status, "checkout")));
+
     if (!userCart) {
-      return res.status(404).json({ message: "No cart in checkout status found" });
+      return res
+        .status(404)
+        .json({ message: "No cart in checkout status found" });
     }
-    
+
     // Get cart items
     const items = await db
       .select()
       .from(cartItems)
       .where(eq(cartItems.cartId, userCart.id));
-    
+
     if (items.length === 0) {
-      return res.status(400).json({ message: "Cannot create payment with empty cart" });
+      return res
+        .status(400)
+        .json({ message: "Cannot create payment with empty cart" });
     }
-    
+
     // Create Metatron Pay intent
     const paymentIntent = await createMetatronPayIntent(userCart, items);
-    
+
     // Update cart with payment information
     await db
       .update(carts)
       .set({
         paymentProvider: "metatron",
         paymentIntentId: paymentIntent.paymentId,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(carts.id, userCart.id));
-    
+
     res.status(200).json({
       paymentId: paymentIntent.paymentId,
       amount: paymentIntent.amount,
-      redirectUrl: paymentIntent.redirectUrl
+      redirectUrl: paymentIntent.redirectUrl,
     });
   } catch (error) {
     console.error("Error creating Metatron Pay intent:", error);
@@ -570,26 +572,32 @@ router.post("/payment/confirm", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user!.id;
     const { paymentIntentId, provider } = req.body;
-    
+
     if (!paymentIntentId || !provider) {
-      return res.status(400).json({ message: "Payment intent ID and provider are required" });
+      return res
+        .status(400)
+        .json({ message: "Payment intent ID and provider are required" });
     }
-    
+
     // Get user's cart with matching payment intent
     const [userCart] = await db
       .select()
       .from(carts)
-      .where(and(
-        eq(carts.userId, userId),
-        eq(carts.paymentIntentId, paymentIntentId)
-      ));
-      
+      .where(
+        and(
+          eq(carts.userId, userId),
+          eq(carts.paymentIntentId, paymentIntentId)
+        )
+      );
+
     if (!userCart) {
-      return res.status(404).json({ message: "No cart found with that payment intent" });
+      return res
+        .status(404)
+        .json({ message: "No cart found with that payment intent" });
     }
-    
+
     let paymentVerification;
-    
+
     // Verify payment based on provider
     if (provider === "stripe") {
       paymentVerification = await confirmStripePayment(paymentIntentId);
@@ -598,27 +606,27 @@ router.post("/payment/confirm", isAuthenticated, async (req, res) => {
     } else {
       return res.status(400).json({ message: "Invalid payment provider" });
     }
-    
+
     if (!paymentVerification.success) {
-      return res.status(400).json({ 
-        message: "Payment verification failed", 
-        details: paymentVerification.message || "Unknown error occurred"
+      return res.status(400).json({
+        message: "Payment verification failed",
+        details: paymentVerification.message || "Unknown error occurred",
       });
     }
-    
+
     // Update cart status to completed
     const [completedCart] = await db
       .update(carts)
       .set({
         status: "completed",
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(carts.id, userCart.id))
       .returning();
-    
+
     res.status(200).json({
       message: "Payment confirmed and order completed",
-      cart: completedCart
+      cart: completedCart,
     });
   } catch (error) {
     console.error("Error confirming payment:", error);

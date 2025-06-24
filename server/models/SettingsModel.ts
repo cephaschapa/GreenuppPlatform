@@ -1,7 +1,3 @@
-import { db } from "../db";
-import { users } from "@shared/schema";
-import { eq } from "drizzle-orm";
-
 export interface UserSettings {
   notifications: {
     emailNotifications: boolean;
@@ -72,7 +68,7 @@ export class SettingsModel {
 
   // Get user settings (for now, return default settings)
   // In a real implementation, this would fetch from a settings table
-  async getUserSettings(userId: number): Promise<UserSettings> {
+  async getUserSettings(): Promise<UserSettings> {
     // For now, return default settings
     // TODO: Implement settings table and fetch user-specific settings
     return this.getDefaultSettings();
@@ -80,7 +76,7 @@ export class SettingsModel {
 
   // Update user settings
   async updateUserSettings(
-    userId: number,
+    _userId: number,
     type: string,
     settings: any
   ): Promise<UserSettings> {

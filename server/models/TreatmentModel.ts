@@ -1,5 +1,5 @@
 import { db } from "../db";
-import { treatmentPlans, treatmentSteps, plantAnalyses } from "@shared/schema";
+import { treatmentPlans, treatmentSteps } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import type {
   TreatmentPlan,
@@ -74,7 +74,7 @@ export class TreatmentModel {
       .delete(treatmentPlans)
       .where(eq(treatmentPlans.id, id));
 
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Get treatment steps for a plan
@@ -118,7 +118,7 @@ export class TreatmentModel {
       .delete(treatmentSteps)
       .where(eq(treatmentSteps.id, id));
 
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Get treatment plan with steps

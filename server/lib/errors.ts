@@ -1,13 +1,8 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 
 // Base error class for our application
 export class AppError extends Error {
-  constructor(
-    public statusCode: number,
-    public message: string,
-    public isOperational = true,
-    public details?: any
-  ) {
+  constructor(public message: string) {
     super(message);
     Object.setPrototypeOf(this, AppError.prototype);
   }
@@ -15,32 +10,32 @@ export class AppError extends Error {
 
 // Specific error types
 export class ValidationError extends AppError {
-  constructor(message: string, details?: any) {
-    super(400, message, true, details);
+  constructor(message: string) {
+    super(message);
   }
 }
 
 export class AuthenticationError extends AppError {
   constructor(message = "Authentication failed") {
-    super(401, message, true);
+    super(message);
   }
 }
 
 export class AuthorizationError extends AppError {
   constructor(message = "Not authorized to perform this action") {
-    super(403, message, true);
+    super(message);
   }
 }
 
 export class NotFoundError extends AppError {
   constructor(message = "Resource not found") {
-    super(404, message, true);
+    super(message);
   }
 }
 
 export class DatabaseError extends AppError {
-  constructor(message = "Database operation failed", details?: any) {
-    super(500, message, false, details);
+  constructor(message = "Database operation failed") {
+    super(message);
   }
 }
 
@@ -48,21 +43,16 @@ export class DatabaseError extends AppError {
 export const errorHandler = (
   err: Error | AppError,
   req: Request,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   // Default to 500 if not an AppError
-  const statusCode = err instanceof AppError ? err.statusCode : 500;
+  const statusCode = err instanceof AppError ? 500 : 500;
   const message = err.message || "Internal Server Error";
-  const isOperational = err instanceof AppError ? err.isOperational : false;
-  const details = err instanceof AppError ? err.details : undefined;
 
   // Log error details
   console.error("Error:", {
     statusCode,
     message,
-    isOperational,
-    details,
     stack: err.stack,
     path: req.path,
     method: req.method,
@@ -74,13 +64,12 @@ export const errorHandler = (
     status: "error",
     message,
     ...(process.env.NODE_ENV === "development" && {
-      details,
       stack: err.stack,
     }),
   });
 
   // In development, throw the error for debugging
-  if (process.env.NODE_ENV === "development" && !isOperational) {
+  if (process.env.NODE_ENV === "development") {
     throw err;
   }
 };

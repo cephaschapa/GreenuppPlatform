@@ -38,7 +38,7 @@ export default function CheckoutPage() {
   
   // Detailed logging to help debug cart issues
   console.log('Current cart state:', { 
-    cart: cart,
+    cart,
     cartStatus: cart?.status, 
     cartId: cart?.id, 
     itemCount: cartItems.length,

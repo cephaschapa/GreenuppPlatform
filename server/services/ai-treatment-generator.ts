@@ -66,7 +66,7 @@ export class AITreatmentGenerator {
     }
 
     this.openai = new OpenAI({
-      apiKey: apiKey,
+      apiKey,
     });
   }
 

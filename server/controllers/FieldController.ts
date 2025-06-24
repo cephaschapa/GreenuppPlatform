@@ -5,6 +5,7 @@ import {
   UpdateFieldData,
 } from "../models/FieldModel.js";
 import { logger } from "../lib/logger.js";
+import { AuthenticationError } from "../lib/errors.js";
 
 export class FieldController {
   /**
@@ -55,29 +56,20 @@ export class FieldController {
    */
   static async create(req: Request, res: Response): Promise<void> {
     try {
-      const fieldData: CreateFieldData = req.body;
-
-      // Basic validation
-      if (!fieldData.name) {
-        res.status(400).json({
-          message: "Field name is required",
-        });
-        return;
+      if (!req.user?.id) {
+        throw new AuthenticationError("Authentication required");
       }
 
-      const newField = await FieldModel.create({
-        ...fieldData,
-        userId: req.user!.id,
-      });
+      const fieldData = {
+        ...req.body,
+        userId: req.user.id,
+      };
 
-      logger.info(`Field created: ${newField.id} by user ${req.user!.id}`);
+      const newField = await FieldModel.create(fieldData);
       res.status(201).json(newField);
-    } catch (error) {
-      logger.error("Failed to create field:", error);
-      res.status(500).json({
-        message: "Failed to create field",
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+    } catch (error: unknown) {
+      logger.error("Error creating field:", error);
+      res.status(500).json({ message: "Failed to create field" });
     }
   }
 

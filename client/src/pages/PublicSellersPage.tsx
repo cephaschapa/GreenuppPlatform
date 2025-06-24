@@ -84,7 +84,7 @@ export default function PublicSellersPage() {
     .filter((seller) => {
       const matchesSearch = searchQuery
         ? (seller.username && seller.username.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          ((seller.firstName || "") + " " + (seller.lastName || "")).toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (`${seller.firstName || ""  } ${  seller.lastName || ""}`).toLowerCase().includes(searchQuery.toLowerCase()) ||
           (seller.bio && seller.bio.toLowerCase().includes(searchQuery.toLowerCase()))
         : true;
 

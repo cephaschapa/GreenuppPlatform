@@ -14,8 +14,8 @@ const logger = {
 };
 
 // Log API key and secret status (not the actual values)
-logger.info(`Stream Chat API Key status: ${apiKey ? 'Set (length: ' + apiKey.length + ')' : 'NOT SET'}`);
-logger.info(`Stream Chat API Secret status: ${apiSecret ? 'Set (length: ' + apiSecret.length + ')' : 'NOT SET'}`);
+logger.info(`Stream Chat API Key status: ${apiKey ? `Set (length: ${  apiKey.length  })` : 'NOT SET'}`);
+logger.info(`Stream Chat API Secret status: ${apiSecret ? `Set (length: ${  apiSecret.length  })` : 'NOT SET'}`);
 
 let serverClient: StreamChat | null = null;
 

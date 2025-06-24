@@ -239,15 +239,9 @@ export class MarketplaceController {
         `New marketplace listing created: ${newListing.id} by user ${req.user.id}`
       );
       res.status(201).json(newListing);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("Error creating marketplace listing:", error);
-      if (error instanceof AuthenticationError) {
-        res.status(401).json({ message: "Authentication required" });
-      } else if (error instanceof ValidationError) {
-        res.status(400).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: "Failed to create listing" });
-      }
+      res.status(500).json({ message: "Failed to create marketplace listing" });
     }
   }
 

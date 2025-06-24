@@ -6,6 +6,7 @@ import {
 } from "../models/CropModel.js";
 import { FieldModel } from "../models/FieldModel.js";
 import { logger } from "../lib/logger.js";
+import { AuthenticationError } from "../lib/errors.js";
 
 export class CropController {
   /**
@@ -85,41 +86,20 @@ export class CropController {
    */
   static async create(req: Request, res: Response): Promise<void> {
     try {
-      const cropData: CreateCropData = req.body;
-
-      // Basic validation
-      if (!cropData.name) {
-        res.status(400).json({
-          message: "Crop name is required",
-        });
-        return;
+      if (!req.user?.id) {
+        throw new AuthenticationError("Authentication required");
       }
 
-      // If fieldId is provided, ensure it belongs to the user
-      if (cropData.fieldId) {
-        const field = await FieldModel.findByIdAndUserId(
-          cropData.fieldId,
-          req.user!.id
-        );
-        if (!field) {
-          res.status(404).json({ message: "Field not found" });
-          return;
-        }
-      }
+      const cropData = {
+        ...req.body,
+        userId: req.user.id,
+      };
 
-      const newCrop = await CropModel.create({
-        ...cropData,
-        userId: req.user!.id,
-      });
-
-      logger.info(`Crop created: ${newCrop.id} by user ${req.user!.id}`);
+      const newCrop = await CropModel.create(cropData);
       res.status(201).json(newCrop);
-    } catch (error) {
-      logger.error("Failed to create crop:", error);
-      res.status(500).json({
-        message: "Failed to create crop",
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+    } catch (error: unknown) {
+      logger.error("Error creating crop:", error);
+      res.status(500).json({ message: "Failed to create crop" });
     }
   }
 

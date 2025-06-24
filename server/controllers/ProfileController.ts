@@ -80,17 +80,9 @@ export class ProfileController {
 
       logger.info(`User profile updated by user ${req.user.id}`);
       res.json(updatedProfile);
-    } catch (error) {
-      logger.error("Error updating user profile:", error);
-      if (error instanceof AuthenticationError) {
-        res.status(401).json({ message: "Authentication required" });
-      } else if (error instanceof ValidationError) {
-        res.status(400).json({ message: error.message });
-      } else if (error instanceof DatabaseError) {
-        res.status(500).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: "Failed to update user profile" });
-      }
+    } catch (error: unknown) {
+      logger.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
     }
   }
 

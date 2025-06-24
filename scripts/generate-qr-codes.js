@@ -1,6 +1,6 @@
 import { db } from "../server/db.js";
 import { crops } from "../shared/schema.js";
-import { eq, isNull } from "drizzle-orm";
+import { isNull } from "drizzle-orm";
 import { cropTraceService } from "../server/services/croptrace.js";
 
 async function generateQRCodesForExistingCrops() {

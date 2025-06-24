@@ -1,12 +1,6 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import type { Express } from "express";
 import { storage } from "../storage";
 import { logger } from "../lib/logger";
-import {
-  ValidationError,
-  AuthenticationError,
-  NotFoundError,
-  DatabaseError,
-} from "../lib/errors";
 
 function setupSearchRoutes(app: Express) {
   // Global search endpoint

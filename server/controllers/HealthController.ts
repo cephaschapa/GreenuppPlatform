@@ -63,8 +63,8 @@ export class HealthController {
         status: "unhealthy",
         timestamp: new Date().toISOString(),
         error: "Server error",
-        requestId: requestId,
-        responseTime: responseTime,
+        requestId,
+        responseTime,
       });
     }
   }
@@ -115,8 +115,8 @@ export class HealthController {
         timestamp: new Date().toISOString(),
         database: "disconnected",
         error: error instanceof Error ? error.message : "Unknown error",
-        requestId: requestId,
-        responseTime: responseTime,
+        requestId,
+        responseTime,
       });
     }
   }
@@ -166,8 +166,8 @@ export class HealthController {
         status: "unhealthy",
         timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : "Unknown error",
-        requestId: requestId,
-        responseTime: responseTime,
+        requestId,
+        responseTime,
       });
     }
   }

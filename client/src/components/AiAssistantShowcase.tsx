@@ -47,7 +47,7 @@ const AiAssistantShowcase = () => {
       setIsTyping(false);
       setConversation(prev => [...prev, { 
         type: 'ai', 
-        message: "I understand you're asking about " + message.toLowerCase() + ". In a real implementation, I would provide a detailed response based on agricultural best practices, your farm's specific conditions, and latest research. The AI assistant uses your farm data, location, and growing history to provide personalized recommendations." 
+        message: `I understand you're asking about ${  message.toLowerCase()  }. In a real implementation, I would provide a detailed response based on agricultural best practices, your farm's specific conditions, and latest research. The AI assistant uses your farm data, location, and growing history to provide personalized recommendations.` 
       }]);
     }, 2000);
   };

@@ -12,7 +12,7 @@ import { dirname } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const BASE_URL = process.env.TEST_URL || "http://localhost:5000";
+const baseUrl = process.env.BASE_URL || "http://localhost:3000";
 const ENDPOINTS = [
   "/api/test",
   "/api/health",
@@ -67,13 +67,13 @@ function makeRequest(url) {
 async function testEndpoints() {
   console.log("🧪 Testing Health Check Endpoints");
   console.log("================================");
-  console.log(`Base URL: ${BASE_URL}`);
+  console.log(`Base URL: ${baseUrl}`);
   console.log("");
 
   const results = [];
 
   for (const endpoint of ENDPOINTS) {
-    const url = `${BASE_URL}${endpoint}`;
+    const url = `${baseUrl}${endpoint}`;
     console.log(`Testing: ${endpoint}`);
 
     try {

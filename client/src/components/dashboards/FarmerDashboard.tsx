@@ -131,7 +131,7 @@ export function FarmerDashboard() {
 
       toast({
         title: "Weather data updated",
-        description: "Showing forecast for " + farmerProfile.farmLocation,
+        description: `Showing forecast for ${  farmerProfile.farmLocation}`,
       });
     } catch (error) {
       console.error("Error fetching weather:", error);

@@ -1,17 +1,7 @@
 import { Router } from "express";
 import { db } from "../db";
-import { 
-  eq, 
-  sql,
-  desc
-} from "drizzle-orm";
-import { 
-  users, 
-  marketplaceListings, 
-  marketplaceReviews,
-  locations,
-  farmerProfiles
-} from "@shared/schema";
+import { eq, sql, desc } from "drizzle-orm";
+import { marketplaceListings } from "@shared/schema";
 
 const router = Router();
 
@@ -55,7 +45,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const sellerId = parseInt(req.params.id);
-    
+
     if (isNaN(sellerId)) {
       return res.status(400).json({ message: "Invalid seller ID" });
     }
@@ -105,7 +95,7 @@ router.get("/:id", async (req, res) => {
 router.get("/:id/listings", async (req, res) => {
   try {
     const sellerId = parseInt(req.params.id);
-    
+
     if (isNaN(sellerId)) {
       return res.status(400).json({ message: "Invalid seller ID" });
     }

@@ -85,7 +85,7 @@ export default function FarmingAssistantPage() {
       content:
         "👋 Hello! I'm your AI Farming Assistant, ready to provide personalized advice based on your crops, soil conditions, and region. How can I help you today?",
       timestamp: Date.now(),
-      sessionId: sessionId,
+      sessionId,
     };
 
     await saveAIAssistantMessage(welcomeMessage);
@@ -324,7 +324,7 @@ export default function FarmingAssistantPage() {
       role: "user",
       content: input,
       timestamp: Date.now(),
-      sessionId: sessionId,
+      sessionId,
     };
 
     // Save to IndexedDB
@@ -359,7 +359,7 @@ export default function FarmingAssistantPage() {
     // Send to API
     sendMessageToApi({
       message: input,
-      sessionId: sessionId,
+      sessionId,
     });
 
     // Clear input field

@@ -1152,10 +1152,10 @@ export class DatabaseStorage implements IStorage {
         whereConditions.push(
           or(
             sql`${marketplaceListings.title} ILIKE ${
-              "%" + params.search + "%"
+              `%${  params.search  }%`
             }`,
             sql`${marketplaceListings.description} ILIKE ${
-              "%" + params.search + "%"
+              `%${  params.search  }%`
             }`
           )
         );

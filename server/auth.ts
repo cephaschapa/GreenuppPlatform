@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User, UserRoleType } from "@shared/schema";
+import { logger } from "./lib/logger";
 
 // Add passport session type
 declare module "express-session" {
@@ -52,7 +53,7 @@ async function comparePasswords(supplied: string, stored: string) {
 // Setup authentication middleware and routes
 export function setupAuth(app: Express) {
   // Configure session settings
-  console.log(
+  logger.info(
     "Setting up authentication with session store:",
     !!storage.sessionStore
   );
@@ -75,13 +76,13 @@ export function setupAuth(app: Express) {
   app.set("trust proxy", 1);
 
   // Setup session middleware
-  console.log("Initializing session middleware with the following settings:");
-  console.log(
+  logger.info("Initializing session middleware with the following settings:");
+  logger.info(
     "- Secret length:",
     (process.env.SESSION_SECRET || "greenupp-secret-key").length
   );
-  console.log("- Cookie secure:", sessionSettings.cookie?.secure);
-  console.log("- Cookie sameSite:", sessionSettings.cookie?.sameSite);
+  logger.info("- Cookie secure:", sessionSettings.cookie?.secure);
+  logger.info("- Cookie sameSite:", sessionSettings.cookie?.sameSite);
 
   app.use(session(sessionSettings));
   app.use(passport.initialize());
@@ -95,7 +96,7 @@ export function setupAuth(app: Express) {
     }
 
     if (req.path.startsWith("/api/")) {
-      console.log(`Authentication status for ${req.method} ${req.path}:`, {
+      logger.info(`Authentication status for ${req.method} ${req.path}:`, {
         hasSession: !!req.session,
         isAuthenticated: req.isAuthenticated?.() || false,
         sessionID: req.sessionID,
@@ -142,22 +143,22 @@ export function setupAuth(app: Express) {
   // Deserialize user from session
   passport.deserializeUser(async (id: number, done) => {
     try {
-      console.log(`Deserializing user with ID: ${id}`);
+      logger.info(`Deserializing user with ID: ${id}`);
       const user = await storage.getUser(id);
 
       if (user) {
-        console.log(
+        logger.info(
           `User found during deserialization: ${user.username} (${user.id})`
         );
         // Ensure we're using the proper User type with valid UserRoleType
         done(null, user as unknown as Express.User);
       } else {
-        console.log(`⚠️ User with ID ${id} not found during deserialization`);
+        logger.warn(`⚠️ User with ID ${id} not found during deserialization`);
         done(null, null);
       }
     } catch (error: any) {
       // Use any to avoid TypeScript errors
-      console.error(
+      logger.error(
         `❌ Error deserializing user: ${error?.message || "Unknown error"}`
       );
       done(error);

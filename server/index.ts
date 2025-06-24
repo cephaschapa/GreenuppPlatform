@@ -1,7 +1,7 @@
 import "dotenv/config";
-import express, { type Request, Response, NextFunction } from "express";
+import express from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic } from "./vite";
+import { serveStatic } from "./vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import { errorHandler } from "./lib/errors";
@@ -75,7 +75,7 @@ app.use((req, res, next) => {
       }
 
       if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
+        logLine = `${logLine.slice(0, 79)}…`;
       }
 
       logger.info(logLine);

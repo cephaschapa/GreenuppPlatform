@@ -4,7 +4,6 @@ import {
   marketplaceReviews,
   marketplaceFavorites,
   marketplaceMessages,
-  users,
 } from "@shared/schema";
 import {
   eq,

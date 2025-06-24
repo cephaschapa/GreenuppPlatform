@@ -1,72 +1,73 @@
-import { Router, Request, Response } from 'express';
-import { streamChatService } from '../services/stream-chat-service';
-import { storage } from '../storage';
+import { Router, Request, Response } from "express";
+import { streamChatService } from "../services/stream-chat-service";
+import { storage } from "../storage";
 
 const router = Router();
 
 /**
  * Diagnostic route to check if the Stream Chat API credentials are set up correctly
  */
-router.get('/status', (req: Request, res: Response) => {
+router.get("/status", (req: Request, res: Response) => {
   const apiKey = process.env.STREAM_API_KEY;
   const apiSecret = process.env.STREAM_API_SECRET;
-  
+
   // Get the module state from the service
   let isInitialized = false;
-  let errorMessage = '';
-  
+  let errorMessage = "";
+
   try {
     // Test API Key validity by attempting to generate a token
     // This will throw an error if the serverClient is not properly initialized
     if (streamChatService) {
       try {
-        const testToken = streamChatService.generateToken(999999); // Use a dummy ID
+        streamChatService.generateToken(999999); // Use a dummy ID
         isInitialized = true;
       } catch (error: any) {
-        errorMessage = error.message || 'Unknown error generating token';
+        errorMessage = error.message || "Unknown error generating token";
       }
     }
   } catch (error: any) {
-    errorMessage = error.message || 'Unknown error accessing streamChatService';
+    errorMessage = error.message || "Unknown error accessing streamChatService";
   }
-  
+
   // Don't send the actual secrets, just their status
   res.json({
     apiKeySet: !!apiKey,
     apiKeyLength: apiKey ? apiKey.length : 0,
-    apiKeyFirstChars: apiKey ? apiKey.substring(0, 3) + '...' : 'none',
+    apiKeyFirstChars: apiKey ? `${apiKey.substring(0, 3)}...` : "none",
     apiSecretSet: !!apiSecret,
     apiSecretLength: apiSecret ? apiSecret.length : 0,
-    apiSecretFirstChars: apiSecret ? apiSecret.substring(0, 3) + '...' : 'none',
+    apiSecretFirstChars: apiSecret ? `${apiSecret.substring(0, 3)}...` : "none",
     serviceInitialized: !!streamChatService,
     clientInitialized: isInitialized,
     error: errorMessage || undefined,
-    serviceStatus: isInitialized ? 'active' : 'error'
+    serviceStatus: isInitialized ? "active" : "error",
   });
 });
 
 /**
  * Test the Stream Chat API connection
  */
-router.get('/test-connection', async (req: Request, res: Response) => {
+router.get("/test-connection", async (req: Request, res: Response) => {
   try {
     // Create a test user to verify API connection
     await streamChatService.createUser({
-      id: 'test-user',
-      name: 'Test User',
-      image: '',
+      id: "test-user",
+      name: "Test User",
+      image: "",
     });
-    
+
     res.json({
       success: true,
-      message: 'Successfully connected to Stream Chat API and created test user'
+      message:
+        "Successfully connected to Stream Chat API and created test user",
     });
   } catch (error: any) {
-    console.error('Error testing Stream Chat connection:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: error.message || 'Unknown error',
-      details: error.toString()
+    console.error("Error testing Stream Chat connection:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Unknown error",
+      details: error.toString(),
     });
   }
 });
@@ -74,96 +75,96 @@ router.get('/test-connection', async (req: Request, res: Response) => {
 /**
  * Get Stream Chat token for the current user
  */
-router.get('/token', async (req: Request, res: Response) => {
+router.get("/token", async (req: Request, res: Response) => {
   try {
     if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: "Unauthorized" });
     }
-    
+
     const userId = req.user.id;
     const token = streamChatService.generateToken(userId);
-    
+
     res.json({ token });
   } catch (error) {
-    console.error('Error generating Stream Chat token:', error);
-    res.status(500).json({ error: 'Failed to generate chat token' });
+    console.error("Error generating Stream Chat token:", error);
+    res.status(500).json({ error: "Failed to generate chat token" });
   }
 });
 
 /**
  * Initialize Stream Chat for a user
  */
-router.post('/init', async (req: Request, res: Response) => {
+router.post("/init", async (req: Request, res: Response) => {
   try {
     if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: "Unauthorized" });
     }
-    
+
     // Create/update user in Stream Chat with proper user data
     const userData = {
       id: req.user.id.toString(),
       name: req.user.username,
-      image: '',  // Default empty string, no profileImage in User type
+      image: "", // Default empty string, no profileImage in User type
     };
-    
+
     await streamChatService.createUser(userData);
-    
+
     // Generate a token for the user
     const token = streamChatService.generateToken(req.user.id);
-    
+
     res.json({
       user: userData,
       token,
     });
   } catch (error) {
-    console.error('Error initializing Stream Chat:', error);
-    res.status(500).json({ error: 'Failed to initialize chat' });
+    console.error("Error initializing Stream Chat:", error);
+    res.status(500).json({ error: "Failed to initialize chat" });
   }
 });
 
 /**
  * Create a direct chat with another user
  */
-router.post('/direct', async (req: Request, res: Response) => {
+router.post("/direct", async (req: Request, res: Response) => {
   try {
     if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: "Unauthorized" });
     }
-    
+
     const { userId } = req.body;
     if (!userId) {
-      return res.status(400).json({ error: 'User ID is required' });
+      return res.status(400).json({ error: "User ID is required" });
     }
-    
+
     // Check if the target user exists
     const targetUser = await storage.getUser(userId);
     if (!targetUser) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
-    
+
     // Create/update both users in Stream Chat with properly formatted data
     const currentUserData = {
       id: req.user.id.toString(),
       name: req.user.username,
-      image: '',  // Default empty string, no profileImage in User type
+      image: "", // Default empty string, no profileImage in User type
     };
-    
+
     const targetUserData = {
       id: targetUser.id.toString(),
       name: targetUser.username,
-      image: '',  // Default empty string, no profileImage in User type
+      image: "", // Default empty string, no profileImage in User type
     };
-    
+
     await streamChatService.createUser(currentUserData);
     await streamChatService.createUser(targetUserData);
-    
+
     // Create a direct channel between the users
     const channel = await streamChatService.createDirectChannel(
       req.user.id,
       targetUser.id,
       `Chat between ${req.user.username} and ${targetUser.username}`
     );
-    
+
     res.json({
       channel: {
         id: channel.id,
@@ -172,33 +173,35 @@ router.post('/direct', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Error creating direct chat:', error);
-    res.status(500).json({ error: 'Failed to create direct chat' });
+    console.error("Error creating direct chat:", error);
+    res.status(500).json({ error: "Failed to create direct chat" });
   }
 });
 
 /**
  * Create a group chat
  */
-router.post('/group', async (req: Request, res: Response) => {
+router.post("/group", async (req: Request, res: Response) => {
   try {
     if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: "Unauthorized" });
     }
-    
+
     const { name, members } = req.body;
     if (!name || !members || !Array.isArray(members)) {
-      return res.status(400).json({ error: 'Name and member IDs array are required' });
+      return res
+        .status(400)
+        .json({ error: "Name and member IDs array are required" });
     }
-    
+
     // Create/update the creator in Stream Chat with properly formatted data
     const creatorData = {
       id: req.user.id.toString(),
       name: req.user.username,
-      image: '',  // Default empty string, no profileImage in User type
+      image: "", // Default empty string, no profileImage in User type
     };
     await streamChatService.createUser(creatorData);
-    
+
     // Create/update all members in Stream Chat with properly formatted data
     for (const memberId of members) {
       const member = await storage.getUser(memberId);
@@ -206,19 +209,19 @@ router.post('/group', async (req: Request, res: Response) => {
         const memberData = {
           id: member.id.toString(),
           name: member.username,
-          image: '',  // Default empty string, no profileImage in User type
+          image: "", // Default empty string, no profileImage in User type
         };
         await streamChatService.createUser(memberData);
       }
     }
-    
+
     // Create a group channel
     const channel = await streamChatService.createGroupChannel(
       name,
       req.user.id,
       members
     );
-    
+
     res.json({
       channel: {
         id: channel.id,
@@ -227,24 +230,24 @@ router.post('/group', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Error creating group chat:', error);
-    res.status(500).json({ error: 'Failed to create group chat' });
+    console.error("Error creating group chat:", error);
+    res.status(500).json({ error: "Failed to create group chat" });
   }
 });
 
 /**
  * Get user's channels
  */
-router.get('/channels', async (req: Request, res: Response) => {
+router.get("/channels", async (req: Request, res: Response) => {
   try {
     if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: "Unauthorized" });
     }
-    
+
     const channels = await streamChatService.getUserChannels(req.user.id);
-    
+
     res.json({
-      channels: channels.map(channel => ({
+      channels: channels.map((channel) => ({
         id: channel.id,
         type: channel.type,
         cid: `${channel.type}:${channel.id}`,
@@ -252,34 +255,34 @@ router.get('/channels', async (req: Request, res: Response) => {
       })),
     });
   } catch (error) {
-    console.error('Error fetching channels:', error);
-    res.status(500).json({ error: 'Failed to fetch channels' });
+    console.error("Error fetching channels:", error);
+    res.status(500).json({ error: "Failed to fetch channels" });
   }
 });
 
 /**
  * Get list of users for chat
  */
-router.get('/users', async (req: Request, res: Response) => {
+router.get("/users", async (req: Request, res: Response) => {
   try {
     if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: "Unauthorized" });
     }
-    
+
     // Get all users except the current user
     const users = await storage.getAllUsers();
     const chatUsers = users
-      .filter(user => user.id !== req.user!.id)
-      .map(user => ({
+      .filter((user) => user.id !== req.user!.id)
+      .map((user) => ({
         id: user.id,
         name: user.username,
-        role: user.role
+        role: user.role,
       }));
-    
+
     res.json({ users: chatUsers });
   } catch (error) {
-    console.error('Error fetching users for chat:', error);
-    res.status(500).json({ error: 'Failed to fetch users' });
+    console.error("Error fetching users for chat:", error);
+    res.status(500).json({ error: "Failed to fetch users" });
   }
 });
 

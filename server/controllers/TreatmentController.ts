@@ -59,7 +59,7 @@ export class TreatmentController {
       );
 
       let planData: any;
-      let treatmentSteps: any[] = [];
+      const treatmentSteps: any[] = [];
 
       // Try AI generation first if enabled and available
       if (useAI && aiTreatmentGenerator) {
@@ -87,7 +87,7 @@ export class TreatmentController {
           // Create the treatment plan from AI response
           planData = {
             userId: req.user.id,
-            analysisId: analysisId,
+            analysisId,
             title: aiPlan.title,
             description: aiPlan.description,
             diseaseType: analysis.diseaseDetected || "Unknown",
@@ -124,8 +124,8 @@ export class TreatmentController {
           const completePlan = {
             ...plan,
             steps: treatmentSteps,
-            analysis: analysis,
-            recommendedProducts: recommendedProducts,
+            analysis,
+            recommendedProducts,
             aiGenerated: true,
             recommendations: aiPlan.recommendations,
             warnings: aiPlan.warnings,
@@ -180,7 +180,7 @@ export class TreatmentController {
       // Create the treatment plan
       planData = {
         userId: req.user.id,
-        analysisId: analysisId,
+        analysisId,
         title: planTitle,
         description: `Automatically generated treatment plan for ${
           analysis.diseaseDetected || "detected disease"
@@ -188,8 +188,8 @@ export class TreatmentController {
           analysis.healthScore
         }/100.`,
         diseaseType: analysis.diseaseDetected || "Unknown",
-        severity: severity,
-        estimatedDuration: estimatedDuration,
+        severity,
+        estimatedDuration,
       };
 
       const plan = await this.model.createTreatmentPlan(planData);
@@ -252,8 +252,8 @@ export class TreatmentController {
       const completePlan = {
         ...plan,
         steps: treatmentSteps,
-        analysis: analysis,
-        recommendedProducts: recommendedProducts,
+        analysis,
+        recommendedProducts,
         aiGenerated: false,
         marketplaceLinks: this.generateMarketplaceLinks(
           recommendedProducts,

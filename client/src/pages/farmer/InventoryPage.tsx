@@ -94,7 +94,7 @@ export default function InventoryPage() {
       // First get user's listings
       const listingsResponse = await apiRequest(
         "GET",
-        "/api/marketplace/listings?sellerId=" + user?.id
+        `/api/marketplace/listings?sellerId=${  user?.id}`
       );
       const listings = await listingsResponse.json();
 
@@ -233,7 +233,7 @@ export default function InventoryPage() {
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat("en-ZM", {
       style: "currency",
-      currency: currency,
+      currency,
     }).format(amount);
   };
 

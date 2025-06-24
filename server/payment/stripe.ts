@@ -1,10 +1,9 @@
-import Stripe from 'stripe';
-import { db } from '../db';
-import { CartItem, Cart } from '@shared/schema';
+import Stripe from "stripe";
+import { CartItem, Cart } from "@shared/schema";
 
 // Initialize Stripe with the secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16' as any,
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+  apiVersion: "2023-10-16" as any,
 });
 
 /**
@@ -14,9 +13,9 @@ export async function createStripePaymentIntent(cart: Cart, items: CartItem[]) {
   try {
     // Calculate the total amount from the cart items (in cents)
     const amount = items.reduce((total, item) => {
-      return total + (Number(item.price) * item.quantity);
+      return total + Number(item.price) * item.quantity;
     }, 0);
-    
+
     // Convert to cents for Stripe
     const amountInCents = Math.round(amount * 100);
 
@@ -37,20 +36,20 @@ export async function createStripePaymentIntent(cart: Cart, items: CartItem[]) {
     // Create a payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
-      currency: 'usd', 
+      currency: "usd",
       metadata,
       // Payment method types - can include more methods like 'card', 'alipay', etc.
-      payment_method_types: ['card'],
+      payment_method_types: ["card"],
       // More options can be configured as needed
     });
 
     return {
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
-      amount: amountInCents
+      amount: amountInCents,
     };
   } catch (error) {
-    console.error('Error creating Stripe payment intent:', error);
+    console.error("Error creating Stripe payment intent:", error);
     throw error;
   }
 }
@@ -61,8 +60,8 @@ export async function createStripePaymentIntent(cart: Cart, items: CartItem[]) {
 export async function confirmStripePayment(paymentIntentId: string) {
   try {
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-    
-    if (paymentIntent.status === 'succeeded') {
+
+    if (paymentIntent.status === "succeeded") {
       const cartId = paymentIntent.metadata.cartId;
       return {
         success: true,
@@ -72,17 +71,17 @@ export async function confirmStripePayment(paymentIntentId: string) {
           amount: paymentIntent.amount,
           currency: paymentIntent.currency,
           status: paymentIntent.status,
-        }
+        },
       };
     }
-    
+
     return {
       success: false,
       status: paymentIntent.status,
-      message: `Payment has not succeeded. Current status: ${paymentIntent.status}`
+      message: `Payment has not succeeded. Current status: ${paymentIntent.status}`,
     };
   } catch (error) {
-    console.error('Error confirming Stripe payment:', error);
+    console.error("Error confirming Stripe payment:", error);
     throw error;
   }
 }

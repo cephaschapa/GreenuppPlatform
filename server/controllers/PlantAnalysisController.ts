@@ -5,6 +5,7 @@ import {
   createPlantAnalysis,
 } from "../services/plant-analysis.js";
 import { insertPlantAnalysisSchema } from "@shared/schema";
+import { logger } from "../utils/logger.js";
 
 export class PlantAnalysisController {
   static async list(req: Request, res: Response) {
@@ -74,19 +75,9 @@ export class PlantAnalysisController {
       insertPlantAnalysisSchema.parse(plantAnalysisData);
       const saved = await PlantAnalysisModel.create(plantAnalysisData);
       res.status(201).json(saved);
-    } catch (error: any) {
-      if (error.message?.includes("OpenAI API")) {
-        res
-          .status(503)
-          .json({
-            message: "Plant analysis service is not properly configured.",
-            details: "API key missing or invalid",
-          });
-      } else {
-        res
-          .status(500)
-          .json({ message: error.message || "Failed to analyze plant image" });
-      }
+    } catch (error: unknown) {
+      logger.error("Error creating plant analysis:", error);
+      res.status(500).json({ message: "Failed to create plant analysis" });
     }
   }
 

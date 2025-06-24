@@ -9,7 +9,6 @@ import {
   NotFoundError,
   DatabaseError,
 } from "../lib/errors";
-import { insertInventorySchema } from "@shared/schema";
 
 export class InventoryController {
   private model: InventoryModel;
@@ -136,19 +135,9 @@ export class InventoryController {
         `Inventory updated for listing ${listingIdNum} by user ${req.user.id}`
       );
       res.json(updatedInventory);
-    } catch (error) {
-      logger.error("Error updating inventory:", error);
-      if (error instanceof AuthenticationError) {
-        res.status(401).json({ message: "Authentication required" });
-      } else if (error instanceof AuthorizationError) {
-        res.status(403).json({ message: error.message });
-      } else if (error instanceof ValidationError) {
-        res.status(400).json({ message: error.message });
-      } else if (error instanceof NotFoundError) {
-        res.status(404).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: "Failed to update inventory" });
-      }
+    } catch (error: unknown) {
+      logger.error("Error updating inventory item:", error);
+      res.status(500).json({ message: "Failed to update inventory item" });
     }
   }
 

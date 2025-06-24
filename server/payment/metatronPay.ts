@@ -15,7 +15,7 @@ export async function createMetatronPayIntent(cart: Cart, items: CartItem[]) {
     // For now, just return a mock response to integrate with the frontend
     return {
       paymentId: `metatron-${Date.now()}`,
-      amount: amount,
+      amount,
       // This would normally come from the actual API
       redirectUrl: '/dashboard/marketplace/payment/metatron',
       // Additional metadata

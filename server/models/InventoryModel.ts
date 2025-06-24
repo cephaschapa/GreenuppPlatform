@@ -1,7 +1,7 @@
 import { db } from "../db";
 import { inventory, marketplaceListings } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
-import type { Inventory, InsertInventory } from "@shared/schema";
+import { eq } from "drizzle-orm";
+import type { Inventory } from "@shared/schema";
 
 export class InventoryModel {
   // Get inventory for a specific listing

@@ -16,12 +16,10 @@ export class WeatherController {
       const data = await WeatherModel.getWeatherData(location as string);
       res.json(data);
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          message: "Failed to retrieve weather data",
-          error: error instanceof Error ? error.message : error,
-        });
+      res.status(500).json({
+        message: "Failed to retrieve weather data",
+        error: error instanceof Error ? error.message : error,
+      });
     }
   }
 
@@ -40,12 +38,10 @@ export class WeatherController {
       );
       res.json(data);
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          message: "Failed to retrieve historical weather data",
-          error: error instanceof Error ? error.message : error,
-        });
+      res.status(500).json({
+        message: "Failed to retrieve historical weather data",
+        error: error instanceof Error ? error.message : error,
+      });
     }
   }
 
@@ -60,12 +56,10 @@ export class WeatherController {
       const data = await WeatherModel.getClimateData(location as string);
       res.json(data);
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          message: "Failed to retrieve climate data",
-          error: error instanceof Error ? error.message : error,
-        });
+      res.status(500).json({
+        message: "Failed to retrieve climate data",
+        error: error instanceof Error ? error.message : error,
+      });
     }
   }
 
@@ -87,12 +81,10 @@ export class WeatherController {
       const data = await WeatherModel.reverseGeocode(latitude, longitude);
       res.json(data);
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          message: "Failed to reverse geocode coordinates",
-          error: error instanceof Error ? error.message : error,
-        });
+      res.status(500).json({
+        message: "Failed to reverse geocode coordinates",
+        error: error instanceof Error ? error.message : error,
+      });
     }
   }
 
@@ -105,12 +97,10 @@ export class WeatherController {
       const data = await WeatherModel.geocode(query as string);
       res.json({ results: data });
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          message: "Failed to search locations",
-          error: error instanceof Error ? error.message : error,
-        });
+      res.status(500).json({
+        message: "Failed to search locations",
+        error: error instanceof Error ? error.message : error,
+      });
     }
   }
 
@@ -130,12 +120,10 @@ export class WeatherController {
       }
       res.json(prefs);
     } catch (error) {
-      res
-        .status(500)
-        .json({
-          message: "Failed to retrieve weather preferences",
-          error: error instanceof Error ? error.message : error,
-        });
+      res.status(500).json({
+        message: "Failed to retrieve weather preferences",
+        error: error instanceof Error ? error.message : error,
+      });
     }
   }
 
@@ -164,12 +152,10 @@ export class WeatherController {
         const validationError = fromZodError(error);
         res.status(400).json({ message: validationError.message });
       } else {
-        res
-          .status(500)
-          .json({
-            message: "Failed to create/update weather preferences",
-            error: error instanceof Error ? error.message : error,
-          });
+        res.status(500).json({
+          message: "Failed to create/update weather preferences",
+          error: error instanceof Error ? error.message : error,
+        });
       }
     }
   }
@@ -177,7 +163,7 @@ export class WeatherController {
   static async updatePreferences(req: Request, res: Response) {
     try {
       // Check if preferences exist, create if not
-      let prefs = await WeatherModel.getWeatherPreferences(req.user!.id);
+      const prefs = await WeatherModel.getWeatherPreferences(req.user!.id);
       const prefsData = insertWeatherPreferencesSchema
         .partial()
         .parse(req.body);
@@ -208,12 +194,10 @@ export class WeatherController {
         const validationError = fromZodError(error);
         res.status(400).json({ message: validationError.message });
       } else {
-        res
-          .status(500)
-          .json({
-            message: "Failed to update weather preferences",
-            error: error instanceof Error ? error.message : error,
-          });
+        res.status(500).json({
+          message: "Failed to update weather preferences",
+          error: error instanceof Error ? error.message : error,
+        });
       }
     }
   }

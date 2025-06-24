@@ -2,13 +2,8 @@ import express from "express";
 import { cropTraceService } from "../services/croptrace";
 import type { Request, Response, NextFunction } from "express";
 import { db } from "../db";
-import {
-  crops,
-  cropTraceEvents,
-  marketplaceListings,
-  fields,
-} from "@shared/schema";
-import { eq, isNotNull } from "drizzle-orm";
+import { crops, cropTraceEvents, marketplaceListings } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 const router = express.Router();
 

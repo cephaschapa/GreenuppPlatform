@@ -7,6 +7,7 @@ import {
 import { FieldModel } from "../models/FieldModel.js";
 import { CropModel } from "../models/CropModel.js";
 import { logger } from "../lib/logger.js";
+import { AuthenticationError } from "../lib/errors.js";
 
 export class TaskController {
   /**
@@ -207,60 +208,18 @@ export class TaskController {
    */
   static async create(req: Request, res: Response): Promise<void> {
     try {
-      const taskData: CreateTaskData = req.body;
-
-      // Basic validation
-      if (!taskData.title) {
-        res.status(400).json({
-          message: "Task title is required",
-        });
-        return;
+      if (!req.user || !req.user.id) {
+        throw new AuthenticationError("Authentication required");
       }
-
-      if (!taskData.dueDate) {
-        res.status(400).json({
-          message: "Due date is required",
-        });
-        return;
-      }
-
-      // If relatedCropId is provided, ensure it belongs to the user
-      if (taskData.relatedCropId) {
-        const crop = await CropModel.findByIdAndUserId(
-          taskData.relatedCropId,
-          req.user!.id
-        );
-        if (!crop) {
-          res.status(404).json({ message: "Related crop not found" });
-          return;
-        }
-      }
-
-      // If relatedFieldId is provided, ensure it belongs to the user
-      if (taskData.relatedFieldId) {
-        const field = await FieldModel.findByIdAndUserId(
-          taskData.relatedFieldId,
-          req.user!.id
-        );
-        if (!field) {
-          res.status(404).json({ message: "Related field not found" });
-          return;
-        }
-      }
-
-      const newTask = await TaskModel.create({
-        ...taskData,
-        userId: req.user!.id,
-      });
-
-      logger.info(`Task created: ${newTask.id} by user ${req.user!.id}`);
+      const taskData = {
+        ...req.body,
+        userId: req.user.id,
+      };
+      const newTask = await TaskModel.create(taskData);
       res.status(201).json(newTask);
-    } catch (error) {
-      logger.error("Failed to create task:", error);
-      res.status(500).json({
-        message: "Failed to create task",
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+    } catch (error: unknown) {
+      logger.error("Error creating task:", error);
+      res.status(500).json({ message: "Failed to create task" });
     }
   }
 

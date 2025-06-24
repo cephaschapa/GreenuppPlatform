@@ -1,6 +1,12 @@
 import OpenAI from "openai";
 import { InsertPlantAnalysis } from "@shared/schema";
 import { Readable } from "stream";
+import { db } from "../db";
+import { plantAnalyses } from "@shared/schema";
+import { eq, desc } from "drizzle-orm";
+import { logger } from "../lib/logger";
+import { ValidationError, NotFoundError } from "../lib/errors";
+import { insertPlantAnalysisSchema } from "@shared/schema";
 
 // Initialize OpenAI
 const openai = new OpenAI({
@@ -65,7 +71,7 @@ function detectImageFormat(base64Data: string): string {
   console.log(
     "First 12 bytes:",
     Array.from(buffer.slice(0, 12))
-      .map((b) => "0x" + b.toString(16).padStart(2, "0"))
+      .map((b) => `0x${b.toString(16).padStart(2, "0")}`)
       .join(" ")
   );
 
@@ -123,7 +129,7 @@ function detectImageFormat(base64Data: string): string {
  */
 function extractBase64FromDataUrl(dataUrl: string): string {
   console.log("Extracting from data URL, length:", dataUrl.length);
-  console.log("Data URL starts with:", dataUrl.substring(0, 100) + "...");
+  console.log("Data URL starts with:", `${dataUrl.substring(0, 100)}...`);
 
   // Check if it's already a base64 string (no data: prefix)
   if (!dataUrl.startsWith("data:")) {
@@ -155,7 +161,7 @@ function convertImageForOpenAI(imageData: string): {
   console.log("Input imageData length:", imageData.length);
   console.log(
     "Input imageData starts with:",
-    imageData.substring(0, 100) + "..."
+    `${imageData.substring(0, 100)}...`
   );
 
   try {
@@ -178,7 +184,7 @@ function convertImageForOpenAI(imageData: string): {
     // Validate that the base64 data is actually valid
     try {
       Buffer.from(base64Data, "base64");
-    } catch (error) {
+    } catch {
       throw new Error("Invalid base64 data format");
     }
 
@@ -199,7 +205,7 @@ function convertImageForOpenAI(imageData: string): {
     // Create the proper data URL for OpenAI
     const dataUrl = `data:image/${imageFormat};base64,${base64Data}`;
     console.log("Generated data URL length:", dataUrl.length);
-    console.log("Data URL starts with:", dataUrl.substring(0, 100) + "...");
+    console.log("Data URL starts with:", `${dataUrl.substring(0, 100)}...`);
 
     return {
       base64Data,

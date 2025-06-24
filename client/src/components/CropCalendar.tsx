@@ -27,7 +27,7 @@ export default function CropCalendar({ crops, activities, onEventClick }: CropCa
           backgroundColor: 'rgba(16, 185, 129, 0.7)',
           extendedProps: {
             type: 'planting',
-            crop: crop
+            crop
           }
         });
       }
@@ -41,7 +41,7 @@ export default function CropCalendar({ crops, activities, onEventClick }: CropCa
           backgroundColor: 'rgba(245, 158, 11, 0.7)',
           extendedProps: {
             type: 'harvest',
-            crop: crop
+            crop
           }
         });
       }
@@ -60,7 +60,7 @@ export default function CropCalendar({ crops, activities, onEventClick }: CropCa
         backgroundColor: activityColor.replace(')', ', 0.7)').replace('rgb', 'rgba'),
         extendedProps: {
           type: 'activity',
-          activity: activity,
+          activity,
           cropName
         }
       });

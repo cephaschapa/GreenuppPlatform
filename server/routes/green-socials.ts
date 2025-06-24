@@ -382,7 +382,7 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
             likeCount: row.like_count,
             commentCount: row.comment_count,
             shareCount: row.share_count,
-            comments: comments // Include the fetched comments
+            comments // Include the fetched comments
           },
           author: {
             id: row.author_id,
@@ -426,7 +426,7 @@ greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
       postType: req.body.postType,
       visibility: req.body.visibility,
       communityId: req.body.communityId,
-      media: req.body.media ? JSON.stringify(req.body.media).substring(0, 100) + '...' : null,
+      media: req.body.media ? `${JSON.stringify(req.body.media).substring(0, 100)  }...` : null,
       locationName: req.body.locationName,
       hashtags: req.body.hashtags,
       cropsTags: req.body.cropsTags,
@@ -843,7 +843,7 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
       if (postOwner && postOwner.userId !== userId) {
         const postType = postOwner.postType || 'post';
         const shortContent = commentRow.content.length > 50 
-          ? commentRow.content.substring(0, 50) + "..." 
+          ? `${commentRow.content.substring(0, 50)  }...` 
           : commentRow.content;
           
         await createNotification({
@@ -853,7 +853,7 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
           message: `${commentRow.author_username} commented on your ${postType}: "${shortContent}"`,
           data: {
             postId: req.body.postId,
-            commentId: commentId,
+            commentId,
             commentedBy: userId,
             commentContent: shortContent
           },
@@ -865,7 +865,7 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
       // Send notification to parent comment owner if this is a reply
       if (parentCommentOwner && parentCommentOwner !== userId) {
         const shortContent = commentRow.content.length > 50 
-          ? commentRow.content.substring(0, 50) + "..." 
+          ? `${commentRow.content.substring(0, 50)  }...` 
           : commentRow.content;
           
         await createNotification({
@@ -875,7 +875,7 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
           message: `${commentRow.author_username} replied to your comment: "${shortContent}"`,
           data: {
             postId: req.body.postId,
-            commentId: commentId,
+            commentId,
             parentCommentId: req.body.parentId,
             repliedBy: userId,
             replyContent: shortContent
@@ -1651,7 +1651,7 @@ greenSocialsRouter.post(
         const postOwner = postOwnerResult[0];
         const shortContent =
           postOwner.content.length > 50
-            ? postOwner.content.substring(0, 50) + "..."
+            ? `${postOwner.content.substring(0, 50)  }...`
             : postOwner.content;
             
         const postType = postOwner.postType || 'post';
@@ -1812,7 +1812,7 @@ greenSocialsRouter.post(
           const commentContent = commentContentResult.rows[0].content;
           const shortContent =
             commentContent.length > 50
-              ? commentContent.substring(0, 50) + "..."
+              ? `${commentContent.substring(0, 50)  }...`
               : commentContent;
 
           // Import the createNotification function
@@ -1961,7 +1961,7 @@ greenSocialsRouter.post(
             
         const content = postData.content || "";
         const shortContent = typeof content === 'string' && content.length > 50 
-          ? content.substring(0, 50) + "..." 
+          ? `${content.substring(0, 50)  }...` 
           : String(content);
 
         let shareType = "their profile";
@@ -2206,7 +2206,7 @@ greenSocialsRouter.post(
             
         const content = postData.content || "";
         const shortContent = typeof content === 'string' && content.length > 50 
-          ? content.substring(0, 50) + "..." 
+          ? `${content.substring(0, 50)  }...` 
           : String(content);
           
         const postType = postData.postType || 'post';

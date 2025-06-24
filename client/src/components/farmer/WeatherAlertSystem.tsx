@@ -90,7 +90,7 @@ export function WeatherAlertSystem({
     threshold: 0,
     unit: "°C",
     enabled: true,
-    location: location,
+    location,
     notificationType: "push",
   });
   const { toast } = useToast();
@@ -224,7 +224,7 @@ export function WeatherAlertSystem({
       threshold: 0,
       unit: "°C",
       enabled: true,
-      location: location,
+      location,
       notificationType: "push",
     });
     setIsCreateDialogOpen(false);

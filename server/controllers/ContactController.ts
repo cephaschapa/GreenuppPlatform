@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { ContactModel } from "../models/ContactModel";
 import { logger } from "../lib/logger";
-import { ValidationError, DatabaseError } from "../lib/errors";
+import { ValidationError } from "../lib/errors";
 import { contactFormSchema } from "@shared/schema";
 
 export class ContactController {
