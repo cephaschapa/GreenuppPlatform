@@ -207,7 +207,6 @@ function NewChatDialogContent({
         throw new Error("Failed to create chat channel");
       }
     } catch (error) {
-      console.error("Error creating chat:", error);
       toast({
         title: "Error",
         description: "Failed to create chat. Please try again.",

@@ -756,13 +756,8 @@ export class DatabaseStorage implements IStorage {
       if (!Array.isArray(updatedData.locations)) {
         // If it's not an array, make it an empty array
         updatedData.locations = [];
-        console.log("Converted non-array locations to empty array");
-      } else {
-        console.log("Locations is already an array:", updatedData.locations);
       }
     }
-
-    console.log("Updating weather preferences with data:", updatedData);
 
     // Then update it by id
     const [prefs] = await db
@@ -773,8 +768,6 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(weatherPreferences.id, existingPrefs.id))
       .returning();
-
-    console.log("Updated preferences:", prefs);
 
     return prefs;
   }
@@ -960,12 +953,10 @@ export class DatabaseStorage implements IStorage {
   // Plant analysis methods
   async getPlantAnalyses(userId: number): Promise<PlantAnalysis[]> {
     try {
-      console.log("Storage: Getting plant analyses for userId:", userId);
       const result = await db
         .select()
         .from(plantAnalyses)
         .where(eq(plantAnalyses.userId, userId));
-      console.log("Storage: Found", result.length, "analyses");
       return result;
     } catch (error) {
       console.error("Storage: Error in getPlantAnalyses:", error);
@@ -1151,12 +1142,10 @@ export class DatabaseStorage implements IStorage {
       if (params.search) {
         whereConditions.push(
           or(
-            sql`${marketplaceListings.title} ILIKE ${
-              `%${  params.search  }%`
-            }`,
-            sql`${marketplaceListings.description} ILIKE ${
-              `%${  params.search  }%`
-            }`
+            sql`${marketplaceListings.title} ILIKE ${`%${params.search}%`}`,
+            sql`${
+              marketplaceListings.description
+            } ILIKE ${`%${params.search}%`}`
           )
         );
       }

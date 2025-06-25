@@ -256,9 +256,6 @@ export default function MarketplacePage() {
             listing.category
           ) {
             if (listing.category !== filters.category) {
-              console.log(
-                `Filtering out by category: ${listing.id} - category: ${listing.category}`
-              );
               return false;
             }
           }
@@ -267,7 +264,7 @@ export default function MarketplacePage() {
           try {
             // Special case for the 111111.00 listing, skip price filtering for it
             if (listing.price === "111111.00") {
-              console.log("Skipping price filter for special test listing");
+              // Skip price filtering for special test listing
             } else {
               const priceValue =
                 typeof listing.price === "string"
@@ -278,9 +275,6 @@ export default function MarketplacePage() {
                 !isNaN(priceValue) &&
                 (priceValue < filters.minPrice || priceValue > filters.maxPrice)
               ) {
-                console.log(
-                  `Filtering out by price: ${listing.id} - price: ${priceValue}`
-                );
                 return false;
               }
             }
@@ -299,7 +293,6 @@ export default function MarketplacePage() {
                 : String(listing.isNegotiable).toLowerCase() === "true";
 
             if (!isNegotiable) {
-              console.log(`Filtering out by negotiable: ${listing.id}`);
               return false;
             }
           }

@@ -35,16 +35,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     next();
   });
-  console.log("Registering all API routes...");
 
   // Set up authentication and get the isAuthenticated middleware
   const { isAuthenticated } = setupAuth(app);
 
   // Set the isAuthenticated middleware for the Green Socials router
   setIsAuthenticatedMiddleware(isAuthenticated);
-  console.log(
-    "Initialized Green Socials with consistent authentication middleware"
-  );
 
   // Register MVC routes (includes marketplace, fields, crops, tasks, weather, plant analyses, product verification)
   registerMvcRoutes(app);
@@ -77,11 +73,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/uploads", uploadRouter);
 
   // Set up Stream Chat routes
-  console.log("Setting up Stream Chat routes");
   app.use("/api/stream-chat", streamChatRoutes);
 
   // Set up AI farming assistant routes
-  console.log("Setting up AI farming assistant routes");
   app.use("/api/farming-assistant", farmingAssistantRoutes);
 
   // Auto-generate treatment plan from analysis - MIGRATED TO MVC
@@ -96,13 +90,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create and return the HTTP server
   const httpServer = createServer(app);
 
-  console.log("WebSocket functionality completely disabled as requested");
-
   // Provide a no-op implementation for the WebSocket notifier
   // to prevent errors in code that calls this function
   setWebSocketNotifier(() => {
     // No-op implementation - websockets are disabled
-    console.log("WebSocket notification attempted but WebSockets are disabled");
   });
 
   return httpServer;
