@@ -4,6 +4,7 @@ import { TopNavbar } from "./TopNavbar";
 import { PopoverAssistant } from "@/components/chat/PopoverAssistant";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { MobileSidebar } from "./MobileSidebar";
+import { SystemHealthStatus } from "@/components/SystemHealthStatus";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -47,6 +48,11 @@ export function DashboardLayout({
                 <p className="text-muted-foreground">{description}</p>
               )}
             </div> */}
+
+            {/* System Health Status - Desktop only */}
+            <div className="hidden md:block absolute top-20 right-4 z-10">
+              <SystemHealthStatus variant="compact" />
+            </div>
 
             {children}
           </div>

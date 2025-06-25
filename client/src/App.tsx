@@ -20,6 +20,7 @@ import FarmingAssistantPage from "@/pages/FarmingAssistantPage";
 import UploadTestPage from "@/pages/UploadTestPage";
 import EmailNotificationTestPage from "@/pages/EmailNotificationTestPage";
 import PublicEmailTestPage from "@/pages/PublicEmailTestPage";
+import SystemHealthPage from "@/pages/admin/SystemHealthPage";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { SocketIOProvider } from "@/hooks/use-socketio";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -142,6 +143,9 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
           component={FarmingAssistantPage}
         />
 
+        {/* Admin routes - without /dashboard prefix on app subdomain */}
+        <ProtectedRoute path="/system-health" component={SystemHealthPage} />
+
         <Route component={NotFound} />
       </Switch>
     );
@@ -258,6 +262,12 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
       <ProtectedRoute
         path="/dashboard/farming-assistant"
         component={FarmingAssistantPage}
+      />
+
+      {/* Admin routes on main domain - with /dashboard prefix */}
+      <ProtectedRoute
+        path="/dashboard/system-health"
+        component={SystemHealthPage}
       />
 
       {/* Role-specific dashboard redirects */}

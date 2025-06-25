@@ -28,6 +28,7 @@ import {
   Grid,
   Brain,
   MessageSquare,
+  Activity,
 } from "lucide-react";
 import greenuppLogo from "@/assets/greenupp-full-logo.png";
 import { cn } from "@/lib/utils";
@@ -229,6 +230,14 @@ export function Sidebar() {
       mobileIcon: <Brain className="h-6 w-6" />,
       active: location === "/dashboard/farming-assistant",
       showInMobileNav: true,
+    },
+    {
+      title: "System Health",
+      href: "/dashboard/system-health",
+      icon: <Activity className="h-5 w-5" />,
+      mobileIcon: <Activity className="h-6 w-6" />,
+      active: location === "/dashboard/system-health",
+      showInMobileNav: false,
     },
   ];
 
