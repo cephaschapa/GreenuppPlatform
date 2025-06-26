@@ -2,6 +2,7 @@ export interface UserSettings {
   notifications: {
     emailNotifications: boolean;
     pushNotifications: boolean;
+    smsNotifications: boolean;
     weatherAlerts: boolean;
     marketPriceAlerts: boolean;
     taskReminders: boolean;
@@ -37,6 +38,7 @@ export class SettingsModel {
       notifications: {
         emailNotifications: true,
         pushNotifications: true,
+        smsNotifications: false,
         weatherAlerts: true,
         marketPriceAlerts: false,
         taskReminders: true,

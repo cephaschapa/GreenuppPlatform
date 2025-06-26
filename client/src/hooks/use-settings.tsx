@@ -6,13 +6,14 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 export interface NotificationSettings {
   emailNotifications: boolean;
   pushNotifications: boolean;
+  smsNotifications: boolean;
   weatherAlerts: boolean;
   marketPriceAlerts: boolean;
   taskReminders: boolean;
 }
 
 export interface DisplaySettings {
-  theme: 'light' | 'dark' | 'system';
+  theme: "light" | "dark" | "system";
   fontSize: number;
   reducedMotion: boolean;
   highContrast: boolean;
@@ -20,21 +21,21 @@ export interface DisplaySettings {
 
 export interface SecuritySettings {
   twoFactorAuth: boolean;
-  sessionTimeout: 'never' | '1hour' | '8hours' | '24hours';
+  sessionTimeout: "never" | "1hour" | "8hours" | "24hours";
   loginNotifications: boolean;
 }
 
 export interface PrivacySettings {
   shareData: boolean;
-  profileVisibility: 'public' | 'private' | 'connections';
+  profileVisibility: "public" | "private" | "connections";
   locationSharing: boolean;
 }
 
 export interface UnitSettings {
-  temperatureUnit: 'celsius' | 'fahrenheit';
-  distanceUnit: 'metric' | 'imperial';
-  weightUnit: 'metric' | 'imperial';
-  dateFormat: 'DMY' | 'MDY' | 'YMD';
+  temperatureUnit: "celsius" | "fahrenheit";
+  distanceUnit: "metric" | "imperial";
+  weightUnit: "metric" | "imperial";
+  dateFormat: "DMY" | "MDY" | "YMD";
 }
 
 export interface Settings {
@@ -57,9 +58,9 @@ export function useSettings() {
 
   const updateNotificationSettingsMutation = useMutation({
     mutationFn: async (notificationSettings: NotificationSettings) => {
-      const res = await apiRequest("PATCH", "/api/settings", { 
-        type: 'notifications', 
-        settings: notificationSettings 
+      const res = await apiRequest("PATCH", "/api/settings", {
+        type: "notifications",
+        settings: notificationSettings,
       });
       return await res.json();
     },
@@ -81,30 +82,32 @@ export function useSettings() {
 
   const updateDisplaySettingsMutation = useMutation({
     mutationFn: async (displaySettings: DisplaySettings) => {
-      const res = await apiRequest("PATCH", "/api/settings", { 
-        type: 'display', 
-        settings: displaySettings 
+      const res = await apiRequest("PATCH", "/api/settings", {
+        type: "display",
+        settings: displaySettings,
       });
       return await res.json();
     },
     onSuccess: (updatedSettings: Settings) => {
       queryClient.setQueryData(["/api/settings"], updatedSettings);
-      
+
       // Apply theme change immediately
       const theme = updatedSettings.display.theme;
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else if (theme === 'light') {
-        document.documentElement.classList.remove('dark');
-      } else if (theme === 'system') {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else if (theme === "light") {
+        document.documentElement.classList.remove("dark");
+      } else if (theme === "system") {
+        const prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
         if (prefersDark) {
-          document.documentElement.classList.add('dark');
+          document.documentElement.classList.add("dark");
         } else {
-          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.remove("dark");
         }
       }
-      
+
       toast({
         title: "Display settings updated",
         description: "Your display preferences have been saved.",
@@ -121,9 +124,9 @@ export function useSettings() {
 
   const updateSecuritySettingsMutation = useMutation({
     mutationFn: async (securitySettings: SecuritySettings) => {
-      const res = await apiRequest("PATCH", "/api/settings", { 
-        type: 'security', 
-        settings: securitySettings 
+      const res = await apiRequest("PATCH", "/api/settings", {
+        type: "security",
+        settings: securitySettings,
       });
       return await res.json();
     },
@@ -145,9 +148,9 @@ export function useSettings() {
 
   const updatePrivacySettingsMutation = useMutation({
     mutationFn: async (privacySettings: PrivacySettings) => {
-      const res = await apiRequest("PATCH", "/api/settings", { 
-        type: 'privacy', 
-        settings: privacySettings 
+      const res = await apiRequest("PATCH", "/api/settings", {
+        type: "privacy",
+        settings: privacySettings,
       });
       return await res.json();
     },
@@ -169,9 +172,9 @@ export function useSettings() {
 
   const updateUnitSettingsMutation = useMutation({
     mutationFn: async (unitSettings: UnitSettings) => {
-      const res = await apiRequest("PATCH", "/api/settings", { 
-        type: 'units', 
-        settings: unitSettings 
+      const res = await apiRequest("PATCH", "/api/settings", {
+        type: "units",
+        settings: unitSettings,
       });
       return await res.json();
     },
@@ -195,25 +198,29 @@ export function useSettings() {
   if (settings?.display.theme) {
     const applyTheme = () => {
       const theme = settings.display.theme;
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else if (theme === 'light') {
-        document.documentElement.classList.remove('dark');
-      } else if (theme === 'system') {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else if (theme === "light") {
+        document.documentElement.classList.remove("dark");
+      } else if (theme === "system") {
+        const prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
         if (prefersDark) {
-          document.documentElement.classList.add('dark');
+          document.documentElement.classList.add("dark");
         } else {
-          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.remove("dark");
         }
       }
     };
-    
+
     applyTheme();
-    
+
     // Listen for system preference changes if using system theme
-    if (settings.display.theme === 'system') {
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+    if (settings.display.theme === "system") {
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", applyTheme);
     }
   }
 

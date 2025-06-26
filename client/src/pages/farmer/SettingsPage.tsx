@@ -54,6 +54,7 @@ import { ThemeProvider, useTheme } from "@/components/ThemeProvider";
 const notificationSettingsSchema = z.object({
   emailNotifications: z.boolean().default(true),
   pushNotifications: z.boolean().default(true),
+  smsNotifications: z.boolean().default(false),
   weatherAlerts: z.boolean().default(true),
   marketPriceAlerts: z.boolean().default(false),
   taskReminders: z.boolean().default(true),
@@ -131,6 +132,7 @@ export default function SettingsPage() {
     notifications: {
       emailNotifications: true,
       pushNotifications: true,
+      smsNotifications: false,
       weatherAlerts: true,
       marketPriceAlerts: false,
       taskReminders: true,
@@ -166,6 +168,7 @@ export default function SettingsPage() {
       ? {
           emailNotifications: settings.notifications.emailNotifications,
           pushNotifications: settings.notifications.pushNotifications,
+          smsNotifications: settings.notifications.smsNotifications,
           weatherAlerts: settings.notifications.weatherAlerts,
           marketPriceAlerts: settings.notifications.marketPriceAlerts,
           taskReminders: settings.notifications.taskReminders,
@@ -389,6 +392,7 @@ export default function SettingsPage() {
         notificationForm.reset({
           emailNotifications: settings.notifications.emailNotifications,
           pushNotifications: settings.notifications.pushNotifications,
+          smsNotifications: settings.notifications.smsNotifications,
           weatherAlerts: settings.notifications.weatherAlerts,
           marketPriceAlerts: settings.notifications.marketPriceAlerts,
           taskReminders: settings.notifications.taskReminders,
@@ -693,6 +697,29 @@ export default function SettingsPage() {
                             </FormLabel>
                             <FormDescription className="text-xs sm:text-sm line-clamp-2">
                               Receive alerts directly in your browser
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={notificationForm.control}
+                      name="smsNotifications"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:p-4">
+                          <div className="space-y-0.5 max-w-[70%]">
+                            <FormLabel className="text-sm sm:text-base line-clamp-1">
+                              SMS Notifications
+                            </FormLabel>
+                            <FormDescription className="text-xs sm:text-sm line-clamp-2">
+                              Receive alerts via text message
                             </FormDescription>
                           </div>
                           <FormControl>
