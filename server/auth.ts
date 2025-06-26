@@ -98,12 +98,10 @@ export function setupAuth(app: Express) {
       return next();
     }
 
-    if (req.path.startsWith("/api/")) {
-      logger.info(`Authentication status for ${req.method} ${req.path}:`, {
-        hasSession: !!req.session,
-        isAuthenticated: req.isAuthenticated?.() || false,
-        sessionID: req.sessionID,
-      });
+    // Only log authentication failures for API routes
+    if (req.path.startsWith("/api/") && req.path !== "/api/user") {
+      // Skip logging for most API routes to reduce noise
+      return next();
     }
     next();
   });
@@ -320,23 +318,19 @@ export function setupAuth(app: Express) {
   // Deserialize user from session
   passport.deserializeUser(async (id: number, done) => {
     try {
-      logger.info(`Deserializing user with ID: ${id}`);
       const user = await storage.getUser(id);
 
       if (user) {
-        logger.info(
-          `User found during deserialization: ${user.username} (${user.id})`
-        );
         // Ensure we're using the proper User type with valid UserRoleType
         done(null, user as unknown as Express.User);
       } else {
-        logger.warn(`⚠️ User with ID ${id} not found during deserialization`);
+        logger.warn(`User with ID ${id} not found during deserialization`);
         done(null, null);
       }
     } catch (error: any) {
       // Use any to avoid TypeScript errors
       logger.error(
-        `❌ Error deserializing user: ${error?.message || "Unknown error"}`
+        `Error deserializing user: ${error?.message || "Unknown error"}`
       );
       done(error);
     }
@@ -389,9 +383,6 @@ export function setupAuth(app: Express) {
 
   // User login route
   app.post("/api/login", (req, res, next) => {
-    console.log("Login attempt:", { email: req.body.email });
-    console.log("- Session ID (pre-auth):", req.sessionID);
-
     passport.authenticate(
       "local",
       (
@@ -400,32 +391,22 @@ export function setupAuth(app: Express) {
         info: { message: string } | undefined
       ) => {
         if (err) {
-          console.log("Login error:", err);
+          logger.error("Login error:", err);
           return next(err);
         }
 
         if (!user) {
-          console.log("Login failed:", info);
+          logger.warn("Login failed:", info?.message || "Invalid credentials");
           return res
             .status(401)
             .json({ message: info?.message || "Login failed" });
         }
 
-        console.log("User authenticated successfully:", {
-          id: user.id,
-          username: user.username,
-        });
-
         req.login(user as unknown as Express.User, (loginErr) => {
           if (loginErr) {
-            console.log("Login session error:", loginErr);
+            logger.error("Login session error:", loginErr);
             return next(loginErr);
           }
-
-          console.log("Session established:");
-          console.log("- Session ID:", req.sessionID);
-          console.log("- Session cookie:", req.headers.cookie);
-          console.log("- Session user:", (req.session as any)?.passport?.user);
 
           // Remove password from response
           const { password, ...userWithoutPassword } = user;
@@ -436,7 +417,6 @@ export function setupAuth(app: Express) {
             httpOnly: false, // Allow JavaScript to read this cookie for debugging
           });
 
-          console.log("Login successful, returning user data");
           res.json(userWithoutPassword);
         });
       }
@@ -445,34 +425,11 @@ export function setupAuth(app: Express) {
 
   // User logout route
   app.post("/api/logout", (req, res) => {
-    console.log("Logout attempt:");
-    console.log("- Session ID:", req.sessionID);
-    console.log("- Is authenticated:", req.isAuthenticated());
-
-    if (req.user) {
-      console.log("- User being logged out:", {
-        id: (req.user as User).id,
-        username: (req.user as User).username,
-      });
-    } else {
-      console.log("- No user found in session");
-    }
-
     req.logout((err) => {
       if (err) {
-        console.log("❌ Logout error:", err);
+        logger.error("Logout error:", err);
         return res.status(500).json({ message: "Logout failed" });
       }
-
-      console.log("✅ User successfully logged out");
-      console.log(
-        "- Session after logout, isAuthenticated:",
-        req.isAuthenticated()
-      );
-      console.log(
-        "- Session user after logout:",
-        (req.session as any)?.passport?.user
-      );
 
       res.status(200).json({ message: "Logged out successfully" });
     });
@@ -480,33 +437,12 @@ export function setupAuth(app: Express) {
 
   // Get current authenticated user
   app.get("/api/user", (req, res) => {
-    // Enhanced debugging always enabled for now
-    console.log("GET /api/user - Debug info:");
-    console.log("- Session ID:", req.sessionID);
-    console.log("- Is authenticated:", req.isAuthenticated());
-    console.log("- Session cookie:", req.headers.cookie);
-
-    if (req.session) {
-      console.log("- Session exists:", true);
-      console.log("- Session user:", (req.session as any)?.passport?.user);
-      console.log("- Session cookie maxAge:", req.session.cookie?.maxAge);
-    } else {
-      console.log("- Session exists:", false);
-    }
-
     if (!req.isAuthenticated()) {
-      console.log("- Authentication status: FAILED");
       return res.status(401).json({ message: "Not authenticated" });
     }
 
     // Remove password from response
     const { password, ...userWithoutPassword } = req.user as User;
-
-    console.log("- Authentication status: SUCCESS");
-    console.log("- User found:", {
-      id: userWithoutPassword.id,
-      username: userWithoutPassword.username,
-    });
 
     res.json(userWithoutPassword);
   });
@@ -556,7 +492,7 @@ export function setupAuth(app: Express) {
 
       res.json({ message: "Password changed successfully" });
     } catch (error) {
-      console.error("Error changing password:", error);
+      logger.error("Error changing password:", error);
       res.status(500).json({ message: "Failed to change password" });
     }
   });
