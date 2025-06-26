@@ -3,8 +3,6 @@ import { db } from "../db.js";
 
 const router = Router();
 
-// HEALTH CHECKS DISABLED - Uncomment to re-enable
-/*
 // Simple test endpoint to verify server is responding
 router.get("/test", (req, res) => {
   console.log("🧪 Test endpoint called:", {
@@ -201,6 +199,5 @@ router.get("/health/detailed", async (req, res) => {
     });
   }
 });
-*/
 
 export default router;

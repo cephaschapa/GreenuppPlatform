@@ -25,7 +25,7 @@
     "format:check": "prettier --check .",
     "test": "echo \"No tests specified\" && exit 0",
     "test:watch": "echo \"No tests specified\" && exit 0",
-    "test:health": "tsx scripts/test-health-checks.js",
+    "test:health": "node scripts/test-health-production.js",
     "type-check": "tsc --noEmit",
     "clean": "rimraf dist node_modules/.cache",
     "prebuild": "npm run clean",
