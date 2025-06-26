@@ -257,6 +257,16 @@ export function registerMvcRoutes(app: Express): void {
           "GET /api/treatment-plans": "Get all treatment plans for user",
           "GET /api/treatment-plans/:id": "Get treatment plan by ID",
         },
+        pushNotifications: {
+          "POST /api/push-notifications/register":
+            "Register FCM token for push notifications",
+          "DELETE /api/push-notifications/unregister": "Remove FCM token",
+          "PATCH /api/push-notifications/preferences":
+            "Update push notification preferences",
+          "POST /api/push-notifications/subscribe": "Subscribe to topic",
+          "POST /api/push-notifications/unsubscribe": "Unsubscribe from topic",
+          "POST /api/push-notifications/test": "Send test push notification",
+        },
       },
     });
   });
