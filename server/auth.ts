@@ -142,6 +142,7 @@ export function setupAuth(app: Express) {
 
   // Configure Google OAuth strategy
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    logger.info("✅ Google OAuth credentials found, registering strategy");
     passport.use(
       new GoogleStrategy(
         {
@@ -215,10 +216,18 @@ export function setupAuth(app: Express) {
         }
       )
     );
+  } else {
+    logger.warn(
+      "⚠️ Google OAuth credentials not found, skipping strategy registration"
+    );
+    logger.info(
+      "To enable Google OAuth, set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables"
+    );
   }
 
   // Configure Facebook OAuth strategy
   if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
+    logger.info("✅ Facebook OAuth credentials found, registering strategy");
     passport.use(
       new FacebookStrategy(
         {
@@ -292,6 +301,13 @@ export function setupAuth(app: Express) {
           }
         }
       )
+    );
+  } else {
+    logger.warn(
+      "⚠️ Facebook OAuth credentials not found, skipping strategy registration"
+    );
+    logger.info(
+      "To enable Facebook OAuth, set FACEBOOK_APP_ID and FACEBOOK_APP_SECRET environment variables"
     );
   }
 

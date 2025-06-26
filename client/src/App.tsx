@@ -55,6 +55,7 @@ import DealerDirectoryPage from "@/pages/farmer/DealerDirectoryPage";
 import OrdersPage from "./pages/farmer/OrdersPage";
 import InventoryPage from "./pages/farmer/InventoryPage";
 import ProductVerificationPage from "./pages/farmer/ProductVerificationPage";
+import { PushNotificationDebug } from "./components/PushNotificationDebug";
 
 function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
   const { user, isLoading } = useAuth();
@@ -308,6 +309,8 @@ function App() {
                     {/* PWA Components */}
                     {/* <InstallPWA /> */}
                     <OfflineIndicator />
+                    {/* Push Notifications Debug*/}
+                    {/* <PushNotificationDebug /> */}
                   </HelmetProvider>
                 </CartProvider>
               </SocketIOProvider>
