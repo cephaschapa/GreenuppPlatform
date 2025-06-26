@@ -9,6 +9,8 @@ import {
 import { eq, and, desc, lt, gte, count, or, isNull } from "drizzle-orm";
 import { sendEmail } from "./email";
 import { sendWebSocketNotification } from "./websocket-notifier";
+import { sendPushNotification } from "./firebase.js";
+import { logger } from "../lib/logger.js";
 
 // Notification status values
 export type NotificationStatus = "unread" | "read" | "archived";
@@ -87,6 +89,34 @@ export async function createNotification({
   // Send real-time notification via WebSocket
   sendWebSocketNotification(userId, notification);
 
+  // Send push notification if enabled
+  if (userSettings?.pushEnabled) {
+    try {
+      const pushSent = await sendPushNotification(userId, title, message, {
+        notificationId: notification.id.toString(),
+        type,
+        actionUrl: actionUrl || "",
+        ...data,
+      });
+
+      if (pushSent) {
+        logger.info(
+          `✅ Push notification sent for user ${userId}, notification ${notification.id}`
+        );
+      } else {
+        logger.warn(
+          `⚠️ Push notification failed for user ${userId}, notification ${notification.id}`
+        );
+      }
+    } catch (error) {
+      logger.error(
+        `❌ Error sending push notification for user ${userId}:`,
+        error
+      );
+      // Don't throw here - push notifications are nice-to-have
+    }
+  }
+
   // Send email if requested and email notifications are enabled
   if (shouldSendEmail && userSettings?.emailEnabled) {
     try {
@@ -98,14 +128,14 @@ export async function createNotification({
         const shouldSendNow = shouldSendEmailNow(userSettings, type);
 
         if (shouldSendNow) {
-          const emailSent = await sendNotificationEmail(user.email, {
+          const emailResult = await sendNotificationEmail(user.email, {
             title,
             message,
             type,
             actionUrl,
           });
 
-          if (emailSent) {
+          if (emailResult && emailResult.success) {
             // Update notification to mark as sent
             await db
               .update(notifications)
@@ -127,6 +157,9 @@ export async function createNotification({
       // Email sending is a nice-to-have but not required
     }
   }
+
+  // Send push notification
+  await sendPushNotification(userId, notification);
 
   return notification;
 }
@@ -325,7 +358,7 @@ export async function countUnreadNotifications(userId: number) {
  * Helper function to determine if a notification type is enabled for a user
  */
 function isNotificationTypeEnabled(
-  settings: NotificationSettings | undefined,
+  settings: any | undefined,
   type: NotificationType
 ) {
   if (!settings) return true; // Default to enabled if no settings
@@ -362,10 +395,7 @@ function isNotificationTypeEnabled(
 /**
  * Helper function to determine if we should send an email now based on user preferences
  */
-function shouldSendEmailNow(
-  settings: NotificationSettings | undefined,
-  type: NotificationType
-) {
+function shouldSendEmailNow(settings: any | undefined, type: NotificationType) {
   if (!settings || !settings.emailEnabled) return false;
 
   // If email frequency is 'instant', always send
@@ -395,7 +425,7 @@ async function sendNotificationEmail(
     type: NotificationType;
     actionUrl?: string;
   }
-): Promise<boolean> {
+): Promise<{ success: boolean }> {
   try {
     // Import the email service
     const { sendEmail, generateHtmlEmail } = await import("./email");
@@ -439,15 +469,17 @@ async function sendNotificationEmail(
         : ""
     }\n\n${footerText}`;
 
-    return await sendEmail({
+    const result = await sendEmail({
       to: email,
       from: `${fromName} <notifications@greenupp.app>`,
       subject: notification.title,
       html,
       text,
     });
+
+    return { success: result };
   } catch (error) {
     console.error("Email sending failed:", error);
-    return false;
+    return { success: false };
   }
 }
