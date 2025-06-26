@@ -111,8 +111,8 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
 
   // Use our settings hook to fetch and update settings
-  const { 
-    settings, 
+  const {
+    settings,
     isLoading: settingsLoading,
     updateDisplaySettings: updateDisplaySettingsApi,
     updateNotificationSettings: updateNotificationSettingsApi,
@@ -123,7 +123,7 @@ export default function SettingsPage() {
     isUpdatingNotifications,
     isUpdatingSecurity,
     isUpdatingPrivacy,
-    isUpdatingUnits
+    isUpdatingUnits,
   } = useSettingsSimple();
 
   // Set default settings
@@ -162,58 +162,77 @@ export default function SettingsPage() {
   // Notification settings form
   const notificationForm = useForm<NotificationSettings>({
     resolver: zodResolver(notificationSettingsSchema),
-    defaultValues: settings?.notifications ? {
-      emailNotifications: settings.notifications.emailNotifications,
-      pushNotifications: settings.notifications.pushNotifications,
-      weatherAlerts: settings.notifications.weatherAlerts,
-      marketPriceAlerts: settings.notifications.marketPriceAlerts,
-      taskReminders: settings.notifications.taskReminders,
-    } : defaultSettings.notifications,
+    defaultValues: settings?.notifications
+      ? {
+          emailNotifications: settings.notifications.emailNotifications,
+          pushNotifications: settings.notifications.pushNotifications,
+          weatherAlerts: settings.notifications.weatherAlerts,
+          marketPriceAlerts: settings.notifications.marketPriceAlerts,
+          taskReminders: settings.notifications.taskReminders,
+        }
+      : defaultSettings.notifications,
   });
 
   // Display settings form
   const displayForm = useForm<DisplaySettings>({
     resolver: zodResolver(displaySettingsSchema),
-    defaultValues: settings?.display ? {
-      theme: settings.display.theme as "light" | "dark" | "system",
-      fontSize: settings.display.fontSize,
-      reducedMotion: settings.display.reducedMotion,
-      highContrast: settings.display.highContrast,
-    } : {
-      ...defaultSettings.display,
-      theme: theme as "light" | "dark" | "system",
-    },
+    defaultValues: settings?.display
+      ? {
+          theme: settings.display.theme as "light" | "dark" | "system",
+          fontSize: settings.display.fontSize,
+          reducedMotion: settings.display.reducedMotion,
+          highContrast: settings.display.highContrast,
+        }
+      : {
+          ...defaultSettings.display,
+          theme: theme as "light" | "dark" | "system",
+        },
   });
 
   // Security settings form
   const securityForm = useForm<SecuritySettings>({
     resolver: zodResolver(securitySettingsSchema),
-    defaultValues: settings?.security ? {
-      twoFactorAuth: settings.security.twoFactorAuth,
-      sessionTimeout: settings.security.sessionTimeout as "never" | "1hour" | "8hours" | "24hours",
-      loginNotifications: settings.security.loginNotifications
-    } : defaultSettings.security,
+    defaultValues: settings?.security
+      ? {
+          twoFactorAuth: settings.security.twoFactorAuth,
+          sessionTimeout: settings.security.sessionTimeout as
+            | "never"
+            | "1hour"
+            | "8hours"
+            | "24hours",
+          loginNotifications: settings.security.loginNotifications,
+        }
+      : defaultSettings.security,
   });
 
   // Privacy settings form
   const privacyForm = useForm<PrivacySettings>({
     resolver: zodResolver(privacySettingsSchema),
-    defaultValues: settings?.privacy ? {
-      shareData: settings.privacy.shareData,
-      profileVisibility: settings.privacy.profileVisibility as "public" | "private" | "connections",
-      locationSharing: settings.privacy.locationSharing
-    } : defaultSettings.privacy,
+    defaultValues: settings?.privacy
+      ? {
+          shareData: settings.privacy.shareData,
+          profileVisibility: settings.privacy.profileVisibility as
+            | "public"
+            | "private"
+            | "connections",
+          locationSharing: settings.privacy.locationSharing,
+        }
+      : defaultSettings.privacy,
   });
 
   // Unit settings form
   const unitForm = useForm<UnitSettings>({
     resolver: zodResolver(unitSettingsSchema),
-    defaultValues: settings?.units ? {
-      temperatureUnit: settings.units.temperatureUnit as "celsius" | "fahrenheit",
-      distanceUnit: settings.units.distanceUnit as "metric" | "imperial",
-      weightUnit: settings.units.weightUnit as "metric" | "imperial",
-      dateFormat: settings.units.dateFormat as "DMY" | "MDY" | "YMD",
-    } : defaultSettings.units,
+    defaultValues: settings?.units
+      ? {
+          temperatureUnit: settings.units.temperatureUnit as
+            | "celsius"
+            | "fahrenheit",
+          distanceUnit: settings.units.distanceUnit as "metric" | "imperial",
+          weightUnit: settings.units.weightUnit as "metric" | "imperial",
+          dateFormat: settings.units.dateFormat as "DMY" | "MDY" | "YMD",
+        }
+      : defaultSettings.units,
   });
 
   // Handle notification settings update
@@ -365,7 +384,7 @@ export default function SettingsPage() {
           highContrast: settings.display.highContrast,
         });
       }
-      
+
       if (settings.notifications) {
         notificationForm.reset({
           emailNotifications: settings.notifications.emailNotifications,
@@ -375,33 +394,49 @@ export default function SettingsPage() {
           taskReminders: settings.notifications.taskReminders,
         });
       }
-      
+
       if (settings.security) {
         securityForm.reset({
           twoFactorAuth: settings.security.twoFactorAuth,
-          sessionTimeout: settings.security.sessionTimeout as "never" | "1hour" | "8hours" | "24hours",
-          loginNotifications: settings.security.loginNotifications
+          sessionTimeout: settings.security.sessionTimeout as
+            | "never"
+            | "1hour"
+            | "8hours"
+            | "24hours",
+          loginNotifications: settings.security.loginNotifications,
         });
       }
-      
+
       if (settings.privacy) {
         privacyForm.reset({
           shareData: settings.privacy.shareData,
-          profileVisibility: settings.privacy.profileVisibility as "public" | "private" | "connections",
-          locationSharing: settings.privacy.locationSharing
+          profileVisibility: settings.privacy.profileVisibility as
+            | "public"
+            | "private"
+            | "connections",
+          locationSharing: settings.privacy.locationSharing,
         });
       }
-      
+
       if (settings.units) {
         unitForm.reset({
-          temperatureUnit: settings.units.temperatureUnit as "celsius" | "fahrenheit",
+          temperatureUnit: settings.units.temperatureUnit as
+            | "celsius"
+            | "fahrenheit",
           distanceUnit: settings.units.distanceUnit as "metric" | "imperial",
           weightUnit: settings.units.weightUnit as "metric" | "imperial",
           dateFormat: settings.units.dateFormat as "DMY" | "MDY" | "YMD",
         });
       }
     }
-  }, [settings, displayForm, notificationForm, securityForm, privacyForm, unitForm]);
+  }, [
+    settings,
+    displayForm,
+    notificationForm,
+    securityForm,
+    privacyForm,
+    unitForm,
+  ]);
 
   if (settingsLoading) {
     return (
@@ -447,12 +482,6 @@ export default function SettingsPage() {
           >
             Privacy
           </TabsTrigger>
-          <TabsTrigger
-            value="security"
-            className="px-2 text-xs sm:text-sm truncate"
-          >
-            Security
-          </TabsTrigger>
         </TabsList>
 
         {/* Display Settings */}
@@ -479,21 +508,33 @@ export default function SettingsPage() {
                         <FormLabel>Theme</FormLabel>
                         <div className="grid grid-cols-3 gap-4 pt-2">
                           <div
-                            className={`flex flex-col items-center justify-center p-2 rounded-md border-2 transition-all cursor-pointer ${field.value === "light" ? "border-primary" : "border-transparent"}`}
+                            className={`flex flex-col items-center justify-center p-2 rounded-md border-2 transition-all cursor-pointer ${
+                              field.value === "light"
+                                ? "border-primary"
+                                : "border-transparent"
+                            }`}
                             onClick={() => field.onChange("light")}
                           >
                             <Sun className="h-8 w-8 mb-2" />
                             <span>Light</span>
                           </div>
                           <div
-                            className={`flex flex-col items-center justify-center p-2 rounded-md border-2 transition-all cursor-pointer ${field.value === "dark" ? "border-primary" : "border-transparent"}`}
+                            className={`flex flex-col items-center justify-center p-2 rounded-md border-2 transition-all cursor-pointer ${
+                              field.value === "dark"
+                                ? "border-primary"
+                                : "border-transparent"
+                            }`}
                             onClick={() => field.onChange("dark")}
                           >
                             <Moon className="h-8 w-8 mb-2" />
                             <span>Dark</span>
                           </div>
                           <div
-                            className={`flex flex-col items-center justify-center p-2 rounded-md border-2 transition-all cursor-pointer ${field.value === "system" ? "border-primary" : "border-transparent"}`}
+                            className={`flex flex-col items-center justify-center p-2 rounded-md border-2 transition-all cursor-pointer ${
+                              field.value === "system"
+                                ? "border-primary"
+                                : "border-transparent"
+                            }`}
                             onClick={() => field.onChange("system")}
                           >
                             <Monitor className="h-8 w-8 mb-2" />
@@ -1060,164 +1101,6 @@ export default function SettingsPage() {
                         <>
                           <Save className="h-4 w-4" />
                           Save Privacy Settings
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Security Settings */}
-        <TabsContent value="security" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">Security Settings</CardTitle>
-              <CardDescription>
-                Manage account security and access options
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent>
-              <Form {...securityForm}>
-                <form
-                  onSubmit={securityForm.handleSubmit(onSecuritySubmit)}
-                  className="space-y-6"
-                >
-                  <FormField
-                    control={securityForm.control}
-                    name="twoFactorAuth"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:p-4">
-                        <div className="space-y-0.5 max-w-[70%]">
-                          <FormLabel className="text-sm sm:text-base line-clamp-1">
-                            Two-Factor Authentication
-                          </FormLabel>
-                          <FormDescription className="text-xs sm:text-sm line-clamp-2">
-                            Add an extra layer of security to your account
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            disabled // Temporarily disabled as the feature is not implemented yet
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={securityForm.control}
-                    name="sessionTimeout"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Session Timeout</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select timeout duration" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="never">Never</SelectItem>
-                            <SelectItem value="1hour">After 1 hour</SelectItem>
-                            <SelectItem value="8hours">
-                              After 8 hours
-                            </SelectItem>
-                            <SelectItem value="24hours">
-                              After 24 hours
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormDescription className="text-xs sm:text-sm line-clamp-2">
-                          Automatically log out after a period of inactivity
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={securityForm.control}
-                    name="loginNotifications"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:p-4">
-                        <div className="space-y-0.5 max-w-[70%]">
-                          <FormLabel className="text-sm sm:text-base line-clamp-1">
-                            Login Notifications
-                          </FormLabel>
-                          <FormDescription className="text-xs sm:text-sm line-clamp-2">
-                            Get alerted about new logins to your account
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <Separator className="my-6" />
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Password Management</h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => {
-                          toast({
-                            title: "Feature Coming Soon",
-                            description:
-                              "Password change functionality will be available soon.",
-                          });
-                        }}
-                      >
-                        Change Password
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => {
-                          toast({
-                            title: "Feature Coming Soon",
-                            description:
-                              "Connected accounts functionality will be available soon.",
-                          });
-                        }}
-                      >
-                        Manage Connected Accounts
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button
-                      type="submit"
-                      className="gap-2"
-                      disabled={isUpdatingSecurity}
-                    >
-                      {isUpdatingSecurity ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4" />
-                          Save Security Settings
                         </>
                       )}
                     </Button>
