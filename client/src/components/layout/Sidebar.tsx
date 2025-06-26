@@ -196,8 +196,22 @@ export function Sidebar() {
       href: "/dashboard/settings",
       icon: <Settings className="h-5 w-5" />,
       mobileIcon: <Settings className="h-6 w-6" />,
-      active: location === "/dashboard/settings",
+      active:
+        location === "/dashboard/settings" ||
+        location === "/dashboard/security",
       showInMobileNav: false,
+      subItems: [
+        {
+          title: "General Settings",
+          href: "/dashboard/settings",
+          active: location === "/dashboard/settings",
+        },
+        {
+          title: "Security Settings",
+          href: "/dashboard/security",
+          active: location === "/dashboard/security",
+        },
+      ],
     },
     {
       title: "AI Knowledge Base",

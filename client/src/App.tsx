@@ -21,6 +21,7 @@ import UploadTestPage from "@/pages/UploadTestPage";
 import EmailNotificationTestPage from "@/pages/EmailNotificationTestPage";
 import PublicEmailTestPage from "@/pages/PublicEmailTestPage";
 import SystemHealthPage from "@/pages/admin/SystemHealthPage";
+import SecuritySettings from "@/pages/auth/SecuritySettings";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { SocketIOProvider } from "@/hooks/use-socketio";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -89,6 +90,7 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
         />
         <ProtectedRoute path="/profile" component={ProfilePage} />
         <ProtectedRoute path="/settings" component={SettingsPage} />
+        <ProtectedRoute path="/security" component={SecuritySettings} />
         <ProtectedRoute
           path="/profile-creation"
           component={ProfileCreationPage}
@@ -189,6 +191,7 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
       />
       <ProtectedRoute path="/dashboard/profile" component={ProfilePage} />
       <ProtectedRoute path="/dashboard/settings" component={SettingsPage} />
+      <ProtectedRoute path="/dashboard/security" component={SecuritySettings} />
       <ProtectedRoute
         path="/profile-creation"
         component={ProfileCreationPage}

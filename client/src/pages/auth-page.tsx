@@ -1,11 +1,32 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { registerUserSchema, loginUserSchema } from "@shared/schema";
@@ -15,11 +36,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import greenuppLogo from "@/assets/greenupp-full-logo.png";
+import { OAuthButtons } from "@/components/auth/OAuthButtons";
+import { TwoFactorVerification } from "@/components/auth/TwoFactorVerification";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function AuthPage() {
   const { user, isLoading } = useAuth();
   const [checked, setChecked] = useState(false);
-  const isAppSubdomain = window.location.hostname.startsWith('app.');
+  const isAppSubdomain = window.location.hostname.startsWith("app.");
 
   useEffect(() => {
     // Only set checked to true after initial auth check is complete
@@ -30,18 +55,18 @@ export default function AuthPage() {
 
   // If the user is already logged in and we've completed initial loading, redirect based on their role
   if (checked && user && !isLoading) {
-    console.log('Auth page: User is logged in, redirecting to dashboard');
-    
+    console.log("Auth page: User is logged in, redirecting to dashboard");
+
     // If we're on app subdomain, don't use /dashboard prefix
     if (isAppSubdomain) {
-      if (user.role === 'buyer' || user.role === 'supplier') {
+      if (user.role === "buyer" || user.role === "supplier") {
         return <Redirect to="/marketplace" />;
       } else {
         return <Redirect to="/" />;
       }
     } else {
       // On main domain, use /dashboard prefix
-      if (user.role === 'buyer' || user.role === 'supplier') {
+      if (user.role === "buyer" || user.role === "supplier") {
         return <Redirect to="/dashboard/marketplace" />;
       } else {
         return <Redirect to="/dashboard" />;
@@ -68,11 +93,11 @@ export default function AuthPage() {
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="register">Register</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="login">
               <LoginForm />
             </TabsContent>
-            
+
             <TabsContent value="register">
               <RegisterForm />
             </TabsContent>
@@ -87,8 +112,9 @@ export default function AuthPage() {
             Transform Your Farming Operations with AI-Powered Insights
           </h2>
           <p className="text-xl mb-8">
-            Greenupp is a revolutionary platform that brings together the latest in AI, IoT, and blockchain 
-            technologies to help farmers optimize yields, reduce costs, and farm more sustainably.
+            Greenupp is a revolutionary platform that brings together the latest
+            in AI, IoT, and blockchain technologies to help farmers optimize
+            yields, reduce costs, and farm more sustainably.
           </p>
           <div className="space-y-4">
             <div className="flex items-start">
@@ -124,6 +150,14 @@ export default function AuthPage() {
 
 function LoginForm() {
   const { loginMutation, refetchUser } = useAuth();
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [pendingCredentials, setPendingCredentials] = useState<{
+    email: string;
+    password: string;
+    rememberMe: boolean;
+  } | null>(null);
+  const { toast } = useToast();
+
   const loginForm = useForm<z.infer<typeof loginUserSchema>>({
     resolver: zodResolver(loginUserSchema),
     defaultValues: {
@@ -134,13 +168,106 @@ function LoginForm() {
   });
 
   function onSubmit(values: z.infer<typeof loginUserSchema>) {
+    setPendingCredentials(values);
+
+    // First, try to login normally
     loginMutation.mutate(values, {
       onSuccess: async () => {
         console.log("Login successful, explicitly refetching user data");
-        // Force refetch user data after login to ensure session is properly recognized
         await refetchUser();
-      }
+      },
+      onError: async (error: any) => {
+        // Check if 2FA is required
+        if (error?.response?.data?.requires2FA) {
+          setRequires2FA(true);
+        } else {
+          toast({
+            title: "Login Failed",
+            description:
+              error?.response?.data?.message || "Invalid credentials",
+            variant: "destructive",
+          });
+        }
+      },
     });
+  }
+
+  const handle2FAVerification = async (token: string) => {
+    if (!pendingCredentials) return;
+
+    try {
+      const response = await apiRequest("POST", "/api/auth/login", {
+        ...pendingCredentials,
+        twoFactorToken: token,
+      });
+
+      if (response.ok) {
+        await refetchUser();
+        toast({
+          title: "Login Successful",
+          description: "Welcome back!",
+        });
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || "2FA verification failed");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Verification Failed",
+        description: error.message || "Invalid verification code",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const handleBackupCode = async (backupCode: string) => {
+    if (!pendingCredentials) return;
+
+    try {
+      const response = await apiRequest("POST", "/api/auth/login", {
+        ...pendingCredentials,
+        backupCode,
+      });
+
+      if (response.ok) {
+        await refetchUser();
+        toast({
+          title: "Login Successful",
+          description: "Welcome back!",
+        });
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || "Backup code verification failed");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Verification Failed",
+        description: error.message || "Invalid backup code",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const handleOAuthLogin = (provider: string) => {
+    window.location.href = `/api/auth/${provider}`;
+  };
+
+  const handleCancel2FA = () => {
+    setRequires2FA(false);
+    setPendingCredentials(null);
+  };
+
+  if (requires2FA) {
+    return (
+      <TwoFactorVerification
+        onVerify={handle2FAVerification}
+        onUseBackupCode={handleBackupCode}
+        onCancel={handleCancel2FA}
+        isLoading={loginMutation.isPending}
+      />
+    );
   }
 
   return (
@@ -153,7 +280,10 @@ function LoginForm() {
       </CardHeader>
       <CardContent>
         <Form {...loginForm}>
-          <form onSubmit={loginForm.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={loginForm.handleSubmit(onSubmit)}
+            className="space-y-4"
+          >
             <FormField
               control={loginForm.control}
               name="email"
@@ -161,7 +291,11 @@ function LoginForm() {
                 <FormItem>
                   <FormLabel>Email or Username</FormLabel>
                   <FormControl>
-                    <Input placeholder="yourname@example.com or username" {...field} value={field.value || ''} />
+                    <Input
+                      placeholder="yourname@example.com or username"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -175,7 +309,12 @@ function LoginForm() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} value={field.value || ''} />
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -188,8 +327,8 @@ function LoginForm() {
               render={({ field }) => (
                 <FormItem className="flex items-center space-x-2 space-y-0">
                   <FormControl>
-                    <Checkbox 
-                      checked={field.value} 
+                    <Checkbox
+                      checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -200,8 +339,8 @@ function LoginForm() {
               )}
             />
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full"
               disabled={loginMutation.isPending}
             >
@@ -216,10 +355,20 @@ function LoginForm() {
             </Button>
           </form>
         </Form>
+
+        {/* OAuth Buttons */}
+        <OAuthButtons
+          onGoogleClick={() => handleOAuthLogin("google")}
+          onFacebookClick={() => handleOAuthLogin("facebook")}
+          isLoading={loginMutation.isPending}
+        />
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-gray-500">
-          Forgot your password? <a href="#" className="text-green-600 hover:text-green-800">Reset it here</a>
+          Forgot your password?{" "}
+          <a href="#" className="text-green-600 hover:text-green-800">
+            Reset it here
+          </a>
         </p>
       </CardFooter>
     </Card>
@@ -248,7 +397,7 @@ function RegisterForm() {
         console.log("Registration successful, explicitly refetching user data");
         // Force refetch user data after registration to ensure session is properly recognized
         await refetchUser();
-      }
+      },
     });
   }
 
@@ -262,7 +411,10 @@ function RegisterForm() {
       </CardHeader>
       <CardContent>
         <Form {...registerForm}>
-          <form onSubmit={registerForm.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={registerForm.handleSubmit(onSubmit)}
+            className="space-y-4"
+          >
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={registerForm.control}
@@ -271,7 +423,11 @@ function RegisterForm() {
                   <FormItem>
                     <FormLabel>First Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="John" {...field} value={field.value || ''} />
+                      <Input
+                        placeholder="John"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -285,7 +441,11 @@ function RegisterForm() {
                   <FormItem>
                     <FormLabel>Last Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Doe" {...field} value={field.value || ''} />
+                      <Input
+                        placeholder="Doe"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -300,7 +460,11 @@ function RegisterForm() {
                 <FormItem>
                   <FormLabel>Username</FormLabel>
                   <FormControl>
-                    <Input placeholder="johndoe" {...field} value={field.value || ''} />
+                    <Input
+                      placeholder="johndoe"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -314,7 +478,11 @@ function RegisterForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="john@example.com" {...field} value={field.value || ''} />
+                    <Input
+                      placeholder="john@example.com"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -328,11 +496,14 @@ function RegisterForm() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} value={field.value || ''} />
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
-                  <FormDescription>
-                    At least 8 characters
-                  </FormDescription>
+                  <FormDescription>At least 8 characters</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -345,13 +516,18 @@ function RegisterForm() {
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} value={field.value || ''} />
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      {...field}
+                      value={field.value || ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={registerForm.control}
               name="role"
@@ -387,14 +563,27 @@ function RegisterForm() {
               render={({ field }) => (
                 <FormItem className="flex items-start space-x-2 space-y-0">
                   <FormControl>
-                    <Checkbox 
-                      checked={field.value} 
+                    <Checkbox
+                      checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel className="text-sm font-normal">
-                      I agree to the <a href="#" className="text-green-600 hover:text-green-800">Terms of Service</a> and <a href="#" className="text-green-600 hover:text-green-800">Privacy Policy</a>
+                      I agree to the{" "}
+                      <a
+                        href="#"
+                        className="text-green-600 hover:text-green-800"
+                      >
+                        Terms of Service
+                      </a>{" "}
+                      and{" "}
+                      <a
+                        href="#"
+                        className="text-green-600 hover:text-green-800"
+                      >
+                        Privacy Policy
+                      </a>
                     </FormLabel>
                     <FormMessage />
                   </div>
@@ -402,8 +591,8 @@ function RegisterForm() {
               )}
             />
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full"
               disabled={registerMutation.isPending}
             >

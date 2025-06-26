@@ -1,12 +1,15 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as FacebookStrategy } from "passport-facebook";
 import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { storage } from "./storage";
+import { storage } from "./storage.js";
 import { User, UserRoleType } from "@shared/schema";
-import { logger } from "./lib/logger";
+import { logger } from "./lib/logger.js";
+import { AuthService } from "./services/authService.js";
 
 // Add passport session type
 declare module "express-session" {
@@ -60,8 +63,8 @@ export function setupAuth(app: Express) {
 
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "greenupp-secret-key",
-    resave: true, // Changed to true to ensure the session is always saved
-    saveUninitialized: true, // Changed to true to ensure new sessions are saved
+    resave: true,
+    saveUninitialized: true,
     store: storage.sessionStore,
     cookie: {
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
@@ -122,7 +125,10 @@ export function setupAuth(app: Express) {
             user = await storage.getUserByUsername(emailOrUsername);
           }
 
-          if (!user || !(await comparePasswords(password, user.password))) {
+          if (
+            !user ||
+            !(await AuthService.comparePasswords(password, user.password))
+          ) {
             return done(null, false, { message: "Invalid credentials" });
           }
 
@@ -133,6 +139,161 @@ export function setupAuth(app: Express) {
       }
     )
   );
+
+  // Configure Google OAuth strategy
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    passport.use(
+      new GoogleStrategy(
+        {
+          clientID: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          callbackURL: "/api/auth/google/callback",
+        },
+        async (accessToken, refreshToken, profile, done) => {
+          try {
+            // Check if user already exists with this Google account
+            let user = await AuthService.findUserByOAuthProvider(
+              "google",
+              profile.id
+            );
+
+            if (user) {
+              return done(null, user as unknown as Express.User);
+            }
+
+            // Check if user exists with the same email
+            if (profile.emails && profile.emails[0]) {
+              user = await storage.getUserByEmail(profile.emails[0].value);
+
+              if (user) {
+                // Link existing account to Google
+                await AuthService.linkOAuthProvider(user.id, {
+                  provider: "google",
+                  providerUserId: profile.id,
+                  providerEmail: profile.emails[0].value,
+                  providerName: profile.displayName,
+                  providerPicture: profile.photos?.[0]?.value,
+                  accessToken,
+                  refreshToken,
+                });
+
+                return done(null, user as unknown as Express.User);
+              }
+            }
+
+            // Create new user
+            const username =
+              profile.displayName?.replace(/\s+/g, "").toLowerCase() ||
+              `user${Date.now()}`;
+
+            user = await storage.createUser({
+              username,
+              email: profile.emails?.[0]?.value || `${profile.id}@google.com`,
+              password: await AuthService.hashPassword(
+                Math.random().toString(36)
+              ), // Random password
+              firstName: profile.name?.givenName,
+              lastName: profile.name?.familyName,
+              role: "farmer",
+            });
+
+            // Link OAuth provider
+            await AuthService.linkOAuthProvider(user.id, {
+              provider: "google",
+              providerUserId: profile.id,
+              providerEmail: profile.emails?.[0]?.value || "",
+              providerName: profile.displayName,
+              providerPicture: profile.photos?.[0]?.value,
+              accessToken,
+              refreshToken,
+            });
+
+            return done(null, user as unknown as Express.User);
+          } catch (error) {
+            return done(error);
+          }
+        }
+      )
+    );
+  }
+
+  // Configure Facebook OAuth strategy
+  if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
+    passport.use(
+      new FacebookStrategy(
+        {
+          clientID: process.env.FACEBOOK_APP_ID,
+          clientSecret: process.env.FACEBOOK_APP_SECRET,
+          callbackURL: "/api/auth/facebook/callback",
+          profileFields: ["id", "emails", "name", "picture"],
+        },
+        async (accessToken, refreshToken, profile, done) => {
+          try {
+            // Check if user already exists with this Facebook account
+            let user = await AuthService.findUserByOAuthProvider(
+              "facebook",
+              profile.id
+            );
+
+            if (user) {
+              return done(null, user as unknown as Express.User);
+            }
+
+            // Check if user exists with the same email
+            if (profile.emails && profile.emails[0]) {
+              user = await storage.getUserByEmail(profile.emails[0].value);
+
+              if (user) {
+                // Link existing account to Facebook
+                await AuthService.linkOAuthProvider(user.id, {
+                  provider: "facebook",
+                  providerUserId: profile.id,
+                  providerEmail: profile.emails[0].value,
+                  providerName: `${profile.name?.givenName} ${profile.name?.familyName}`,
+                  providerPicture: profile.photos?.[0]?.value,
+                  accessToken,
+                  refreshToken,
+                });
+
+                return done(null, user as unknown as Express.User);
+              }
+            }
+
+            // Create new user
+            const username =
+              `${profile.name?.givenName}${profile.name?.familyName}`.toLowerCase() ||
+              `user${Date.now()}`;
+
+            user = await storage.createUser({
+              username,
+              email: profile.emails?.[0]?.value || `${profile.id}@facebook.com`,
+              password: await AuthService.hashPassword(
+                Math.random().toString(36)
+              ), // Random password
+              firstName: profile.name?.givenName,
+              lastName: profile.name?.familyName,
+              role: "farmer",
+            });
+
+            // Link OAuth provider
+            await AuthService.linkOAuthProvider(user.id, {
+              provider: "facebook",
+              providerUserId: profile.id,
+              providerEmail: profile.emails?.[0]?.value || "",
+              providerName: `${profile.name?.givenName} ${profile.name?.familyName}`,
+              providerPicture: profile.photos?.[0]?.value,
+              accessToken,
+              refreshToken,
+            });
+
+            return done(null, user as unknown as Express.User);
+          } catch (error) {
+            return done(error);
+          }
+        }
+      )
+    );
+  }
 
   // Serialize user to session
   passport.serializeUser((user: Express.User, done) => {
@@ -191,7 +352,7 @@ export function setupAuth(app: Express) {
       }
 
       // Hash password and create new user
-      const hashedPassword = await hashPassword(req.body.password);
+      const hashedPassword = await AuthService.hashPassword(req.body.password);
       const user = await storage.createUser({
         ...req.body,
         password: hashedPassword,
@@ -358,7 +519,7 @@ export function setupAuth(app: Express) {
       }
 
       // Verify current password
-      const isCurrentPasswordValid = await comparePasswords(
+      const isCurrentPasswordValid = await AuthService.comparePasswords(
         currentPassword,
         user.password
       );
@@ -370,7 +531,7 @@ export function setupAuth(app: Express) {
       }
 
       // Hash the new password
-      const hashedNewPassword = await hashPassword(newPassword);
+      const hashedNewPassword = await AuthService.hashPassword(newPassword);
 
       // Update the user's password
       await storage.updateUser((req.user as User).id, {

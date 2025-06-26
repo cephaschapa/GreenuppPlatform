@@ -17,6 +17,7 @@ import searchRoutes from "./routes/search";
 import { setWebSocketNotifier } from "./services/websocket-notifier";
 import { registerMvcRoutes } from "./routes/index-mvc.js";
 import { setupAuth } from "./auth";
+import authRoutes from "./routes/auth-routes.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to handle subdomain routing
@@ -41,6 +42,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set the isAuthenticated middleware for the Green Socials router
   setIsAuthenticatedMiddleware(isAuthenticated);
+
+  // Register enhanced authentication routes
+  app.use("/api/auth", authRoutes);
 
   // Register MVC routes (includes marketplace, fields, crops, tasks, weather, plant analyses, product verification)
   registerMvcRoutes(app);

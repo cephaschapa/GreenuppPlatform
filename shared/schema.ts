@@ -1140,3 +1140,87 @@ export const deliveryStatusHistory = pgTable("delivery_status_history", {
   notes: text("notes"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Enhanced Authentication Tables
+
+// OAuth providers for third-party authentication
+export const oauthProviders = pgTable("oauth_providers", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  provider: text("provider").notNull(), // 'google', 'facebook', 'github', etc.
+  providerUserId: text("provider_user_id").notNull(), // ID from the OAuth provider
+  providerEmail: text("provider_email"),
+  providerName: text("provider_name"),
+  providerPicture: text("provider_picture"),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  tokenExpiresAt: timestamp("token_expires_at"),
+  isPrimary: boolean("is_primary").default(false), // Whether this is the primary login method
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Two-factor authentication settings
+export const twoFactorAuth = pgTable("two_factor_auth", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  isEnabled: boolean("is_enabled").default(false),
+  secret: text("secret"), // TOTP secret key
+  backupCodes: text("backup_codes").array(), // Array of backup codes
+  lastUsedAt: timestamp("last_used_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Device sessions for device management
+export const deviceSessions = pgTable("device_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  sessionId: text("session_id").notNull().unique(), // Express session ID
+  deviceName: text("device_name"), // User-friendly device name
+  deviceType: text("device_type"), // 'desktop', 'mobile', 'tablet'
+  browser: text("browser"), // Browser name
+  os: text("os"), // Operating system
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  location: text("location"), // Approximate location based on IP
+  isCurrent: boolean("is_current").default(false), // Whether this is the current session
+  isTrusted: boolean("is_trusted").default(false), // Whether user has marked this device as trusted
+  lastActiveAt: timestamp("last_active_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Login attempts for security monitoring
+export const loginAttempts = pgTable("login_attempts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id), // Can be null for failed attempts
+  email: text("email").notNull(),
+  ipAddress: text("ip_address").notNull(),
+  userAgent: text("user_agent"),
+  success: boolean("success").notNull(),
+  failureReason: text("failure_reason"), // 'invalid_password', 'user_not_found', '2fa_required', etc.
+  provider: text("provider"), // 'local', 'google', 'facebook', etc.
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Security events for audit trail
+export const securityEvents = pgTable("security_events", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  eventType: text("event_type").notNull(), // 'password_changed', '2fa_enabled', 'device_added', 'suspicious_login', etc.
+  description: text("description").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  metadata: jsonb("metadata").$type<Record<string, any>>(), // Additional event data
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
