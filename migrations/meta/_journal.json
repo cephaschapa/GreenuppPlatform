@@ -36,6 +36,13 @@
       "when": 1750947123599,
       "tag": "0004_faulty_magdalene",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1750968522983,
+      "tag": "0005_spooky_vance_astro",
+      "breakpoints": true
     }
   ]
 }
