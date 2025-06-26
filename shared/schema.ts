@@ -882,6 +882,7 @@ export const notificationSettings = pgTable("notification_settings", {
   emailFrequency: text("email_frequency").default("instant"), // instant, daily, weekly
   emailDigestDay: integer("email_digest_day"), // day of week for weekly digests (0-6)
   emailDigestTime: integer("email_digest_time"), // hour of day for digests (0-23)
+  smsEnabled: boolean("sms_enabled").default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

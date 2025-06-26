@@ -4,13 +4,13 @@ import {
   notificationSettings,
   users,
   type Notification,
-  type NotificationSetting,
 } from "@shared/schema";
 import { eq, and, desc, lt, gte, count, or, isNull } from "drizzle-orm";
 import { sendEmail } from "./email";
 import { sendWebSocketNotification } from "./websocket-notifier";
 import { sendPushNotification } from "./firebase.js";
 import { logger } from "../lib/logger.js";
+import { sendSms } from "./sms";
 
 // Notification status values
 export type NotificationStatus = "unread" | "read" | "archived";
@@ -155,6 +155,23 @@ export async function createNotification({
       console.error("Failed to send notification email:", error);
       // We don't throw here because the notification was created successfully
       // Email sending is a nice-to-have but not required
+    }
+  }
+
+  // Send SMS notification if enabled
+  if (userSettings?.smsEnabled) {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      if (user && user.phone) {
+        // Ensure phone is in E.164 format (Twilio requirement)
+        const phone = user.phone.startsWith("+")
+          ? user.phone
+          : `+${user.phone}`;
+        await sendSms(phone, `${title}: ${message}`);
+        logger.info(`✅ SMS sent to user ${userId}`);
+      }
+    } catch (error) {
+      logger.error(`❌ Failed to send SMS to user ${userId}:`, error);
     }
   }
 
