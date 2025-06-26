@@ -3,6 +3,9 @@ import { db } from "../db.js";
 
 const router = Router();
 
+// OLD HEALTH ROUTES - DISABLED (using MVC version instead)
+// HEALTH CHECKS DISABLED - Uncomment to re-enable
+/*
 // Simple test endpoint to verify server is responding
 router.get("/test", (req, res) => {
   console.log("🧪 Test endpoint called:", {
@@ -199,5 +202,6 @@ router.get("/health/detailed", async (req, res) => {
     });
   }
 });
+*/
 
 export default router;
