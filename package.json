@@ -30,7 +30,10 @@
     "clean": "rimraf dist node_modules/.cache",
     "prebuild": "npm run clean",
     "generate-qr": "tsx scripts/generate-qr-codes.js",
-    "regenerate-qr": "tsx scripts/regenerate-qr-codes.js"
+    "regenerate-qr": "tsx scripts/regenerate-qr-codes.js",
+    "optimize:db": "node scripts/optimize-performance.js",
+    "optimize:indexes": "node scripts/performance-optimization.sql",
+    "monitor:performance": "tsx scripts/monitor-performance.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",

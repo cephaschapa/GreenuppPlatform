@@ -17,6 +17,7 @@ import { setupSettingsRoutes } from "./settings-mvc.js";
 import { setupLocationRoutes } from "./location-mvc.js";
 import { setupGeocodingRoutes } from "./geocoding-mvc.js";
 import { setupTreatmentRoutes } from "./treatment-mvc.js";
+import adminRoutes from "./admin.js";
 
 /**
  * Register all routes following MVC pattern
@@ -75,6 +76,9 @@ export function registerMvcRoutes(app: Express): void {
 
   // Treatment plan routes
   setupTreatmentRoutes(app);
+
+  // Admin routes
+  app.use("/api/admin", adminRoutes);
 
   // You can add more route modules here:
   // app.use("/api/products", productRoutes);
