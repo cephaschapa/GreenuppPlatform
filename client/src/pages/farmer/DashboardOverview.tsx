@@ -101,10 +101,17 @@ export default function DashboardOverview() {
 
   // Weather data
   const { data: weatherData, isLoading: weatherLoading } = useQuery({
-    queryKey: ["/api/weather"],
+    queryKey: ["/api/weather", farmerProfile?.farmLocation],
     queryFn: async () => {
       try {
-        const response = await fetch("/api/weather");
+        if (!farmerProfile?.farmLocation) {
+          throw new Error("No farm location set");
+        }
+        const response = await fetch(
+          `/api/weather?location=${encodeURIComponent(
+            farmerProfile.farmLocation
+          )}`
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch weather");
         }
@@ -114,6 +121,7 @@ export default function DashboardOverview() {
         return null;
       }
     },
+    enabled: !!farmerProfile?.farmLocation, // Only run query if we have a location
   });
 
   // Check if any section is loading
@@ -288,6 +296,12 @@ export default function DashboardOverview() {
                       {weatherData.current.condition}
                     </p>
                   </>
+                ) : !farmerProfile?.farmLocation ? (
+                  <div className="text-center">
+                    <p className="text-xs md:text-sm text-muted-foreground">
+                      Set farm location to view weather
+                    </p>
+                  </div>
                 ) : (
                   <p className="text-xs md:text-sm text-muted-foreground mt-1">
                     Unavailable
@@ -295,17 +309,31 @@ export default function DashboardOverview() {
                 )}
               </CardContent>
               <CardFooter className="pt-0 px-4 pb-3">
-                <Link href="/dashboard/weather">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-between text-xs md:text-sm"
-                  >
-                    <span className="hidden sm:inline">Weather Details</span>
-                    <span className="sm:hidden">Details</span>
-                    <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
-                  </Button>
-                </Link>
+                {!farmerProfile?.farmLocation ? (
+                  <Link href="/dashboard/profile">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-between text-xs md:text-sm"
+                    >
+                      <span className="hidden sm:inline">Set Location</span>
+                      <span className="sm:hidden">Set Location</span>
+                      <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/dashboard/weather">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-between text-xs md:text-sm"
+                    >
+                      <span className="hidden sm:inline">Weather Details</span>
+                      <span className="sm:hidden">Details</span>
+                      <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
+                    </Button>
+                  </Link>
+                )}
               </CardFooter>
             </Card>
           </div>
