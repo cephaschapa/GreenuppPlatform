@@ -1,7 +1,13 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "./use-auth"; 
+import { useAuth } from "./use-auth";
 import { useToast } from "./use-toast";
 import { useWebSocket } from "./use-websocket";
 
@@ -10,7 +16,7 @@ type Notification = {
   type: string;
   title: string;
   message: string;
-  status: 'unread' | 'read' | 'archived';
+  status: "unread" | "read" | "archived";
   createdAt: string;
   actionUrl?: string;
   data?: Record<string, any>;
@@ -19,12 +25,13 @@ type Notification = {
 type NotificationSettings = {
   emailEnabled: boolean;
   pushEnabled: boolean;
+  smsEnabled: boolean;
   weatherAlerts: boolean;
   taskReminders: boolean;
   marketPriceAlerts: boolean;
   systemNotifications: boolean;
   messageNotifications: boolean;
-  emailFrequency: 'instant' | 'daily' | 'weekly';
+  emailFrequency: "instant" | "daily" | "weekly";
   emailDigestDay?: number;
   emailDigestTime?: number;
 };
@@ -49,57 +56,64 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const { connected } = useWebSocket();
   const queryClient = useQueryClient();
   const isAuthenticated = !!user;
-  
+
   // Listen for WebSocket connection changes
   useEffect(() => {
     if (connected && isAuthenticated) {
       // Once connected, we can rely on real-time notifications
       // We'll still do initial fetching to get existing notifications
-      console.log('WebSocket connected - real-time notifications active');
-      
+      console.log("WebSocket connected - real-time notifications active");
+
       // Setup event listener for real-time notifications from WebSocket
       const handleNewNotification = (event: CustomEvent) => {
-        console.log('Received new notification via custom event:', event.detail);
+        console.log(
+          "Received new notification via custom event:",
+          event.detail
+        );
         // The queryClient invalidation is already handled in the WebSocket handler
         // Here we can handle any additional client-side logic for new notifications
-        
+
         // We could update local state if needed, but React Query's invalidation
         // should take care of refreshing the data automatically
       };
-      
+
       // Add event listener for custom notification events
-      window.addEventListener('new-notification', handleNewNotification as EventListener);
-      
+      window.addEventListener(
+        "new-notification",
+        handleNewNotification as EventListener
+      );
+
       // Clean up event listener on unmount
       return () => {
-        window.removeEventListener('new-notification', handleNewNotification as EventListener);
+        window.removeEventListener(
+          "new-notification",
+          handleNewNotification as EventListener
+        );
       };
     }
   }, [connected, isAuthenticated]);
 
   // Get all notifications
-  const { 
-    data: notifications = [], 
-    isLoading, 
-    refetch: refetchNotifications
+  const {
+    data: notifications = [],
+    isLoading,
+    refetch: refetchNotifications,
   } = useQuery({
-    queryKey: ['/api/notifications'],
+    queryKey: ["/api/notifications"],
     queryFn: async () => {
       if (!isAuthenticated) return [];
-      const res = await apiRequest('GET', '/api/notifications');
+      const res = await apiRequest("GET", "/api/notifications");
       return await res.json();
     },
     enabled: isAuthenticated,
   });
 
   // Get unread count
-  const { 
-    data: unreadCountData = { count: 0 }
-  } = useQuery({
-    queryKey: ['/api/notifications/unread/count'],
+  const { data: unreadCountData = { count: 0 } } = useQuery({
+    queryKey: ["/api/notifications/unread/count"],
     queryFn: async () => {
       if (!isAuthenticated) return { count: 0 };
-      const res = await apiRequest('GET', '/api/notifications/unread/count');
+      const res = await apiRequest("GET", "/api/notifications/unread/count");
       return await res.json();
     },
     enabled: isAuthenticated,
@@ -107,14 +121,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   });
 
   // Get notification settings
-  const { 
-    data: settings = null,
-    isLoading: settingsLoading,
-  } = useQuery({
-    queryKey: ['/api/notifications/settings'],
+  const { data: settings = null, isLoading: settingsLoading } = useQuery({
+    queryKey: ["/api/notifications/settings"],
     queryFn: async () => {
       if (!isAuthenticated) return null;
-      const res = await apiRequest('GET', '/api/notifications/settings');
+      const res = await apiRequest("GET", "/api/notifications/settings");
       return await res.json();
     },
     enabled: isAuthenticated,
@@ -123,12 +134,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   // Mark a notification as read
   const markAsReadMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiRequest('PATCH', `/api/notifications/${id}/read`);
+      const res = await apiRequest("PATCH", `/api/notifications/${id}/read`);
       return await res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread/count'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/notifications/unread/count"],
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -142,12 +155,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   // Mark a notification as archived
   const markAsArchivedMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiRequest('PATCH', `/api/notifications/${id}/archive`);
+      const res = await apiRequest("PATCH", `/api/notifications/${id}/archive`);
       return await res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread/count'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/notifications/unread/count"],
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -161,11 +176,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   // Update notification settings
   const updateSettingsMutation = useMutation({
     mutationFn: async (newSettings: Partial<NotificationSettings>) => {
-      const res = await apiRequest('PATCH', '/api/notifications/settings', newSettings);
+      const res = await apiRequest(
+        "PATCH",
+        "/api/notifications/settings",
+        newSettings
+      );
       return await res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/notifications/settings'] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/notifications/settings"],
+      });
       toast({
         title: "Notification settings updated",
         description: "Your notification preferences have been saved.",
@@ -214,7 +235,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 export function useNotifications() {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error("useNotifications must be used within a NotificationProvider");
+    throw new Error(
+      "useNotifications must be used within a NotificationProvider"
+    );
   }
   return context;
 }

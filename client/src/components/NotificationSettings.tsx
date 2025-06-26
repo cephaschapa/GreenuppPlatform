@@ -2,18 +2,42 @@ import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useNotifications, type NotificationSettings } from "@/hooks/use-notifications";
+import {
+  useNotifications,
+  type NotificationSettings,
+} from "@/hooks/use-notifications";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
 const FormSchema = z.object({
   emailEnabled: z.boolean().default(true),
   pushEnabled: z.boolean().default(true),
+  smsEnabled: z.boolean().default(false),
   weatherAlerts: z.boolean().default(true),
   taskReminders: z.boolean().default(true),
   marketPriceAlerts: z.boolean().default(false),
@@ -33,6 +57,7 @@ export function NotificationSettingsForm() {
       ? {
           emailEnabled: settings.emailEnabled,
           pushEnabled: settings.pushEnabled,
+          smsEnabled: settings.smsEnabled,
           weatherAlerts: settings.weatherAlerts,
           taskReminders: settings.taskReminders,
           marketPriceAlerts: settings.marketPriceAlerts,
@@ -45,6 +70,7 @@ export function NotificationSettingsForm() {
       : {
           emailEnabled: true,
           pushEnabled: true,
+          smsEnabled: false,
           weatherAlerts: true,
           taskReminders: true,
           marketPriceAlerts: false,
@@ -60,6 +86,7 @@ export function NotificationSettingsForm() {
       form.reset({
         emailEnabled: settings.emailEnabled,
         pushEnabled: settings.pushEnabled,
+        smsEnabled: settings.smsEnabled,
         weatherAlerts: settings.weatherAlerts,
         taskReminders: settings.taskReminders,
         marketPriceAlerts: settings.marketPriceAlerts,
@@ -90,7 +117,9 @@ export function NotificationSettingsForm() {
         <Card>
           <CardHeader>
             <CardTitle>Notification Channels</CardTitle>
-            <CardDescription>Choose how you want to receive notifications</CardDescription>
+            <CardDescription>
+              Choose how you want to receive notifications
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormField
@@ -99,11 +128,18 @@ export function NotificationSettingsForm() {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Email Notifications</FormLabel>
-                    <FormDescription>Receive notifications via email</FormDescription>
+                    <FormLabel className="text-base">
+                      Email Notifications
+                    </FormLabel>
+                    <FormDescription>
+                      Receive notifications via email
+                    </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                 </FormItem>
               )}
@@ -114,11 +150,40 @@ export function NotificationSettingsForm() {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Push Notifications</FormLabel>
-                    <FormDescription>Receive notifications in the app</FormDescription>
+                    <FormLabel className="text-base">
+                      Push Notifications
+                    </FormLabel>
+                    <FormDescription>
+                      Receive notifications in the app
+                    </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="smsEnabled"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">
+                      SMS Notifications
+                    </FormLabel>
+                    <FormDescription>
+                      Receive notifications via SMS
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                 </FormItem>
               )}
@@ -129,7 +194,9 @@ export function NotificationSettingsForm() {
         <Card>
           <CardHeader>
             <CardTitle>Notification Types</CardTitle>
-            <CardDescription>Choose which types of notifications you want to receive</CardDescription>
+            <CardDescription>
+              Choose which types of notifications you want to receive
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormField
@@ -139,10 +206,15 @@ export function NotificationSettingsForm() {
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Weather Alerts</FormLabel>
-                    <FormDescription>Important weather updates for your region</FormDescription>
+                    <FormDescription>
+                      Important weather updates for your region
+                    </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                 </FormItem>
               )}
@@ -154,10 +226,15 @@ export function NotificationSettingsForm() {
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Task Reminders</FormLabel>
-                    <FormDescription>Reminders for upcoming and overdue tasks</FormDescription>
+                    <FormDescription>
+                      Reminders for upcoming and overdue tasks
+                    </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                 </FormItem>
               )}
@@ -168,11 +245,18 @@ export function NotificationSettingsForm() {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Market Price Alerts</FormLabel>
-                    <FormDescription>Alerts for significant market price changes</FormDescription>
+                    <FormLabel className="text-base">
+                      Market Price Alerts
+                    </FormLabel>
+                    <FormDescription>
+                      Alerts for significant market price changes
+                    </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                 </FormItem>
               )}
@@ -183,11 +267,18 @@ export function NotificationSettingsForm() {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">System Notifications</FormLabel>
-                    <FormDescription>Important system updates and announcements</FormDescription>
+                    <FormLabel className="text-base">
+                      System Notifications
+                    </FormLabel>
+                    <FormDescription>
+                      Important system updates and announcements
+                    </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                 </FormItem>
               )}
@@ -198,11 +289,18 @@ export function NotificationSettingsForm() {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Message Notifications</FormLabel>
-                    <FormDescription>Notifications for new messages and chat requests</FormDescription>
+                    <FormLabel className="text-base">
+                      Message Notifications
+                    </FormLabel>
+                    <FormDescription>
+                      Notifications for new messages and chat requests
+                    </FormDescription>
                   </div>
                   <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
                   </FormControl>
                 </FormItem>
               )}
@@ -213,7 +311,9 @@ export function NotificationSettingsForm() {
         <Card>
           <CardHeader>
             <CardTitle>Email Preferences</CardTitle>
-            <CardDescription>Configure how often you receive email notifications</CardDescription>
+            <CardDescription>
+              Configure how often you receive email notifications
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormField
@@ -232,19 +332,25 @@ export function NotificationSettingsForm() {
                         <FormControl>
                           <RadioGroupItem value="instant" />
                         </FormControl>
-                        <FormLabel className="font-normal">Instant - Send emails immediately</FormLabel>
+                        <FormLabel className="font-normal">
+                          Instant - Send emails immediately
+                        </FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
                           <RadioGroupItem value="daily" />
                         </FormControl>
-                        <FormLabel className="font-normal">Daily Digest - Send a daily summary</FormLabel>
+                        <FormLabel className="font-normal">
+                          Daily Digest - Send a daily summary
+                        </FormLabel>
                       </FormItem>
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>
                           <RadioGroupItem value="weekly" />
                         </FormControl>
-                        <FormLabel className="font-normal">Weekly Digest - Send a weekly summary</FormLabel>
+                        <FormLabel className="font-normal">
+                          Weekly Digest - Send a weekly summary
+                        </FormLabel>
                       </FormItem>
                     </RadioGroup>
                   </FormControl>
@@ -272,12 +378,20 @@ export function NotificationSettingsForm() {
                       <SelectContent>
                         {Array.from({ length: 24 }, (_, i) => (
                           <SelectItem key={i} value={i.toString()}>
-                            {i === 0 ? "12 AM" : i < 12 ? `${i} AM` : i === 12 ? "12 PM" : `${i - 12} PM`}
+                            {i === 0
+                              ? "12 AM"
+                              : i < 12
+                              ? `${i} AM`
+                              : i === 12
+                              ? "12 PM"
+                              : `${i - 12} PM`}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription>What time of day would you like to receive your digest?</FormDescription>
+                    <FormDescription>
+                      What time of day would you like to receive your digest?
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -293,7 +407,9 @@ export function NotificationSettingsForm() {
                     <FormItem>
                       <FormLabel>Digest Day</FormLabel>
                       <Select
-                        onValueChange={(value) => field.onChange(parseInt(value))}
+                        onValueChange={(value) =>
+                          field.onChange(parseInt(value))
+                        }
                         defaultValue={field.value?.toString() || "1"}
                       >
                         <FormControl>
@@ -311,7 +427,9 @@ export function NotificationSettingsForm() {
                           <SelectItem value="6">Saturday</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormDescription>What day would you like to receive your weekly digest?</FormDescription>
+                      <FormDescription>
+                        What day would you like to receive your weekly digest?
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -324,7 +442,9 @@ export function NotificationSettingsForm() {
                     <FormItem>
                       <FormLabel>Digest Time</FormLabel>
                       <Select
-                        onValueChange={(value) => field.onChange(parseInt(value))}
+                        onValueChange={(value) =>
+                          field.onChange(parseInt(value))
+                        }
                         defaultValue={field.value?.toString() || "9"}
                       >
                         <FormControl>
@@ -335,12 +455,20 @@ export function NotificationSettingsForm() {
                         <SelectContent>
                           {Array.from({ length: 24 }, (_, i) => (
                             <SelectItem key={i} value={i.toString()}>
-                              {i === 0 ? "12 AM" : i < 12 ? `${i} AM` : i === 12 ? "12 PM" : `${i - 12} PM`}
+                              {i === 0
+                                ? "12 AM"
+                                : i < 12
+                                ? `${i} AM`
+                                : i === 12
+                                ? "12 PM"
+                                : `${i - 12} PM`}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormDescription>What time would you like to receive your weekly digest?</FormDescription>
+                      <FormDescription>
+                        What time would you like to receive your weekly digest?
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

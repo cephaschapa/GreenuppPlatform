@@ -3,11 +3,31 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Bell, Megaphone, Calendar, Mail, AlertTriangle, MessageSquare, BadgeInfo } from "lucide-react";
+import {
+  Bell,
+  Megaphone,
+  Calendar,
+  Mail,
+  AlertTriangle,
+  MessageSquare,
+  BadgeInfo,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface NotificationSettingsProps {
@@ -17,28 +37,34 @@ interface NotificationSettingsProps {
 export function NotificationSettings({ userId }: NotificationSettingsProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Fetch notification settings
-  const { 
-    data: settings, 
+  const {
+    data: settings,
     isLoading,
-    error
+    error,
   } = useQuery({
-    queryKey: ['/api/notifications/settings'],
+    queryKey: ["/api/notifications/settings"],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/notifications/settings');
+      const response = await apiRequest("GET", "/api/notifications/settings");
       return await response.json();
     },
-    retry: 1
+    retry: 1,
   });
-  
+
   // State for optimistic updates
-  const [emailFrequency, setEmailFrequency] = useState<string>(settings?.emailFrequency || 'instant');
-  
+  const [emailFrequency, setEmailFrequency] = useState<string>(
+    settings?.emailFrequency || "instant"
+  );
+
   // Mutation to update notification settings
   const updateSettingsMutation = useMutation({
     mutationFn: async (updatedSettings: any) => {
-      const response = await apiRequest('PATCH', '/api/notifications/settings', updatedSettings);
+      const response = await apiRequest(
+        "PATCH",
+        "/api/notifications/settings",
+        updatedSettings
+      );
       return await response.json();
     },
     onSuccess: () => {
@@ -46,40 +72,48 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
         title: "Settings updated",
         description: "Your notification preferences have been saved.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/notifications/settings'] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/notifications/settings"],
+      });
     },
     onError: (error: any) => {
       toast({
         title: "Failed to update settings",
-        description: error.message || "An error occurred while saving your preferences.",
-        variant: "destructive"
+        description:
+          error.message || "An error occurred while saving your preferences.",
+        variant: "destructive",
       });
-    }
+    },
   });
-  
+
   // Handle toggle changes
   const handleToggleChange = (setting: string, checked: boolean) => {
     updateSettingsMutation.mutate({ [setting]: checked });
   };
-  
+
   // Handle email frequency change
   const handleEmailFrequencyChange = (value: string) => {
     setEmailFrequency(value);
     updateSettingsMutation.mutate({ emailFrequency: value });
   };
-  
+
   // Test email function
   const sendTestEmail = async () => {
     try {
-      const response = await apiRequest('POST', '/api/notifications/test-email', {
-        email: undefined // use the user's email on file
-      });
+      const response = await apiRequest(
+        "POST",
+        "/api/notifications/test-email",
+        {
+          email: undefined, // use the user's email on file
+        }
+      );
       const result = await response.json();
-      
+
       if (response.ok) {
         toast({
           title: "Test email sent",
-          description: "Check your inbox to confirm you received the test email.",
+          description:
+            "Check your inbox to confirm you received the test email.",
         });
       } else {
         throw new Error(result.message || "Failed to send test email");
@@ -87,12 +121,13 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
     } catch (error: any) {
       toast({
         title: "Failed to send test email",
-        description: error.message || "An error occurred while sending the test email.",
-        variant: "destructive"
+        description:
+          error.message || "An error occurred while sending the test email.",
+        variant: "destructive",
       });
     }
   };
-  
+
   if (isLoading) {
     return (
       <Card>
@@ -115,7 +150,7 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
       </Card>
     );
   }
-  
+
   if (error) {
     return (
       <Card>
@@ -126,14 +161,20 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/notifications/settings'] })}>
+          <Button
+            onClick={() =>
+              queryClient.invalidateQueries({
+                queryKey: ["/api/notifications/settings"],
+              })
+            }
+          >
             Try Again
           </Button>
         </CardContent>
       </Card>
     );
   }
-  
+
   return (
     <Card>
       <CardHeader>
@@ -153,31 +194,56 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <Label htmlFor="emailEnabled" className="text-sm">Email Notifications</Label>
+                <Label htmlFor="emailEnabled" className="text-sm">
+                  Email Notifications
+                </Label>
               </div>
-              <Switch 
-                id="emailEnabled" 
+              <Switch
+                id="emailEnabled"
                 checked={settings?.emailEnabled || false}
-                onCheckedChange={(checked) => handleToggleChange('emailEnabled', checked)}
+                onCheckedChange={(checked) =>
+                  handleToggleChange("emailEnabled", checked)
+                }
                 disabled={updateSettingsMutation.isPending}
               />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Bell className="h-4 w-4 text-muted-foreground" />
-                <Label htmlFor="pushEnabled" className="text-sm">Push Notifications</Label>
+                <Label htmlFor="pushEnabled" className="text-sm">
+                  Push Notifications
+                </Label>
               </div>
-              <Switch 
-                id="pushEnabled" 
+              <Switch
+                id="pushEnabled"
                 checked={settings?.pushEnabled || false}
-                onCheckedChange={(checked) => handleToggleChange('pushEnabled', checked)}
+                onCheckedChange={(checked) =>
+                  handleToggleChange("pushEnabled", checked)
+                }
+                disabled={updateSettingsMutation.isPending}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <MessageSquare className="h-4 w-4 text-blue-500" />
+                <Label htmlFor="smsEnabled" className="text-sm">
+                  SMS Notifications
+                </Label>
+              </div>
+              <Switch
+                id="smsEnabled"
+                checked={settings?.smsEnabled || false}
+                onCheckedChange={(checked) =>
+                  handleToggleChange("smsEnabled", checked)
+                }
                 disabled={updateSettingsMutation.isPending}
               />
             </div>
           </div>
         </div>
-        
+
         {/* Notification Types */}
         <div className="space-y-4">
           <h3 className="text-sm font-medium">Notification Types</h3>
@@ -185,77 +251,99 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                <Label htmlFor="weatherAlerts" className="text-sm">Weather Alerts</Label>
+                <Label htmlFor="weatherAlerts" className="text-sm">
+                  Weather Alerts
+                </Label>
               </div>
-              <Switch 
-                id="weatherAlerts" 
+              <Switch
+                id="weatherAlerts"
                 checked={settings?.weatherAlerts || false}
-                onCheckedChange={(checked) => handleToggleChange('weatherAlerts', checked)}
+                onCheckedChange={(checked) =>
+                  handleToggleChange("weatherAlerts", checked)
+                }
                 disabled={updateSettingsMutation.isPending}
               />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Calendar className="h-4 w-4 text-blue-500" />
-                <Label htmlFor="taskReminders" className="text-sm">Task Reminders</Label>
+                <Label htmlFor="taskReminders" className="text-sm">
+                  Task Reminders
+                </Label>
               </div>
-              <Switch 
-                id="taskReminders" 
+              <Switch
+                id="taskReminders"
                 checked={settings?.taskReminders || false}
-                onCheckedChange={(checked) => handleToggleChange('taskReminders', checked)}
+                onCheckedChange={(checked) =>
+                  handleToggleChange("taskReminders", checked)
+                }
                 disabled={updateSettingsMutation.isPending}
               />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Megaphone className="h-4 w-4 text-green-500" />
-                <Label htmlFor="marketPriceAlerts" className="text-sm">Market Price Alerts</Label>
+                <Label htmlFor="marketPriceAlerts" className="text-sm">
+                  Market Price Alerts
+                </Label>
               </div>
-              <Switch 
-                id="marketPriceAlerts" 
+              <Switch
+                id="marketPriceAlerts"
                 checked={settings?.marketPriceAlerts || false}
-                onCheckedChange={(checked) => handleToggleChange('marketPriceAlerts', checked)}
+                onCheckedChange={(checked) =>
+                  handleToggleChange("marketPriceAlerts", checked)
+                }
                 disabled={updateSettingsMutation.isPending}
               />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <MessageSquare className="h-4 w-4 text-purple-500" />
-                <Label htmlFor="messageNotifications" className="text-sm">Message Notifications</Label>
+                <Label htmlFor="messageNotifications" className="text-sm">
+                  Message Notifications
+                </Label>
               </div>
-              <Switch 
-                id="messageNotifications" 
+              <Switch
+                id="messageNotifications"
                 checked={settings?.messageNotifications || false}
-                onCheckedChange={(checked) => handleToggleChange('messageNotifications', checked)}
+                onCheckedChange={(checked) =>
+                  handleToggleChange("messageNotifications", checked)
+                }
                 disabled={updateSettingsMutation.isPending}
               />
             </div>
-            
+
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <BadgeInfo className="h-4 w-4 text-gray-500" />
-                <Label htmlFor="systemNotifications" className="text-sm">System Notifications</Label>
+                <Label htmlFor="systemNotifications" className="text-sm">
+                  System Notifications
+                </Label>
               </div>
-              <Switch 
-                id="systemNotifications" 
+              <Switch
+                id="systemNotifications"
                 checked={settings?.systemNotifications || false}
-                onCheckedChange={(checked) => handleToggleChange('systemNotifications', checked)}
+                onCheckedChange={(checked) =>
+                  handleToggleChange("systemNotifications", checked)
+                }
                 disabled={updateSettingsMutation.isPending}
               />
             </div>
           </div>
         </div>
-        
+
         {/* Email Digest Settings */}
         {settings?.emailEnabled && (
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Email Frequency</h3>
             <div className="grid gap-2">
-              <Label htmlFor="emailFrequency" className="text-sm">How often should we send email notifications?</Label>
-              <Select 
+              <Label htmlFor="emailFrequency" className="text-sm">
+                How often should we send email notifications?
+              </Label>
+              <Select
                 value={emailFrequency}
                 onValueChange={handleEmailFrequencyChange}
                 disabled={updateSettingsMutation.isPending}
@@ -264,20 +352,24 @@ export function NotificationSettings({ userId }: NotificationSettingsProps) {
                   <SelectValue placeholder="Select frequency" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="instant">Instant (As they happen)</SelectItem>
+                  <SelectItem value="instant">
+                    Instant (As they happen)
+                  </SelectItem>
                   <SelectItem value="daily">Daily Digest</SelectItem>
                   <SelectItem value="weekly">Weekly Digest</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                {emailFrequency === 'instant' 
-                  ? 'You will receive an email for each notification as it happens.' 
-                  : `You will receive a daily${emailFrequency === 'weekly' ? ' weekly' : ''} summary of all your notifications.`}
+                {emailFrequency === "instant"
+                  ? "You will receive an email for each notification as it happens."
+                  : `You will receive a daily${
+                      emailFrequency === "weekly" ? " weekly" : ""
+                    } summary of all your notifications.`}
               </p>
             </div>
             <div className="pt-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={sendTestEmail}
                 disabled={updateSettingsMutation.isPending}

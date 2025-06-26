@@ -250,6 +250,7 @@ export async function createDefaultNotificationSettings(userId: number) {
       userId,
       emailEnabled: true,
       pushEnabled: true,
+      smsEnabled: false,
       weatherAlerts: true,
       taskReminders: true,
       marketPriceAlerts: false,
