@@ -1190,6 +1190,12 @@ export const deviceSessions = pgTable("device_sessions", {
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
   location: text("location"), // Approximate location based on IP
+  latitude: decimal("latitude", { precision: 10, scale: 7 }), // Precise latitude coordinates
+  longitude: decimal("longitude", { precision: 10, scale: 7 }), // Precise longitude coordinates
+  geoPath: text("geo_path"), // Full geographic path (City, State, Country)
+  country: text("country"), // Country name
+  city: text("city"), // City name
+  state: text("state"), // State/province name
   isCurrent: boolean("is_current").default(false), // Whether this is the current session
   isTrusted: boolean("is_trusted").default(false), // Whether user has marked this device as trusted
   lastActiveAt: timestamp("last_active_at").notNull().defaultNow(),

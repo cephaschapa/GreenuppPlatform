@@ -15,6 +15,20 @@
       "when": 1744131195831,
       "tag": "0001_curved_the_renegades",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1750935870257,
+      "tag": "0002_previous_next_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1750938616254,
+      "tag": "0003_living_silver_surfer",
+      "breakpoints": true
     }
   ]
 }

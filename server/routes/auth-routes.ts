@@ -4,6 +4,7 @@ import { AuthService } from "../services/authService.js";
 import { storage } from "../storage.js";
 import { User } from "@shared/schema";
 import { logger } from "../lib/logger.js";
+import speakeasy from "speakeasy";
 
 const router = Router();
 
@@ -273,6 +274,26 @@ router.post("/2fa/setup", async (req: Request, res: Response) => {
   }
 });
 
+// Get 2FA status
+router.get("/2fa/status", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  try {
+    const user = req.user as User;
+    const isEnabled = await AuthService.is2FAEnabled(user.id);
+
+    res.json({
+      isEnabled,
+      userId: user.id,
+    });
+  } catch (error) {
+    logger.error("2FA status error:", error);
+    res.status(500).json({ message: "Failed to get 2FA status" });
+  }
+});
+
 router.post("/2fa/enable", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Not authenticated" });
@@ -282,8 +303,18 @@ router.post("/2fa/enable", async (req: Request, res: Response) => {
     const user = req.user as User;
     const { secret, backupCodes, token } = req.body;
 
-    // Verify the token before enabling
-    const isValid = await AuthService.verify2FA(user.id, token);
+    logger.info(`2FA enable attempt for user ${user.id}, token: ${token}`);
+
+    // Verify the token against the provided secret (not stored secret)
+    const isValid = speakeasy.totp.verify({
+      secret: secret,
+      encoding: "base32",
+      token,
+      window: 2, // Allow 2 time steps for clock skew
+    });
+
+    logger.info(`2FA token verification result: ${isValid}`);
+
     if (!isValid) {
       return res.status(400).json({ message: "Invalid verification code" });
     }

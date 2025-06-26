@@ -13,6 +13,7 @@ import { promisify } from "util";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import { logger } from "../lib/logger.js";
+import { getIPLocation, IPLocation } from "./ipGeolocationService.js";
 
 const scryptAsync = promisify(scrypt);
 
@@ -34,6 +35,12 @@ export interface DeviceInfo {
   ipAddress?: string;
   userAgent?: string;
   location?: string;
+  latitude?: number;
+  longitude?: number;
+  geoPath?: string;
+  country?: string;
+  city?: string;
+  state?: string;
 }
 
 export interface LoginAttempt {
@@ -247,17 +254,47 @@ export class AuthService {
       .set({ isCurrent: false })
       .where(eq(deviceSessions.userId, userId));
 
+    // Get IP geolocation data if IP address is available
+    let enhancedDeviceInfo = { ...deviceInfo };
+    if (deviceInfo.ipAddress && deviceInfo.ipAddress !== "unknown") {
+      try {
+        const ipLocation = await getIPLocation(deviceInfo.ipAddress);
+        enhancedDeviceInfo = {
+          ...deviceInfo,
+          latitude: ipLocation.lat,
+          longitude: ipLocation.lon,
+          geoPath: ipLocation.geoPath,
+          country: ipLocation.country,
+          city: ipLocation.city,
+          state: ipLocation.state,
+          location: ipLocation.geoPath, // Update location with full geo path
+        };
+      } catch (error) {
+        logger.error(
+          `Error getting IP location for ${deviceInfo.ipAddress}:`,
+          error
+        );
+        // Continue with original device info if geolocation fails
+      }
+    }
+
     // Create new session
     await db.insert(deviceSessions).values({
       userId,
       sessionId,
-      deviceName: deviceInfo.deviceName || "Unknown Device",
-      deviceType: deviceInfo.deviceType || "desktop",
-      browser: deviceInfo.browser,
-      os: deviceInfo.os,
-      ipAddress: deviceInfo.ipAddress,
-      userAgent: deviceInfo.userAgent,
-      location: deviceInfo.location,
+      deviceName: enhancedDeviceInfo.deviceName || "Unknown Device",
+      deviceType: enhancedDeviceInfo.deviceType || "desktop",
+      browser: enhancedDeviceInfo.browser,
+      os: enhancedDeviceInfo.os,
+      ipAddress: enhancedDeviceInfo.ipAddress,
+      userAgent: enhancedDeviceInfo.userAgent,
+      location: enhancedDeviceInfo.location,
+      latitude: enhancedDeviceInfo.latitude,
+      longitude: enhancedDeviceInfo.longitude,
+      geoPath: enhancedDeviceInfo.geoPath,
+      country: enhancedDeviceInfo.country,
+      city: enhancedDeviceInfo.city,
+      state: enhancedDeviceInfo.state,
       isCurrent: true,
       expiresAt,
     });

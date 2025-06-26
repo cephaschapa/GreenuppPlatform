@@ -1,4 +1,13 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  jsonb,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { users } from "./schema";
@@ -6,66 +15,75 @@ import { users } from "./schema";
 // Green Socials - Social feature for agricultural community
 
 // Post visibility enum
-export const postVisibilityEnum = pgEnum('post_visibility', [
-  'public',    // Visible to everyone
-  'community', // Visible to specific groups
-  'followers', // Visible to followers only
-  'private'    // Visible to specified users only
+export const socialPostVisibilityEnum = pgEnum("social_post_visibility", [
+  "public", // Visible to everyone
+  "community", // Visible to specific groups
+  "followers", // Visible to followers only
+  "private", // Visible to specified users only
 ]);
 
 // Post types enum
-export const postTypeEnum = pgEnum('post_type', [
-  'text',          // Simple text post
-  'image',         // Post with image(s)
-  'article',       // Longer formatted content
-  'question',      // Question seeking answers
-  'poll',          // Poll/survey
-  'event',         // Event announcement
-  'milestone',     // Farming milestone
-  'resource',      // Shared resource
-  'tip',           // Quick farming tip
-  'market_update'  // Market prices or trends
+export const socialPostTypeEnum = pgEnum("social_post_type", [
+  "text", // Simple text post
+  "image", // Post with image(s)
+  "article", // Longer formatted content
+  "question", // Question seeking answers
+  "poll", // Poll/survey
+  "event", // Event announcement
+  "milestone", // Farming milestone
+  "resource", // Shared resource
+  "tip", // Quick farming tip
+  "market_update", // Market prices or trends
 ]);
 
 // Verification status enum
-export const verificationStatusEnum = pgEnum('verification_status', [
-  'unverified',     // Default state
-  'pending',        // Under review
-  'verified',       // Officially verified
-  'expert',         // Expert-level verification
-  'rejected'        // Verification rejected
-]);
+export const socialVerificationStatusEnum = pgEnum(
+  "social_verification_status",
+  [
+    "unverified", // Default state
+    "pending", // Under review
+    "verified", // Officially verified
+    "expert", // Expert-level verification
+    "rejected", // Verification rejected
+  ]
+);
 
 // Relationship status enum
-export const relationshipStatusEnum = pgEnum('relationship_status', [
-  'following',      // User is following
-  'followed_by',    // User is being followed
-  'mutual',         // Both users follow each other
-  'blocked',        // User has blocked the other
-  'none'            // No relationship
-]);
+export const socialRelationshipStatusEnum = pgEnum(
+  "social_relationship_status",
+  [
+    "following", // User is following
+    "followed_by", // User is being followed
+    "mutual", // Both users follow each other
+    "blocked", // User has blocked the other
+    "none", // No relationship
+  ]
+);
 
 // User profiles extended for social features
 export const socialProfiles = pgTable("social_profiles", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   displayName: text("display_name").notNull(),
   bio: text("bio"),
   profileImage: text("profile_image"),
   coverImage: text("cover_image"),
   location: text("location"),
   website: text("website"),
-  verificationStatus: text("verification_status").default('unverified'),
+  verificationStatus: text("verification_status").default("unverified"),
   expertise: text("expertise").array(), // Areas of agricultural expertise
   experienceYears: integer("experience_years"),
   specializations: text("specializations").array(),
-  badges: jsonb("badges").$type<{ name: string, icon: string, date: string }[]>(),
+  badges:
+    jsonb("badges").$type<{ name: string; icon: string; date: string }[]>(),
   socialLinks: jsonb("social_links").$type<Record<string, string>>(), // Other platforms
   // Engagement metrics
   postCount: integer("post_count").default(0),
   followerCount: integer("follower_count").default(0),
   followingCount: integer("following_count").default(0),
-  visibility: text("visibility").default('public'), // Profile visibility setting
+  visibility: text("visibility").default("public"), // Profile visibility setting
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -77,7 +95,9 @@ export const communities = pgTable("communities", {
   description: text("description").notNull(),
   communityIcon: text("community_icon"),
   coverImage: text("cover_image"),
-  ownerId: integer("owner_id").notNull().references(() => users.id),
+  ownerId: integer("owner_id")
+    .notNull()
+    .references(() => users.id),
   // Community type (public, private, verified)
   isPrivate: boolean("is_private").default(false),
   isVerified: boolean("is_verified").default(false),
@@ -96,9 +116,13 @@ export const communities = pgTable("communities", {
 // Community memberships
 export const communityMembers = pgTable("community_members", {
   id: serial("id").primaryKey(),
-  communityId: integer("community_id").notNull().references(() => communities.id),
-  userId: integer("user_id").notNull().references(() => users.id),
-  role: text("role").default('member'), // member, moderator, admin
+  communityId: integer("community_id")
+    .notNull()
+    .references(() => communities.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  role: text("role").default("member"), // member, moderator, admin
   joinDate: timestamp("join_date").notNull().defaultNow(),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -108,12 +132,15 @@ export const communityMembers = pgTable("community_members", {
 // Social posts
 export const posts = pgTable("posts", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   content: text("content").notNull(),
-  postType: text("post_type").notNull().default('text'),
-  visibility: text("visibility").notNull().default('public'),
+  postType: text("post_type").notNull().default("text"),
+  visibility: text("visibility").notNull().default("public"),
   // Media content
-  media: jsonb("media").$type<{ url: string, type: string, caption?: string }[]>(),
+  media:
+    jsonb("media").$type<{ url: string; type: string; caption?: string }[]>(),
   // Community association (optional)
   communityId: integer("community_id").references(() => communities.id),
   // Location data (optional)
@@ -147,13 +174,17 @@ export const posts = pgTable("posts", {
 // Comments on posts
 export const comments = pgTable("comments", {
   id: serial("id").primaryKey(),
-  postId: integer("post_id").notNull().references(() => posts.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  postId: integer("post_id")
+    .notNull()
+    .references(() => posts.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   content: text("content").notNull(),
-  // Parent comment for replies 
+  // Parent comment for replies
   parentId: integer("parent_id").references(() => comments.id),
   // Media attachments
-  media: jsonb("media").$type<{ url: string, type: string }[]>(),
+  media: jsonb("media").$type<{ url: string; type: string }[]>(),
   // Engagement metrics
   likeCount: integer("like_count").default(0),
   replyCount: integer("reply_count").default(0),
@@ -167,25 +198,37 @@ export const comments = pgTable("comments", {
 // Post likes
 export const postLikes = pgTable("post_likes", {
   id: serial("id").primaryKey(),
-  postId: integer("post_id").notNull().references(() => posts.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  postId: integer("post_id")
+    .notNull()
+    .references(() => posts.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 // Comment likes
 export const commentLikes = pgTable("comment_likes", {
   id: serial("id").primaryKey(),
-  commentId: integer("comment_id").notNull().references(() => comments.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  commentId: integer("comment_id")
+    .notNull()
+    .references(() => comments.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 // User relationships (follows)
 export const userRelationships = pgTable("user_relationships", {
   id: serial("id").primaryKey(),
-  followerId: integer("follower_id").notNull().references(() => users.id),
-  followedId: integer("followed_id").notNull().references(() => users.id),
-  status: text("status").notNull().default('following'),
+  followerId: integer("follower_id")
+    .notNull()
+    .references(() => users.id),
+  followedId: integer("followed_id")
+    .notNull()
+    .references(() => users.id),
+  status: text("status").notNull().default("following"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -193,17 +236,25 @@ export const userRelationships = pgTable("user_relationships", {
 // Saved posts (bookmarks)
 export const savedPosts = pgTable("saved_posts", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  postId: integer("post_id").notNull().references(() => posts.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  postId: integer("post_id")
+    .notNull()
+    .references(() => posts.id),
   savedAt: timestamp("saved_at").notNull().defaultNow(),
-  collectionName: text("collection_name").default('Saved'), // Custom collection
+  collectionName: text("collection_name").default("Saved"), // Custom collection
 });
 
 // Post shares
 export const postShares = pgTable("post_shares", {
   id: serial("id").primaryKey(),
-  postId: integer("post_id").notNull().references(() => posts.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  postId: integer("post_id")
+    .notNull()
+    .references(() => posts.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   targetType: text("target_type").notNull(), // 'profile', 'community', 'external'
   targetId: integer("target_id"), // Profile or community ID if applicable
   externalPlatform: text("external_platform"), // e.g., 'whatsapp', 'email', etc.
@@ -228,7 +279,7 @@ export const knowledgeBase = pgTable("knowledge_base", {
   sourceUrl: text("source_url"),
   authorId: integer("author_id").references(() => users.id),
   // Verification
-  verificationStatus: text("verification_status").notNull().default('pending'),
+  verificationStatus: text("verification_status").notNull().default("pending"),
   verifiedBy: integer("verified_by").references(() => users.id),
   verificationDate: timestamp("verification_date"),
   // Engagement
@@ -241,7 +292,9 @@ export const knowledgeBase = pgTable("knowledge_base", {
 // Questions and Answers
 export const questions = pgTable("questions", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   title: text("title").notNull(),
   content: text("content").notNull(),
   tags: text("tags").array(),
@@ -254,7 +307,7 @@ export const questions = pgTable("questions", {
   season: text("season"),
   growingZone: text("growing_zone"),
   // Status
-  status: text("status").default('open'), // open, answered, closed
+  status: text("status").default("open"), // open, answered, closed
   // Engagement metrics
   viewCount: integer("view_count").default(0),
   answerCount: integer("answer_count").default(0),
@@ -266,11 +319,15 @@ export const questions = pgTable("questions", {
 // Answers to questions
 export const answers = pgTable("answers", {
   id: serial("id").primaryKey(),
-  questionId: integer("question_id").notNull().references(() => questions.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  questionId: integer("question_id")
+    .notNull()
+    .references(() => questions.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   content: text("content").notNull(),
   // Media attachments
-  media: jsonb("media").$type<{ url: string, type: string }[]>(),
+  media: jsonb("media").$type<{ url: string; type: string }[]>(),
   // Engagement and verification
   isAccepted: boolean("is_accepted").default(false),
   upvoteCount: integer("upvote_count").default(0),
@@ -284,8 +341,12 @@ export const answers = pgTable("answers", {
 // Answer votes
 export const answerVotes = pgTable("answer_votes", {
   id: serial("id").primaryKey(),
-  answerId: integer("answer_id").notNull().references(() => answers.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  answerId: integer("answer_id")
+    .notNull()
+    .references(() => answers.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   voteType: text("vote_type").notNull(), // upvote or downvote
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -293,7 +354,9 @@ export const answerVotes = pgTable("answer_votes", {
 // Events (for farming calendar, workshops, etc.)
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
-  creatorId: integer("creator_id").notNull().references(() => users.id),
+  creatorId: integer("creator_id")
+    .notNull()
+    .references(() => users.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
   eventType: text("event_type").notNull(), // workshop, market, conference, etc.
@@ -323,8 +386,12 @@ export const events = pgTable("events", {
 // Event attendees
 export const eventAttendees = pgTable("event_attendees", {
   id: serial("id").primaryKey(),
-  eventId: integer("event_id").notNull().references(() => events.id),
-  userId: integer("user_id").notNull().references(() => users.id),
+  eventId: integer("event_id")
+    .notNull()
+    .references(() => events.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   status: text("status").notNull(), // registered, attending, interested, declined
   registrationDate: timestamp("registration_date").notNull().defaultNow(),
 });
@@ -332,7 +399,9 @@ export const eventAttendees = pgTable("event_attendees", {
 // Seasonal activity tracker
 export const seasonalActivities = pgTable("seasonal_activities", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   title: text("title").notNull(),
   description: text("description"),
   activityType: text("activity_type").notNull(), // planting, harvesting, etc.
@@ -341,7 +410,7 @@ export const seasonalActivities = pgTable("seasonal_activities", {
   crops: text("crops").array(),
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),
-  status: text("status").default('planned'), // planned, in-progress, completed
+  status: text("status").default("planned"), // planned, in-progress, completed
   results: text("results"),
   notes: text("notes"),
   isPublic: boolean("is_public").default(false),
@@ -352,55 +421,63 @@ export const seasonalActivities = pgTable("seasonal_activities", {
 // User notifications for social activity
 export const socialNotifications = pgTable("social_notifications", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
   type: text("type").notNull(), // follow, mention, comment, like, etc.
   content: text("content").notNull(),
   relatedUserId: integer("related_user_id").references(() => users.id),
   relatedPostId: integer("related_post_id").references(() => posts.id),
   relatedCommentId: integer("related_comment_id").references(() => comments.id),
-  relatedCommunityId: integer("related_community_id").references(() => communities.id),
+  relatedCommunityId: integer("related_community_id").references(
+    () => communities.id
+  ),
   read: boolean("read").default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 // Report content types enum
-export const reportTargetTypeEnum = pgEnum('report_target_type', [
-  'post',       // Report a post
-  'comment',    // Report a comment
-  'user',       // Report a user
-  'community',  // Report a community
+export const reportTargetTypeEnum = pgEnum("report_target_type", [
+  "post", // Report a post
+  "comment", // Report a comment
+  "user", // Report a user
+  "community", // Report a community
 ]);
 
 // Report reasons enum
-export const reportReasonEnum = pgEnum('report_reason', [
-  'spam',                  // Spam or misleading
-  'harassment',            // Harassment or bullying
-  'hate_speech',           // Hate speech
-  'false_information',     // False information
-  'inappropriate_content', // Inappropriate content
-  'intellectual_property', // Intellectual property violation
-  'violence',              // Violence or threats
-  'other',                 // Other reason
+export const reportReasonEnum = pgEnum("report_reason", [
+  "spam", // Spam or misleading
+  "harassment", // Harassment or bullying
+  "hate_speech", // Hate speech
+  "false_information", // False information
+  "inappropriate_content", // Inappropriate content
+  "intellectual_property", // Intellectual property violation
+  "violence", // Violence or threats
+  "other", // Other reason
 ]);
 
 // Content reports
 export const contentReports = pgTable("content_reports", {
   id: serial("id").primaryKey(),
-  reporterId: integer("reporter_id").notNull().references(() => users.id),
+  reporterId: integer("reporter_id")
+    .notNull()
+    .references(() => users.id),
   targetType: text("target_type").notNull(), // post, comment, user, community
-  targetId: integer("target_id").notNull(),  // ID of the reported content
-  reason: text("reason").notNull(),          // Reason for reporting
-  description: text("description"),          // Additional details
-  status: text("status").default('pending'), // pending, reviewed, actioned, dismissed
+  targetId: integer("target_id").notNull(), // ID of the reported content
+  reason: text("reason").notNull(), // Reason for reporting
+  description: text("description"), // Additional details
+  status: text("status").default("pending"), // pending, reviewed, actioned, dismissed
   reviewedBy: integer("reviewed_by").references(() => users.id),
-  reviewNotes: text("review_notes"),         // Admin notes on report
-  actionTaken: text("action_taken"),         // Action taken if any
+  reviewNotes: text("review_notes"), // Admin notes on report
+  actionTaken: text("action_taken"), // Action taken if any
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 // Create insert schemas for key tables
-export const insertSocialProfileSchema = createInsertSchema(socialProfiles).omit({
+export const insertSocialProfileSchema = createInsertSchema(
+  socialProfiles
+).omit({
   id: true,
   postCount: true,
   followerCount: true,
@@ -421,7 +498,9 @@ export const insertPostSchema = createInsertSchema(posts).omit({
   updatedAt: true,
 });
 
-export const insertUserRelationshipSchema = createInsertSchema(userRelationships).omit({
+export const insertUserRelationshipSchema = createInsertSchema(
+  userRelationships
+).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -474,7 +553,9 @@ export const insertEventSchema = createInsertSchema(events).omit({
   updatedAt: true,
 });
 
-export const insertContentReportSchema = createInsertSchema(contentReports).omit({
+export const insertContentReportSchema = createInsertSchema(
+  contentReports
+).omit({
   id: true,
   status: true,
   reviewedBy: true,
@@ -518,7 +599,9 @@ export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type SeasonalActivity = typeof seasonalActivities.$inferSelect;
 
 export type UserRelationship = typeof userRelationships.$inferSelect;
-export type InsertUserRelationship = z.infer<typeof insertUserRelationshipSchema>;
+export type InsertUserRelationship = z.infer<
+  typeof insertUserRelationshipSchema
+>;
 
 export type ContentReport = typeof contentReports.$inferSelect;
 export type InsertContentReport = z.infer<typeof insertContentReportSchema>;

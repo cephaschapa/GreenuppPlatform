@@ -1,6 +1,6 @@
 {
-  "id": "bafe901c-e918-4779-abb3-504a7f8b6ac0",
-  "prevId": "450b11fa-0a05-430f-9091-0004e9e9e400",
+  "id": "677c7727-22c1-4bab-875c-e4ae3099edda",
+  "prevId": "bafe901c-e918-4779-abb3-504a7f8b6ac0",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1348,6 +1348,42 @@
         },
         "location": {
           "name": "location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "latitude": {
+          "name": "latitude",
+          "type": "numeric(10, 7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "longitude": {
+          "name": "longitude",
+          "type": "numeric(10, 7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "geo_path": {
+          "name": "geo_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "country": {
+          "name": "country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "city": {
+          "name": "city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
           "type": "text",
           "primaryKey": false,
           "notNull": false

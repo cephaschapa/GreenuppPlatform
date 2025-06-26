@@ -21,6 +21,7 @@ import {
   Trash2,
   RefreshCw,
   AlertTriangle,
+  Navigation,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -34,6 +35,12 @@ interface DeviceSession {
   os: string;
   ipAddress: string;
   location: string;
+  latitude?: string;
+  longitude?: string;
+  geoPath?: string;
+  country?: string;
+  city?: string;
+  state?: string;
   isCurrent: boolean;
   isTrusted: boolean;
   lastActiveAt: string;
@@ -144,6 +151,27 @@ export function DeviceManager() {
     }
   };
 
+  const openInMaps = (latitude: number, longitude: number) => {
+    const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
+    window.open(url, "_blank");
+  };
+
+  const getLocationDisplay = (device: DeviceSession) => {
+    if (device.geoPath) {
+      return device.geoPath;
+    }
+    if (device.city && device.state && device.country) {
+      return `${device.city}, ${device.state}, ${device.country}`;
+    }
+    if (device.city && device.country) {
+      return `${device.city}, ${device.country}`;
+    }
+    if (device.country) {
+      return device.country;
+    }
+    return device.location || "Unknown location";
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -155,13 +183,16 @@ export function DeviceManager() {
     );
   }
 
+  console.log(devices);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Device Management</h2>
           <p className="text-muted-foreground">
-            Manage your active sessions and trusted devices
+            Manage your active sessions and trusted devices with precise
+            location tracking
           </p>
         </div>
         <Button onClick={refreshDevices} disabled={isRefreshing}>
@@ -213,12 +244,10 @@ export function DeviceManager() {
                           </span>
                         </div>
 
-                        {device.location && (
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="h-3 w-3" />
-                            <span>{device.location}</span>
-                          </div>
-                        )}
+                        <div className="flex items-center space-x-1">
+                          <MapPin className="h-3 w-3" />
+                          <span>{getLocationDisplay(device)}</span>
+                        </div>
 
                         <div className="flex items-center space-x-1">
                           <Clock className="h-3 w-3" />
@@ -228,6 +257,32 @@ export function DeviceManager() {
                         </div>
 
                         <div className="text-xs">IP: {device.ipAddress}</div>
+
+                        {/* Enhanced location information */}
+                        {device.latitude && device.longitude && (
+                          <div className="flex items-center space-x-1 col-span-2">
+                            <Navigation className="h-3 w-3" />
+                            <span className="text-xs">
+                              Coordinates:{" "}
+                              {parseFloat(device.latitude).toFixed(4)},{" "}
+                              {parseFloat(device.longitude).toFixed(4)}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-4 w-4 p-0 ml-1"
+                              onClick={() =>
+                                openInMaps(
+                                  parseFloat(device.latitude!),
+                                  parseFloat(device.longitude!)
+                                )
+                              }
+                              title="Open in Google Maps"
+                            >
+                              <MapPin className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -266,9 +321,10 @@ export function DeviceManager() {
       <Alert>
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Security Tip:</strong> Regularly review your active sessions
-          and revoke any devices you don't recognize. Trusted devices won't
-          require additional verification for future logins.
+          <strong>Enhanced Security:</strong> Device locations are determined
+          using IP geolocation with precise coordinates. Click the map icon to
+          view exact locations in Google Maps. Regularly review your active
+          sessions and revoke any devices you don't recognize.
         </AlertDescription>
       </Alert>
     </div>
