@@ -18,6 +18,7 @@ import { setupLocationRoutes } from "./location-mvc.js";
 import { setupGeocodingRoutes } from "./geocoding-mvc.js";
 import { setupTreatmentRoutes } from "./treatment-mvc.js";
 import adminRoutes from "./admin.js";
+import pushNotificationRoutes from "./push-notifications.js";
 
 /**
  * Register all routes following MVC pattern
@@ -79,6 +80,9 @@ export function registerMvcRoutes(app: Express): void {
 
   // Admin routes
   app.use("/api/admin", adminRoutes);
+
+  // Push notification routes
+  app.use("/api/push-notifications", pushNotificationRoutes);
 
   // You can add more route modules here:
   // app.use("/api/products", productRoutes);

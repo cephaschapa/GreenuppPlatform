@@ -164,7 +164,7 @@ export default function SecuritySettings() {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
+      <DashboardLayout title="Security Settings">
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -174,7 +174,7 @@ export default function SecuritySettings() {
 
   if (show2FASetup) {
     return (
-      <DashboardLayout>
+      <DashboardLayout title="Security Settings">
         <div className="container mx-auto py-8">
           <TwoFactorSetup
             onSetupComplete={handle2FASetupComplete}
@@ -186,7 +186,7 @@ export default function SecuritySettings() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout title="Security Settings">
       <div className="container mx-auto py-8 space-y-8">
         {/* Header */}
         <div>

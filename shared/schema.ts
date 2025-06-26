@@ -34,6 +34,10 @@ export const users = pgTable("users", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   profileImage: text("profile_image"),
+  // Push notification fields
+  fcmToken: text("fcm_token"), // Firebase Cloud Messaging token
+  fcmTokenUpdatedAt: timestamp("fcm_token_updated_at"), // When the token was last updated
+  pushNotificationsEnabled: boolean("push_notifications_enabled").default(true), // User preference
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

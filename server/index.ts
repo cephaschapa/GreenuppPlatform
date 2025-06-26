@@ -8,6 +8,7 @@ import { errorHandler } from "./lib/errors";
 import { logger, logApiRequest } from "./lib/logger";
 import morgan from "morgan";
 import { stream } from "./lib/logger";
+import { initializeFirebase } from "./services/firebase.js";
 
 // Fix for __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -86,6 +87,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Initialize Firebase for push notifications
+  initializeFirebase();
+
   const server = await registerRoutes(app);
 
   // Global error handler
