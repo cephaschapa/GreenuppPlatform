@@ -17,6 +17,7 @@ import {
 } from "@shared/green-socials-schema";
 import {
   and,
+  asc,
   desc,
   eq,
   inArray,
@@ -47,7 +48,7 @@ export const greenSocialsRouter = Router();
 
 // This function will be called from routes.ts to inject the correct middleware
 export function setIsAuthenticatedMiddleware(
-  middleware: IsAuthenticatedMiddleware,
+  middleware: IsAuthenticatedMiddleware
 ) {
   console.log("Setting shared isAuthenticated middleware for Green Socials");
   isAuthenticated = middleware;
@@ -86,7 +87,7 @@ greenSocialsRouter.get("/profile/:userId", async (req, res) => {
       LEFT JOIN users u ON sp.user_id = u.id
       WHERE sp.user_id = ${userId}
       LIMIT 1
-    `,
+    `
       )
       .then((result) => {
         if (result.rows.length === 0) return null;
@@ -134,6 +135,10 @@ greenSocialsRouter.get("/profile/:userId", async (req, res) => {
 // Create or update social profile
 greenSocialsRouter.post("/profile", isAuthenticated, async (req, res) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
     const userId = req.user.id;
 
     // Check if profile already exists using raw SQL
@@ -143,7 +148,7 @@ greenSocialsRouter.post("/profile", isAuthenticated, async (req, res) => {
       SELECT id FROM social_profiles 
       WHERE user_id = ${userId}
       LIMIT 1
-    `,
+    `
       )
       .then((result) => (result.rows.length > 0 ? result.rows[0] : null));
 
@@ -167,7 +172,7 @@ greenSocialsRouter.post("/profile", isAuthenticated, async (req, res) => {
           userId,
           displayName: req.body.displayName || req.user.username,
           bio: req.body.bio || "",
-          profileImage: req.body.profileImage || req.user.profileImage,
+          profileImage: req.body.profileImage || (req.user as any).profileImage,
           ...req.body,
         })
         .returning();
@@ -185,7 +190,7 @@ greenSocialsRouter.post("/profile", isAuthenticated, async (req, res) => {
 greenSocialsRouter.get("/posts/:postId/comments", async (req, res) => {
   try {
     const postId = parseInt(req.params.postId);
-    
+
     // Get comments for the post using Drizzle query builder
     const result = await db
       .select({
@@ -200,23 +205,23 @@ greenSocialsRouter.get("/posts/:postId/comments", async (req, res) => {
         replyCount: comments.replyCount,
         createdAt: comments.createdAt,
         updatedAt: comments.updatedAt,
-        
+
         // Author fields
         author_id: users.id,
         author_username: users.username,
         author_profileImage: users.profileImage,
-        
+
         // Profile fields
-        profile_displayName: socialProfiles.displayName
+        profile_displayName: socialProfiles.displayName,
       })
       .from(comments)
       .leftJoin(users, eq(comments.userId, users.id))
       .leftJoin(socialProfiles, eq(comments.userId, socialProfiles.userId))
       .where(eq(comments.postId, postId))
       .orderBy(asc(comments.parentId), desc(comments.createdAt));
-    
+
     // Transform the results into the expected structure
-    const formattedComments = result.map(comment => ({
+    const formattedComments = result.map((comment) => ({
       comment: {
         id: comment.id,
         userId: comment.userId,
@@ -227,18 +232,18 @@ greenSocialsRouter.get("/posts/:postId/comments", async (req, res) => {
         likeCount: comment.likeCount,
         replyCount: comment.replyCount,
         createdAt: comment.createdAt,
-        updatedAt: comment.updatedAt
+        updatedAt: comment.updatedAt,
       },
       author: {
         id: comment.author_id,
         username: comment.author_username,
-        profileImage: comment.author_profileImage
+        profileImage: comment.author_profileImage,
       },
       profile: {
-        displayName: comment.profile_displayName
-      }
+        displayName: comment.profile_displayName,
+      },
     }));
-    
+
     return res.json(formattedComments);
   } catch (error) {
     console.error("Error fetching comments:", error);
@@ -284,14 +289,14 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
           like_count: posts.likeCount,
           comment_count: posts.commentCount,
           share_count: posts.shareCount,
-          
+
           // User fields
           author_id: users.id,
           author_username: users.username,
           author_profile_image: users.profileImage,
-          
+
           // Profile fields (may be null)
-          author_display_name: socialProfiles.displayName
+          author_display_name: socialProfiles.displayName,
         })
         .from(posts)
         .innerJoin(users, eq(posts.userId, users.id))
@@ -305,12 +310,13 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
       }
 
       // Transform the results into the expected structure
-      const feed = await Promise.all(result.map(async (row) => {
-        // Fetch comments for this post using our new endpoint
-        let comments = [];
-        try {
-          // Get comments using raw SQL for now since we're having issues with Drizzle query builder variable names
-          const commentResults = await db.execute(sql`
+      const feed = await Promise.all(
+        result.map(async (row) => {
+          // Fetch comments for this post using our new endpoint
+          let comments = [];
+          try {
+            // Get comments using raw SQL for now since we're having issues with Drizzle query builder variable names
+            const commentResults = await db.execute(sql`
             SELECT 
               c.id, c.user_id as "userId", c.post_id as "postId", c.parent_id as "parentId",
               c.content, c.media, c.like_count as "likeCount", c.reply_count as "replyCount",
@@ -326,74 +332,79 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
             ORDER BY 
               c.parent_id ASC, c.created_at DESC
           `);
-          
-          // Add debugging for comment results
-          console.log(`Fetched comments for post ${row.id}:`, commentResults);
-          
-          // Access rows property of the result (which may be in different formats)
-          const commentRows = commentResults.rows || commentResults;
-          console.log(`Comment rows for post ${row.id}:`, commentRows.length, "comments found");
-          
-          comments = commentRows.map((comment: any) => ({
-            comment: {
-              id: comment.id,
-              userId: comment.userId,
-              postId: comment.postId,
-              parentId: comment.parentId,
-              content: comment.content,
-              media: comment.media,
-              likeCount: comment.likeCount,
-              replyCount: comment.replyCount,
-              createdAt: comment.createdAt,
-              updatedAt: comment.updatedAt
+
+            // Add debugging for comment results
+            console.log(`Fetched comments for post ${row.id}:`, commentResults);
+
+            // Access rows property of the result (which may be in different formats)
+            const commentRows = commentResults.rows || commentResults;
+            console.log(
+              `Comment rows for post ${row.id}:`,
+              commentRows.length,
+              "comments found"
+            );
+
+            comments = commentRows.map((comment: any) => ({
+              comment: {
+                id: comment.id,
+                userId: comment.userId,
+                postId: comment.postId,
+                parentId: comment.parentId,
+                content: comment.content,
+                media: comment.media,
+                likeCount: comment.likeCount,
+                replyCount: comment.replyCount,
+                createdAt: comment.createdAt,
+                updatedAt: comment.updatedAt,
+              },
+              author: {
+                id: comment.author_id,
+                username: comment.author_username,
+                profileImage: comment.author_profileImage,
+              },
+              profile: {
+                displayName: comment.profile_displayName,
+              },
+            }));
+          } catch (error) {
+            console.error("Error fetching comments for post:", row.id, error);
+          }
+
+          return {
+            post: {
+              id: row.id,
+              userId: row.user_id,
+              content: row.content,
+              postType: row.post_type,
+              visibility: row.visibility,
+              publishedAt: row.published_at,
+              communityId: row.community_id,
+              media: row.media,
+              locationName: row.location_name,
+              latitude: row.latitude,
+              longitude: row.longitude,
+              season: row.season,
+              growingZone: row.growing_zone,
+              weatherConditions: row.weather_conditions,
+              hashtags: row.hashtags,
+              mentionedUsers: row.mentioned_users,
+              cropsTags: row.crops_tags,
+              likeCount: row.like_count,
+              commentCount: row.comment_count,
+              shareCount: row.share_count,
+              comments, // Include the fetched comments
             },
             author: {
-              id: comment.author_id,
-              username: comment.author_username,
-              profileImage: comment.author_profileImage
+              id: row.author_id,
+              username: row.author_username,
+              profileImage: row.author_profile_image,
             },
             profile: {
-              displayName: comment.profile_displayName
-            }
-          }));
-        } catch (error) {
-          console.error("Error fetching comments for post:", row.id, error);
-        }
-
-        return {
-          post: {
-            id: row.id,
-            userId: row.user_id,
-            content: row.content,
-            postType: row.post_type,
-            visibility: row.visibility,
-            publishedAt: row.published_at,
-            communityId: row.community_id,
-            media: row.media,
-            locationName: row.location_name,
-            latitude: row.latitude,
-            longitude: row.longitude,
-            season: row.season,
-            growingZone: row.growing_zone,
-            weatherConditions: row.weather_conditions,
-            hashtags: row.hashtags,
-            mentionedUsers: row.mentioned_users,
-            cropsTags: row.crops_tags,
-            likeCount: row.like_count,
-            commentCount: row.comment_count,
-            shareCount: row.share_count,
-            comments // Include the fetched comments
-          },
-          author: {
-            id: row.author_id,
-            username: row.author_username,
-            profileImage: row.author_profile_image,
-          },
-          profile: {
-            displayName: row.author_display_name,
-          },
-        };
-      }));
+              displayName: row.author_display_name,
+            },
+          };
+        })
+      );
 
       return res.json(feed);
     } catch (queryError) {
@@ -411,32 +422,38 @@ greenSocialsRouter.get("/feed", isAuthenticated, async (req, res) => {
 greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
   try {
     console.log("Creating new social post");
-    
+
     // Check for authenticated user
     if (!req.user) {
       console.error("User not authenticated in post creation");
       return res.status(401).json({ message: "Not authenticated" });
     }
-    
+
     const userId = req.user.id;
-    
+
     // Log the received payload for debugging
     console.log("Received post payload:", {
       content: req.body.content,
       postType: req.body.postType,
       visibility: req.body.visibility,
       communityId: req.body.communityId,
-      media: req.body.media ? `${JSON.stringify(req.body.media).substring(0, 100)  }...` : null,
+      media: req.body.media
+        ? `${JSON.stringify(req.body.media).substring(0, 100)}...`
+        : null,
       locationName: req.body.locationName,
       hashtags: req.body.hashtags,
       cropsTags: req.body.cropsTags,
-      userId
+      userId,
     });
 
     // Special handling for media array
     if (req.body.media) {
-      console.log(`Post contains ${Array.isArray(req.body.media) ? req.body.media.length : 1} media items`);
-      
+      console.log(
+        `Post contains ${
+          Array.isArray(req.body.media) ? req.body.media.length : 1
+        } media items`
+      );
+
       if (Array.isArray(req.body.media)) {
         // Log the first media item structure
         if (req.body.media.length > 0) {
@@ -449,7 +466,7 @@ greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
 
     // Create post using raw SQL - only including fields that exist in the database table
     const now = new Date().toISOString();
-    
+
     // Prepare the media for JSONB storage
     let mediaForStorage = null;
     if (req.body.media) {
@@ -462,7 +479,7 @@ greenSocialsRouter.post("/posts", isAuthenticated, async (req, res) => {
         mediaForStorage = null;
       }
     }
-    
+
     const insertResult = await db.execute(sql`
       INSERT INTO posts (
         user_id, content, post_type, visibility, community_id, media,
@@ -693,21 +710,21 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
       console.error("User not authenticated in comment creation");
       return res.status(401).json({ message: "Not authenticated" });
     }
-    
+
     const userId = req.user.id;
     console.log("Creating comment using Drizzle query builder");
     console.log("Comment data:", {
       userId,
       postId: req.body.postId,
       parentId: req.body.parentId || null,
-      content: req.body.content
+      content: req.body.content,
     });
 
     // Validate that we have a post ID and content
     if (!req.body.postId) {
       return res.status(400).json({ message: "Post ID is required" });
     }
-    
+
     if (!req.body.content || !req.body.content.trim()) {
       return res.status(400).json({ message: "Comment content is required" });
     }
@@ -725,10 +742,10 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
         likeCount: 0,
         replyCount: 0,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
       })
       .returning();
-    
+
     // Extract the ID of the newly created comment
     const commentId = insertResult[0].id;
 
@@ -737,7 +754,7 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
       .update(posts)
       .set({
         commentCount: sql`${posts.commentCount} + 1`,
-        updatedAt: now
+        updatedAt: now,
       })
       .where(eq(posts.id, req.body.postId));
 
@@ -747,7 +764,7 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
         .update(comments)
         .set({
           replyCount: sql`${comments.replyCount} + 1`,
-          updatedAt: now
+          updatedAt: now,
         })
         .where(eq(comments.id, req.body.parentId));
     }
@@ -766,14 +783,14 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
         replyCount: comments.replyCount,
         createdAt: comments.createdAt,
         updatedAt: comments.updatedAt,
-        
+
         // Author fields
         author_id: users.id,
         author_username: users.username,
         author_profileImage: users.profileImage,
-        
+
         // Profile fields
-        profile_displayName: socialProfiles.displayName
+        profile_displayName: socialProfiles.displayName,
       })
       .from(comments)
       .leftJoin(users, eq(comments.userId, users.id))
@@ -783,7 +800,9 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
 
     // If comment not found (unlikely since we just created it)
     if (!commentResult.length) {
-      return res.status(500).json({ message: "Error retrieving created comment" });
+      return res
+        .status(500)
+        .json({ message: "Error retrieving created comment" });
     }
 
     // Transform the result into the expected structure
@@ -799,28 +818,28 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
         likeCount: commentRow.likeCount,
         replyCount: commentRow.replyCount,
         createdAt: commentRow.createdAt,
-        updatedAt: commentRow.updatedAt
+        updatedAt: commentRow.updatedAt,
       },
       author: {
         id: commentRow.author_id,
         username: commentRow.author_username,
-        profileImage: commentRow.author_profileImage
+        profileImage: commentRow.author_profileImage,
       },
       profile: {
-        displayName: commentRow.profile_displayName
-      }
+        displayName: commentRow.profile_displayName,
+      },
     };
-    
+
     // Get post owner to send notification
     const [postOwner] = await db
-      .select({ 
+      .select({
         userId: posts.userId,
-        postType: posts.postType
+        postType: posts.postType,
       })
       .from(posts)
       .where(eq(posts.id, req.body.postId))
       .limit(1);
-      
+
     // Check if parent comment exists (for reply notification)
     let parentCommentOwner = null;
     if (req.body.parentId) {
@@ -829,59 +848,61 @@ greenSocialsRouter.post("/comments", isAuthenticated, async (req, res) => {
         .from(comments)
         .where(eq(comments.id, req.body.parentId))
         .limit(1);
-        
+
       if (parent) {
         parentCommentOwner = parent.userId;
       }
     }
-    
+
     try {
       // Import the createNotification function
-      const { createNotification } = await import('../services/notifications');
-      
+      const { createNotification } = await import("../services/notifications");
+
       // Send notification to post owner if they're not the commenter
       if (postOwner && postOwner.userId !== userId) {
-        const postType = postOwner.postType || 'post';
-        const shortContent = commentRow.content.length > 50 
-          ? `${commentRow.content.substring(0, 50)  }...` 
-          : commentRow.content;
-          
+        const postType = postOwner.postType || "post";
+        const shortContent =
+          commentRow.content.length > 50
+            ? `${commentRow.content.substring(0, 50)}...`
+            : commentRow.content;
+
         await createNotification({
           userId: postOwner.userId,
-          type: 'social_comment',
-          title: 'New Comment on Your Post',
+          type: "social_comment",
+          title: "New Comment on Your Post",
           message: `${commentRow.author_username} commented on your ${postType}: "${shortContent}"`,
           data: {
             postId: req.body.postId,
             commentId,
             commentedBy: userId,
-            commentContent: shortContent
+            commentContent: shortContent,
           },
           actionUrl: `/social/posts/${req.body.postId}?comment=${commentId}`,
-          sendEmail: true // Email notifications enabled for comments
+          sendEmail: true, // Email notifications enabled for comments
         });
       }
-      
+
       // Send notification to parent comment owner if this is a reply
       if (parentCommentOwner && parentCommentOwner !== userId) {
-        const shortContent = commentRow.content.length > 50 
-          ? `${commentRow.content.substring(0, 50)  }...` 
-          : commentRow.content;
-          
+        const shortContent =
+          commentRow.content.length > 50
+            ? `${commentRow.content.substring(0, 50)}...`
+            : commentRow.content;
+
         await createNotification({
           userId: parentCommentOwner,
-          type: 'social_reply',
-          title: 'New Reply to Your Comment',
+          type: "social_reply",
+          title: "New Reply to Your Comment",
           message: `${commentRow.author_username} replied to your comment: "${shortContent}"`,
           data: {
             postId: req.body.postId,
             commentId,
             parentCommentId: req.body.parentId,
             repliedBy: userId,
-            replyContent: shortContent
+            replyContent: shortContent,
           },
           actionUrl: `/social/posts/${req.body.postId}?comment=${commentId}`,
-          sendEmail: true // Email notifications enabled for replies
+          sendEmail: true, // Email notifications enabled for replies
         });
       }
     } catch (error) {
@@ -1070,7 +1091,7 @@ greenSocialsRouter.post(
     const followedId = parseInt(req.params.userId);
 
     console.log(
-      `Follow request from user ${followerId} to follow user ${followedId}`,
+      `Follow request from user ${followerId} to follow user ${followedId}`
     );
 
     try {
@@ -1078,7 +1099,7 @@ greenSocialsRouter.post(
       const checkResult = await db.execute(
         sql`SELECT COUNT(*) as count FROM user_relationships 
           WHERE follower_id = ${followerId} 
-          AND followed_id = ${followedId}`,
+          AND followed_id = ${followedId}`
       );
 
       // Extract count, handling different return formats
@@ -1096,13 +1117,13 @@ greenSocialsRouter.post(
       // If already following, return success message
       if (count > 0) {
         console.log(
-          `User ${followerId} is already following user ${followedId} (count: ${count})`,
+          `User ${followerId} is already following user ${followedId} (count: ${count})`
         );
         return res.status(200).json({ message: "Already following this user" });
       }
 
       console.log(
-        `Creating new relationship: ${followerId} following ${followedId}`,
+        `Creating new relationship: ${followerId} following ${followedId}`
       );
 
       // Use a transaction to ensure all operations succeed or fail together
@@ -1111,47 +1132,49 @@ greenSocialsRouter.post(
         await tx.execute(
           sql`INSERT INTO user_relationships (follower_id, followed_id, status)
             VALUES (${followerId}, ${followedId}, 'following')
-            ON CONFLICT (follower_id, followed_id) DO NOTHING`,
+            ON CONFLICT (follower_id, followed_id) DO NOTHING`
         );
 
         // Update follower count for followed user
         await tx.execute(
           sql`UPDATE social_profiles 
             SET follower_count = GREATEST(0, follower_count + 1)
-            WHERE user_id = ${followedId}`,
+            WHERE user_id = ${followedId}`
         );
 
         // Update following count for follower
         await tx.execute(
           sql`UPDATE social_profiles 
             SET following_count = GREATEST(0, following_count + 1)
-            WHERE user_id = ${followerId}`,
+            WHERE user_id = ${followerId}`
         );
       });
-      
+
       // Get follower and followed usernames for notification
       const [follower] = await db
         .select({ username: users.username })
         .from(users)
         .where(eq(users.id, followerId))
         .limit(1);
-      
+
       try {
         // Import the createNotification function
-        const { createNotification } = await import('../services/notifications');
-        
+        const { createNotification } = await import(
+          "../services/notifications"
+        );
+
         // Create a notification for the followed user
         await createNotification({
           userId: followedId,
-          type: 'social_follow',
-          title: 'New Follower',
+          type: "social_follow",
+          title: "New Follower",
           message: `${follower.username} started following you`,
           data: {
             followerId,
-            followerUsername: follower.username
+            followerUsername: follower.username,
           },
           actionUrl: `/social/profile/${followerId}`,
-          sendEmail: true // Email notifications enabled for follows
+          sendEmail: true, // Email notifications enabled for follows
         });
       } catch (error) {
         // Just log the error, don't fail the follow operation
@@ -1163,7 +1186,7 @@ greenSocialsRouter.post(
       // Special handling for duplicate relationships
       if (error && error.code === "23505") {
         console.log(
-          `Duplicate relationship handled: ${followerId} -> ${followedId}`,
+          `Duplicate relationship handled: ${followerId} -> ${followedId}`
         );
         return res.status(200).json({ message: "Already following this user" });
       }
@@ -1172,7 +1195,7 @@ greenSocialsRouter.post(
       console.error("Error following user:", error);
       return res.status(500).json({ message: "Server error" });
     }
-  },
+  }
 );
 
 // DELETE /api/social/follow/:userId
@@ -1190,7 +1213,7 @@ greenSocialsRouter.delete(
     const followedId = parseInt(req.params.userId);
 
     console.log(
-      `Unfollow request from user ${followerId} to unfollow user ${followedId}`,
+      `Unfollow request from user ${followerId} to unfollow user ${followedId}`
     );
 
     try {
@@ -1198,7 +1221,7 @@ greenSocialsRouter.delete(
       const checkResult = await db.execute(
         sql`SELECT COUNT(*) as count FROM user_relationships 
           WHERE follower_id = ${followerId} 
-          AND followed_id = ${followedId}`,
+          AND followed_id = ${followedId}`
       );
 
       // Extract count, handling different return formats
@@ -1220,7 +1243,7 @@ greenSocialsRouter.delete(
       }
 
       console.log(
-        `Deleting relationship: ${followerId} unfollowing ${followedId}`,
+        `Deleting relationship: ${followerId} unfollowing ${followedId}`
       );
 
       // Use a transaction to ensure all operations succeed or fail together
@@ -1229,21 +1252,21 @@ greenSocialsRouter.delete(
         await tx.execute(
           sql`DELETE FROM user_relationships 
             WHERE follower_id = ${followerId} 
-            AND followed_id = ${followedId}`,
+            AND followed_id = ${followedId}`
         );
 
         // Update follower count for followed user
         await tx.execute(
           sql`UPDATE social_profiles 
             SET follower_count = GREATEST(follower_count - 1, 0)
-            WHERE user_id = ${followedId}`,
+            WHERE user_id = ${followedId}`
         );
 
         // Update following count for follower
         await tx.execute(
           sql`UPDATE social_profiles 
             SET following_count = GREATEST(following_count - 1, 0)
-            WHERE user_id = ${followerId}`,
+            WHERE user_id = ${followerId}`
         );
       });
 
@@ -1252,7 +1275,7 @@ greenSocialsRouter.delete(
       console.error("Error unfollowing user:", error);
       return res.status(500).json({ message: "Server error" });
     }
-  },
+  }
 );
 
 // GET /api/social/following
@@ -1268,14 +1291,16 @@ greenSocialsRouter.get("/following", isAuthenticated, async (req, res) => {
     const offset = parseInt(req.query.offset as string) || 0;
 
     // Get relationships with user and profile info using Drizzle query builder
-    console.log(`Fetching following list for user ${userId} using Drizzle query builder`);
+    console.log(
+      `Fetching following list for user ${userId} using Drizzle query builder`
+    );
 
     // First get relationship IDs for debugging
     const relationshipCount = await db
-      .select({count: sql`count(*)`})
+      .select({ count: sql`count(*)` })
       .from(userRelationships)
       .where(eq(userRelationships.followerId, userId));
-      
+
     console.log(`DEBUG: Found ${relationshipCount[0].count} following users`);
 
     // Get relationships with user profiles using Drizzle query builder
@@ -1296,7 +1321,7 @@ greenSocialsRouter.get("/following", isAuthenticated, async (req, res) => {
         experienceYears: socialProfiles.experienceYears,
         badges: socialProfiles.badges,
         followerCount: sql`COALESCE(${socialProfiles.followerCount}, 0)`,
-        followingCount: sql`COALESCE(${socialProfiles.followingCount}, 0)`
+        followingCount: sql`COALESCE(${socialProfiles.followingCount}, 0)`,
       })
       .from(userRelationships)
       .innerJoin(users, eq(userRelationships.followedId, users.id))
@@ -1351,10 +1376,10 @@ greenSocialsRouter.get("/followers", isAuthenticated, async (req, res) => {
           LEFT JOIN social_profiles sp ON u.id = sp.user_id
           WHERE ur.followed_id = ${userId}
           ORDER BY ur.created_at DESC
-          LIMIT ${limit} OFFSET ${offset}`,
+          LIMIT ${limit} OFFSET ${offset}`
     );
 
-    return res.json(followers);
+    return res.json(followers.rows || []);
   } catch (error) {
     console.error("Error fetching followers:", error);
     return res.status(500).json({ message: "Server error" });
@@ -1377,7 +1402,7 @@ greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
     // Get all followed IDs for filtering
     console.log(`Getting followed user IDs for user ${userId}`);
     const followedResult = await db.execute(
-      sql`SELECT followed_id FROM user_relationships WHERE follower_id = ${userId}`,
+      sql`SELECT followed_id FROM user_relationships WHERE follower_id = ${userId}`
     );
 
     // Extract the followed IDs more carefully and convert to integers
@@ -1419,7 +1444,7 @@ greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
           FROM users u
           JOIN social_profiles sp ON u.id = sp.user_id
           WHERE u.id NOT IN (${sql.raw(followedIdsStringForSql)})
-          LIMIT ${limit}`,
+          LIMIT ${limit}`
     );
 
     // Format the response consistently
@@ -1435,12 +1460,12 @@ greenSocialsRouter.get("/suggested", isAuthenticated, async (req, res) => {
     }
 
     console.log(
-      `Found ${formattedResults.length} suggested users after filtering`,
+      `Found ${formattedResults.length} suggested users after filtering`
     );
 
     // Return the formatted results from our direct approach
     console.log(
-      `DEBUG: Found ${formattedResults.length} users to suggest after filtering`,
+      `DEBUG: Found ${formattedResults.length} users to suggest after filtering`
     );
     console.log("Formatted results:", JSON.stringify(formattedResults));
 
@@ -1464,14 +1489,18 @@ greenSocialsRouter.get("/activity", isAuthenticated, async (req, res) => {
 
     // Get users that this user follows using SQL
     const followingResult = await db.execute(
-      sql`SELECT followed_id FROM user_relationships WHERE follower_id = ${userId}`,
+      sql`SELECT followed_id FROM user_relationships WHERE follower_id = ${userId}`
     );
 
     const followedIds: number[] = [];
 
-    // Handle results safely
-    if (Array.isArray(followingResult)) {
-      followingResult.forEach((row: any) => {
+    // Handle results safely - fix: access .rows property
+    if (
+      followingResult &&
+      followingResult.rows &&
+      Array.isArray(followingResult.rows)
+    ) {
+      followingResult.rows.forEach((row: any) => {
         if (row && row.followed_id) {
           followedIds.push(row.followed_id);
         }
@@ -1523,10 +1552,10 @@ greenSocialsRouter.get("/activity", isAuthenticated, async (req, res) => {
         LIMIT ${limit}
       )
       ORDER BY "createdAt" DESC
-      LIMIT ${limit}`,
+      LIMIT ${limit}`
     );
 
-    return res.json(activityResult);
+    return res.json(activityResult.rows || []);
   } catch (error) {
     console.error("Error fetching activity:", error);
     return res.status(500).json({ message: "Server error" });
@@ -1589,6 +1618,10 @@ greenSocialsRouter.post(
   isAuthenticated,
   async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
       const userId = req.user.id;
       const postId = parseInt(req.params.postId);
 
@@ -1631,10 +1664,10 @@ greenSocialsRouter.post(
 
       // Create a notification for the post owner
       const postOwnerResult = await db
-        .select({ 
-          userId: posts.userId, 
+        .select({
+          userId: posts.userId,
           content: posts.content,
-          postType: posts.postType
+          postType: posts.postType,
         })
         .from(posts)
         .where(eq(posts.id, postId))
@@ -1651,28 +1684,30 @@ greenSocialsRouter.post(
         const postOwner = postOwnerResult[0];
         const shortContent =
           postOwner.content.length > 50
-            ? `${postOwner.content.substring(0, 50)  }...`
+            ? `${postOwner.content.substring(0, 50)}...`
             : postOwner.content;
-            
-        const postType = postOwner.postType || 'post';
+
+        const postType = postOwner.postType || "post";
 
         // Import the createNotification function
-        const { createNotification } = await import('../services/notifications');
-        
+        const { createNotification } = await import(
+          "../services/notifications"
+        );
+
         try {
           // Create a notification using the notification service
           await createNotification({
             userId: postOwner.userId,
-            type: 'social_like',
-            title: 'New Like on Your Post',
+            type: "social_like",
+            title: "New Like on Your Post",
             message: `${liker.username} liked your ${postType}: "${shortContent}"`,
             data: {
               postId,
               likedBy: userId,
-              postContent: shortContent
+              postContent: shortContent,
             },
             actionUrl: `/social/posts/${postId}`,
-            sendEmail: true // Email notifications enabled for likes
+            sendEmail: true, // Email notifications enabled for likes
           });
         } catch (error) {
           // Just log the error, don't fail the like operation
@@ -1685,7 +1720,7 @@ greenSocialsRouter.post(
       console.error("Error liking post:", error);
       return res.status(500).json({ message: "Server error" });
     }
-  },
+  }
 );
 
 // DELETE /api/social/posts/:postId/like
@@ -1733,7 +1768,7 @@ greenSocialsRouter.delete(
       console.error("Error unliking post:", error);
       return res.status(500).json({ message: "Server error" });
     }
-  },
+  }
 );
 
 // POST /api/social/comments/:commentId/like
@@ -1808,35 +1843,40 @@ greenSocialsRouter.post(
             .from(users)
             .where(eq(users.id, userId))
             .limit(1);
-            
+
           const commentContent = commentContentResult.rows[0].content;
           const shortContent =
             commentContent.length > 50
-              ? `${commentContent.substring(0, 50)  }...`
+              ? `${commentContent.substring(0, 50)}...`
               : commentContent;
 
           // Import the createNotification function
-          const { createNotification } = await import('../services/notifications');
-          
+          const { createNotification } = await import(
+            "../services/notifications"
+          );
+
           try {
             // Create a notification using the notification service
             await createNotification({
               userId: commentData.userId,
-              type: 'social_like',
-              title: 'New Like on Your Comment',
+              type: "social_like",
+              title: "New Like on Your Comment",
               message: `${liker.username} liked your comment: "${shortContent}"`,
               data: {
                 commentId,
                 postId: commentData.postId,
                 likedBy: userId,
-                commentContent: shortContent
+                commentContent: shortContent,
               },
               actionUrl: `/social/posts/${commentData.postId}?comment=${commentId}`,
-              sendEmail: true // Email notifications enabled for comment likes
+              sendEmail: true, // Email notifications enabled for comment likes
             });
           } catch (error) {
             // Just log the error, don't fail the like operation
-            console.error("Failed to create notification for comment like:", error);
+            console.error(
+              "Failed to create notification for comment like:",
+              error
+            );
           }
         }
       }
@@ -1846,7 +1886,7 @@ greenSocialsRouter.post(
       console.error("Error liking comment:", error);
       return res.status(500).json({ message: "Server error" });
     }
-  },
+  }
 );
 
 // DELETE /api/social/comments/:commentId/like
@@ -1894,7 +1934,7 @@ greenSocialsRouter.delete(
       console.error("Error unliking comment:", error);
       return res.status(500).json({ message: "Server error" });
     }
-  },
+  }
 );
 
 // POST /api/social/posts/:postId/share
@@ -1958,11 +1998,12 @@ greenSocialsRouter.post(
           .from(users)
           .where(eq(users.id, userId))
           .limit(1);
-            
+
         const content = postData.content || "";
-        const shortContent = typeof content === 'string' && content.length > 50 
-          ? `${content.substring(0, 50)  }...` 
-          : String(content);
+        const shortContent =
+          typeof content === "string" && content.length > 50
+            ? `${content.substring(0, 50)}...`
+            : String(content);
 
         let shareType = "their profile";
         if (targetType === "community") {
@@ -1973,13 +2014,15 @@ greenSocialsRouter.post(
 
         try {
           // Import the createNotification function
-          const { createNotification } = await import('../services/notifications');
-          
+          const { createNotification } = await import(
+            "../services/notifications"
+          );
+
           // Create a notification using the notification service
           await createNotification({
             userId: postData.userId,
-            type: 'social_like', // You can create a separate 'social_share' type if needed
-            title: 'Your Post Was Shared',
+            type: "social_like", // You can create a separate 'social_share' type if needed
+            title: "Your Post Was Shared",
             message: `${sharer.username} shared your post to ${shareType}: "${shortContent}"`,
             data: {
               postId,
@@ -1987,10 +2030,10 @@ greenSocialsRouter.post(
               targetType,
               targetId,
               externalPlatform,
-              postContent: shortContent
+              postContent: shortContent,
             },
             actionUrl: `/social/posts/${postId}`,
-            sendEmail: true // Email notifications enabled for shares
+            sendEmail: true, // Email notifications enabled for shares
           });
         } catch (error) {
           // Just log the error, don't fail the share operation
@@ -2069,7 +2112,7 @@ greenSocialsRouter.post(
       console.error("Error reporting post:", error);
       return res.status(500).json({ message: "Server error" });
     }
-  },
+  }
 );
 
 // POST /api/social/comments/:commentId/report
@@ -2135,7 +2178,7 @@ greenSocialsRouter.post(
       console.error("Error reporting comment:", error);
       return res.status(500).json({ message: "Server error" });
     }
-  },
+  }
 );
 
 // POST /api/social/posts/:postId/save
@@ -2166,7 +2209,7 @@ greenSocialsRouter.post(
       if (!postCheckResult.rows.length) {
         return res.status(404).json({ message: "Post not found" });
       }
-      
+
       const postData = postCheckResult.rows[0];
 
       // Check if the user already saved this post using raw SQL
@@ -2194,7 +2237,7 @@ greenSocialsRouter.post(
       SET updated_at = ${now}
       WHERE id = ${postId}
     `);
-      
+
       // Send notification to post owner if they're different than the saver
       if (postData.userId !== userId) {
         // Get the user who is saving the post
@@ -2203,32 +2246,35 @@ greenSocialsRouter.post(
           .from(users)
           .where(eq(users.id, userId))
           .limit(1);
-            
+
         const content = postData.content || "";
-        const shortContent = typeof content === 'string' && content.length > 50 
-          ? `${content.substring(0, 50)  }...` 
-          : String(content);
-          
-        const postType = postData.postType || 'post';
+        const shortContent =
+          typeof content === "string" && content.length > 50
+            ? `${content.substring(0, 50)}...`
+            : String(content);
+
+        const postType = postData.postType || "post";
 
         try {
           // Import the createNotification function
-          const { createNotification } = await import('../services/notifications');
-          
+          const { createNotification } = await import(
+            "../services/notifications"
+          );
+
           // Create a notification using the notification service
           await createNotification({
             userId: postData.userId,
-            type: 'social_save',
-            title: 'Your Post Was Saved',
+            type: "social_save",
+            title: "Your Post Was Saved",
             message: `${saver.username} saved your ${postType}: "${shortContent}"`,
             data: {
               postId,
               savedBy: userId,
               collection,
-              postContent: shortContent
+              postContent: shortContent,
             },
             actionUrl: `/social/posts/${postId}`,
-            sendEmail: true // Email notifications enabled for saved posts
+            sendEmail: true, // Email notifications enabled for saved posts
           });
         } catch (error) {
           // Just log the error, don't fail the save operation
@@ -2241,7 +2287,7 @@ greenSocialsRouter.post(
       console.error("Error saving post:", error);
       return res.status(500).json({ message: "Server error" });
     }
-  },
+  }
 );
 
 // DELETE /api/social/posts/:postId/save
@@ -2290,5 +2336,5 @@ greenSocialsRouter.delete(
       console.error("Error unsaving post:", error);
       return res.status(500).json({ message: "Server error" });
     }
-  },
+  }
 );

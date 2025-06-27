@@ -181,8 +181,8 @@ export const comments = pgTable("comments", {
     .notNull()
     .references(() => users.id),
   content: text("content").notNull(),
-  // Parent comment for replies
-  parentId: integer("parent_id").references(() => comments.id),
+  // Parent comment for replies - will be handled at application level
+  parentId: integer("parent_id"),
   // Media attachments
   media: jsonb("media").$type<{ url: string; type: string }[]>(),
   // Engagement metrics

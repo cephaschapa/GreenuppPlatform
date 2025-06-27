@@ -34,6 +34,7 @@ export const users = pgTable("users", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   profileImage: text("profile_image"),
+  phone: text("phone"), // Phone number for SMS notifications
   // Push notification fields
   fcmToken: text("fcm_token"), // Firebase Cloud Messaging token
   fcmTokenUpdatedAt: timestamp("fcm_token_updated_at"), // When the token was last updated
