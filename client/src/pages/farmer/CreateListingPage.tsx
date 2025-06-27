@@ -78,7 +78,6 @@ const SUBCATEGORIES: Record<string, { id: string; name: string }[]> = {
 
 // Form schema with validation
 const listingSchema = z.object({
-  sellerId: z.number(),
   title: z
     .string()
     .min(5, { message: "Title must be at least 5 characters" })
@@ -91,14 +90,14 @@ const listingSchema = z.object({
   price: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
     message: "Price must be a positive number",
   }),
-  priceCurrency: z.string().default("USD"),
+  priceCurrency: z.string().default("ZMW"),
   priceUnit: z.string().optional(),
   quantity: z.string().optional(),
   quantityUnit: z.string().optional(),
   condition: z.string().optional(),
   contactPhone: z.string().optional(),
   isNegotiable: z.boolean().default(false),
-  isDeliveryAvailable: z.boolean().default(false),
+  deliveryAvailable: z.boolean().default(false),
   tags: z.array(z.string()).optional(),
   // We'll handle images separately
 });
@@ -117,7 +116,6 @@ export default function CreateListingPage() {
   const form = useForm<ListingFormValues>({
     resolver: zodResolver(listingSchema),
     defaultValues: {
-      sellerId: user?.id || 0, // Set the user ID from session
       title: "",
       description: "",
       category: "",
@@ -130,7 +128,7 @@ export default function CreateListingPage() {
       condition: "",
       contactPhone: "",
       isNegotiable: false,
-      isDeliveryAvailable: false,
+      deliveryAvailable: false,
       tags: [],
     },
   });
@@ -318,7 +316,7 @@ export default function CreateListingPage() {
     // Create FormData to handle file uploads
     const formData = new FormData();
 
-    // Add form values
+    // Add form values - ensure all field names match backend schema
     Object.entries(values).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         if (Array.isArray(value)) {
@@ -356,6 +354,13 @@ export default function CreateListingPage() {
     // Add images
     images.forEach((image, index) => {
       formData.append(`images`, image);
+    });
+
+    // Log the form data for debugging
+    console.log("Form values being sent:", values);
+    console.log("FormData entries:");
+    formData.forEach((value, key) => {
+      console.log(`${key}: ${value}`);
     });
 
     // Submit the form
@@ -677,7 +682,7 @@ export default function CreateListingPage() {
 
                       <FormField
                         control={form.control}
-                        name="isDeliveryAvailable"
+                        name="deliveryAvailable"
                         render={({ field }) => (
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 space-y-0 gap-2">
                             <div className="space-y-0.5">

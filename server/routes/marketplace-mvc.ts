@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { MarketplaceController } from "../controllers/MarketplaceController";
 import { isAuthenticated } from "../middleware/auth";
+import { upload } from "../services/uploadService";
 
 export function setupMarketplaceRoutes(app: Express) {
   const controller = new MarketplaceController();
@@ -33,11 +34,13 @@ export function setupMarketplaceRoutes(app: Express) {
   app.post(
     "/api/marketplace/listings",
     isAuthenticated,
+    upload.array("images", 5), // Handle up to 5 images
     controller.createListing.bind(controller)
   );
   app.put(
     "/api/marketplace/listings/:id",
     isAuthenticated,
+    upload.array("images", 5), // Handle up to 5 images for updates too
     controller.updateListing.bind(controller)
   );
   app.delete(

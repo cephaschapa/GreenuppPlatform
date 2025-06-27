@@ -1,26 +1,54 @@
-import React, { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Loader2, ShieldCheck, ArrowLeft, ExternalLink, Check, AlertTriangle } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import type { Crop, InsertMarketplaceListing } from '@shared/schema';
+import React, { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
+  Loader2,
+  ShieldCheck,
+  ArrowLeft,
+  ExternalLink,
+  Check,
+  AlertTriangle,
+} from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import type { Crop, InsertMarketplaceListing } from "@shared/schema";
 
 // Form schema for creating marketplace listing
 const listingSchema = z.object({
@@ -28,16 +56,22 @@ const listingSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters"),
   category: z.string().min(1, "Category is required"),
   subcategory: z.string().optional(),
-  price: z.string().min(1, "Price is required").refine(
-    (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 
-    "Price must be a positive number"
-  ),
+  price: z
+    .string()
+    .min(1, "Price is required")
+    .refine(
+      (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
+      "Price must be a positive number"
+    ),
   priceCurrency: z.string().default("ZMW"),
   priceUnit: z.string().optional(),
-  quantity: z.string().refine(
-    (val) => val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) > 0),
-    "Quantity must be a positive number if provided"
-  ).optional(),
+  quantity: z
+    .string()
+    .refine(
+      (val) => val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) > 0),
+      "Quantity must be a positive number if provided"
+    )
+    .optional(),
   quantityUnit: z.string().optional(),
   condition: z.string().optional(),
   contactPhone: z.string().optional(),
@@ -46,7 +80,7 @@ const listingSchema = z.object({
   status: z.string().default("active"),
   tags: z.array(z.string()).optional(),
   images: z.array(z.string()).optional(),
-  cropId: z.number().optional(), // For blockchain traceability
+  sourceCropId: z.number().optional(), // Fixed: use sourceCropId instead of cropId
   useBlockchain: z.boolean().default(false), // UI only field for blockchain option
 });
 
@@ -59,20 +93,20 @@ export default function ListCropOnMarketplace() {
   const [location, navigate] = useLocation();
   const [selectedCropId, setSelectedCropId] = useState<number | null>(null);
   const [blockchainVerified, setBlockchainVerified] = useState(false);
-  
+
   // Fetch farmer's crops
   const { data: crops, isLoading: isLoadingCrops } = useQuery<Crop[]>({
-    queryKey: ['/api/crops'],
+    queryKey: ["/api/crops"],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/crops');
+      const response = await apiRequest("GET", "/api/crops");
       return await response.json();
     },
   });
-  
+
   // Filter crops that can be traced (have a batch ID)
-  const traceableCrops = crops?.filter(crop => crop.batchId) || [];
-  const nonTraceableCrops = crops?.filter(crop => !crop.batchId) || [];
-  
+  const traceableCrops = crops?.filter((crop) => crop.batchId) || [];
+  const nonTraceableCrops = crops?.filter((crop) => !crop.batchId) || [];
+
   // Setup form
   const form = useForm<ListingFormValues>({
     resolver: zodResolver(listingSchema),
@@ -96,66 +130,90 @@ export default function ListCropOnMarketplace() {
       useBlockchain: false,
     },
   });
-  
+
   // Toggle blockchain verification when a crop is selected
   const handleCropSelect = (cropId: string) => {
     const id = parseInt(cropId);
     setSelectedCropId(id);
-    
+
     // If the crop has a batch ID, it can be traced on blockchain
-    const crop = crops?.find(c => c.id === id);
+    const crop = crops?.find((c) => c.id === id);
     const canTrace = !!crop?.batchId;
-    
+
     if (canTrace) {
-      form.setValue('useBlockchain', true);
+      form.setValue("useBlockchain", true);
       setBlockchainVerified(true);
     } else {
-      form.setValue('useBlockchain', false);
+      form.setValue("useBlockchain", false);
       setBlockchainVerified(false);
     }
   };
-  
+
   // Create marketplace listing
   const createListingMutation = useMutation({
     mutationFn: async (data: ListingFormValues) => {
-      // Format the data for API
+      // Format the data for API - ensure all fields match backend schema
       const formattedData: any = {
-        ...data,
-        price: parseFloat(data.price),
-        quantity: data.quantity ? parseFloat(data.quantity) : undefined,
-        sellerId: user?.id,
-        sourceCropId: data.useBlockchain ? selectedCropId : undefined,
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        subcategory: data.subcategory,
+        price: data.price, // Keep as string, backend will parse
+        priceCurrency: data.priceCurrency,
+        priceUnit: data.priceUnit,
+        quantity: data.quantity ? data.quantity : undefined, // Keep as string, backend will parse
+        quantityUnit: data.quantityUnit,
+        condition: data.condition,
+        contactPhone: data.contactPhone,
+        deliveryAvailable: data.deliveryAvailable,
+        isNegotiable: data.isNegotiable,
+        status: data.status,
+        tags: data.tags,
+        images: data.images,
+        // Only include sourceCropId if blockchain is enabled and crop is selected
+        sourceCropId:
+          data.useBlockchain && selectedCropId ? selectedCropId : undefined,
       };
-      
+
       // Remove UI-only field
       delete formattedData.useBlockchain;
-      
+
+      console.log("Sending marketplace listing data:", formattedData);
+
       // Create the listing
-      const response = await apiRequest('POST', '/api/marketplace/listings', formattedData);
+      const response = await apiRequest(
+        "POST",
+        "/api/marketplace/listings",
+        formattedData
+      );
       return await response.json();
     },
     onSuccess: async (data) => {
       // If we're using blockchain verification, link the listing to the crop
-      if (form.getValues('useBlockchain') && selectedCropId) {
+      if (form.getValues("useBlockchain") && selectedCropId) {
         try {
-          await apiRequest('POST', `/marketplace/listings/${data.id}/trace`, { cropId: selectedCropId });
+          await apiRequest("POST", `/marketplace/listings/${data.id}/trace`, {
+            cropId: selectedCropId,
+          });
         } catch (error) {
           console.error("Error linking listing to crop:", error);
           // We'll show a warning but not fail the whole operation
           toast({
             title: "Listing Created",
-            description: "Listing created but blockchain verification failed. You can try again later.",
+            description:
+              "Listing created but blockchain verification failed. You can try again later.",
             variant: "destructive",
           });
           return;
         }
       }
-      
+
       toast({
         title: "Listing Created",
-        description: "Your crop has been listed on the marketplace successfully.",
+        description:
+          "Your crop has been listed on the marketplace successfully.",
       });
-      
+
       // Redirect to the marketplace
       navigate("/marketplace");
     },
@@ -166,28 +224,33 @@ export default function ListCropOnMarketplace() {
         description: "Could not create marketplace listing. Please try again.",
         variant: "destructive",
       });
-    }
+    },
   });
-  
+
   const onSubmit = (data: ListingFormValues) => {
     createListingMutation.mutate(data);
   };
-  
+
   return (
     <div className="container max-w-4xl py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard/marketplace")}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/dashboard/marketplace")}
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
         <h1 className="text-2xl font-bold">List Crop on Marketplace</h1>
       </div>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Blockchain Traceability</CardTitle>
           <CardDescription>
-            Add blockchain verification to your marketplace listing to build trust and transparency
+            Add blockchain verification to your marketplace listing to build
+            trust and transparency
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -199,11 +262,12 @@ export default function ListCropOnMarketplace() {
               <div className="space-y-1">
                 <h3 className="font-medium">Verify Product Authenticity</h3>
                 <p className="text-sm text-muted-foreground">
-                  Link your marketplace listing to a crop's blockchain record to allow buyers to verify its complete history.
+                  Link your marketplace listing to a crop's blockchain record to
+                  allow buyers to verify its complete history.
                 </p>
               </div>
             </div>
-            
+
             {isLoadingCrops ? (
               <div className="flex items-center justify-center p-4">
                 <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
@@ -213,11 +277,13 @@ export default function ListCropOnMarketplace() {
               <div className="space-y-3">
                 <FormField
                   control={form.control}
-                  name="cropId"
+                  name="sourceCropId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Select a Crop</FormLabel>
-                      <Select onValueChange={(value) => handleCropSelect(value)}>
+                      <Select
+                        onValueChange={(value) => handleCropSelect(value)}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a crop to link" />
@@ -230,10 +296,19 @@ export default function ListCropOnMarketplace() {
                                 Blockchain Enabled Crops
                               </div>
                               {traceableCrops.map((crop) => (
-                                <SelectItem key={crop.id} value={crop.id.toString()}>
+                                <SelectItem
+                                  key={crop.id}
+                                  value={crop.id.toString()}
+                                >
                                   <div className="flex items-center">
-                                    <span>{crop.name} {crop.variety ? `(${crop.variety})` : ''}</span>
-                                    <Badge variant="outline" className="ml-2 bg-green-50 text-green-600 border-green-200 text-xs py-0 px-1">
+                                    <span>
+                                      {crop.name}{" "}
+                                      {crop.variety ? `(${crop.variety})` : ""}
+                                    </span>
+                                    <Badge
+                                      variant="outline"
+                                      className="ml-2 bg-green-50 text-green-600 border-green-200 text-xs py-0 px-1"
+                                    >
                                       <Check className="h-3 w-3 mr-1" />
                                       Traceable
                                     </Badge>
@@ -242,15 +317,19 @@ export default function ListCropOnMarketplace() {
                               ))}
                             </>
                           )}
-                          
+
                           {nonTraceableCrops.length > 0 && (
                             <>
                               <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
                                 Standard Crops (No Blockchain)
                               </div>
                               {nonTraceableCrops.map((crop) => (
-                                <SelectItem key={crop.id} value={crop.id.toString()}>
-                                  {crop.name} {crop.variety ? `(${crop.variety})` : ''}
+                                <SelectItem
+                                  key={crop.id}
+                                  value={crop.id.toString()}
+                                >
+                                  {crop.name}{" "}
+                                  {crop.variety ? `(${crop.variety})` : ""}
                                 </SelectItem>
                               ))}
                             </>
@@ -261,17 +340,19 @@ export default function ListCropOnMarketplace() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="useBlockchain"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Enable Blockchain Verification</FormLabel>
+                        <FormLabel className="text-base">
+                          Enable Blockchain Verification
+                        </FormLabel>
                         <FormDescription>
-                          {blockchainVerified 
-                            ? "This listing will be verified on the blockchain" 
+                          {blockchainVerified
+                            ? "This listing will be verified on the blockchain"
                             : "Select a blockchain-enabled crop to use this feature"}
                         </FormDescription>
                       </div>
@@ -285,13 +366,14 @@ export default function ListCropOnMarketplace() {
                     </FormItem>
                   )}
                 />
-                
-                {form.watch('useBlockchain') && (
+
+                {form.watch("useBlockchain") && (
                   <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
                     <ShieldCheck className="h-4 w-4 text-green-500" />
                     <AlertTitle>Blockchain Verification Enabled</AlertTitle>
                     <AlertDescription>
-                      Buyers will be able to scan a QR code to verify this product's complete history from planting to harvest.
+                      Buyers will be able to scan a QR code to verify this
+                      product's complete history from planting to harvest.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -301,8 +383,13 @@ export default function ListCropOnMarketplace() {
                 <AlertTriangle className="h-4 w-4 text-yellow-500" />
                 <AlertTitle>No Crops Found</AlertTitle>
                 <AlertDescription>
-                  You need to add crops before you can list them on the marketplace.
-                  <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/crops/add")}>
+                  You need to add crops before you can list them on the
+                  marketplace.
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto"
+                    onClick={() => navigate("/crops/add")}
+                  >
                     Add a crop
                   </Button>
                 </AlertDescription>
@@ -311,7 +398,7 @@ export default function ListCropOnMarketplace() {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Listing Details</CardTitle>
@@ -336,14 +423,17 @@ export default function ListCropOnMarketplace() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="category"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category*</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a category" />
@@ -368,7 +458,7 @@ export default function ListCropOnMarketplace() {
                   )}
                 />
               </div>
-              
+
               <FormField
                 control={form.control}
                 name="description"
@@ -376,7 +466,7 @@ export default function ListCropOnMarketplace() {
                   <FormItem>
                     <FormLabel>Description*</FormLabel>
                     <FormControl>
-                      <Textarea 
+                      <Textarea
                         placeholder="Describe your product in detail..."
                         className="min-h-24 resize-y"
                         {...field}
@@ -386,7 +476,7 @@ export default function ListCropOnMarketplace() {
                   </FormItem>
                 )}
               />
-              
+
               <div className="grid gap-4 md:grid-cols-3">
                 <FormField
                   control={form.control}
@@ -401,21 +491,26 @@ export default function ListCropOnMarketplace() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="priceCurrency"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Currency</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select currency" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="ZMW">ZMW (Zambian Kwacha)</SelectItem>
+                          <SelectItem value="ZMW">
+                            ZMW (Zambian Kwacha)
+                          </SelectItem>
                           <SelectItem value="USD">USD (US Dollar)</SelectItem>
                         </SelectContent>
                       </Select>
@@ -423,14 +518,17 @@ export default function ListCropOnMarketplace() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="priceUnit"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Price Per</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Price per unit" />
@@ -450,7 +548,7 @@ export default function ListCropOnMarketplace() {
                   )}
                 />
               </div>
-              
+
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
@@ -465,14 +563,17 @@ export default function ListCropOnMarketplace() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="quantityUnit"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Quantity Unit</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select unit" />
@@ -493,7 +594,7 @@ export default function ListCropOnMarketplace() {
                   )}
                 />
               </div>
-              
+
               <div className="grid gap-4 md:grid-cols-2">
                 <FormField
                   control={form.control}
@@ -502,20 +603,26 @@ export default function ListCropOnMarketplace() {
                     <FormItem>
                       <FormLabel>Contact Phone</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., +260 9XX XXX XXX" {...field} />
+                        <Input
+                          placeholder="e.g., +260 9XX XXX XXX"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="condition"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Condition</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select condition" />
@@ -525,7 +632,9 @@ export default function ListCropOnMarketplace() {
                           <SelectItem value="new">New/Fresh</SelectItem>
                           <SelectItem value="good">Good</SelectItem>
                           <SelectItem value="used">Used</SelectItem>
-                          <SelectItem value="refurbished">Refurbished</SelectItem>
+                          <SelectItem value="refurbished">
+                            Refurbished
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -533,7 +642,7 @@ export default function ListCropOnMarketplace() {
                   )}
                 />
               </div>
-              
+
               <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
                 <FormField
                   control={form.control}
@@ -541,7 +650,9 @@ export default function ListCropOnMarketplace() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 flex-1">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Delivery Available</FormLabel>
+                        <FormLabel className="text-base">
+                          Delivery Available
+                        </FormLabel>
                         <FormDescription>
                           Can you deliver this product to buyers?
                         </FormDescription>
@@ -555,14 +666,16 @@ export default function ListCropOnMarketplace() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="isNegotiable"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 flex-1">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Price Negotiable</FormLabel>
+                        <FormLabel className="text-base">
+                          Price Negotiable
+                        </FormLabel>
                         <FormDescription>
                           Are you open to price negotiations?
                         </FormDescription>
@@ -577,12 +690,19 @@ export default function ListCropOnMarketplace() {
                   )}
                 />
               </div>
-              
+
               <CardFooter className="flex justify-end gap-2 px-0">
-                <Button variant="outline" type="button" onClick={() => navigate("/dashboard/marketplace")}>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => navigate("/dashboard/marketplace")}
+                >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={createListingMutation.isPending}>
+                <Button
+                  type="submit"
+                  disabled={createListingMutation.isPending}
+                >
                   {createListingMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

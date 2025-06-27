@@ -203,10 +203,57 @@ export class MarketplaceController {
         throw new AuthenticationError();
       }
 
+      // Debug: Log what we're receiving
+      console.log("=== CREATE LISTING DEBUG ===");
+      console.log("Content-Type:", req.headers["content-type"]);
+      console.log("req.body:", req.body);
+      console.log("req.body type:", typeof req.body);
+      console.log("req.body keys:", Object.keys(req.body || {}));
+      console.log("req.files:", req.files);
+
+      // Handle FormData vs JSON
+      let parsedData = req.body;
+
+      // If it's FormData, we need to handle it differently
+      if (req.headers["content-type"]?.includes("multipart/form-data")) {
+        console.log("Processing FormData...");
+
+        // Handle uploaded files
+        let imageUrls: string[] = [];
+        if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+          imageUrls = req.files.map((file: any) => {
+            // Create URL for the uploaded file
+            const baseUrl =
+              process.env.NODE_ENV === "production"
+                ? `${req.protocol}://${req.get("host")}`
+                : `${req.protocol}://${req.get("host")}`;
+            return `${baseUrl}/uploads/${file.filename}`;
+          });
+        }
+
+        // FormData should already be parsed by multer middleware
+        // But let's ensure we have the right structure
+        parsedData = {
+          ...req.body,
+          // Convert string arrays back to arrays if they were sent as FormData
+          tags: req.body.tags
+            ? Array.isArray(req.body.tags)
+              ? req.body.tags
+              : [req.body.tags]
+            : undefined,
+          // Use uploaded file URLs instead of the original images field
+          images: imageUrls.length > 0 ? imageUrls : undefined,
+        };
+      }
+
+      console.log("Parsed data:", parsedData);
+
       const listingData = insertMarketplaceListingSchema.parse({
-        ...req.body,
+        ...parsedData,
         sellerId: req.user.id,
       });
+
+      console.log("Validated listing data:", listingData);
 
       // Convert null values to undefined for the model
       const modelData = {
@@ -232,6 +279,8 @@ export class MarketplaceController {
         blockchainVerified: listingData.blockchainVerified ?? false,
         traceabilityBatchId: listingData.traceabilityBatchId || undefined,
       };
+
+      console.log("Model data:", modelData);
 
       const newListing = await this.model.createListing(modelData);
 
@@ -268,9 +317,34 @@ export class MarketplaceController {
         throw new AuthorizationError("You can only update your own listings");
       }
 
+      // Handle FormData vs JSON
+      let parsedData = req.body;
+
+      // If it's FormData, handle uploaded files
+      if (req.headers["content-type"]?.includes("multipart/form-data")) {
+        // Handle uploaded files
+        let imageUrls: string[] = [];
+        if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+          imageUrls = req.files.map((file: any) => {
+            // Create URL for the uploaded file
+            const baseUrl =
+              process.env.NODE_ENV === "production"
+                ? `${req.protocol}://${req.get("host")}`
+                : `${req.protocol}://${req.get("host")}`;
+            return `${baseUrl}/uploads/${file.filename}`;
+          });
+        }
+
+        // Use uploaded file URLs if provided, otherwise keep existing images
+        parsedData = {
+          ...req.body,
+          images: imageUrls.length > 0 ? imageUrls : existingListing.images,
+        };
+      }
+
       const listingData = insertMarketplaceListingSchema
         .partial()
-        .parse(req.body);
+        .parse(parsedData);
 
       // Convert null values to undefined for the model
       const modelData = {
