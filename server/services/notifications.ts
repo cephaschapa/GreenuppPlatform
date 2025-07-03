@@ -92,12 +92,32 @@ export async function createNotification({
   // Send push notification if enabled
   if (userSettings?.pushEnabled) {
     try {
-      const pushSent = await sendPushNotification(userId, title, message, {
+      // Convert data to Firebase-compatible format (all values must be strings)
+      const firebaseData: Record<string, string> = {
         notificationId: notification.id.toString(),
         type,
         actionUrl: actionUrl || "",
-        ...data,
+      };
+
+      // Convert complex data to strings for Firebase compatibility
+      Object.entries(data).forEach(([key, value]) => {
+        if (typeof value === "string") {
+          firebaseData[key] = value;
+        } else if (typeof value === "number" || typeof value === "boolean") {
+          firebaseData[key] = value.toString();
+        } else if (Array.isArray(value)) {
+          firebaseData[key] = JSON.stringify(value);
+        } else if (typeof value === "object" && value !== null) {
+          firebaseData[key] = JSON.stringify(value);
+        }
       });
+
+      const pushSent = await sendPushNotification(
+        userId,
+        title,
+        message,
+        firebaseData
+      );
 
       if (pushSent) {
         logger.info(
@@ -174,9 +194,6 @@ export async function createNotification({
       logger.error(`❌ Failed to send SMS to user ${userId}:`, error);
     }
   }
-
-  // Send push notification
-  await sendPushNotification(userId, notification);
 
   return notification;
 }

@@ -1,16 +1,4 @@
-import { MailService } from '@sendgrid/mail';
-
-// Create a mail service instance
-const mailService = new MailService();
-
-// Initialize SendGrid with API key if available
-const SENDGRID_AVAILABLE = Boolean(process.env.SENDGRID_API_KEY);
-
-if (SENDGRID_AVAILABLE) {
-  mailService.setApiKey(process.env.SENDGRID_API_KEY!);
-} else {
-  console.warn('SENDGRID_API_KEY is not set. Using console-based email service for development.');
-}
+import { sendSmtpEmail } from "./smtp-email";
 
 interface EmailOptions {
   to: string;
@@ -25,16 +13,15 @@ interface EmailOptions {
  * This simulates sending an email by logging it to the console
  */
 function logEmailToDev(options: EmailOptions): boolean {
-  console.log('\n==================================');
-  console.log('💌 EMAIL SENT (DEVELOPMENT MODE)');
-  console.log('==================================');
+  console.log("\n==================================");
+  console.log("💌 EMAIL SENT (DEVELOPMENT MODE)");
+  console.log("==================================");
   console.log(`From: ${options.from}`);
   console.log(`To: ${options.to}`);
   console.log(`Subject: ${options.subject}`);
-  console.log('----------------------------------');
+  console.log("----------------------------------");
   console.log(options.text);
-  console.log('==================================\n');
-  
+  console.log("==================================\n");
   return true;
 }
 
@@ -45,36 +32,29 @@ export interface EmailResult {
 }
 
 /**
- * Send an email using SendGrid or log to console in development
+ * Send an email using SMTP or log to console in development
  */
 export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
-  // If SendGrid is not available, log the email to console
-  if (!SENDGRID_AVAILABLE) {
+  // If SMTP is not configured, log the email to console
+  if (
+    !process.env.SMTP_HOST ||
+    !process.env.SMTP_USER ||
+    !process.env.SMTP_PASS
+  ) {
     logEmailToDev(options);
     return { success: true };
   }
-  
   try {
-    await mailService.send({
-      to: options.to,
-      from: options.from,
-      subject: options.subject,
-      text: options.text,
-      html: options.html,
-    });
-    
+    await sendSmtpEmail(options);
     return { success: true };
   } catch (err) {
     const error = err as any;
-    console.error('Failed to send email via SendGrid:', error);
-    
-    // If we hit domain verification issues, fall back to development mode
-    console.log('Falling back to development mode email logging');
+    console.error("Failed to send email via SMTP:", error);
+    // Fallback to dev logger
     logEmailToDev(options);
-    
-    return { 
-      success: true, 
-      error: 'SendGrid error, but logged to console in development mode' 
+    return {
+      success: true,
+      error: "SMTP error, but logged to console in development mode",
     };
   }
 }
@@ -83,9 +63,9 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
  * Generate a styled HTML email template
  */
 export function generateHtmlEmail(
-  title: string, 
-  message: string, 
-  actionUrl?: string, 
+  title: string,
+  message: string,
+  actionUrl?: string,
   actionText?: string,
   footerText?: string
 ): string {
@@ -96,8 +76,9 @@ export function generateHtmlEmail(
       </div>
       <div style="padding: 20px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;">
         <p style="font-size: 16px; line-height: 1.5; color: #334155;">${message}</p>
-        
-        ${actionUrl && actionText ? `
+        ${
+          actionUrl && actionText
+            ? `
           <div style="margin-top: 20px; margin-bottom: 20px; text-align: center;">
             <a href="${actionUrl}" 
                style="display: inline-block; background-color: #10b981; color: white; 
@@ -106,11 +87,15 @@ export function generateHtmlEmail(
               ${actionText}
             </a>
           </div>
-        ` : ''}
-        
+        `
+            : ""
+        }
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; 
                     font-size: 12px; color: #64748b; line-height: 1.5;">
-          <p>${footerText || 'This message was sent from Greenupp, the agricultural intelligence platform.'}</p>
+          <p>${
+            footerText ||
+            "This message was sent from Greenupp, the agricultural intelligence platform."
+          }</p>
           <p>© ${new Date().getFullYear()} Greenupp. All rights reserved.</p>
         </div>
       </div>
@@ -123,18 +108,17 @@ export function generateHtmlEmail(
  */
 export async function testEmail(to: string): Promise<EmailResult> {
   const html = generateHtmlEmail(
-    'Test Email from Greenupp',
-    'This is a test email sent from the Greenupp platform to verify that email functionality is working correctly.',
-    'https://greenupp.app/dashboard',
-    'Visit Dashboard',
-    'This is a test email. If you did not request this email, please ignore it.'
+    "Test Email from Greenupp",
+    "This is a test email sent from the Greenupp platform to verify that email functionality is working correctly.",
+    "https://greenupp.app/dashboard",
+    "Visit Dashboard",
+    "This is a test email. If you did not request this email, please ignore it."
   );
-  
   return sendEmail({
     to,
-    from: 'greenupp.notifier@gmail.com',
-    subject: 'Test Email from Greenupp',
+    from: process.env.SMTP_FROM || "notifications@greenupp.app",
+    subject: "Test Email from Greenupp",
     html,
-    text: 'This is a test email from Greenupp to verify that email functionality is working correctly.'
+    text: "This is a test email from Greenupp to verify that email functionality is working correctly.",
   });
 }
