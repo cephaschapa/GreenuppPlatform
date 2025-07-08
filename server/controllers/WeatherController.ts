@@ -104,6 +104,26 @@ export class WeatherController {
     }
   }
 
+  static async getCropRecommendations(req: Request, res: Response) {
+    try {
+      const { location } = req.query;
+      if (!location) {
+        return res
+          .status(400)
+          .json({ message: "Location parameter is required" });
+      }
+      const data = await WeatherModel.getCropRecommendations(
+        location as string
+      );
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({
+        message: "Failed to retrieve crop recommendations",
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+  }
+
   static async getPreferences(req: Request, res: Response) {
     try {
       if (!req.user?.id) {

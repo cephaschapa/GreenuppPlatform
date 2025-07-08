@@ -23,6 +23,11 @@ export class WeatherModel {
     return getClimateData(location);
   }
 
+  static async getCropRecommendations(location: string) {
+    const { getCropRecommendations } = await import("../weather");
+    return getCropRecommendations(location);
+  }
+
   static async reverseGeocode(lat: number, lon: number) {
     const { reverseGeocode } = await import("../weather");
     return reverseGeocode(lat, lon);

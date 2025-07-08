@@ -573,7 +573,7 @@ export default function WeatherPage() {
     setLoadingRecommendations(true);
     try {
       const response = await fetch(
-        `/api/crop-recommendations?location=${encodeURIComponent(
+        `/api/weather/crop-recommendations?location=${encodeURIComponent(
           activeLocation
         )}`
       );

@@ -774,8 +774,90 @@ export async function getCropRecommendations(
   location: string
 ): Promise<CropRecommendation[]> {
   try {
-    // Get climate data for the location
-    const climateData = await getClimateData(location);
+    // Get basic weather data for the location to determine climate zone
+    const weatherData = await getWeatherData(location);
+
+    // Create simplified climate data based on current weather and location
+    const currentTemp = weatherData.current.temp;
+    const currentHumidity = weatherData.current.humidity;
+
+    // Estimate climate zone based on temperature and location
+    const lat = weatherData.coordinates.lat;
+    const isTropical = Math.abs(lat) < 15;
+    const isTemperate = Math.abs(lat) >= 15 && Math.abs(lat) < 45;
+    const isCold = Math.abs(lat) >= 45;
+
+    // Create simplified climate data structure
+    const climateData = {
+      monthlyAverages: [
+        {
+          month: "January",
+          averageTemp: currentTemp - 5,
+          averagePrecipitation: 80,
+        },
+        {
+          month: "February",
+          averageTemp: currentTemp - 3,
+          averagePrecipitation: 70,
+        },
+        {
+          month: "March",
+          averageTemp: currentTemp - 1,
+          averagePrecipitation: 90,
+        },
+        {
+          month: "April",
+          averageTemp: currentTemp + 2,
+          averagePrecipitation: 100,
+        },
+        {
+          month: "May",
+          averageTemp: currentTemp + 5,
+          averagePrecipitation: 120,
+        },
+        {
+          month: "June",
+          averageTemp: currentTemp + 8,
+          averagePrecipitation: 100,
+        },
+        {
+          month: "July",
+          averageTemp: currentTemp + 10,
+          averagePrecipitation: 80,
+        },
+        {
+          month: "August",
+          averageTemp: currentTemp + 8,
+          averagePrecipitation: 90,
+        },
+        {
+          month: "September",
+          averageTemp: currentTemp + 5,
+          averagePrecipitation: 100,
+        },
+        {
+          month: "October",
+          averageTemp: currentTemp + 2,
+          averagePrecipitation: 90,
+        },
+        {
+          month: "November",
+          averageTemp: currentTemp - 1,
+          averagePrecipitation: 80,
+        },
+        {
+          month: "December",
+          averageTemp: currentTemp - 3,
+          averagePrecipitation: 70,
+        },
+      ],
+      soilConditions: {
+        type: isTropical ? "Clay" : isTemperate ? "Loam" : "Silt Loam",
+        ph: isTropical ? 5.5 : isTemperate ? 6.5 : 5.8,
+        moisture: currentHumidity,
+      },
+      growingSeasonLength: isTropical ? 365 : isTemperate ? 180 : 120,
+    };
 
     // Simple crop database with climate requirements
     // In a real application, this would be in a database

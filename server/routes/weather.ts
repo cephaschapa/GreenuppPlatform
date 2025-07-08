@@ -12,6 +12,7 @@ router.get("/historical", WeatherController.getHistoricalWeather);
 router.get("/climate", WeatherController.getClimate);
 router.get("/reverse-geocode", WeatherController.reverseGeocode);
 router.get("/geocode", WeatherController.geocode);
+router.get("/crop-recommendations", WeatherController.getCropRecommendations);
 
 // Weather preferences endpoints
 router.get("/preferences", WeatherController.getPreferences);
