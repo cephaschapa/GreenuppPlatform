@@ -244,6 +244,31 @@ export const StreamChatComponent = ({
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [showChannelList, setShowChannelList] = useState(!isMobile);
 
+  // Handle notification clicks that open specific channels
+  useEffect(() => {
+    if (client && isInitialized) {
+      // Check URL parameters for channel ID from notification clicks
+      const urlParams = new URLSearchParams(window.location.search);
+      const channelId = urlParams.get("channel");
+
+      if (channelId && !activeChannel) {
+        try {
+          // Find the channel in user channels
+          const channel = userChannels.find((c) => c.id === channelId);
+          if (channel) {
+            handleChannelSelect(channel);
+            // Clean up URL parameter
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.delete("channel");
+            window.history.replaceState({}, "", newUrl.toString());
+          }
+        } catch (err) {
+          console.error("Error opening channel from notification:", err);
+        }
+      }
+    }
+  }, [client, isInitialized, userChannels, activeChannel]);
+
   // Set the active channel when the activeChannelId prop changes
   useEffect(() => {
     if (client && isInitialized && activeChannelId) {

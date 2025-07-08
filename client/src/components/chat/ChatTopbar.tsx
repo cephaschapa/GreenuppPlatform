@@ -1,30 +1,60 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'wouter';
-import { Menu, Search, X, Bell, MessageSquare, User, MoreVertical, Home, Package, Users, Map, Cloud, Leaf, Sprout, Calendar, Settings, ChevronLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Badge } from '@/components/ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/hooks/use-auth';
-import { useNotifications } from '@/hooks/use-notifications';
-import { useSocketIOChat } from '@/hooks/use-socketio-chat';
-import { useSocketIO } from '@/hooks/use-socketio';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "wouter";
+import {
+  Menu,
+  Search,
+  X,
+  Bell,
+  MessageSquare,
+  User,
+  MoreVertical,
+  Home,
+  Package,
+  Users,
+  Map,
+  Cloud,
+  Leaf,
+  Sprout,
+  Calendar,
+  Settings,
+  ChevronLeft,
+  LogOut,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/use-auth";
+import { useNotifications } from "@/hooks/use-notifications";
+import { useSocketIOChat } from "@/hooks/use-socketio-chat";
+import { useSocketIO } from "@/hooks/use-socketio";
+import { cn } from "@/lib/utils";
 
 // Define the navigation menu items with icons
 const MENU_ITEMS = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home },
-  { name: 'Fields', href: '/dashboard/fields', icon: Map },
-  { name: 'Crops', href: '/dashboard/crops', icon: Sprout },
-  { name: 'Tasks', href: '/dashboard/tasks', icon: Calendar },
-  { name: 'Weather', href: '/dashboard/weather', icon: Cloud },
-  { name: 'Plant Diagnosis', href: '/dashboard/plant-diagnosis', icon: Leaf },
-  { name: 'Marketplace', href: '/dashboard/marketplace', icon: Package },
-  { name: 'Social', href: '/dashboard/social', icon: Users },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "Fields", href: "/dashboard/fields", icon: Map },
+  { name: "Crops", href: "/dashboard/crops", icon: Sprout },
+  { name: "Tasks", href: "/dashboard/tasks", icon: Calendar },
+  { name: "Weather", href: "/dashboard/weather", icon: Cloud },
+  { name: "Plant Diagnosis", href: "/dashboard/plant-diagnosis", icon: Leaf },
+  { name: "Marketplace", href: "/dashboard/marketplace", icon: Package },
+  { name: "Social", href: "/dashboard/social", icon: Users },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 export default function ChatTopbar() {
@@ -34,7 +64,7 @@ export default function ChatTopbar() {
   const { totalUnreadCount } = useSocketIOChat();
   const { unreadCount: notificationCount } = useNotifications();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Check if we're in a mobile viewport
   useEffect(() => {
@@ -42,8 +72,8 @@ export default function ChatTopbar() {
       setIsMobile(window.innerWidth < 768);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Function to handle logout
@@ -53,7 +83,7 @@ export default function ChatTopbar() {
 
   // Function to clear search
   const clearSearch = () => {
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   return (
@@ -79,12 +109,14 @@ export default function ChatTopbar() {
                     return (
                       <li key={item.href}>
                         <Link href={item.href}>
-                          <a className={cn(
-                            "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-                            isActive 
-                              ? "bg-primary text-primary-foreground font-medium" 
-                              : "hover:bg-muted"
-                          )}>
+                          <a
+                            className={cn(
+                              "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+                              isActive
+                                ? "bg-primary text-primary-foreground font-medium"
+                                : "hover:bg-muted"
+                            )}
+                          >
                             <Icon className="h-5 w-5" />
                             <span>{item.name}</span>
                           </a>
@@ -95,13 +127,13 @@ export default function ChatTopbar() {
                 </ul>
               </nav>
               <div className="p-4 border-t">
-                <Button 
-                  variant="outline" 
-                  onClick={handleLogout} 
+                <Button
+                  variant="outline"
+                  onClick={handleLogout}
                   className="w-full"
                   disabled={logoutMutation.isPending}
                 >
-                  {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
+                  {logoutMutation.isPending ? "Logging out..." : "Logout"}
                 </Button>
               </div>
             </div>
@@ -119,19 +151,25 @@ export default function ChatTopbar() {
 
         {/* Page title */}
         <h1 className="text-lg font-semibold">Chat</h1>
-        
+
         {/* Socket connection status indicator */}
         <div className="hidden md:flex items-center gap-2">
-          <div className={cn(
-            "h-2 w-2 rounded-full",
-            socketStatus === 'connected' ? "bg-green-500" : 
-            socketStatus === 'connecting' ? "bg-amber-500" : 
-            "bg-red-500"
-          )} />
+          <div
+            className={cn(
+              "h-2 w-2 rounded-full",
+              socketStatus === "connected"
+                ? "bg-green-500"
+                : socketStatus === "connecting"
+                ? "bg-amber-500"
+                : "bg-red-500"
+            )}
+          />
           <span className="text-xs text-muted-foreground">
-            {socketStatus === 'connected' ? 'Connected' : 
-             socketStatus === 'connecting' ? 'Connecting...' : 
-             'Disconnected'}
+            {socketStatus === "connected"
+              ? "Connected"
+              : socketStatus === "connecting"
+              ? "Connecting..."
+              : "Disconnected"}
           </span>
         </div>
       </div>
@@ -168,7 +206,7 @@ export default function ChatTopbar() {
                 variant="destructive"
                 className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1"
               >
-                {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
+                {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
               </Badge>
             )}
           </Button>
@@ -184,7 +222,7 @@ export default function ChatTopbar() {
                   variant="destructive"
                   className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1"
                 >
-                  {notificationCount > 99 ? '99+' : notificationCount}
+                  {notificationCount > 99 ? "99+" : notificationCount}
                 </Badge>
               )}
             </Button>
@@ -210,17 +248,35 @@ export default function ChatTopbar() {
         {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative rounded-full">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative rounded-full"
+            >
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/avatar-placeholder.png" />
-                <AvatarFallback>
-                  {user?.username?.substring(0, 2).toUpperCase() || 'U'}
+                <AvatarImage src={user?.profileImage || undefined} />
+                <AvatarFallback className="text-sm bg-primary/20 text-primary">
+                  {(user && (user.firstName?.[0] || user.username?.[0])) || "U"}
                 </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">
+                  {user?.firstName && user?.lastName
+                    ? `${user.firstName} ${user.lastName}`
+                    : user?.username || "User"}
+                </p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {user?.email || "No email"}
+                </p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  @{user?.username || "username"}
+                </p>
+              </div>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href="/dashboard/profile">
@@ -239,8 +295,13 @@ export default function ChatTopbar() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
-              Logout
+            <DropdownMenuItem
+              className="text-red-500 focus:text-red-500 flex items-center gap-2"
+              onClick={handleLogout}
+              disabled={logoutMutation.isPending}
+            >
+              <LogOut className="h-4 w-4" />
+              {logoutMutation.isPending ? "Logging out..." : "Sign Out"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -254,9 +315,11 @@ export default function ChatTopbar() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => {
-                // Mobile search
-              }}>
+              <DropdownMenuItem
+                onClick={() => {
+                  // Mobile search
+                }}
+              >
                 <Search className="mr-2 h-4 w-4" />
                 <span>Search</span>
               </DropdownMenuItem>

@@ -31,8 +31,10 @@ const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY || "";
 function DiagnosticPanel() {
   const [status, setStatus] = useState<any>(null);
   const [testResult, setTestResult] = useState<any>(null);
+  const [webhookStatus, setWebhookStatus] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
+  const [webhookLoading, setWebhookLoading] = useState(false);
   const { toast } = useToast();
 
   const checkStatus = async () => {
@@ -91,6 +93,42 @@ function DiagnosticPanel() {
     }
   };
 
+  const checkWebhookStatus = async () => {
+    setWebhookLoading(true);
+    try {
+      const response = await apiRequest(
+        "GET",
+        "/api/stream-chat/webhooks/health"
+      );
+      const data = await response.json();
+      setWebhookStatus(data);
+      if (data.status === "healthy") {
+        toast({
+          title: "Webhooks Healthy",
+          description: "Webhook endpoints are working correctly",
+        });
+      } else {
+        toast({
+          title: "Webhook Warning",
+          description: "Webhook endpoints may have issues",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Webhook Error",
+        description: "Failed to check webhook status",
+        variant: "destructive",
+      });
+      setWebhookStatus({
+        status: "error",
+        error: "Failed to connect to webhook endpoints",
+      });
+    } finally {
+      setWebhookLoading(false);
+    }
+  };
+
   return (
     <Card className="mb-4">
       <CardHeader>
@@ -101,7 +139,7 @@ function DiagnosticPanel() {
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-4">
-          <div className="flex gap-4">
+          <div className="flex gap-4 flex-wrap">
             <Button onClick={checkStatus} disabled={loading}>
               {loading ? "Checking..." : "Check API Status"}
             </Button>
@@ -111,6 +149,13 @@ function DiagnosticPanel() {
               variant="secondary"
             >
               {testLoading ? "Testing..." : "Test Connection"}
+            </Button>
+            <Button
+              onClick={checkWebhookStatus}
+              disabled={webhookLoading}
+              variant="outline"
+            >
+              {webhookLoading ? "Checking..." : "Check Webhooks"}
             </Button>
           </div>
 
@@ -136,6 +181,19 @@ function DiagnosticPanel() {
             </div>
           )}
 
+          {webhookStatus && (
+            <div
+              className={`p-4 border rounded-lg ${
+                webhookStatus.status === "healthy" ? "bg-green-50" : "bg-red-50"
+              }`}
+            >
+              <h3 className="font-semibold mb-2">Webhook Status</h3>
+              <pre className="text-xs overflow-auto">
+                {JSON.stringify(webhookStatus, null, 2)}
+              </pre>
+            </div>
+          )}
+
           <div className="text-sm text-muted-foreground">
             <p>
               API Key:{" "}
@@ -145,6 +203,10 @@ function DiagnosticPanel() {
             </p>
             <p>Front-end ENV var: VITE_STREAM_API_KEY</p>
             <p>Back-end ENV vars: STREAM_API_KEY, STREAM_API_SECRET</p>
+            <p className="mt-2 text-xs">
+              💡 <strong>Webhook Setup:</strong> Configure webhooks in Stream
+              Chat dashboard to enable message notifications
+            </p>
           </div>
         </div>
       </CardContent>

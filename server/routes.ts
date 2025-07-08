@@ -12,6 +12,7 @@ import {
 } from "./routes/green-socials";
 import { uploadRouter } from "./routes/upload-routes";
 import streamChatRoutes from "./routes/stream-chat-routes";
+import streamChatWebhooks from "./routes/stream-chat-webhooks";
 import farmingAssistantRoutes from "./routes/farming-assistant";
 import searchRoutes from "./routes/search";
 import { setWebSocketNotifier } from "./services/websocket-notifier";
@@ -78,6 +79,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up Stream Chat routes
   app.use("/api/stream-chat", streamChatRoutes);
+
+  // Set up Stream Chat webhooks (no authentication required)
+  app.use("/api/stream-chat/webhooks", streamChatWebhooks);
 
   // Set up AI farming assistant routes
   app.use("/api/farming-assistant", farmingAssistantRoutes);

@@ -166,7 +166,25 @@ export function TopNavbar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8 border border-primary/20">
+                    <AvatarImage src={user?.profileImage || undefined} />
+                    <AvatarFallback className="text-sm bg-primary/20 text-primary">
+                      {(user && (user.firstName?.[0] || user.username?.[0])) ||
+                        "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium">
+                      {user?.firstName} {user?.lastName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link
