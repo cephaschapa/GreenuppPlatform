@@ -173,4 +173,38 @@ export class TreatmentModel {
 
     return results;
   }
+
+  // Get treatment step by ID
+  async getTreatmentStep(id: number): Promise<TreatmentStep | undefined> {
+    const results = await db
+      .select()
+      .from(treatmentSteps)
+      .where(eq(treatmentSteps.id, id))
+      .limit(1);
+
+    return results[0];
+  }
+
+  // Get treatment progress for a plan
+  async getTreatmentProgress(planId: number): Promise<any[]> {
+    // This would typically use a treatmentProgress table
+    // For now, return an empty array as placeholder
+    return [];
+  }
+
+  // Record treatment progress
+  async recordTreatmentProgress(data: any): Promise<any> {
+    // This would typically use a treatmentProgress table
+    // For now, return a mock progress record
+    return {
+      id: Date.now(),
+      treatmentStepId: data.treatmentStepId,
+      userId: data.userId,
+      applicationDate: new Date(),
+      effectiveness: data.effectiveness || 3,
+      observations: data.observations || "",
+      weatherConditions: data.weatherConditions || "",
+      createdAt: new Date(),
+    };
+  }
 }

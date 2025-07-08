@@ -341,6 +341,492 @@ export class TreatmentController {
     }
   }
 
+  // Get treatment plan by analysis ID
+  async getTreatmentPlanByAnalysis(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new AuthenticationError();
+      }
+
+      const { analysisId } = req.params;
+      const analysisIdNum = parseInt(analysisId);
+
+      if (isNaN(analysisIdNum)) {
+        throw new ValidationError("Invalid analysis ID");
+      }
+
+      const plan = await this.model.getTreatmentPlanByAnalysis(analysisIdNum);
+      if (!plan) {
+        res.status(404).json({ error: "Treatment plan not found" });
+        return;
+      }
+
+      // Ensure the plan belongs to the authenticated user
+      if (plan.userId !== req.user.id) {
+        throw new AuthorizationError("Access denied");
+      }
+
+      res.json(plan);
+    } catch (error) {
+      logger.error("Error fetching treatment plan by analysis:", error);
+      if (error instanceof AuthenticationError) {
+        res.status(401).json({ error: "Authentication required" });
+      } else if (error instanceof AuthorizationError) {
+        res.status(403).json({ error: error.message });
+      } else if (error instanceof ValidationError) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to retrieve treatment plan" });
+      }
+    }
+  }
+
+  // Create treatment plan
+  async createTreatmentPlan(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new AuthenticationError();
+      }
+
+      const planData = {
+        ...req.body,
+        userId: req.user.id,
+      };
+
+      const plan = await this.model.createTreatmentPlan(planData);
+      res.status(201).json(plan);
+    } catch (error) {
+      logger.error("Error creating treatment plan:", error);
+      if (error instanceof AuthenticationError) {
+        res.status(401).json({ error: "Authentication required" });
+      } else if (error instanceof ValidationError) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to create treatment plan" });
+      }
+    }
+  }
+
+  // Update treatment plan
+  async updateTreatmentPlan(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new AuthenticationError();
+      }
+
+      const { id } = req.params;
+      const planId = parseInt(id);
+
+      if (isNaN(planId)) {
+        throw new ValidationError("Invalid treatment plan ID");
+      }
+
+      const plan = await this.model.getTreatmentPlan(planId);
+      if (!plan) {
+        throw new NotFoundError("Treatment plan not found");
+      }
+
+      if (plan.userId !== req.user.id) {
+        throw new AuthorizationError("Access denied");
+      }
+
+      const updatedPlan = await this.model.updateTreatmentPlan(
+        planId,
+        req.body
+      );
+      res.json(updatedPlan);
+    } catch (error) {
+      logger.error("Error updating treatment plan:", error);
+      if (error instanceof AuthenticationError) {
+        res.status(401).json({ error: "Authentication required" });
+      } else if (error instanceof AuthorizationError) {
+        res.status(403).json({ error: error.message });
+      } else if (error instanceof ValidationError) {
+        res.status(400).json({ error: error.message });
+      } else if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to update treatment plan" });
+      }
+    }
+  }
+
+  // Delete treatment plan
+  async deleteTreatmentPlan(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new AuthenticationError();
+      }
+
+      const { id } = req.params;
+      const planId = parseInt(id);
+
+      if (isNaN(planId)) {
+        throw new ValidationError("Invalid treatment plan ID");
+      }
+
+      const plan = await this.model.getTreatmentPlan(planId);
+      if (!plan) {
+        throw new NotFoundError("Treatment plan not found");
+      }
+
+      if (plan.userId !== req.user.id) {
+        throw new AuthorizationError("Access denied");
+      }
+
+      await this.model.deleteTreatmentPlan(planId);
+      res.status(204).send();
+    } catch (error) {
+      logger.error("Error deleting treatment plan:", error);
+      if (error instanceof AuthenticationError) {
+        res.status(401).json({ error: "Authentication required" });
+      } else if (error instanceof AuthorizationError) {
+        res.status(403).json({ error: error.message });
+      } else if (error instanceof ValidationError) {
+        res.status(400).json({ error: error.message });
+      } else if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to delete treatment plan" });
+      }
+    }
+  }
+
+  // Get treatment steps for a plan
+  async getTreatmentSteps(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new AuthenticationError();
+      }
+
+      const { planId } = req.params;
+      const planIdNum = parseInt(planId);
+
+      if (isNaN(planIdNum)) {
+        throw new ValidationError("Invalid plan ID");
+      }
+
+      const plan = await this.model.getTreatmentPlan(planIdNum);
+      if (!plan) {
+        throw new NotFoundError("Treatment plan not found");
+      }
+
+      if (plan.userId !== req.user.id) {
+        throw new AuthorizationError("Access denied");
+      }
+
+      const steps = await this.model.getTreatmentSteps(planIdNum);
+      res.json(steps);
+    } catch (error) {
+      logger.error("Error fetching treatment steps:", error);
+      if (error instanceof AuthenticationError) {
+        res.status(401).json({ error: "Authentication required" });
+      } else if (error instanceof AuthorizationError) {
+        res.status(403).json({ error: error.message });
+      } else if (error instanceof ValidationError) {
+        res.status(400).json({ error: error.message });
+      } else if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to retrieve treatment steps" });
+      }
+    }
+  }
+
+  // Get treatment progress for a plan
+  async getTreatmentProgress(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new AuthenticationError();
+      }
+
+      const { planId } = req.params;
+      const planIdNum = parseInt(planId);
+
+      if (isNaN(planIdNum)) {
+        throw new ValidationError("Invalid plan ID");
+      }
+
+      const plan = await this.model.getTreatmentPlan(planIdNum);
+      if (!plan) {
+        throw new NotFoundError("Treatment plan not found");
+      }
+
+      if (plan.userId !== req.user.id) {
+        throw new AuthorizationError("Access denied");
+      }
+
+      const progress = await this.model.getTreatmentProgress(planIdNum);
+      res.json(progress);
+    } catch (error) {
+      logger.error("Error fetching treatment progress:", error);
+      if (error instanceof AuthenticationError) {
+        res.status(401).json({ error: "Authentication required" });
+      } else if (error instanceof AuthorizationError) {
+        res.status(403).json({ error: error.message });
+      } else if (error instanceof ValidationError) {
+        res.status(400).json({ error: error.message });
+      } else if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res
+          .status(500)
+          .json({ error: "Failed to retrieve treatment progress" });
+      }
+    }
+  }
+
+  // Create treatment step
+  async createTreatmentStep(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new AuthenticationError();
+      }
+
+      const { planId } = req.params;
+      const planIdNum = parseInt(planId);
+
+      if (isNaN(planIdNum)) {
+        throw new ValidationError("Invalid plan ID");
+      }
+
+      const plan = await this.model.getTreatmentPlan(planIdNum);
+      if (!plan) {
+        throw new NotFoundError("Treatment plan not found");
+      }
+
+      if (plan.userId !== req.user.id) {
+        throw new AuthorizationError("Access denied");
+      }
+
+      const stepData = {
+        ...req.body,
+        treatmentPlanId: planIdNum,
+      };
+
+      const step = await this.model.createTreatmentStep(stepData);
+      res.status(201).json(step);
+    } catch (error) {
+      logger.error("Error creating treatment step:", error);
+      if (error instanceof AuthenticationError) {
+        res.status(401).json({ error: "Authentication required" });
+      } else if (error instanceof AuthorizationError) {
+        res.status(403).json({ error: error.message });
+      } else if (error instanceof ValidationError) {
+        res.status(400).json({ error: error.message });
+      } else if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to create treatment step" });
+      }
+    }
+  }
+
+  // Get treatment step by ID
+  async getTreatmentStep(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new AuthenticationError();
+      }
+
+      const { stepId } = req.params;
+      const stepIdNum = parseInt(stepId);
+
+      if (isNaN(stepIdNum)) {
+        throw new ValidationError("Invalid step ID");
+      }
+
+      const step = await this.model.getTreatmentStep(stepIdNum);
+      if (!step) {
+        throw new NotFoundError("Treatment step not found");
+      }
+
+      // Get the plan to check ownership
+      const plan = await this.model.getTreatmentPlan(step.treatmentPlanId);
+      if (!plan || plan.userId !== req.user.id) {
+        throw new AuthorizationError("Access denied");
+      }
+
+      res.json(step);
+    } catch (error) {
+      logger.error("Error fetching treatment step:", error);
+      if (error instanceof AuthenticationError) {
+        res.status(401).json({ error: "Authentication required" });
+      } else if (error instanceof AuthorizationError) {
+        res.status(403).json({ error: error.message });
+      } else if (error instanceof ValidationError) {
+        res.status(400).json({ error: error.message });
+      } else if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to retrieve treatment step" });
+      }
+    }
+  }
+
+  // Update treatment step
+  async updateTreatmentStep(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new AuthenticationError();
+      }
+
+      const { stepId } = req.params;
+      const stepIdNum = parseInt(stepId);
+
+      if (isNaN(stepIdNum)) {
+        throw new ValidationError("Invalid step ID");
+      }
+
+      const step = await this.model.getTreatmentStep(stepIdNum);
+      if (!step) {
+        throw new NotFoundError("Treatment step not found");
+      }
+
+      // Get the plan to check ownership
+      const plan = await this.model.getTreatmentPlan(step.treatmentPlanId);
+      if (!plan || plan.userId !== req.user.id) {
+        throw new AuthorizationError("Access denied");
+      }
+
+      const updatedStep = await this.model.updateTreatmentStep(
+        stepIdNum,
+        req.body
+      );
+      res.json(updatedStep);
+    } catch (error) {
+      logger.error("Error updating treatment step:", error);
+      if (error instanceof AuthenticationError) {
+        res.status(401).json({ error: "Authentication required" });
+      } else if (error instanceof AuthorizationError) {
+        res.status(403).json({ error: error.message });
+      } else if (error instanceof ValidationError) {
+        res.status(400).json({ error: error.message });
+      } else if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to update treatment step" });
+      }
+    }
+  }
+
+  // Delete treatment step
+  async deleteTreatmentStep(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new AuthenticationError();
+      }
+
+      const { stepId } = req.params;
+      const stepIdNum = parseInt(stepId);
+
+      if (isNaN(stepIdNum)) {
+        throw new ValidationError("Invalid step ID");
+      }
+
+      const step = await this.model.getTreatmentStep(stepIdNum);
+      if (!step) {
+        throw new NotFoundError("Treatment step not found");
+      }
+
+      // Get the plan to check ownership
+      const plan = await this.model.getTreatmentPlan(step.treatmentPlanId);
+      if (!plan || plan.userId !== req.user.id) {
+        throw new AuthorizationError("Access denied");
+      }
+
+      await this.model.deleteTreatmentStep(stepIdNum);
+      res.status(204).send();
+    } catch (error) {
+      logger.error("Error deleting treatment step:", error);
+      if (error instanceof AuthenticationError) {
+        res.status(401).json({ error: "Authentication required" });
+      } else if (error instanceof AuthorizationError) {
+        res.status(403).json({ error: error.message });
+      } else if (error instanceof ValidationError) {
+        res.status(400).json({ error: error.message });
+      } else if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to delete treatment step" });
+      }
+    }
+  }
+
+  // Record treatment progress
+  async recordTreatmentProgress(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new AuthenticationError();
+      }
+
+      const { stepId } = req.params;
+      const stepIdNum = parseInt(stepId);
+
+      if (isNaN(stepIdNum)) {
+        throw new ValidationError("Invalid step ID");
+      }
+
+      const step = await this.model.getTreatmentStep(stepIdNum);
+      if (!step) {
+        throw new NotFoundError("Treatment step not found");
+      }
+
+      // Get the plan to check ownership
+      const plan = await this.model.getTreatmentPlan(step.treatmentPlanId);
+      if (!plan || plan.userId !== req.user.id) {
+        throw new AuthorizationError("Access denied");
+      }
+
+      const progressData = {
+        ...req.body,
+        treatmentStepId: stepIdNum,
+        userId: req.user.id,
+      };
+
+      const progress = await this.model.recordTreatmentProgress(progressData);
+      res.status(201).json(progress);
+    } catch (error) {
+      logger.error("Error recording treatment progress:", error);
+      if (error instanceof AuthenticationError) {
+        res.status(401).json({ error: "Authentication required" });
+      } else if (error instanceof AuthorizationError) {
+        res.status(403).json({ error: error.message });
+      } else if (error instanceof ValidationError) {
+        res.status(400).json({ error: error.message });
+      } else if (error instanceof NotFoundError) {
+        res.status(404).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to record treatment progress" });
+      }
+    }
+  }
+
+  // Get treatment products
+  async getTreatmentProducts(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        throw new AuthenticationError();
+      }
+
+      const { disease, plantType } = req.query;
+      const products = await this.getTreatmentProducts(
+        disease as string,
+        plantType as string
+      );
+      res.json(products);
+    } catch (error) {
+      logger.error("Error fetching treatment products:", error);
+      if (error instanceof AuthenticationError) {
+        res.status(401).json({ error: "Authentication required" });
+      } else {
+        res
+          .status(500)
+          .json({ error: "Failed to retrieve treatment products" });
+      }
+    }
+  }
+
   // Helper methods (these would typically be injected or moved to a service)
   private async getPlantAnalysis(analysisId: number): Promise<any> {
     // This would typically use a PlantAnalysisModel
