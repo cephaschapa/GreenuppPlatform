@@ -148,7 +148,11 @@ interface HistoricalWeatherData {
 export default function WeatherPage() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
-  const [activeLocation, setActiveLocation] = useState<string | null>(null);
+  const [activeLocation, setActiveLocation] = useState<string | null>(() => {
+    // Try to get the last active location from localStorage
+    const savedLocation = localStorage.getItem("weatherActiveLocation");
+    return savedLocation || null;
+  });
   const [climateData, setClimateData] = useState<ClimateData | null>(null);
   const [loadingClimate, setLoadingClimate] = useState(false);
   const [cropRecommendations, setCropRecommendations] = useState<
@@ -383,6 +387,7 @@ export default function WeatherPage() {
       navigator.geolocation
     ) {
       setHasAttemptedAutoDetect(true);
+      console.log("Attempting to auto-detect location...");
 
       // Check if we have permission to access location
       navigator.permissions
@@ -390,31 +395,63 @@ export default function WeatherPage() {
         .then((permissionStatus) => {
           if (permissionStatus.state === "granted") {
             // User has already granted permission, auto-detect
+            console.log("Location permission granted, detecting location...");
             detectCurrentLocation();
+          } else {
+            console.log(
+              "Location permission not granted:",
+              permissionStatus.state
+            );
           }
           // If permission is 'denied' or 'prompt', don't auto-detect to avoid annoying the user
         })
         .catch(() => {
           // Permissions API not supported, don't auto-detect
+          console.log("Permissions API not supported");
         });
     }
   }, [activeLocation, isLoading, hasAttemptedAutoDetect]);
 
-  // Set first location as active when preferences load
+  // Save active location to localStorage whenever it changes
   useEffect(() => {
-    if (
-      preferences?.locations &&
-      preferences.locations.length > 0 &&
-      !activeLocation
-    ) {
-      setActiveLocation(preferences.locations[0]);
+    if (activeLocation) {
+      localStorage.setItem("weatherActiveLocation", activeLocation);
+    } else {
+      // Clear localStorage if no active location
+      localStorage.removeItem("weatherActiveLocation");
+    }
+  }, [activeLocation]);
+
+  // Validate and set active location when preferences load
+  useEffect(() => {
+    if (preferences?.locations && preferences.locations.length > 0) {
+      // If we have a saved location, check if it's still in user's preferences
+      if (activeLocation && preferences.locations.includes(activeLocation)) {
+        // Saved location is still valid, keep it
+        console.log("Using saved active location:", activeLocation);
+      } else if (
+        !activeLocation ||
+        !preferences.locations.includes(activeLocation)
+      ) {
+        // Either no active location or saved location is no longer in preferences
+        // Set the first location as active
+        console.log(
+          "Setting active location from preferences:",
+          preferences.locations[0]
+        );
+        setActiveLocation(preferences.locations[0]);
+      }
     }
   }, [preferences, activeLocation]);
 
   // Fetch weather for the active location
   useEffect(() => {
-    if (!activeLocation) return;
+    if (!activeLocation) {
+      console.log("No active location, skipping weather fetch");
+      return;
+    }
 
+    console.log("Fetching weather for location:", activeLocation);
     const fetchWeather = async () => {
       setLoadingWeather(true);
       try {
