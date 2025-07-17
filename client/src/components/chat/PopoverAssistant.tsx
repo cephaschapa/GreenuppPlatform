@@ -223,11 +223,7 @@ export function PopoverAssistant() {
                     <Maximize2 size={16} />
                   </Button>
                 </Link>
-                <DialogClose asChild>
-                  <Button variant="ghost" size="icon" title="Close">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </DialogClose>
+                <DialogClose asChild></DialogClose>
               </div>
             </div>
           </DialogHeader>
