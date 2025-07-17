@@ -113,7 +113,7 @@ export function PopoverAssistant() {
         id: crypto.randomUUID(),
         userId: user!.id,
         sessionId: currentSession.id,
-        content: data.message,
+        content: data.response, // Changed from data.message to data.response
         role: "assistant",
         timestamp: Date.now(),
       };
@@ -217,12 +217,14 @@ export function PopoverAssistant() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setOpen(false)}
+                    title="Open in full page"
+                    className="-mt-4 mr-2"
                   >
-                    <Maximize2 className="h-4 w-4" />
+                    <Maximize2 size={16} />
                   </Button>
                 </Link>
                 <DialogClose asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" title="Close">
                     <X className="h-4 w-4" />
                   </Button>
                 </DialogClose>
@@ -294,7 +296,23 @@ export function PopoverAssistant() {
                         {message.role === "user" ? (
                           <p>{message.content}</p>
                         ) : (
-                          <Markdown>{message.content}</Markdown>
+                          <div>
+                            {/* Debug: Show raw content */}
+                            {(() => {
+                              console.log(
+                                "Assistant message content:",
+                                message.content
+                              );
+                              return null;
+                            })()}
+                            {message.content ? (
+                              <Markdown>{message.content}</Markdown>
+                            ) : (
+                              <p className="text-muted-foreground italic">
+                                No content available
+                              </p>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
