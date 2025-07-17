@@ -6,15 +6,19 @@ interface OAuthButtonsProps {
   onGoogleClick: () => void;
   onFacebookClick: () => void;
   isLoading?: boolean;
+  mode?: "login" | "register";
 }
 
 export function OAuthButtons({
   onGoogleClick,
   onFacebookClick,
   isLoading,
+  mode = "login",
 }: OAuthButtonsProps) {
+  const isRegisterMode = mode === "register";
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
@@ -34,7 +38,7 @@ export function OAuthButtons({
           className="w-full"
         >
           <FcGoogle className="mr-2 h-4 w-4" />
-          Google
+          {isRegisterMode ? "Sign up with Google" : "Login with Google"}
         </Button>
 
         <Button
@@ -44,7 +48,7 @@ export function OAuthButtons({
           className="w-full"
         >
           <FaFacebook className="mr-2 h-4 w-4 text-blue-600" />
-          Facebook
+          {isRegisterMode ? "Sign up with Facebook" : "Login with Facebook"}
         </Button>
       </div>
     </div>

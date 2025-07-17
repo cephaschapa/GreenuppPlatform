@@ -30,6 +30,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import LocationMap from "@/components/marketplace/LocationMap";
 import { Textarea } from "@/components/ui/textarea";
+import { TrustBadges } from "@/components/marketplace/TrustBadges";
 import {
   Carousel,
   CarouselContent,
@@ -558,6 +559,9 @@ export default function MarketplaceDetailPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Trust & Transparency Details */}
+                <TrustBadges listing={listing} />
 
                 <Separator className="my-4" />
 

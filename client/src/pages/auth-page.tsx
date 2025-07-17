@@ -154,7 +154,7 @@ function LoginForm() {
   const [pendingCredentials, setPendingCredentials] = useState<{
     email: string;
     password: string;
-    rememberMe: boolean;
+    rememberMe?: boolean;
   } | null>(null);
   const { toast } = useToast();
 
@@ -168,7 +168,11 @@ function LoginForm() {
   });
 
   function onSubmit(values: z.infer<typeof loginUserSchema>) {
-    setPendingCredentials(values);
+    setPendingCredentials({
+      email: values.email,
+      password: values.password,
+      rememberMe: values.rememberMe || false,
+    });
 
     // First, try to login normally
     loginMutation.mutate(values, {
@@ -357,11 +361,14 @@ function LoginForm() {
         </Form>
 
         {/* OAuth Buttons */}
-        <OAuthButtons
-          onGoogleClick={() => handleOAuthLogin("google")}
-          onFacebookClick={() => handleOAuthLogin("facebook")}
-          isLoading={loginMutation.isPending}
-        />
+        <div className="mt-6">
+          <OAuthButtons
+            onGoogleClick={() => handleOAuthLogin("google")}
+            onFacebookClick={() => handleOAuthLogin("facebook")}
+            isLoading={loginMutation.isPending}
+            mode="login"
+          />
+        </div>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-gray-500">
@@ -400,6 +407,15 @@ function RegisterForm() {
       },
     });
   }
+
+  const handleOAuthLogin = (provider: string) => {
+    window.location.href = `/api/auth/${provider}`;
+  };
+
+  const handleOAuthRegister = (provider: string) => {
+    // For registration, we'll use the same OAuth flow but with a registration flag
+    window.location.href = `/api/auth/${provider}?mode=register`;
+  };
 
   return (
     <Card>
@@ -607,6 +623,16 @@ function RegisterForm() {
             </Button>
           </form>
         </Form>
+
+        {/* OAuth Buttons */}
+        <div className="mt-6">
+          <OAuthButtons
+            onGoogleClick={() => handleOAuthRegister("google")}
+            onFacebookClick={() => handleOAuthRegister("facebook")}
+            isLoading={registerMutation.isPending}
+            mode="register"
+          />
+        </div>
       </CardContent>
     </Card>
   );

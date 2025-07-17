@@ -3,6 +3,7 @@ import healthRoutes from "./health-mvc.js";
 import userRoutes from "./users.js";
 import fieldRoutes from "./fields.js";
 import cropRoutes from "./crops.js";
+import cropActivityRoutes from "./crop-activities.js";
 import fieldCropRoutes from "./field-crops.js";
 import taskRoutes from "./tasks.js";
 import weatherRoutes from "./weather.js";
@@ -35,6 +36,9 @@ export function registerMvcRoutes(app: Express): void {
 
   // Crop management routes
   app.use("/api/crops", cropRoutes);
+
+  // Crop activities routes
+  app.use("/api/crop-activities", cropActivityRoutes);
 
   // Field-specific crop routes
   app.use("/api/fields/:fieldId/crops", fieldCropRoutes);

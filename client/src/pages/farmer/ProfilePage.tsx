@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -83,6 +83,15 @@ const extendedFarmerProfileSchema = insertFarmerProfileSchema.extend({
   farmLocation: z.string().min(1, "Farm location is required"),
   farmSize: z.string().min(1, "Farm size is required"),
   cropsInput: z.string().optional(),
+  contactPhone: z.string().nullable().optional(),
+  bio: z.string().nullable().optional(),
+  establishedYear: z
+    .union([
+      z.number(),
+      z.string().transform((val) => (val ? parseInt(val, 10) : undefined)),
+      z.null(),
+    ])
+    .optional(),
 });
 
 // Type for the main form that combines both schemas
@@ -194,7 +203,7 @@ export default function ProfilePage() {
   });
 
   // Update the form when data is loaded
-  useState(() => {
+  useEffect(() => {
     if (user && farmerProfile) {
       form.reset({
         firstName: user.firstName || "",
@@ -210,7 +219,7 @@ export default function ProfilePage() {
         establishedYear: farmerProfile.establishedYear?.toString() || "",
       });
     }
-  });
+  }, [user, farmerProfile, form]);
 
   // Handle profile update
   const updateProfile = useMutation({
@@ -490,7 +499,13 @@ export default function ProfilePage() {
                               placeholder="Year your farm was established"
                               disabled={!editMode}
                               {...field}
-                              value={field.value || ""}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                field.onChange(
+                                  value ? parseInt(value, 10) : undefined
+                                );
+                              }}
+                              value={field.value?.toString() ?? ""}
                             />
                           </FormControl>
                           <FormMessage />
@@ -607,7 +622,7 @@ export default function ProfilePage() {
                               placeholder="Your phone number"
                               disabled={!editMode}
                               {...field}
-                              value={field.value || ""}
+                              value={field.value ?? ""}
                             />
                           </FormControl>
                           <FormMessage />
@@ -627,7 +642,7 @@ export default function ProfilePage() {
                               className="min-h-[120px]"
                               disabled={!editMode}
                               {...field}
-                              value={field.value || ""}
+                              value={field.value ?? ""}
                             />
                           </FormControl>
                           <FormMessage />

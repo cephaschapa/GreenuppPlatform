@@ -109,6 +109,40 @@ export function FarmerDashboard() {
     enabled: !!farmerProfile,
   });
 
+  // Fetch statistics for the dashboard
+  const { data: stats } = useQuery({
+    queryKey: ["/api/stats"],
+    queryFn: async () => {
+      try {
+        const [fieldsRes, cropsRes, tasksRes] = await Promise.all([
+          fetch("/api/fields"),
+          fetch("/api/crops"),
+          fetch("/api/tasks"),
+        ]);
+
+        const fields = fieldsRes.ok ? await fieldsRes.json() : [];
+        const crops = cropsRes.ok ? await cropsRes.json() : [];
+        const tasks = tasksRes.ok ? await tasksRes.json() : [];
+
+        return {
+          totalFields: fields.length,
+          totalCrops: crops.length,
+          activeTasks: tasks.filter((task: any) => !task.completed).length,
+          completedTasks: tasks.filter((task: any) => task.completed).length,
+        };
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+        return {
+          totalFields: 0,
+          totalCrops: 0,
+          activeTasks: 0,
+          completedTasks: 0,
+        };
+      }
+    },
+    enabled: !!farmerProfile,
+  });
+
   // Function to fetch weather data
   const fetchWeatherData = async () => {
     if (!farmerProfile?.farmLocation) return;
@@ -131,7 +165,7 @@ export function FarmerDashboard() {
 
       toast({
         title: "Weather data updated",
-        description: `Showing forecast for ${  farmerProfile.farmLocation}`,
+        description: `Showing forecast for ${farmerProfile.farmLocation}`,
       });
     } catch (error) {
       console.error("Error fetching weather:", error);
@@ -150,6 +184,30 @@ export function FarmerDashboard() {
       fetchWeatherData();
     }
   }, [farmerProfile]);
+
+  // Calculate profile completion percentage
+  const calculateProfileCompletion = () => {
+    if (!farmerProfile || !user) return 0;
+
+    const requiredFields = [
+      farmerProfile.farmName,
+      farmerProfile.farmLocation,
+      farmerProfile.farmSize,
+      farmerProfile.farmType,
+      farmerProfile.contactPhone,
+      farmerProfile.bio,
+      user.firstName,
+      user.lastName,
+      user.email,
+    ];
+
+    const completedFields = requiredFields.filter(
+      (field) => field && field.toString().trim() !== ""
+    ).length;
+    return Math.round((completedFields / requiredFields.length) * 100);
+  };
+
+  const profileCompletion = calculateProfileCompletion();
 
   // Handle missing profile
   if (!profileLoading && !farmerProfile) {
@@ -172,6 +230,35 @@ export function FarmerDashboard() {
               </p>
               <Link href="/profile-creation">
                 <Button variant="default">Complete Farm Profile</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Handle incomplete profile
+  if (farmerProfile && profileCompletion < 100) {
+    return (
+      <div className="grid grid-cols-1 gap-6">
+        <Card className="bg-secondary/30 border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-xl font-medium text-white font-space">
+              Complete Your Profile ({profileCompletion}%)
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              Complete your profile to unlock all dashboard features
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-48 flex flex-col items-center justify-center border border-dashed border-primary/40 rounded-md p-6">
+              <p className="text-gray-300 text-center mb-4">
+                Your profile is {profileCompletion}% complete. Complete it to
+                unlock all dashboard features.
+              </p>
+              <Link href="/dashboard/profile">
+                <Button variant="default">Complete Profile</Button>
               </Link>
             </div>
           </CardContent>
@@ -342,6 +429,8 @@ export function FarmerDashboard() {
 
   // State for dialogs
   const [selectedFieldForCrop, setSelectedFieldForCrop] = useState<any>(null);
+  const [isAddCropDialogOpen, setIsAddCropDialogOpen] = useState(false);
+  const [newCropFieldId, setNewCropFieldId] = useState<number | null>(null);
 
   // Handle crop dialog trigger
   const handleAddCropClick = () => {
@@ -657,6 +746,67 @@ export function FarmerDashboard() {
           </CardFooter>
         </Card>
       </div>
+
+      {/* Stats Overview - Show when profile is complete */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card className="bg-secondary/30 border-primary/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <MapPin className="h-4 w-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Fields</p>
+                  <p className="text-2xl font-bold">{stats.totalFields}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-secondary/30 border-primary/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Crop className="h-4 w-4 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Crops</p>
+                  <p className="text-2xl font-bold">{stats.totalCrops}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-secondary/30 border-primary/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <Clock className="h-4 w-4 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Active Tasks</p>
+                  <p className="text-2xl font-bold">{stats.activeTasks}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-secondary/30 border-primary/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <CheckCircle className="h-4 w-4 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Completed</p>
+                  <p className="text-2xl font-bold">{stats.completedTasks}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Detailed Crop Management View */}
       <Card className="bg-secondary/30 border-primary/20">

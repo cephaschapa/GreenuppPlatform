@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTasks } from "@/hooks/use-tasks";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -72,6 +72,7 @@ const taskFormSchema = insertFarmerTaskSchema.extend({
 
 export function TaskManager() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date()
   );
@@ -105,6 +106,30 @@ export function TaskManager() {
       dueDate: new Date(),
     },
   });
+
+  // Prefill form when editing a task
+  useEffect(() => {
+    if (editingTask) {
+      form.reset({
+        userId: user?.id,
+        title: editingTask.title || "",
+        description: editingTask.description || "",
+        priority: editingTask.priority || "medium",
+        dueDate: editingTask.dueDate
+          ? new Date(editingTask.dueDate)
+          : new Date(),
+      });
+    } else {
+      // Reset form for new task
+      form.reset({
+        userId: user?.id,
+        title: "",
+        description: "",
+        priority: "medium",
+        dueDate: new Date(),
+      });
+    }
+  }, [editingTask, user?.id, form]);
 
   // Handler for task creation
   const onSubmit = (values: z.infer<typeof taskFormSchema>) => {

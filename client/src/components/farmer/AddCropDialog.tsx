@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -103,16 +103,16 @@ export function AddCropDialog({ field, trigger }: AddCropDialogProps) {
   const form = useForm<z.infer<typeof cropFormSchema>>({
     resolver: zodResolver(cropFormSchema),
     defaultValues: {
-      userId: 2, // Hard-coded for now - should come from authentication context
+      userId: user?.id || 2, // Use actual user ID from auth context
       fieldId: field.id,
       name: "",
       variety: "",
       plantingDate: "",
       expectedHarvestDate: "",
-      fieldSize: "0",
-      sizeUnit: "hectares",
+      fieldSize: field.size?.toString() || "0", // Prefill with field size
+      sizeUnit: field.sizeUnit || "hectares", // Use field's size unit
       status: "planning",
-      notes: "",
+      notes: field.notes || "", // Prefill with field notes
       batchId: "",
       seedSource: "",
       seedVariety: "",
@@ -122,6 +122,13 @@ export function AddCropDialog({ field, trigger }: AddCropDialogProps) {
       traceabilityQrCode: "",
     },
   });
+
+  // Auto-generate batch ID when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      generateBatchId();
+    }
+  }, [isOpen]);
 
   // Create crop mutation
   const createCropMutation = useMutation({

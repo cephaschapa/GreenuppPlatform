@@ -6,6 +6,11 @@ import { User } from "@shared/schema";
 import { logger } from "../lib/logger.js";
 import speakeasy from "speakeasy";
 
+// Type for session with oauthMode
+interface ExtendedSession {
+  oauthMode?: "login" | "register";
+}
+
 const router = Router();
 
 // Helper function to get client IP
@@ -14,7 +19,8 @@ function getClientIP(req: Request): string {
     req.ip ||
     req.connection.remoteAddress ||
     req.socket.remoteAddress ||
-    (req.connection as any).socket?.remoteAddress ||
+    (req.connection as { socket?: { remoteAddress?: string } }).socket
+      ?.remoteAddress ||
     "unknown"
   );
 }
@@ -126,7 +132,7 @@ router.post(
       }
 
       // Login successful
-      req.login(user as any, async (err) => {
+      req.login(user as unknown, async (err) => {
         if (err) return next(err);
 
         // Create device session
@@ -135,7 +141,7 @@ router.post(
 
         await AuthService.createDeviceSession(
           user.id,
-          req.sessionID!,
+          req.sessionID,
           deviceInfo,
           expiresAt
         );
@@ -159,7 +165,8 @@ router.post(
           userAgent
         );
 
-        const { password: _, ...userWithoutPassword } = user;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password: _password, ...userWithoutPassword } = user;
         res.json(userWithoutPassword);
       });
     } catch (error) {
@@ -172,6 +179,15 @@ router.post(
 // OAuth routes
 router.get(
   "/google",
+  (req: Request, res: Response, next: NextFunction) => {
+    // Store the mode (login/register) in session for callback
+    if (req.query.mode === "register") {
+      req.session.oauthMode = "register";
+    } else {
+      req.session.oauthMode = "login";
+    }
+    next();
+  },
   passport.authenticate("google", {
     scope: ["profile", "email"],
   })
@@ -187,23 +203,34 @@ router.get(
       const user = req.user as User;
       const deviceInfo = getDeviceInfo(req);
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const oauthMode = (req.session as ExtendedSession).oauthMode || "login";
 
       await AuthService.createDeviceSession(
         user.id,
-        req.sessionID!,
+        req.sessionID,
         deviceInfo,
         expiresAt
       );
 
       await AuthService.logSecurityEvent(
         user.id,
-        "oauth_login",
-        "User logged in via Google OAuth",
+        oauthMode === "register" ? "oauth_register" : "oauth_login",
+        `User ${
+          oauthMode === "register" ? "registered" : "logged in"
+        } via Google OAuth`,
         getClientIP(req),
         req.headers["user-agent"]
       );
 
-      res.redirect("/dashboard");
+      // Clear the OAuth mode from session
+      delete (req.session as ExtendedSession).oauthMode;
+
+      // Redirect based on mode
+      if (oauthMode === "register") {
+        res.redirect("/dashboard?welcome=true");
+      } else {
+        res.redirect("/dashboard");
+      }
     } catch (error) {
       logger.error("Google OAuth callback error:", error);
       res.redirect("/auth?error=oauth_failed");
@@ -213,6 +240,15 @@ router.get(
 
 router.get(
   "/facebook",
+  (req: Request, res: Response, next: NextFunction) => {
+    // Store the mode (login/register) in session for callback
+    if (req.query.mode === "register") {
+      req.session.oauthMode = "register";
+    } else {
+      req.session.oauthMode = "login";
+    }
+    next();
+  },
   passport.authenticate("facebook", {
     scope: ["email"],
   })
@@ -228,23 +264,34 @@ router.get(
       const user = req.user as User;
       const deviceInfo = getDeviceInfo(req);
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const oauthMode = req.session.oauthMode || "login";
 
       await AuthService.createDeviceSession(
         user.id,
-        req.sessionID!,
+        req.sessionID,
         deviceInfo,
         expiresAt
       );
 
       await AuthService.logSecurityEvent(
         user.id,
-        "oauth_login",
-        "User logged in via Facebook OAuth",
+        oauthMode === "register" ? "oauth_register" : "oauth_login",
+        `User ${
+          oauthMode === "register" ? "registered" : "logged in"
+        } via Facebook OAuth`,
         getClientIP(req),
         req.headers["user-agent"]
       );
 
-      res.redirect("/dashboard");
+      // Clear the OAuth mode from session
+      delete req.session.oauthMode;
+
+      // Redirect based on mode
+      if (oauthMode === "register") {
+        res.redirect("/dashboard?welcome=true");
+      } else {
+        res.redirect("/dashboard");
+      }
     } catch (error) {
       logger.error("Facebook OAuth callback error:", error);
       res.redirect("/auth?error=oauth_failed");
@@ -307,7 +354,7 @@ router.post("/2fa/enable", async (req: Request, res: Response) => {
 
     // Verify the token against the provided secret (not stored secret)
     const isValid = speakeasy.totp.verify({
-      secret: secret,
+      secret,
       encoding: "base32",
       token,
       window: 2, // Allow 2 time steps for clock skew
@@ -497,9 +544,6 @@ router.get("/security/events", async (req: Request, res: Response) => {
   }
 
   try {
-    const user = req.user as User;
-    const { limit = 50 } = req.query;
-
     // This would need to be implemented in the service
     // For now, we'll return a placeholder
     res.json({ message: "Security events endpoint - to be implemented" });

@@ -21,6 +21,7 @@ import UploadTestPage from "@/pages/UploadTestPage";
 import EmailNotificationTestPage from "@/pages/EmailNotificationTestPage";
 import PublicEmailTestPage from "@/pages/PublicEmailTestPage";
 import SystemHealthPage from "@/pages/admin/SystemHealthPage";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
 import SecuritySettings from "@/pages/auth/SecuritySettings";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { SocketIOProvider } from "@/hooks/use-socketio";
@@ -147,6 +148,7 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
         />
 
         {/* Admin routes - without /dashboard prefix on app subdomain */}
+        <ProtectedRoute path="/admin" component={AdminDashboard} />
         <ProtectedRoute path="/system-health" component={SystemHealthPage} />
 
         <Route component={NotFound} />
@@ -269,6 +271,7 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
       />
 
       {/* Admin routes on main domain - with /dashboard prefix */}
+      <ProtectedRoute path="/dashboard/admin" component={AdminDashboard} />
       <ProtectedRoute
         path="/dashboard/system-health"
         component={SystemHealthPage}

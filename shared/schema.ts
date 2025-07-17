@@ -635,6 +635,73 @@ export const marketplaceListings = pgTable("marketplace_listings", {
   certifications: text("certifications").array(), // Any certifications (organic, fair trade, etc.)
   blockchainVerified: boolean("blockchain_verified").default(false), // Whether this listing has been verified on blockchain
   traceabilityBatchId: text("traceability_batch_id"), // For linking multiple products from same batch
+
+  // Enhanced Blockchain and Traceability
+  blockchainId: text("blockchain_id"), // Unique blockchain identifier
+  blockchainTxHash: text("blockchain_tx_hash"), // Blockchain transaction hash
+  blockchainVerifiedAt: timestamp("blockchain_verified_at"), // When blockchain verification was completed
+
+  // Greenupp Platform Verification
+  greenuppVerified: boolean("greenupp_verified").default(false), // Platform verification status
+  greenuppVerifiedAt: timestamp("greenupp_verified_at"), // When platform verification was completed
+  greenuppVerificationLevel: text("greenupp_verification_level").default(
+    "basic"
+  ), // basic, premium, certified
+
+  // Farm Details
+  farmName: text("farm_name"), // Name of the farm
+  farmLocation: text("farm_location"), // Location of the farm
+  farmSize: text("farm_size"), // Size of the farm
+  farmType: text("farm_type"), // Type of farm (organic, conventional, etc.)
+  farmEstablishedYear: integer("farm_established_year"), // Year farm was established
+  farmCertifications: text("farm_certifications").array(), // Array of farm certifications
+  farmComplianceStatus: text("farm_compliance_status").default("pending"), // pending, compliant, non_compliant
+  farmAuditDate: timestamp("farm_audit_date"), // Last audit date
+
+  // Quality Assurance
+  qualityScore: decimal("quality_score", { precision: 3, scale: 2 }), // 0.00 to 5.00 quality rating
+  qualityTested: boolean("quality_tested").default(false), // Whether product has been quality tested
+  qualityTestDate: timestamp("quality_test_date"), // When quality test was conducted
+  qualityTestResults: jsonb("quality_test_results"), // Detailed test results as JSON
+
+  // Certifications and Compliance
+  organicCertified: boolean("organic_certified").default(false), // Organic certification
+  organicCertificationId: text("organic_certification_id"), // Organic certification ID
+  fairTradeCertified: boolean("fair_trade_certified").default(false), // Fair trade certification
+  fairTradeCertificationId: text("fair_trade_certification_id"), // Fair trade certification ID
+
+  // Sustainability Metrics
+  sustainabilityScore: decimal("sustainability_score", {
+    precision: 3,
+    scale: 2,
+  }), // 0.00 to 5.00 sustainability rating
+  carbonFootprint: decimal("carbon_footprint", { precision: 10, scale: 2 }), // CO2 equivalent in kg
+  waterUsage: decimal("water_usage", { precision: 10, scale: 2 }), // Water usage in liters
+
+  // Product Attributes
+  pesticideFree: boolean("pesticide_free").default(false), // Pesticide free
+  gmoFree: boolean("gmo_free").default(false), // GMO free
+  localSourced: boolean("local_sourced").default(false), // Locally sourced
+
+  // Product Lifecycle
+  harvestDate: date("harvest_date"), // Harvest date
+  expiryDate: date("expiry_date"), // Expiry date
+  storageConditions: text("storage_conditions"), // Storage conditions
+  transportMethod: text("transport_method"), // Transport method
+  packagingType: text("packaging_type"), // Packaging type
+  packagingMaterial: text("packaging_material"), // Packaging material
+  packagingRecyclable: boolean("packaging_recyclable").default(false), // Recyclable packaging
+
+  // Seller Trust Metrics
+  sellerRating: decimal("seller_rating", { precision: 3, scale: 2 }), // Average seller rating
+  sellerReviewCount: integer("seller_review_count").default(0), // Number of seller reviews
+  sellerVerified: boolean("seller_verified").default(false), // Seller verification status
+  sellerVerifiedAt: timestamp("seller_verified_at"), // When seller was verified
+
+  // Overall Trust and Transparency
+  trustScore: decimal("trust_score", { precision: 3, scale: 2 }), // Overall trust score 0.00 to 5.00
+  transparencyLevel: text("transparency_level").default("basic"), // basic, enhanced, premium
+
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -709,6 +776,89 @@ export const insertMarketplaceListingSchema = createInsertSchema(
       .optional(),
     deliveryAvailable: z
       .union([z.boolean(), z.string().transform((val) => val === "true")])
+      .optional(),
+    // Convert sourceCropId from string to number
+    sourceCropId: z
+      .union([z.number(), z.string().transform((val) => parseInt(val, 10))])
+      .optional(),
+    // Handle boolean fields for trust features
+    blockchainVerified: z
+      .union([z.boolean(), z.string().transform((val) => val === "true")])
+      .optional(),
+    greenuppVerified: z
+      .union([z.boolean(), z.string().transform((val) => val === "true")])
+      .optional(),
+    qualityTested: z
+      .union([z.boolean(), z.string().transform((val) => val === "true")])
+      .optional(),
+    organicCertified: z
+      .union([z.boolean(), z.string().transform((val) => val === "true")])
+      .optional(),
+    fairTradeCertified: z
+      .union([z.boolean(), z.string().transform((val) => val === "true")])
+      .optional(),
+    pesticideFree: z
+      .union([z.boolean(), z.string().transform((val) => val === "true")])
+      .optional(),
+    gmoFree: z
+      .union([z.boolean(), z.string().transform((val) => val === "true")])
+      .optional(),
+    localSourced: z
+      .union([z.boolean(), z.string().transform((val) => val === "true")])
+      .optional(),
+    packagingRecyclable: z
+      .union([z.boolean(), z.string().transform((val) => val === "true")])
+      .optional(),
+    sellerVerified: z
+      .union([z.boolean(), z.string().transform((val) => val === "true")])
+      .optional(),
+    // Handle numeric fields
+    farmEstablishedYear: z
+      .union([z.number(), z.string().transform((val) => parseInt(val, 10))])
+      .optional(),
+    sellerReviewCount: z
+      .union([z.number(), z.string().transform((val) => parseInt(val, 10))])
+      .optional(),
+    // Handle decimal fields
+    qualityScore: z
+      .union([z.number(), z.string().transform((val) => parseFloat(val))])
+      .optional(),
+    sustainabilityScore: z
+      .union([z.number(), z.string().transform((val) => parseFloat(val))])
+      .optional(),
+    carbonFootprint: z
+      .union([z.number(), z.string().transform((val) => parseFloat(val))])
+      .optional(),
+    waterUsage: z
+      .union([z.number(), z.string().transform((val) => parseFloat(val))])
+      .optional(),
+    sellerRating: z
+      .union([z.number(), z.string().transform((val) => parseFloat(val))])
+      .optional(),
+    trustScore: z
+      .union([z.number(), z.string().transform((val) => parseFloat(val))])
+      .optional(),
+    // Handle date fields
+    harvestDate: z
+      .union([z.date(), z.string().transform((val) => new Date(val))])
+      .optional(),
+    expiryDate: z
+      .union([z.date(), z.string().transform((val) => new Date(val))])
+      .optional(),
+    blockchainVerifiedAt: z
+      .union([z.date(), z.string().transform((val) => new Date(val))])
+      .optional(),
+    greenuppVerifiedAt: z
+      .union([z.date(), z.string().transform((val) => new Date(val))])
+      .optional(),
+    qualityTestDate: z
+      .union([z.date(), z.string().transform((val) => new Date(val))])
+      .optional(),
+    farmAuditDate: z
+      .union([z.date(), z.string().transform((val) => new Date(val))])
+      .optional(),
+    sellerVerifiedAt: z
+      .union([z.date(), z.string().transform((val) => new Date(val))])
       .optional(),
   });
 

@@ -36,6 +36,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserRole } from "@shared/schema";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { AdminNav } from "./AdminNav";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -551,6 +552,9 @@ export function Sidebar() {
                 )}
               </div>
             ))}
+
+            {/* Admin Navigation */}
+            <AdminNav className="mt-6" />
           </nav>
         </ScrollArea>
 

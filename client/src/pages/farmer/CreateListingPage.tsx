@@ -4,10 +4,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ArrowLeft, Upload, Plus, X, MapPin, Loader2 } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import LocationSelector, {
   LocationData,
 } from "@/components/marketplace/LocationSelector";
+import { TrustDetailsForm } from "@/components/marketplace/TrustDetailsForm";
 import { useAuth } from "@/hooks/use-auth";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -99,6 +100,42 @@ const listingSchema = z.object({
   isNegotiable: z.boolean().default(false),
   deliveryAvailable: z.boolean().default(false),
   tags: z.array(z.string()).optional(),
+  // New source selection fields
+  source: z.string().min(1, { message: "Source is required" }),
+  sourceCropId: z.string().optional(),
+
+  // Trust and Transparency Fields
+  // Farm Information
+  farmName: z.string().optional(),
+  farmLocation: z.string().optional(),
+  farmSize: z.string().optional(),
+  farmType: z.string().optional(),
+  farmEstablishedYear: z.string().optional(),
+  farmCertifications: z.array(z.string()).optional(),
+  farmComplianceStatus: z.string().optional(),
+
+  // Certifications and Quality
+  organicCertified: z.boolean().default(false),
+  organicCertificationId: z.string().optional(),
+  fairTradeCertified: z.boolean().default(false),
+  fairTradeCertificationId: z.string().optional(),
+  pesticideFree: z.boolean().default(false),
+  gmoFree: z.boolean().default(false),
+  localSourced: z.boolean().default(false),
+
+  // Product Lifecycle
+  harvestDate: z.string().optional(),
+  expiryDate: z.string().optional(),
+  storageConditions: z.string().optional(),
+  transportMethod: z.string().optional(),
+  packagingType: z.string().optional(),
+  packagingMaterial: z.string().optional(),
+  packagingRecyclable: z.boolean().default(false),
+
+  // Sustainability Metrics
+  carbonFootprint: z.string().optional(),
+  waterUsage: z.string().optional(),
+
   // We'll handle images separately
 });
 
@@ -111,6 +148,46 @@ export default function CreateListingPage() {
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+
+  // Fetch user's crops for source selection
+  const { data: crops, isLoading: cropsLoading } = useQuery({
+    queryKey: ["/api/crops"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/crops");
+        if (!response.ok) {
+          throw new Error("Failed to fetch crops");
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Error fetching crops:", error);
+        return [];
+      }
+    },
+  });
+
+  // Fetch user's farmer profile for auto-filling farm details
+  const { data: farmerProfile } = useQuery({
+    queryKey: ["/api/profile"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/profile");
+        if (!response.ok) {
+          throw new Error("Failed to fetch profile");
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        return null;
+      }
+    },
+  });
+
+  // Filter crops that are harvested or completed
+  const availableCrops =
+    crops?.filter((crop: any) =>
+      ["harvesting", "completed"].includes(crop.status)
+    ) || [];
 
   // Create form
   const form = useForm<ListingFormValues>({
@@ -130,8 +207,121 @@ export default function CreateListingPage() {
       isNegotiable: false,
       deliveryAvailable: false,
       tags: [],
+      source: "",
+      sourceCropId: "",
+
+      // Trust and transparency defaults
+      farmName: "",
+      farmLocation: "",
+      farmSize: "",
+      farmType: "",
+      farmEstablishedYear: "",
+      farmCertifications: [],
+      farmComplianceStatus: "pending",
+      organicCertified: false,
+      organicCertificationId: "",
+      fairTradeCertified: false,
+      fairTradeCertificationId: "",
+      pesticideFree: false,
+      gmoFree: false,
+      localSourced: false,
+      harvestDate: "",
+      expiryDate: "",
+      storageConditions: "",
+      transportMethod: "",
+      packagingType: "",
+      packagingMaterial: "",
+      packagingRecyclable: false,
+      carbonFootprint: "",
+      waterUsage: "",
     },
   });
+
+  // Watch for source changes to handle auto-fill
+  const watchSource = form.watch("source");
+  const watchSourceCropId = form.watch("sourceCropId");
+
+  // Auto-fill form when crop is selected
+  useEffect(() => {
+    if (watchSource === "farm" && watchSourceCropId) {
+      const selectedCrop = availableCrops.find(
+        (crop: any) => crop.id.toString() === watchSourceCropId
+      );
+
+      if (selectedCrop) {
+        // Auto-fill form with crop data
+        form.setValue(
+          "title",
+          `${selectedCrop.name}${
+            selectedCrop.variety ? ` - ${selectedCrop.variety}` : ""
+          }`
+        );
+        form.setValue(
+          "description",
+          `Fresh ${selectedCrop.name}${
+            selectedCrop.variety ? ` (${selectedCrop.variety})` : ""
+          } harvested from our farm.${
+            selectedCrop.notes ? ` ${selectedCrop.notes}` : ""
+          }`
+        );
+        form.setValue("category", "produce");
+
+        form.setValue("quantityUnit", selectedCrop.yieldUnit || "kg");
+        form.setValue("condition", "new");
+
+        // Set organic certification if available
+        if (selectedCrop.organicCertified) {
+          form.setValue("tags", ["organic", "farm-fresh"]);
+        } else {
+          form.setValue("tags", ["farm-fresh"]);
+        }
+      }
+    }
+  }, [watchSource, watchSourceCropId, availableCrops, form]);
+
+  // Auto-fill form with farmer profile data when available
+  useEffect(() => {
+    if (farmerProfile) {
+      // Prefill farm information from profile
+      form.setValue("farmName", farmerProfile.farmName || "");
+      form.setValue("farmLocation", farmerProfile.farmLocation || "");
+      form.setValue("farmSize", farmerProfile.farmSize || "");
+      form.setValue("farmType", farmerProfile.farmType || "");
+      form.setValue(
+        "farmEstablishedYear",
+        farmerProfile.establishedYear?.toString() || ""
+      );
+
+      // Prefill contact information
+      form.setValue("contactPhone", farmerProfile.contactPhone || "");
+
+      // Set organic certification based on profile if available
+      if (farmerProfile.organicCertified) {
+        form.setValue("organicCertified", true);
+        form.setValue(
+          "organicCertificationId",
+          farmerProfile.organicCertificationId || ""
+        );
+      }
+
+      // Set fair trade certification if available
+      if (farmerProfile.fairTradeCertified) {
+        form.setValue("fairTradeCertified", true);
+        form.setValue(
+          "fairTradeCertificationId",
+          farmerProfile.fairTradeCertificationId || ""
+        );
+      }
+
+      // Set other certifications from profile
+      if (
+        farmerProfile.certifications &&
+        farmerProfile.certifications.length > 0
+      ) {
+        form.setValue("farmCertifications", farmerProfile.certifications);
+      }
+    }
+  }, [farmerProfile, form]);
 
   // Log user data when component mounts
   useEffect(() => {
@@ -313,6 +503,16 @@ export default function CreateListingPage() {
       return;
     }
 
+    // Validate source selection
+    if (values.source === "farm" && !values.sourceCropId) {
+      toast({
+        title: "Crop selection required",
+        description: "Please select a crop when listing farm produce",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Create FormData to handle file uploads
     const formData = new FormData();
 
@@ -395,6 +595,95 @@ export default function CreateListingPage() {
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Source Selection */}
+                  <div className="md:col-span-2">
+                    <FormField
+                      control={form.control}
+                      name="source"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Source *</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select source of your product" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="farm">
+                                🚜 From Farm (Auto-fill crop data)
+                              </SelectItem>
+                              <SelectItem value="other">
+                                📦 Other (Manual entry)
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Choose whether this listing is for your farm produce
+                            or other items
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Crop Selection - Only show when "From Farm" is selected */}
+                  {watchSource === "farm" && (
+                    <div className="md:col-span-2">
+                      <FormField
+                        control={form.control}
+                        name="sourceCropId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Crop *</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              disabled={cropsLoading}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue
+                                    placeholder={
+                                      cropsLoading
+                                        ? "Loading crops..."
+                                        : availableCrops.length === 0
+                                        ? "No harvested crops available"
+                                        : "Select a crop to auto-fill details"
+                                    }
+                                  />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {availableCrops.map((crop: any) => (
+                                  <SelectItem
+                                    key={crop.id}
+                                    value={crop.id.toString()}
+                                  >
+                                    {crop.name}
+                                    {crop.variety && ` - ${crop.variety}`}
+                                    {crop.actualYield &&
+                                      ` (${crop.actualYield} ${crop.yieldUnit})`}
+                                    {crop.organicCertified && " 🌿 Organic"}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              Select a harvested crop to automatically fill in
+                              the listing details
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+
                   <div className="md:col-span-2">
                     <FormField
                       control={form.control}
@@ -759,6 +1048,22 @@ export default function CreateListingPage() {
                     Exact address will not be shared.
                   </p>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Trust and Transparency Details */}
+            <Card>
+              <CardContent className="p-6">
+                <h2 className="text-xl font-semibold mb-4">
+                  Trust & Transparency Details
+                </h2>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Add detailed information about your farm, certifications, and
+                  product quality to build trust with buyers and increase your
+                  sales.
+                </p>
+
+                <TrustDetailsForm farmerProfile={farmerProfile} />
               </CardContent>
             </Card>
 

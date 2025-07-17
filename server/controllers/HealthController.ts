@@ -122,6 +122,27 @@ export class HealthController {
   }
 
   /**
+   * Environment variables check (for debugging authentication issues)
+   */
+  static async checkEnvironment(req: Request, res: Response): Promise<void> {
+    logger.info("🔍 Environment variables check requested");
+
+    // Only show if variables are set, not their actual values for security
+    const envStatus = {
+      DATABASE_URL: !!process.env.DATABASE_URL,
+      SESSION_SECRET: !!process.env.SESSION_SECRET,
+      GOOGLE_CLIENT_ID: !!process.env.GOOGLE_CLIENT_ID,
+      GOOGLE_CLIENT_SECRET: !!process.env.GOOGLE_CLIENT_SECRET,
+      FACEBOOK_APP_ID: !!process.env.FACEBOOK_APP_ID,
+      FACEBOOK_APP_SECRET: !!process.env.FACEBOOK_APP_SECRET,
+      NODE_ENV: process.env.NODE_ENV || "development",
+      timestamp: new Date().toISOString(),
+    };
+
+    res.status(200).json(envStatus);
+  }
+
+  /**
    * Detailed health check
    */
   static async detailedHealth(req: Request, res: Response): Promise<void> {

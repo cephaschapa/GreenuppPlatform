@@ -15,4 +15,7 @@ router.get("/db", HealthController.databaseHealth);
 // Detailed health check
 router.get("/detailed", HealthController.detailedHealth);
 
+// Environment variables check (for debugging authentication issues)
+router.get("/env", HealthController.checkEnvironment);
+
 export default router;

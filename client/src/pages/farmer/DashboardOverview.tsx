@@ -20,11 +20,16 @@ import {
   Cloud,
   Sparkles,
   ChevronRight,
+  AlertCircle,
+  CheckCircle,
 } from "lucide-react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
+import { Progress } from "@/components/ui/progress";
 
 export default function DashboardOverview() {
+  const { user } = useAuth();
   // Fetch farmer profile
   const { data: farmerProfile, isLoading: profileLoading } =
     useQuery<FarmerProfile>({
@@ -172,11 +177,64 @@ export default function DashboardOverview() {
       .slice(0, 5);
   };
 
+  // Calculate profile completion percentage
+  const calculateProfileCompletion = () => {
+    if (!farmerProfile || !user) return 0;
+    const requiredFields = [
+      farmerProfile.farmName,
+      farmerProfile.farmLocation,
+      farmerProfile.farmSize,
+      farmerProfile.farmType,
+      farmerProfile.contactPhone,
+      farmerProfile.bio,
+      user.firstName,
+      user.lastName,
+      user.email,
+    ];
+    const completedFields = requiredFields.filter(
+      (field) => field && field.toString().trim() !== ""
+    ).length;
+    return Math.round((completedFields / requiredFields.length) * 100);
+  };
+  const profileCompletion = calculateProfileCompletion();
+
   return (
     <DashboardLayout
       title={`Welcome, ${farmerProfile?.farmName || "Farmer"}`}
       description="Your farming operations at a glance"
     >
+      {profileCompletion < 100 && (
+        <Card className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700 mb-4">
+          <CardContent className="pt-6 pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+                <div>
+                  <h3 className="font-medium">Profile Completion</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {profileCompletion === 100
+                      ? "Your profile is complete!"
+                      : "Complete your profile to unlock all features"}
+                  </p>
+                </div>
+              </div>
+              <Badge
+                variant={profileCompletion === 100 ? "default" : "secondary"}
+              >
+                {profileCompletion}%
+              </Badge>
+            </div>
+            <Progress value={profileCompletion} className="h-2 mb-2" />
+            <div className="flex justify-end">
+              <Link href="/dashboard/profile">
+                <Button size="sm" variant="default">
+                  Complete Profile
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       {isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />

@@ -41,7 +41,8 @@ app.use((req, res, next) => {
     path === "/auth" ||
     path.startsWith("/assets/") ||
     path.includes(".") ||
-    path.startsWith("/_assets/")
+    path.startsWith("/_assets/") ||
+    path.startsWith("/uploads/")
   ) {
     return next();
   }
