@@ -159,11 +159,22 @@ export const fields = pgTable("fields", {
     .notNull()
     .references(() => users.id),
   name: text("name").notNull(),
-  location: text("location"),
+  location: text("location"), // Keep for backward compatibility
+  locationId: integer("location_id").references(() => locations.id), // Link to precise location data
   size: decimal("size", { precision: 10, scale: 2 }),
   sizeUnit: text("size_unit").default("hectares"),
   soilType: text("soil_type"),
   notes: text("notes"),
+  // Field boundary as GeoJSON polygon
+  boundary: jsonb("boundary").$type<{
+    type: "Polygon";
+    coordinates: number[][][]; // [[[lng, lat], [lng, lat], ...]]
+  }>(),
+  // Calculated area from boundary (in square meters)
+  calculatedArea: decimal("calculated_area", { precision: 12, scale: 2 }),
+  // Center point of the field (calculated from boundary)
+  centerLat: decimal("center_lat", { precision: 10, scale: 7 }),
+  centerLng: decimal("center_lng", { precision: 10, scale: 7 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

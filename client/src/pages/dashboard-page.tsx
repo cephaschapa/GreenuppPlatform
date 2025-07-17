@@ -578,47 +578,72 @@ export default function DashboardPage() {
               </Card>
             </div>
 
-            {/* Quick Access */}
+            {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Card className="bg-card border hover:border-primary/30 transition-colors">
                 <CardHeader className="pb-2 px-4 py-3">
                   <CardTitle className="text-base md:text-lg font-medium flex items-center gap-2">
                     <TractorIcon className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                    <span className="hidden sm:inline">Add New Field</span>
-                    <span className="sm:hidden">Add Field</span>
+                    <span className="hidden sm:inline">Quick Actions</span>
+                    <span className="sm:hidden">Actions</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-3">
-                  <p className="text-sm text-muted-foreground">
-                    Map and configure your farming areas
-                  </p>
-                </CardContent>
-                <CardFooter className="pt-0 px-4 pb-3">
+                <CardContent className="px-4 pb-3 space-y-2">
                   <Link href="/dashboard/fields">
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="w-full justify-between text-xs md:text-sm"
+                      className="w-full justify-start text-xs md:text-sm"
                     >
-                      <span className="hidden sm:inline">Add Field</span>
-                      <span className="sm:hidden">Add</span>
-                      <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
+                      <TractorIcon className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                      <span className="hidden sm:inline">Add New Field</span>
+                      <span className="sm:hidden">Add Field</span>
                     </Button>
                   </Link>
-                </CardFooter>
+                  <Link href="/dashboard/fields">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start text-xs md:text-sm"
+                    >
+                      <Leaf className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                      <span className="hidden sm:inline">Add New Crop</span>
+                      <span className="sm:hidden">Add Crop</span>
+                    </Button>
+                  </Link>
+                </CardContent>
               </Card>
+
+              {/* Field Summary */}
               <Card className="bg-card border hover:border-primary/30 transition-colors">
                 <CardHeader className="pb-2 px-4 py-3">
                   <CardTitle className="text-base md:text-lg font-medium flex items-center gap-2">
-                    <Leaf className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                    <span className="hidden sm:inline">Add New Crop</span>
-                    <span className="sm:hidden">Add Crop</span>
+                    <TractorIcon className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                    <span className="hidden sm:inline">Field Summary</span>
+                    <span className="sm:hidden">Fields</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-3">
-                  <p className="text-sm text-muted-foreground">
-                    Add details about your crops and their status
-                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Total Fields:
+                      </span>
+                      <span className="font-medium">{fieldCount}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Active Crops:
+                      </span>
+                      <span className="font-medium">{cropCount}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Pending Tasks:
+                      </span>
+                      <span className="font-medium">{pendingTaskCount}</span>
+                    </div>
+                  </div>
                 </CardContent>
                 <CardFooter className="pt-0 px-4 pb-3">
                   <Link href="/dashboard/fields">
@@ -627,8 +652,8 @@ export default function DashboardPage() {
                       size="sm"
                       className="w-full justify-between text-xs md:text-sm"
                     >
-                      <span className="hidden sm:inline">Add Crop</span>
-                      <span className="sm:hidden">Add</span>
+                      <span className="hidden sm:inline">Manage Fields</span>
+                      <span className="sm:hidden">Manage</span>
                       <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
                     </Button>
                   </Link>
