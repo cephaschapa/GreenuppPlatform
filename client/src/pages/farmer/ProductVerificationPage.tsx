@@ -138,10 +138,12 @@ export default function ProductVerificationPage() {
     },
   });
 
-  // Filter crops that have begun production (planted, growing, harvested, processed)
+  // Filter crops that have begun production (planning, planted, growing, harvesting, completed)
   const productionCrops =
     crops?.filter((crop) =>
-      ["planted", "growing", "harvested", "processed"].includes(crop.status)
+      ["planning", "planted", "growing", "harvesting", "completed"].includes(
+        crop.status
+      )
     ) || [];
 
   // Filter scannable products (have batch IDs and QR codes)
@@ -258,13 +260,15 @@ export default function ProductVerificationPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case "planning":
+        return <Calendar className="h-4 w-4 text-gray-500" />;
       case "planted":
         return <Leaf className="h-4 w-4 text-blue-500" />;
       case "growing":
         return <BarChart3 className="h-4 w-4 text-green-500" />;
-      case "harvested":
+      case "harvesting":
         return <Package className="h-4 w-4 text-orange-500" />;
-      case "processed":
+      case "completed":
         return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       default:
         return <Calendar className="h-4 w-4 text-gray-500" />;
@@ -273,13 +277,15 @@ export default function ProductVerificationPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "planning":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
       case "planted":
         return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100";
       case "growing":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
-      case "harvested":
+      case "harvesting":
         return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100";
-      case "processed":
+      case "completed":
         return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100";
