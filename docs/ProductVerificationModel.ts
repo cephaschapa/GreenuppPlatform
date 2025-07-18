@@ -151,9 +151,13 @@ export class ProductVerificationModel {
       },
       {
         check: "Crop status valid",
-        passed: ["planted", "growing", "harvested", "processed"].includes(
-          crop.status
-        ),
+        passed: [
+          "planning",
+          "planted",
+          "growing",
+          "harvesting",
+          "completed",
+        ].includes(crop.status),
         details: `Crop status: ${crop.status}`,
       },
     ];

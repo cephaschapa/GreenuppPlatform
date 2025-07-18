@@ -200,7 +200,10 @@ export default function ProductVerificationPage() {
   // Verification mutation
   const verificationMutation = useMutation({
     mutationFn: async (batchId: string) => {
-      const response = await apiRequest("GET", `/api/trace/verify/${batchId}`);
+      const response = await apiRequest(
+        "GET",
+        `/api/product-verification/verify/${batchId}`
+      );
       return await response.json();
     },
     onSuccess: (data) => {

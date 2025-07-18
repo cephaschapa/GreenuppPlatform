@@ -23,8 +23,11 @@ export class CropTraceService {
     blockchainTxId: string;
     blockchainTxHash: string;
   }> {
-    // Generate a unique batch ID
-    const batchId = `batch_${nanoid(12)}`;
+    // Generate a unique batch ID using the same format as manual generation
+    const location = (cropData.location?.slice(0, 3) || "GEN").toUpperCase();
+    const date = new Date().toISOString().slice(2, 10).replace(/-/g, "");
+    const serial = Math.floor(1000 + Math.random() * 9000);
+    const batchId = `${location}-${date}-${serial}`;
 
     // Record the crop on the blockchain
     const { txId, txHash } = await hyperledgerService.createCropBatch(

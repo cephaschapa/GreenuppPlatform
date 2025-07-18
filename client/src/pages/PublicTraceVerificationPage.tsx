@@ -45,10 +45,13 @@ export default function PublicTraceVerificationPage() {
 
   // Fetch trace verification data
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["/api/trace", batchId],
+    queryKey: ["/api/product-verification/verify", batchId],
     queryFn: async () => {
       if (!batchId) return null;
-      const response = await apiRequest("GET", `/api/trace/${batchId}`);
+      const response = await apiRequest(
+        "GET",
+        `/api/product-verification/verify/${batchId}`
+      );
       return await response.json();
     },
     enabled: !!batchId,
@@ -68,218 +71,449 @@ export default function PublicTraceVerificationPage() {
       year: "numeric",
     });
   };
-  
+
   const getRegionBadge = (seedSource: string, seedVariety: string = "") => {
     if (!seedSource || !seedVariety) return "All Regions";
-    
+
     // ZAMSEED varieties
     if (seedSource === "zamseed") {
       switch (seedVariety) {
-        case "zms301": return "Region I";
-        case "zms405": return "Regions I & II";
-        case "zms520": return "Regions II & III";
-        case "zms606": return "Regions II & III";
-        case "zms620": return "Regions II & III";
-        case "zms638": return "Regions II & III";
-        case "zms720": return "Region III";
-        case "zms721": return "Region III";
-        case "gv664": return "Regions I & II";
-        default: return "All Regions";
+        case "zms301":
+          return "Region I";
+        case "zms405":
+          return "Regions I & II";
+        case "zms520":
+          return "Regions II & III";
+        case "zms606":
+          return "Regions II & III";
+        case "zms620":
+          return "Regions II & III";
+        case "zms638":
+          return "Regions II & III";
+        case "zms720":
+          return "Region III";
+        case "zms721":
+          return "Region III";
+        case "gv664":
+          return "Regions I & II";
+        default:
+          return "All Regions";
       }
     }
-    
+
     // SeedCo varieties
     if (seedSource === "seedco") {
       switch (seedVariety) {
-        case "sc633": return "Regions II & III";
-        case "sc637": return "Region III";
-        case "sc647": return "Regions I-III";
-        case "sc657": return "Regions I-III";
-        default: return "All Regions";
+        case "sc633":
+          return "Regions II & III";
+        case "sc637":
+          return "Region III";
+        case "sc647":
+          return "Regions I-III";
+        case "sc657":
+          return "Regions I-III";
+        default:
+          return "All Regions";
       }
     }
-    
+
     // Amiran varieties
     if (seedSource === "amiran") {
       switch (seedVariety) {
-        case "dominique": return "Regions I-III";
-        case "topacio": return "Regions II & III";
-        case "yaara": return "Regions II & III";
-        case "karni": return "Regions II & III";
-        case "nemonetta": return "Regions II & III";
-        case "superelad": return "Regions I-III";
-        case "landini": return "Regions I-III";
-        default: return "All Regions";
+        case "dominique":
+          return "Regions I-III";
+        case "topacio":
+          return "Regions II & III";
+        case "yaara":
+          return "Regions II & III";
+        case "karni":
+          return "Regions II & III";
+        case "nemonetta":
+          return "Regions II & III";
+        case "superelad":
+          return "Regions I-III";
+        case "landini":
+          return "Regions I-III";
+        default:
+          return "All Regions";
       }
     }
-    
+
     return "All Regions";
   };
-  
-  const getRegionDescription = (seedSource: string, seedVariety: string = "") => {
-    if (!seedSource || !seedVariety) return "Suitable for appropriate growing conditions.";
-    
+
+  const getRegionDescription = (
+    seedSource: string,
+    seedVariety: string = ""
+  ) => {
+    if (!seedSource || !seedVariety)
+      return "Suitable for appropriate growing conditions.";
+
     const regionDescriptions: Record<string, string> = {
-      "Region I": "Southern, Eastern & Western provinces; 600–800 mm rainfall; 80–120 day season.",
-      "Region II": "Central, Southern, Eastern & Lusaka provinces; 800–1000 mm rainfall; 100–140 day season.",
-      "Region III": "Northern, Luapula, Copperbelt & Northwestern provinces; over 1000 mm rainfall; 120–150 day season.",
-      "Regions I & II": "Suitable for areas with 600-1000 mm rainfall; 80-140 day growing season.",
-      "Regions II & III": "Suitable for areas with 800+ mm rainfall; 100-150 day growing season.",
-      "Regions I-III": "Widely adaptable across all Zambian agricultural regions.",
-      "All Regions": "Can be grown throughout Zambia in suitable conditions."
+      "Region I":
+        "Southern, Eastern & Western provinces; 600–800 mm rainfall; 80–120 day season.",
+      "Region II":
+        "Central, Southern, Eastern & Lusaka provinces; 800–1000 mm rainfall; 100–140 day season.",
+      "Region III":
+        "Northern, Luapula, Copperbelt & Northwestern provinces; over 1000 mm rainfall; 120–150 day season.",
+      "Regions I & II":
+        "Suitable for areas with 600-1000 mm rainfall; 80-140 day growing season.",
+      "Regions II & III":
+        "Suitable for areas with 800+ mm rainfall; 100-150 day growing season.",
+      "Regions I-III":
+        "Widely adaptable across all Zambian agricultural regions.",
+      "All Regions": "Can be grown throughout Zambia in suitable conditions.",
     };
-    
+
     const regionBadge = getRegionBadge(seedSource, seedVariety);
-    return regionDescriptions[regionBadge] || "Suitable for appropriate growing conditions.";
+    return (
+      regionDescriptions[regionBadge] ||
+      "Suitable for appropriate growing conditions."
+    );
   };
-  
-  const renderSeedVarietyInfo = (seedSource: string, seedVariety: string = "") => {
+
+  const renderSeedVarietyInfo = (
+    seedSource: string,
+    seedVariety: string = ""
+  ) => {
     if (!seedSource || !seedVariety) return seedVariety || "Not specified";
-    
+
     // ZAMSEED varieties
     if (seedSource === "zamseed") {
       switch (seedVariety) {
         case "zms301":
           return (
             <div className="space-y-1 text-sm">
-              <p><span className="font-medium">ZMS 301</span> - Semi-flint white grain</p>
+              <p>
+                <span className="font-medium">ZMS 301</span> - Semi-flint white
+                grain
+              </p>
               <div className="flex flex-wrap gap-1 mt-1">
-                <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300">Drought Tolerant</Badge>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300">75 Days to Maturity</Badge>
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300">Region I</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300"
+                >
+                  Drought Tolerant
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                >
+                  75 Days to Maturity
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+                >
+                  Region I
+                </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Yield potential: 120–140 × 50 kg bags/ha</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Yield potential: 120–140 × 50 kg bags/ha
+              </p>
             </div>
           );
         case "zms405":
           return (
             <div className="space-y-1 text-sm">
-              <p><span className="font-medium">ZMS 405</span> - Flint white grain</p>
+              <p>
+                <span className="font-medium">ZMS 405</span> - Flint white grain
+              </p>
               <div className="flex flex-wrap gap-1 mt-1">
-                <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300">High-yielding</Badge>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300">100-105 Days to Maturity</Badge>
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300">Regions I & II</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300"
+                >
+                  High-yielding
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                >
+                  100-105 Days to Maturity
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+                >
+                  Regions I & II
+                </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Yield potential: 140–160 × 50 kg bags/ha</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Yield potential: 140–160 × 50 kg bags/ha
+              </p>
             </div>
           );
         case "zms520":
           return (
             <div className="space-y-1 text-sm">
-              <p><span className="font-medium">ZMS 520</span> - Dent white grain</p>
+              <p>
+                <span className="font-medium">ZMS 520</span> - Dent white grain
+              </p>
               <div className="flex flex-wrap gap-1 mt-1">
-                <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300">Full Husk Cover</Badge>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300">120-125 Days to Maturity</Badge>
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300">Regions II & III</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300"
+                >
+                  Full Husk Cover
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                >
+                  120-125 Days to Maturity
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+                >
+                  Regions II & III
+                </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Yield potential: 180–200 × 50 kg bags/ha</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Yield potential: 180–200 × 50 kg bags/ha
+              </p>
             </div>
           );
         case "gv664":
           return (
             <div className="space-y-1 text-sm">
-              <p><span className="font-medium">GV664 (A)</span> - Flint orange (Vitamin A enriched)</p>
+              <p>
+                <span className="font-medium">GV664 (A)</span> - Flint orange
+                (Vitamin A enriched)
+              </p>
               <div className="flex flex-wrap gap-1 mt-1">
-                <Badge variant="outline" className="bg-orange-50 text-orange-700 dark:bg-orange-900 dark:text-orange-300">Vitamin A Enriched</Badge>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300">115-125 Days to Maturity</Badge>
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300">Regions I & II</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-orange-50 text-orange-700 dark:bg-orange-900 dark:text-orange-300"
+                >
+                  Vitamin A Enriched
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                >
+                  115-125 Days to Maturity
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+                >
+                  Regions I & II
+                </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Yield potential: 140 × 50 kg bags/ha, GMO-free</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Yield potential: 140 × 50 kg bags/ha, GMO-free
+              </p>
             </div>
           );
         default:
           return seedVariety;
       }
     }
-    
+
     // SeedCo varieties
     if (seedSource === "seedco") {
       switch (seedVariety) {
         case "sc633":
           return (
             <div className="space-y-1 text-sm">
-              <p><span className="font-medium">SC 633</span> - Medium maturing</p>
+              <p>
+                <span className="font-medium">SC 633</span> - Medium maturing
+              </p>
               <div className="flex flex-wrap gap-1 mt-1">
-                <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300">Drought Tolerant</Badge>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300">130-136 Days to Maturity</Badge>
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300">Regions II & III</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300"
+                >
+                  Drought Tolerant
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                >
+                  130-136 Days to Maturity
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+                >
+                  Regions II & III
+                </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Yield potential: up to 13 t/ha, Good tolerance to GLS</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Yield potential: up to 13 t/ha, Good tolerance to GLS
+              </p>
             </div>
           );
         case "sc637":
           return (
             <div className="space-y-1 text-sm">
-              <p><span className="font-medium">SC 637</span> - Medium maturing</p>
+              <p>
+                <span className="font-medium">SC 637</span> - Medium maturing
+              </p>
               <div className="flex flex-wrap gap-1 mt-1">
-                <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300">Semi-flint grain</Badge>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300">Disease Tolerance</Badge>
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300">Region III</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300"
+                >
+                  Semi-flint grain
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                >
+                  Disease Tolerance
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+                >
+                  Region III
+                </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Yield potential: 11-13 t/ha, Excellent tip cover</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Yield potential: 11-13 t/ha, Excellent tip cover
+              </p>
             </div>
           );
         case "sc647":
           return (
             <div className="space-y-1 text-sm">
-              <p><span className="font-medium">SC 647</span> - Medium maturing</p>
+              <p>
+                <span className="font-medium">SC 647</span> - Medium maturing
+              </p>
               <div className="flex flex-wrap gap-1 mt-1">
-                <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300">Heat & Drought Tolerant</Badge>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300">130-136 Days to Maturity</Badge>
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300">Regions I-III</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300"
+                >
+                  Heat & Drought Tolerant
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                >
+                  130-136 Days to Maturity
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+                >
+                  Regions I-III
+                </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Yield potential: up to 16 t/ha, Performs well on acidic soils</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Yield potential: up to 16 t/ha, Performs well on acidic soils
+              </p>
             </div>
           );
         default:
           return seedVariety;
       }
     }
-    
+
     // Amiran varieties (vegetables)
     if (seedSource === "amiran") {
       switch (seedVariety) {
         case "dominique":
           return (
             <div className="space-y-1 text-sm">
-              <p><span className="font-medium">Dominique F1</span> - Tomato</p>
+              <p>
+                <span className="font-medium">Dominique F1</span> - Tomato
+              </p>
               <div className="flex flex-wrap gap-1 mt-1">
-                <Badge variant="outline" className="bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300">180–200g Fruit</Badge>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300">TYLCV Resistant</Badge>
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300">Indeterminate</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300"
+                >
+                  180–200g Fruit
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                >
+                  TYLCV Resistant
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+                >
+                  Indeterminate
+                </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Year-round production, suitable for all regions</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Year-round production, suitable for all regions
+              </p>
             </div>
           );
         case "landini":
           return (
             <div className="space-y-1 text-sm">
-              <p><span className="font-medium">Landini F1</span> - Cabbage</p>
+              <p>
+                <span className="font-medium">Landini F1</span> - Cabbage
+              </p>
               <div className="flex flex-wrap gap-1 mt-1">
-                <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300">75 Days Maturity</Badge>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300">Heat Tolerant</Badge>
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300">Uniform Heads</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300"
+                >
+                  75 Days Maturity
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                >
+                  Heat Tolerant
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+                >
+                  Uniform Heads
+                </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Head weight exceeds 5 kg, resistant to black root</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Head weight exceeds 5 kg, resistant to black root
+              </p>
             </div>
           );
         case "superelad":
           return (
             <div className="space-y-1 text-sm">
-              <p><span className="font-medium">Super Elad F1</span> - Onion</p>
+              <p>
+                <span className="font-medium">Super Elad F1</span> - Onion
+              </p>
               <div className="flex flex-wrap gap-1 mt-1">
-                <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300">Early Maturity</Badge>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300">Medium-large Bulbs</Badge>
-                <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300">Pink Root Resistant</Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300"
+                >
+                  Early Maturity
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                >
+                  Medium-large Bulbs
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+                >
+                  Pink Root Resistant
+                </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Very pungent, suitable for rain-fed & irrigated</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Very pungent, suitable for rain-fed & irrigated
+              </p>
             </div>
           );
         default:
           return seedVariety;
       }
     }
-    
+
     // Default for other seed companies
     return seedVariety;
   };
@@ -420,30 +654,42 @@ export default function PublicTraceVerificationPage() {
                             </Badge>
                           </div>
                         </div>
-                          
+
                         {data.crop.seedVariety && (
                           <div className="space-y-1 mb-3">
                             <p className="text-sm font-medium text-muted-foreground">
                               Seed Variety Information
                             </p>
                             <div className="border rounded-lg p-3 bg-muted/20">
-                              {renderSeedVarietyInfo(data.crop.seedSource, data.crop.seedVariety)}
+                              {renderSeedVarietyInfo(
+                                data.crop.seedSource,
+                                data.crop.seedVariety
+                              )}
                             </div>
                           </div>
                         )}
-                        
+
                         <div className="space-y-1">
                           <p className="text-sm font-medium text-muted-foreground">
                             Region Information
                           </p>
                           <div className="text-sm">
                             <div className="mb-1">
-                              <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300 mb-2">
-                                {getRegionBadge(data.crop.seedSource, data.crop.seedVariety)}
+                              <Badge
+                                variant="outline"
+                                className="bg-amber-50 text-amber-700 dark:bg-amber-900 dark:text-amber-300 mb-2"
+                              >
+                                {getRegionBadge(
+                                  data.crop.seedSource,
+                                  data.crop.seedVariety
+                                )}
                               </Badge>
                             </div>
                             <p className="text-xs text-muted-foreground">
-                              {getRegionDescription(data.crop.seedSource, data.crop.seedVariety)}
+                              {getRegionDescription(
+                                data.crop.seedSource,
+                                data.crop.seedVariety
+                              )}
                             </p>
                           </div>
                         </div>
@@ -570,12 +816,16 @@ export default function PublicTraceVerificationPage() {
                             <span>{result.eventType.replace("_", " ")}</span>
                             <Badge
                               variant={result.verified ? "outline" : "outline"}
-                              className={`h-fit ${result.verified ? "bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300" : "bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300"}`}
+                              className={`h-fit ${
+                                result.verified
+                                  ? "bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300"
+                                  : "bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300"
+                              }`}
                             >
                               {result.verified ? "Verified" : "Unverified"}
                             </Badge>
                           </div>
-                        ),
+                        )
                       )}
                   </div>
 
