@@ -471,30 +471,168 @@ export default function FieldMapDisplay({
                               <Leaf className="h-3 w-3 text-green-600" />
                               Crops ({field.crops.length})
                             </div>
-                            <div className="space-y-1">
+                            <div className="space-y-3">
                               {field.crops.slice(0, 3).map((crop: any) => (
                                 <div
                                   key={crop.id}
-                                  className="flex items-center justify-between text-xs"
+                                  className="border-l-2 border-primary/20 pl-3 space-y-2"
                                 >
-                                  <span>
-                                    {crop.name}{" "}
-                                    {crop.variety && `(${crop.variety})`}
-                                  </span>
-                                  <Badge
-                                    variant="secondary"
-                                    className={`text-xs ${getStatusColor(
-                                      crop.status
-                                    )}`}
-                                  >
-                                    {crop.status}
-                                  </Badge>
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex-1">
+                                      <div className="font-medium text-sm">
+                                        {crop.name}{" "}
+                                        {crop.variety && (
+                                          <span className="text-muted-foreground font-normal">
+                                            ({crop.variety})
+                                          </span>
+                                        )}
+                                      </div>
+                                      <Badge
+                                        variant="secondary"
+                                        className={`text-xs mt-1 ${getStatusColor(
+                                          crop.status
+                                        )}`}
+                                      >
+                                        {crop.status}
+                                      </Badge>
+                                    </div>
+                                  </div>
+
+                                  {/* Crop Timeline/Stages */}
+                                  <div className="space-y-1">
+                                    {crop.plantingDate && (
+                                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                        <span>
+                                          Planted:{" "}
+                                          {new Date(
+                                            crop.plantingDate
+                                          ).toLocaleDateString()}
+                                        </span>
+                                      </div>
+                                    )}
+
+                                    {crop.expectedHarvestDate && (
+                                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <div className="w-2 h-2 bg-orange-500 rounded-full" />
+                                        <span>
+                                          Expected Harvest:{" "}
+                                          {new Date(
+                                            crop.expectedHarvestDate
+                                          ).toLocaleDateString()}
+                                        </span>
+                                      </div>
+                                    )}
+
+                                    {/* Show days to harvest if both dates are available */}
+                                    {crop.plantingDate &&
+                                      crop.expectedHarvestDate &&
+                                      (() => {
+                                        const today = new Date();
+                                        const harvestDate = new Date(
+                                          crop.expectedHarvestDate
+                                        );
+                                        const daysToHarvest = Math.ceil(
+                                          (harvestDate.getTime() -
+                                            today.getTime()) /
+                                            (1000 * 60 * 60 * 24)
+                                        );
+
+                                        if (daysToHarvest > 0) {
+                                          return (
+                                            <div className="flex items-center gap-2 text-xs">
+                                              <Calendar className="h-3 w-3 text-blue-500" />
+                                              <span className="text-blue-600 font-medium">
+                                                {daysToHarvest} days to harvest
+                                              </span>
+                                            </div>
+                                          );
+                                        } else if (daysToHarvest === 0) {
+                                          return (
+                                            <div className="flex items-center gap-2 text-xs">
+                                              <Calendar className="h-3 w-3 text-orange-500" />
+                                              <span className="text-orange-600 font-medium">
+                                                Harvest due today!
+                                              </span>
+                                            </div>
+                                          );
+                                        } else if (daysToHarvest > -7) {
+                                          return (
+                                            <div className="flex items-center gap-2 text-xs">
+                                              <Calendar className="h-3 w-3 text-red-500" />
+                                              <span className="text-red-600 font-medium">
+                                                {Math.abs(daysToHarvest)} days
+                                                overdue
+                                              </span>
+                                            </div>
+                                          );
+                                        }
+                                        return null;
+                                      })()}
+
+                                    {/* Growth stage indicator based on status */}
+                                    {crop.status && (
+                                      <div className="flex items-center gap-2 text-xs">
+                                        {crop.status === "planning" && (
+                                          <>
+                                            <div className="w-2 h-2 bg-gray-400 rounded-full" />
+                                            <span className="text-gray-600">
+                                              Planning stage
+                                            </span>
+                                          </>
+                                        )}
+                                        {crop.status === "planted" && (
+                                          <>
+                                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                            <span className="text-green-600">
+                                              Germination stage
+                                            </span>
+                                          </>
+                                        )}
+                                        {crop.status === "growing" && (
+                                          <>
+                                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                                            <span className="text-blue-600">
+                                              Active growth stage
+                                            </span>
+                                          </>
+                                        )}
+                                        {crop.status === "harvesting" && (
+                                          <>
+                                            <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                                            <span className="text-orange-600">
+                                              Harvest stage
+                                            </span>
+                                          </>
+                                        )}
+                                        {crop.status === "completed" && (
+                                          <>
+                                            <div className="w-2 h-2 bg-purple-500 rounded-full" />
+                                            <span className="text-purple-600">
+                                              Harvest completed
+                                            </span>
+                                          </>
+                                        )}
+                                        {crop.status === "failed" && (
+                                          <>
+                                            <div className="w-2 h-2 bg-red-500 rounded-full" />
+                                            <span className="text-red-600">
+                                              Crop failed
+                                            </span>
+                                          </>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               ))}
                               {field.crops.length > 3 && (
-                                <p className="text-xs text-muted-foreground">
-                                  +{field.crops.length - 3} more crops
-                                </p>
+                                <div className="text-xs text-muted-foreground pl-3 border-l-2 border-primary/10">
+                                  <p>+{field.crops.length - 3} more crops</p>
+                                  <p className="text-blue-600 cursor-pointer hover:underline">
+                                    Click "View Details" to see all
+                                  </p>
+                                </div>
                               )}
                             </div>
                           </div>
