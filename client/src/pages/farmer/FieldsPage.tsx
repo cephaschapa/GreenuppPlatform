@@ -77,6 +77,9 @@ import { CropActivityManager } from "@/components/CropActivityManager";
 import { CropDateManager } from "@/components/CropDateManager";
 import { AddCropDialog } from "@/components/farmer/AddCropDialog";
 import AddFieldDialog from "@/components/farmer/AddFieldDialog";
+import EditFieldDialog from "@/components/farmer/EditFieldDialog";
+import DeleteFieldDialog from "@/components/farmer/DeleteFieldDialog";
+import { CropDetailsDialog } from "@/components/farmer/CropDetailsDialog";
 import React from "react";
 
 export default function FieldsPage() {
@@ -88,6 +91,7 @@ export default function FieldsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedCrops, setSelectedCrops] = useState<Set<number>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
+  const [isCropDetailsOpen, setIsCropDetailsOpen] = useState(false);
 
   // Fetch fields
   const { data: fields, isLoading: fieldsLoading } = useQuery<Field[]>({
@@ -191,6 +195,7 @@ export default function FieldsPage() {
 
   const handleCropSelect = (crop: Crop) => {
     setSelectedCrop(crop);
+    setIsCropDetailsOpen(true);
   };
 
   const handleCropStatusChange = (cropId: number, status: string) => {
@@ -492,26 +497,79 @@ export default function FieldsPage() {
                   return (
                     <Card
                       key={field.id}
-                      className={`cursor-pointer transition-all hover:shadow-md ${
+                      className={`transition-all hover:shadow-md ${
                         isSelected
                           ? "ring-2 ring-primary bg-primary/5"
                           : "hover:border-primary/50"
                       }`}
-                      onClick={() => handleFieldSelect(field)}
                     >
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
+                          <div
+                            className="flex items-center gap-2 cursor-pointer flex-1"
+                            onClick={() => handleFieldSelect(field)}
+                          >
                             <TractorIcon className="h-4 w-4 text-primary" />
                             <CardTitle className="text-base">
                               {field.name}
                             </CardTitle>
                           </div>
-                          {isSelected && (
-                            <ArrowRight className="h-4 w-4 text-primary" />
-                          )}
+                          <div className="flex items-center gap-1">
+                            {isSelected && (
+                              <ArrowRight className="h-4 w-4 text-primary mr-2" />
+                            )}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>
+                                  Field Actions
+                                </DropdownMenuLabel>
+                                <DropdownMenuItem
+                                  onClick={() => handleFieldSelect(field)}
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                  <EditFieldDialog
+                                    field={field}
+                                    trigger={
+                                      <div className="w-full flex items-center">
+                                        <Edit className="h-4 w-4 mr-2" />
+                                        Edit Field
+                                      </div>
+                                    }
+                                  />
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <DeleteFieldDialog
+                                    field={field}
+                                    cropCount={fieldCrops.length}
+                                    trigger={
+                                      <div className="w-full flex items-center text-destructive">
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Delete Field
+                                      </div>
+                                    }
+                                  />
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </div>
-                        <CardDescription className="flex items-center gap-1 text-xs">
+                        <CardDescription
+                          className="flex items-center gap-1 text-xs cursor-pointer"
+                          onClick={() => handleFieldSelect(field)}
+                        >
                           <MapPin className="h-3 w-3" />
                           {field.location}
                         </CardDescription>
@@ -581,9 +639,30 @@ export default function FieldsPage() {
                           {selectedField.name}
                         </CardTitle>
                       </div>
-                      <Badge variant="outline" className="capitalize">
-                        {selectedField.soilType} soil
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="capitalize">
+                          {selectedField.soilType} soil
+                        </Badge>
+                        <EditFieldDialog
+                          field={selectedField}
+                          trigger={
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
+                          }
+                        />
+                        <DeleteFieldDialog
+                          field={selectedField}
+                          cropCount={getFieldCrops(selectedField.id).length}
+                          trigger={
+                            <Button variant="outline" size="sm">
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </Button>
+                          }
+                        />
+                      </div>
                     </div>
                     <CardDescription className="flex items-center gap-1">
                       <MapPin className="h-3 w-3" />
@@ -682,9 +761,10 @@ export default function FieldsPage() {
                           return (
                             <Card
                               key={crop.id}
-                              className={`${
+                              className={`cursor-pointer hover:shadow-md transition-shadow ${
                                 isSelected ? "ring-2 ring-primary" : ""
                               }`}
+                              onClick={() => handleCropSelect(crop)}
                             >
                               <CardHeader className="pb-3">
                                 <div className="flex items-center justify-between">
@@ -694,6 +774,7 @@ export default function FieldsPage() {
                                       onCheckedChange={() =>
                                         toggleCropSelection(crop.id)
                                       }
+                                      onClick={(e) => e.stopPropagation()}
                                     />
                                     <div className="flex items-center gap-2">
                                       <healthStatus.icon
@@ -706,7 +787,11 @@ export default function FieldsPage() {
                                   </div>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="sm">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
                                         <MoreHorizontal className="h-4 w-4" />
                                       </Button>
                                     </DropdownMenuTrigger>
@@ -844,6 +929,16 @@ export default function FieldsPage() {
           </div>
         </div>
       </div>
+
+      {/* Crop Details Dialog */}
+      <CropDetailsDialog
+        crop={selectedCrop as any}
+        isOpen={isCropDetailsOpen}
+        onClose={() => {
+          setIsCropDetailsOpen(false);
+          setSelectedCrop(null);
+        }}
+      />
     </DashboardLayout>
   );
 }

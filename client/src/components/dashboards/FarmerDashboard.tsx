@@ -37,6 +37,9 @@ import {
   ClipboardList,
   Settings,
   Sparkles,
+  MapPin,
+  Clock,
+  CheckCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
@@ -48,6 +51,7 @@ import { TaskManager } from "../farmer/TaskManager";
 import { WeatherPreferences } from "../farmer/WeatherPreferences";
 import { CropPredictions } from "../farmer/CropPredictions";
 import { AddCropDialog } from "@/components/farmer/AddCropDialog";
+import { CropDetailsDialog } from "@/components/farmer/CropDetailsDialog";
 
 export function FarmerDashboard() {
   const { user } = useAuth();
@@ -367,6 +371,7 @@ export function FarmerDashboard() {
   const [selectedCrop, setSelectedCrop] = useState<Crop | null>(null);
   const [isActivityManagerOpen, setIsActivityManagerOpen] = useState(false);
   const [isDateManagerOpen, setIsDateManagerOpen] = useState(false);
+  const [isCropDetailsOpen, setIsCropDetailsOpen] = useState(false);
 
   // Fetch crop activities
   const { data: cropActivities, isLoading: activitiesLoading } = useQuery<
@@ -853,7 +858,11 @@ export function FarmerDashboard() {
                     return (
                       <div
                         key={crop.id}
-                        className="p-4 bg-secondary/50 border border-primary/20 rounded-md hover:border-primary/40 transition-colors"
+                        className="p-4 bg-secondary/50 border border-primary/20 rounded-md hover:border-primary/40 transition-colors cursor-pointer"
+                        onClick={() => {
+                          setSelectedCrop(crop);
+                          setIsCropDetailsOpen(true);
+                        }}
                       >
                         <div className="flex justify-between items-start mb-2">
                           <div>
@@ -925,7 +934,8 @@ export function FarmerDashboard() {
                             variant="outline"
                             size="sm"
                             className="border-primary/50 text-primary hover:bg-primary/20"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setSelectedCrop(crop);
                               setIsActivityManagerOpen(true);
                             }}
@@ -937,7 +947,8 @@ export function FarmerDashboard() {
                             variant="outline"
                             size="sm"
                             className="border-red-700/50 text-red-400 hover:bg-red-900/20 hover:text-red-300"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               if (
                                 confirm(
                                   "Are you sure you want to delete this crop?"
@@ -1499,6 +1510,16 @@ export function FarmerDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Crop Details Dialog */}
+      <CropDetailsDialog
+        crop={selectedCrop as any}
+        isOpen={isCropDetailsOpen}
+        onClose={() => {
+          setIsCropDetailsOpen(false);
+          setSelectedCrop(null);
+        }}
+      />
 
       {/* Advanced Features Section */}
       <Card className="bg-secondary/30 border-primary/20">
