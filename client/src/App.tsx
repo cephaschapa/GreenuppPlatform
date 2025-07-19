@@ -12,6 +12,7 @@ import PublicListingDetailPage from "@/pages/PublicListingDetailPage";
 import PublicSellersPage from "@/pages/PublicSellersPage";
 import PublicSellerProfilePage from "@/pages/PublicSellerProfilePage";
 import PublicTraceVerificationPage from "@/pages/PublicTraceVerificationPage";
+import TestingWaitlistPage from "@/pages/TestingWaitlistPage";
 import AiKnowledgeBasePage from "@/pages/AiKnowledgeBasePage";
 import AboutPage from "@/pages/AboutPage";
 import GreenSocialsPage from "@/pages/GreenSocialsPage";
@@ -178,6 +179,7 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
         path="/test-email-notifications"
         component={EmailNotificationTestPage}
       />
+      <Route path="/testing-waitlist" component={TestingWaitlistPage} />
 
       {/* Dashboard routes on main domain - with /dashboard prefix */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
