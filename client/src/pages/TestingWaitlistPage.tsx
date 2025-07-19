@@ -17,6 +17,8 @@ import {
   MapPin,
   Phone,
 } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -107,6 +109,7 @@ const interestOptions = [
 export default function TestingWaitlistPage() {
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const form = useForm<WaitlistFormData>({
     resolver: zodResolver(waitlistSchema),
@@ -157,7 +160,11 @@ export default function TestingWaitlistPage() {
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">
-        <div className="container max-w-4xl py-16">
+        <Navbar
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+        />
+        <main className="container max-w-4xl py-16">
           <div className="text-center space-y-6">
             <div className="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
@@ -186,14 +193,19 @@ export default function TestingWaitlistPage() {
               Return to Home
             </Button>
           </div>
-        </div>
+        </main>
+        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950">
-      <div className="container max-w-6xl py-16">
+      <Navbar
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+      />
+      <main className="container max-w-6xl py-16">
         {/* Header */}
         <div className="text-center mb-12">
           <Badge
@@ -628,7 +640,8 @@ export default function TestingWaitlistPage() {
             </Form>
           </CardContent>
         </Card>
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 }
