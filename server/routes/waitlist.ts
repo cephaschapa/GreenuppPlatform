@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db.js";
 import { waitlistRegistrations } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc, and, like, sql, count } from "drizzle-orm";
 import { z } from "zod";
 
 const router = Router();
@@ -113,14 +113,14 @@ router.get("/stats", async (req, res) => {
   try {
     // Get total registrations
     const totalRegistrations = await db
-      .select({ count: db.count() })
+      .select({ count: count() })
       .from(waitlistRegistrations);
 
     // Get registrations by user type
     const userTypeStats = await db
       .select({
         userType: waitlistRegistrations.userType,
-        count: db.count(),
+        count: count(),
       })
       .from(waitlistRegistrations)
       .groupBy(waitlistRegistrations.userType);
@@ -129,7 +129,7 @@ router.get("/stats", async (req, res) => {
     const statusStats = await db
       .select({
         status: waitlistRegistrations.status,
-        count: db.count(),
+        count: count(),
       })
       .from(waitlistRegistrations)
       .groupBy(waitlistRegistrations.status);
@@ -139,9 +139,11 @@ router.get("/stats", async (req, res) => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const recentRegistrations = await db
-      .select({ count: db.count() })
+      .select({ count: count() })
       .from(waitlistRegistrations)
-      .where(db.gte(waitlistRegistrations.registrationDate, thirtyDaysAgo));
+      .where(
+        sql`${waitlistRegistrations.registrationDate} >= ${thirtyDaysAgo}`
+      );
 
     res.json({
       total: totalRegistrations[0]?.count || 0,
@@ -167,12 +169,12 @@ router.get("/registrations", async (req, res) => {
     const registrations = await db
       .select()
       .from(waitlistRegistrations)
-      .orderBy(db.desc(waitlistRegistrations.registrationDate))
+      .orderBy(desc(waitlistRegistrations.registrationDate))
       .limit(limit)
       .offset(offset);
 
     const totalCount = await db
-      .select({ count: db.count() })
+      .select({ count: count() })
       .from(waitlistRegistrations);
 
     res.json({
