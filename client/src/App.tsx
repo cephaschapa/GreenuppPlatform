@@ -23,6 +23,7 @@ import EmailNotificationTestPage from "@/pages/EmailNotificationTestPage";
 import PublicEmailTestPage from "@/pages/PublicEmailTestPage";
 import SystemHealthPage from "@/pages/admin/SystemHealthPage";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import WaitlistManagementPage from "@/pages/admin/WaitlistManagementPage";
 import SecuritySettings from "@/pages/auth/SecuritySettings";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { SocketIOProvider } from "@/hooks/use-socketio";
@@ -277,6 +278,10 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
       <ProtectedRoute
         path="/dashboard/system-health"
         component={SystemHealthPage}
+      />
+      <ProtectedRoute
+        path="/dashboard/admin/waitlist-management"
+        component={WaitlistManagementPage}
       />
 
       {/* Role-specific dashboard redirects */}

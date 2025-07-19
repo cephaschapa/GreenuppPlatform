@@ -10,6 +10,8 @@ import {
   date,
   decimal,
   primaryKey,
+  varchar,
+  json,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -1398,7 +1400,14 @@ export const securityEvents = pgTable("security_events", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// Waitlist registrations table for testing program
+// For session storage (express-session with connect-pg-simple)
+export const sessions = pgTable("session", {
+  sid: varchar("sid", { length: 255 }).primaryKey().notNull(),
+  sess: json("sess").notNull(),
+  expire: timestamp("expire", { withTimezone: true }).notNull(),
+});
+
+// Waitlist registrations for testing program
 export const waitlistRegistrations = pgTable("waitlist_registrations", {
   id: serial("id").primaryKey(),
   firstName: text("first_name").notNull(),
