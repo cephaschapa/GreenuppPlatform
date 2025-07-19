@@ -1420,5 +1420,3 @@ export const waitlistRegistrations = pgTable("waitlist_registrations", {
   invitedAt: timestamp("invited_at"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
-
-export default db;
