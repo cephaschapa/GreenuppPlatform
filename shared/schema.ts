@@ -1397,3 +1397,28 @@ export const securityEvents = pgTable("security_events", {
   metadata: jsonb("metadata").$type<Record<string, any>>(), // Additional event data
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+// Waitlist registrations table for testing program
+export const waitlistRegistrations = pgTable("waitlist_registrations", {
+  id: serial("id").primaryKey(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email").notNull().unique(),
+  phone: text("phone"),
+  organization: text("organization"),
+  userType: text("user_type").notNull(), // farmer, buyer, supplier, distributor, other
+  location: text("location").notNull(),
+  farmSize: text("farm_size"),
+  primaryCrops: text("primary_crops"),
+  experience: text("experience").notNull(), // beginner, intermediate, advanced, expert
+  interests: text("interests").array().notNull(), // array of feature interests
+  additionalInfo: text("additional_info"),
+  agreeToTerms: boolean("agree_to_terms").notNull().default(false),
+  subscribeUpdates: boolean("subscribe_updates").notNull().default(true),
+  status: text("status").notNull().default("pending"), // pending, invited, accepted, rejected
+  registrationDate: timestamp("registration_date").notNull().defaultNow(),
+  invitedAt: timestamp("invited_at"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export default db;

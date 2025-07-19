@@ -4,6 +4,7 @@ import { createServer, type Server } from "http";
 import cartRoutes from "./routes/cart";
 import sellerRoutes from "./routes/seller";
 import cropTraceRoutes from "./routes/croptrace";
+import waitlistRoutes from "./routes/waitlist";
 import notificationRoutes from "./routes/notifications";
 import emailRoutes from "./routes/email";
 import {
@@ -64,6 +65,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Public crop trace verification route
   app.use("/api/trace", cropTraceRoutes);
+
+  // Set up waitlist routes
+  app.use("/api/waitlist", waitlistRoutes);
 
   // Set up notification routes
   app.use("/api/notifications", notificationRoutes);
