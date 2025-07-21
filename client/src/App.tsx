@@ -23,6 +23,7 @@ import EmailNotificationTestPage from "@/pages/EmailNotificationTestPage";
 import PublicEmailTestPage from "@/pages/PublicEmailTestPage";
 import SystemHealthPage from "@/pages/admin/SystemHealthPage";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminLoginPage from "@/pages/admin/AdminLoginPage";
 import WaitlistManagementPage from "@/pages/admin/WaitlistManagementPage";
 import SecuritySettings from "@/pages/auth/SecuritySettings";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
@@ -181,6 +182,9 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
         component={EmailNotificationTestPage}
       />
       <Route path="/testing-waitlist" component={TestingWaitlistPage} />
+
+      {/* Admin login route - public access */}
+      <Route path="/admin/login" component={AdminLoginPage} />
 
       {/* Dashboard routes on main domain - with /dashboard prefix */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />

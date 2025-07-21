@@ -4,9 +4,9 @@ import { storage } from "./server/storage.ts";
 import { AuthService } from "./server/services/authService.ts";
 
 async function createAdminUser() {
-  const email = "kefas.chapa@gmail.com";
+  const email = "cephaschapa@gmail.com";
   const password = "D@abase1";
-  const username = "kefas.chapa";
+  const username = "cephaschapa";
 
   try {
     console.log(`🔍 Checking if user already exists: ${email}`);
@@ -54,7 +54,7 @@ async function createAdminUser() {
       username,
       password: hashedPassword,
       role: "admin",
-      firstName: "Kefas",
+      firstName: "Cephas",
       lastName: "Chapa",
     });
 

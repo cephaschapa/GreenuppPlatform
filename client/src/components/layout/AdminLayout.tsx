@@ -175,17 +175,22 @@ export function AdminLayout({
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
 
-  // Only allow admin users
+  // Only allow admin users - redirect to admin login if not authenticated
   if (!user || user.role !== "admin") {
+    // Use setTimeout to avoid immediate redirect during render
+    setTimeout(() => {
+      window.location.href = "/admin/login";
+    }, 100);
+
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Shield className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-red-600 mb-2">
-            Access Denied
+            Redirecting...
           </h1>
           <p className="text-muted-foreground">
-            You need admin privileges to access this area.
+            Redirecting to admin login page...
           </p>
         </div>
       </div>
