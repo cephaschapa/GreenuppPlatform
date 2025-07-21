@@ -20,8 +20,7 @@ async function createAdminUser() {
       if (existingUser.role === "admin") {
         console.log("ℹ️  User is already an admin");
         console.log("\n🎉 You can now access the admin dashboard at:");
-        console.log("   - /admin (on app subdomain)");
-        console.log("   - /dashboard/admin (on main domain)");
+        console.log("   - /admin (on both domains)");
         return;
       }
 
@@ -35,8 +34,7 @@ async function createAdminUser() {
         console.log(`   Email: ${updatedUser.email}`);
         console.log(`   Role: ${updatedUser.role}`);
         console.log("\n🎉 You can now access the admin dashboard at:");
-        console.log("   - /admin (on app subdomain)");
-        console.log("   - /dashboard/admin (on main domain)");
+        console.log("   - /admin (on both domains)");
       } else {
         console.log("❌ Failed to update user role");
         process.exit(1);
@@ -67,8 +65,7 @@ async function createAdminUser() {
       console.log(`   Role: ${newUser.role}`);
       console.log(`   Password: ${password}`);
       console.log("\n🎉 You can now log in and access the admin dashboard at:");
-      console.log("   - /admin (on app subdomain)");
-      console.log("   - /dashboard/admin (on main domain)");
+      console.log("   - /admin (on both domains)");
     } else {
       console.log("❌ Failed to create user");
       process.exit(1);

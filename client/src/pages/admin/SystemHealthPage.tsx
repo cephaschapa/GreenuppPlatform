@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { SystemHealthStatus } from "@/components/SystemHealthStatus";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +24,7 @@ export default function SystemHealthPage() {
   };
 
   return (
-    <DashboardLayout
+    <AdminLayout
       title="System Health"
       description="Monitor system health and performance metrics"
     >
@@ -192,6 +192,6 @@ export default function SystemHealthPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

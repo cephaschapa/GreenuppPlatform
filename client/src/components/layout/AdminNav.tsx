@@ -32,28 +32,16 @@ export function AdminNav({ className }: AdminNavProps) {
       description: "Admin overview and metrics",
     },
     {
-      href: "/admin/users",
-      label: "Users",
-      icon: Users,
-      description: "Manage user accounts",
-    },
-    {
-      href: "/admin/analytics",
-      label: "Analytics",
-      icon: BarChart3,
-      description: "System analytics and trends",
-    },
-    {
-      href: "/admin/content",
-      label: "Content",
-      icon: FileText,
-      description: "Manage marketplace content",
-    },
-    {
-      href: "/admin/system",
-      label: "System",
+      href: "/admin/system-health",
+      label: "System Health",
       icon: Settings,
-      description: "System monitoring and settings",
+      description: "System monitoring and health checks",
+    },
+    {
+      href: "/admin/waitlist-management",
+      label: "Waitlist",
+      icon: Users,
+      description: "Manage testing waitlist",
     },
   ];
 

@@ -59,7 +59,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -257,7 +257,7 @@ export default function WaitlistManagementPage() {
   };
 
   return (
-    <DashboardLayout title="Waitlist Management">
+    <AdminLayout title="Waitlist Management">
       <div className="container max-w-7xl py-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -599,6 +599,6 @@ export default function WaitlistManagementPage() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

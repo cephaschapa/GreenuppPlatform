@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -170,7 +170,7 @@ export default function AdminDashboard() {
 
   if (dashboardLoading) {
     return (
-      <DashboardLayout
+      <AdminLayout
         title="Admin Dashboard"
         description="System administration and monitoring"
       >
@@ -180,12 +180,12 @@ export default function AdminDashboard() {
             <p>Loading admin dashboard...</p>
           </div>
         </div>
-      </DashboardLayout>
+      </AdminLayout>
     );
   }
 
   return (
-    <DashboardLayout
+    <AdminLayout
       title="Admin Dashboard"
       description="System administration and monitoring"
     >
@@ -692,6 +692,6 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

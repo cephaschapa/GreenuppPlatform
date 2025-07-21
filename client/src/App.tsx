@@ -273,14 +273,14 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
         component={FarmingAssistantPage}
       />
 
-      {/* Admin routes on main domain - with /dashboard prefix */}
-      <ProtectedRoute path="/dashboard/admin" component={AdminDashboard} />
+      {/* Admin routes on main domain */}
+      <ProtectedRoute path="/admin" component={AdminDashboard} />
       <ProtectedRoute
-        path="/dashboard/system-health"
+        path="/admin/system-health"
         component={SystemHealthPage}
       />
       <ProtectedRoute
-        path="/dashboard/admin/waitlist-management"
+        path="/admin/waitlist-management"
         component={WaitlistManagementPage}
       />
 
