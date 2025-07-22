@@ -50,7 +50,7 @@ router.get("/dashboard", async (req, res) => {
     const [recentContacts] = await db
       .select({ count: count() })
       .from(contactForm)
-      .where(sql`created_at >= NOW() - INTERVAL '7 days'`);
+      .where(sql`timestamp >= NOW() - INTERVAL '7 days'`);
 
     // Get security statistics
     const [totalLoginAttempts] = await db
@@ -201,6 +201,55 @@ router.get("/users/:id", async (req, res) => {
 });
 
 /**
+ * DELETE /api/admin/users/:id
+ * Delete user by ID (admin only)
+ */
+router.delete("/users/:id", async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
+
+    // Check if user exists
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!existingUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Prevent deleting admin users (safety measure)
+    if (existingUser.role === "admin") {
+      return res.status(403).json({ error: "Cannot delete admin users" });
+    }
+
+    // Delete the user
+    await db.delete(users).where(eq(users.id, userId));
+
+    logger.info(
+      `User ${existingUser.username} (ID: ${userId}) deleted by admin ${req.session.userId}`
+    );
+
+    res.json({
+      message: "User deleted successfully",
+      deletedUser: {
+        id: existingUser.id,
+        username: existingUser.username,
+        email: existingUser.email,
+      },
+    });
+  } catch (error) {
+    logger.error("Error deleting user:", error);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+});
+
+/**
  * PATCH /api/admin/users/:id
  * Update user (admin only)
  */
@@ -237,52 +286,64 @@ router.get("/analytics", async (req, res) => {
   try {
     const period = (req.query.period as string) || "7d"; // 7d, 30d, 90d
 
-    let interval;
+    let days;
     switch (period) {
       case "30d":
-        interval = "30 days";
+        days = 30;
         break;
       case "90d":
-        interval = "90 days";
+        days = 90;
         break;
       default:
-        interval = "7 days";
+        days = 7;
     }
 
     // User registration trends
     const userTrends = await db
       .select({
-        date: sql`DATE(created_at)`,
+        date: sql`DATE(${users.createdAt})`,
         count: count(),
       })
       .from(users)
-      .where(sql`created_at >= NOW() - INTERVAL '${interval}'`)
-      .groupBy(sql`DATE(created_at)`)
-      .orderBy(sql`DATE(created_at)`);
+      .where(
+        sql`${users.createdAt} >= NOW() - INTERVAL '${sql.raw(
+          days.toString()
+        )} days'`
+      )
+      .groupBy(sql`DATE(${users.createdAt})`)
+      .orderBy(sql`DATE(${users.createdAt})`);
 
     // Login attempt trends
     const loginTrends = await db
       .select({
-        date: sql`DATE(created_at)`,
+        date: sql`DATE(${loginAttempts.createdAt})`,
         total: count(),
-        successful: sql`COUNT(CASE WHEN success = true THEN 1 END)`,
-        failed: sql`COUNT(CASE WHEN success = false THEN 1 END)`,
+        successful: sql`COUNT(CASE WHEN ${loginAttempts.success} = true THEN 1 END)`,
+        failed: sql`COUNT(CASE WHEN ${loginAttempts.success} = false THEN 1 END)`,
       })
       .from(loginAttempts)
-      .where(sql`created_at >= NOW() - INTERVAL '${interval}'`)
-      .groupBy(sql`DATE(created_at)`)
-      .orderBy(sql`DATE(created_at)`);
+      .where(
+        sql`${loginAttempts.createdAt} >= NOW() - INTERVAL '${sql.raw(
+          days.toString()
+        )} days'`
+      )
+      .groupBy(sql`DATE(${loginAttempts.createdAt})`)
+      .orderBy(sql`DATE(${loginAttempts.createdAt})`);
 
     // Marketplace activity
     const marketplaceTrends = await db
       .select({
-        date: sql`DATE(created_at)`,
+        date: sql`DATE(${marketplaceListings.createdAt})`,
         count: count(),
       })
       .from(marketplaceListings)
-      .where(sql`created_at >= NOW() - INTERVAL '${interval}'`)
-      .groupBy(sql`DATE(created_at)`)
-      .orderBy(sql`DATE(created_at)`);
+      .where(
+        sql`${marketplaceListings.createdAt} >= NOW() - INTERVAL '${sql.raw(
+          days.toString()
+        )} days'`
+      )
+      .groupBy(sql`DATE(${marketplaceListings.createdAt})`)
+      .orderBy(sql`DATE(${marketplaceListings.createdAt})`);
 
     res.json({
       userTrends,
@@ -312,7 +373,7 @@ router.get("/content", async (req, res) => {
     const recentContacts = await db
       .select()
       .from(contactForm)
-      .orderBy(desc(contactForm.createdAt))
+      .orderBy(desc(contactForm.timestamp))
       .limit(10);
 
     // Get content statistics
@@ -321,8 +382,7 @@ router.get("/content", async (req, res) => {
       .from(marketplaceListings);
     const [pendingContacts] = await db
       .select({ count: count() })
-      .from(contactForm)
-      .where(eq(contactForm.status, "pending"));
+      .from(contactForm);
 
     res.json({
       recentListings,

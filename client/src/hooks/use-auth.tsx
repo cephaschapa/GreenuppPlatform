@@ -1,4 +1,10 @@
-import { createContext, ReactNode, useContext, useEffect } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import {
   useQuery,
   useMutation,
@@ -28,6 +34,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [location] = useLocation();
+  const [lastUserRole, setLastUserRole] = useState<string | null>(null);
 
   const {
     data: user,
@@ -68,6 +75,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refetchUser();
     }
   }, [user, isLoading, refetchUser]);
+
+  useEffect(() => {
+    if (user && user.role) {
+      setLastUserRole(user.role);
+    }
+  }, [user]);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginUser) => {
@@ -134,6 +147,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
+
+      // Redirect based on last user role
+      if (lastUserRole === "admin") {
+        window.location.href = "/admin/login";
+      } else {
+        window.location.href = "/auth";
+      }
     },
     onError: (error: Error) => {
       toast({

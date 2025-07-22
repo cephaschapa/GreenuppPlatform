@@ -83,11 +83,11 @@ export function registerMvcRoutes(app: Express): void {
   // Treatment plan routes
   setupTreatmentRoutes(app);
 
-  // Admin routes
-  app.use("/api/admin", adminRoutes);
+  // Admin authentication routes (separate path to avoid middleware conflicts)
+  app.use("/api/admin-auth", adminAuthRoutes);
 
-  // Admin authentication routes
-  app.use("/api/admin/auth", adminAuthRoutes);
+  // Admin routes (protected by admin middleware)
+  app.use("/api/admin", adminRoutes);
 
   // Push notification routes
   app.use("/api/push-notifications", pushNotificationRoutes);

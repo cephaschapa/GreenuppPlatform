@@ -53,9 +53,24 @@ export default function AuthPage() {
     }
   }, [isLoading]);
 
+  // Show loader while authentication state is loading
+  if (isLoading || !checked) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground text-sm">
+          Loading authentication...
+        </p>
+      </div>
+    );
+  }
+
   // If the user is already logged in and we've completed initial loading, redirect based on their role
   if (checked && user && !isLoading) {
-    console.log("Auth page: User is logged in, redirecting to dashboard");
+    // Redirect admin users to /admin
+    if (user.role === "admin") {
+      return <Redirect to="/admin" />;
+    }
 
     // If we're on app subdomain, don't use /dashboard prefix
     if (isAppSubdomain) {

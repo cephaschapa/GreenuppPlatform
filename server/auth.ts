@@ -17,6 +17,16 @@ declare module "express-session" {
     passport: {
       user: number; // User ID stored in session
     };
+    // Admin session properties
+    userId?: number;
+    user?: {
+      id: number;
+      username: string;
+      email: string;
+      role: string;
+      firstName?: string;
+      lastName?: string;
+    };
   }
 }
 
@@ -437,14 +447,21 @@ export function setupAuth(app: Express) {
 
   // Get current authenticated user
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Not authenticated" });
+    // Check for regular Passport authentication
+    if (req.isAuthenticated()) {
+      // Remove password from response
+      const { password, ...userWithoutPassword } = req.user as User;
+      return res.json(userWithoutPassword);
     }
 
-    // Remove password from response
-    const { password, ...userWithoutPassword } = req.user as User;
+    // Check for admin session authentication
+    if (req.session && req.session.userId && req.session.user) {
+      // Admin session exists, return the user data
+      return res.json(req.session.user);
+    }
 
-    res.json(userWithoutPassword);
+    // No authentication found
+    return res.status(401).json({ message: "Not authenticated" });
   });
 
   // Change password route

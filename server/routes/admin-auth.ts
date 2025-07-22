@@ -25,6 +25,14 @@ const ADMIN_USERS = [
     firstName: "Cephas",
     lastName: "Chapa",
   },
+  {
+    email: "kefas.chapa@gmail.com",
+    password: "D@abase1", // In production, this should be hashed
+    role: "admin",
+    username: "kefas.chapa",
+    firstName: "Kefas",
+    lastName: "Chapa",
+  },
   // Add more admin users as needed
 ];
 
@@ -151,11 +159,35 @@ router.post("/login", async (req, res) => {
       }
     }
 
-    // Create device session
-    await AuthService.createDeviceSession(dbUser[0].id, req.sessionID, {
-      userAgent,
-      ipAddress: clientIp,
-    });
+    // Handle device session (remove existing session with same ID, then create new one)
+    try {
+      // First, try to revoke any existing session with the same session ID
+      await AuthService.revokeDeviceSession(req.sessionID);
+    } catch (error) {
+      // Ignore errors if session doesn't exist
+      logger.debug(`No existing session to revoke: ${req.sessionID}`);
+    }
+
+    // Create device session (30 days expiration for admin sessions)
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
+    try {
+      await AuthService.createDeviceSession(
+        dbUser[0].id,
+        req.sessionID,
+        {
+          userAgent,
+          ipAddress: clientIp,
+        },
+        expiresAt
+      );
+    } catch (deviceSessionError) {
+      logger.warn(
+        `Device session creation failed, continuing with login: ${deviceSessionError.message}`
+      );
+      // Don't fail the login if device session creation fails
+    }
 
     // Record successful login
     try {

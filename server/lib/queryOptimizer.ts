@@ -1,6 +1,15 @@
 import { db } from "../db.js";
 import { logger } from "./logger.js";
 import { getCache, setCache, memoizedQuery } from "./cache.js";
+import { eq, desc, asc, sql, and, or, gte, lte, ilike } from "drizzle-orm";
+import {
+  marketplaceListings,
+  locations,
+  users,
+  farmerTasks,
+  crops,
+  fields,
+} from "@shared/schema";
 
 /**
  * Query optimization utilities for better performance

@@ -8,9 +8,16 @@ export function isAuthenticated(
   res: Response,
   next: NextFunction
 ): void {
+  // Check for regular Passport authentication
   if (req.isAuthenticated && req.isAuthenticated()) {
     return next();
   }
+
+  // Check for admin session authentication
+  if (req.session && req.session.userId && req.session.user) {
+    return next();
+  }
+
   res.status(401).json({ message: "Not authenticated" });
 }
 
@@ -19,6 +26,7 @@ export function isAuthenticated(
  */
 export function hasRole(role: string) {
   return (req: Request, res: Response, next: NextFunction): void => {
+    // Check for regular Passport authentication
     if (
       req.isAuthenticated &&
       req.isAuthenticated() &&
@@ -27,6 +35,17 @@ export function hasRole(role: string) {
     ) {
       return next();
     }
+
+    // Check for admin session authentication
+    if (
+      req.session &&
+      req.session.userId &&
+      req.session.user &&
+      req.session.user.role === role
+    ) {
+      return next();
+    }
+
     res.status(403).json({ message: "Unauthorized access" });
   };
 }

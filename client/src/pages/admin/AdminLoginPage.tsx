@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ interface AdminLoginData {
 export default function AdminLoginPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<AdminLoginData>({
     email: "",
@@ -36,7 +37,7 @@ export default function AdminLoginPage() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: AdminLoginData) => {
-      const response = await apiRequest("POST", "/api/admin/auth/login", data);
+      const response = await apiRequest("POST", "/api/admin-auth/login", data);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Admin login failed");
@@ -49,10 +50,12 @@ export default function AdminLoginPage() {
         description: `Welcome back, ${data.user?.username || "Administrator"}`,
         duration: 3000,
       });
+
+      // Invalidate and refetch user data to update auth state
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+
       // Redirect to admin dashboard
       setLocation("/admin");
-      // Refresh the page to update auth state
-      window.location.reload();
     },
     onError: (error: Error) => {
       toast({
