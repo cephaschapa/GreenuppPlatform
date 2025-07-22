@@ -1,8 +1,9 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useLocation } from "wouter";
@@ -25,6 +26,53 @@ import {
   Terminal,
   HelpCircle,
   LogOut,
+  TrendingUp,
+  PieChart,
+  Sprout,
+  MapPin,
+  Calendar,
+  ShoppingCart,
+  Package,
+  Users2,
+  BookOpen,
+  Bell,
+  Mail,
+  Megaphone,
+  Target,
+  UserPlus,
+  Award,
+  Smartphone,
+  Plug,
+  CheckCircle,
+  Brain,
+  Cpu,
+  FlaskConical,
+  GitBranch,
+  LineChart,
+  CloudCog,
+  BarChart4,
+  MonitorSpeaker,
+  Layers,
+  TestTube,
+  Workflow,
+  Network,
+  Beaker,
+  Wifi,
+  Thermometer,
+  Droplets,
+  Wind,
+  Gauge,
+  Radio,
+  Satellite,
+  ScanLine,
+  Radar,
+  Router,
+  Power,
+  BatteryLow,
+  Waves,
+  Compass,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -105,6 +153,416 @@ const adminNavItems: AdminNavItem[] = [
     category: "platform",
   },
 
+  // Business Intelligence & Analytics
+  {
+    icon: TrendingUp,
+    label: "Business Intelligence",
+    href: "/admin/business-intelligence",
+    description: "Revenue, growth metrics, KPIs",
+    category: "platform",
+  },
+  {
+    icon: PieChart,
+    label: "Market Analytics",
+    href: "/admin/market-analytics",
+    description: "Marketplace trends & insights",
+    category: "platform",
+  },
+
+  // Agriculture-Specific Management
+  {
+    icon: Sprout,
+    label: "Crop Management",
+    href: "/admin/crops",
+    description: "Global crop data & varieties",
+    category: "platform",
+  },
+  {
+    icon: MapPin,
+    label: "Regional Settings",
+    href: "/admin/regions",
+    description: "Geographic zones & climate data",
+    category: "platform",
+  },
+  {
+    icon: Calendar,
+    label: "Seasonal Calendar",
+    href: "/admin/seasons",
+    description: "Planting & harvest schedules",
+    category: "platform",
+  },
+
+  // Marketplace & Commerce
+  {
+    icon: ShoppingCart,
+    label: "Marketplace Admin",
+    href: "/admin/marketplace",
+    description: "Listings, orders, transactions",
+    category: "platform",
+  },
+  {
+    icon: Package,
+    label: "Inventory Oversight",
+    href: "/admin/inventory",
+    description: "Platform-wide inventory tracking",
+    category: "platform",
+  },
+  {
+    icon: CreditCard,
+    label: "Payment Management",
+    href: "/admin/payments",
+    description: "Transactions, refunds, disputes",
+    category: "platform",
+  },
+
+  // Community & Support
+  {
+    icon: Users2,
+    label: "Community Management",
+    href: "/admin/community",
+    description: "Social features, forums, groups",
+    category: "platform",
+  },
+  {
+    icon: HelpCircle,
+    label: "Support Center",
+    href: "/admin/support",
+    description: "Tickets, FAQ management",
+    category: "platform",
+  },
+  {
+    icon: BookOpen,
+    label: "Knowledge Base",
+    href: "/admin/knowledge-base",
+    description: "Educational content & guides",
+    category: "platform",
+  },
+
+  // Communication & Engagement
+  {
+    icon: Bell,
+    label: "Notification Center",
+    href: "/admin/notifications",
+    description: "Push, email, SMS campaigns",
+    category: "platform",
+  },
+  {
+    icon: Mail,
+    label: "Email Campaigns",
+    href: "/admin/email-campaigns",
+    description: "Marketing & transactional emails",
+    category: "platform",
+  },
+  {
+    icon: Megaphone,
+    label: "Announcements",
+    href: "/admin/announcements",
+    description: "Platform-wide communications",
+    category: "platform",
+  },
+
+  // Growth & Optimization
+  {
+    icon: Target,
+    label: "A/B Testing",
+    href: "/admin/ab-testing",
+    description: "Feature experiments & optimization",
+    category: "platform",
+  },
+  {
+    icon: UserPlus,
+    label: "User Onboarding",
+    href: "/admin/onboarding",
+    description: "Registration flows & tutorials",
+    category: "platform",
+  },
+  {
+    icon: Award,
+    label: "Rewards Program",
+    href: "/admin/rewards",
+    description: "Loyalty points, achievements",
+    category: "platform",
+  },
+
+  // Mobile & Integration
+  {
+    icon: Smartphone,
+    label: "Mobile App Management",
+    href: "/admin/mobile",
+    description: "App versions, push settings",
+    category: "platform",
+  },
+  {
+    icon: Plug,
+    label: "Integrations",
+    href: "/admin/integrations",
+    description: "Third-party APIs & services",
+    category: "platform",
+  },
+
+  // Quality & Moderation
+  {
+    icon: Shield,
+    label: "Content Moderation",
+    href: "/admin/moderation",
+    description: "Review flagged content & users",
+    category: "platform",
+  },
+  {
+    icon: CheckCircle,
+    label: "Quality Assurance",
+    href: "/admin/quality",
+    description: "Product verification & standards",
+    category: "platform",
+  },
+
+  // AI Lab - Model Management
+  {
+    icon: Brain,
+    label: "Model Training",
+    href: "/admin/ai-lab/model-training",
+    description: "Retrain crop recognition & disease models",
+    category: "ailab",
+  },
+  {
+    icon: GitBranch,
+    label: "Model Versioning",
+    href: "/admin/ai-lab/model-versions",
+    description: "Manage model versions & rollbacks",
+    category: "ailab",
+  },
+  {
+    icon: LineChart,
+    label: "Model Performance",
+    href: "/admin/ai-lab/model-performance",
+    description: "Accuracy metrics & validation results",
+    category: "ailab",
+  },
+  {
+    icon: Layers,
+    label: "Dataset Management",
+    href: "/admin/ai-lab/datasets",
+    description: "Training data & annotations",
+    category: "ailab",
+  },
+
+  // AI Lab - Conversational AI
+  {
+    icon: MessageSquare,
+    label: "Chat Assistants",
+    href: "/admin/ai-lab/chat-assistants",
+    description: "Configure AI personalities & knowledge",
+    category: "ailab",
+  },
+  {
+    icon: Target,
+    label: "Intent Training",
+    href: "/admin/ai-lab/intent-training",
+    description: "Teach AI farming query understanding",
+    category: "ailab",
+  },
+  {
+    icon: FileText,
+    label: "Response Templates",
+    href: "/admin/ai-lab/response-templates",
+    description: "Manage AI response patterns & tone",
+    category: "ailab",
+  },
+  {
+    icon: BarChart4,
+    label: "Conversation Analytics",
+    href: "/admin/ai-lab/conversation-analytics",
+    description: "Chat success rates & satisfaction",
+    category: "ailab",
+  },
+
+  // AI Lab - Experiments & Research
+  {
+    icon: FlaskConical,
+    label: "Experiment Dashboard",
+    href: "/admin/ai-lab/experiments",
+    description: "Track AI research & tests",
+    category: "ailab",
+  },
+  {
+    icon: TestTube,
+    label: "Feature Flags",
+    href: "/admin/ai-lab/feature-flags",
+    description: "Toggle experimental AI features",
+    category: "ailab",
+  },
+  {
+    icon: Beaker,
+    label: "Hypothesis Testing",
+    href: "/admin/ai-lab/hypothesis-testing",
+    description: "Document AI improvement experiments",
+    category: "ailab",
+  },
+  {
+    icon: Network,
+    label: "Research Projects",
+    href: "/admin/ai-lab/research",
+    description: "Long-term AI development initiatives",
+    category: "ailab",
+  },
+
+  // AI Lab - Analytics & Infrastructure
+  {
+    icon: BarChart3,
+    label: "AI Usage Analytics",
+    href: "/admin/ai-lab/usage-analytics",
+    description: "User interaction with AI features",
+    category: "ailab",
+  },
+  {
+    icon: MonitorSpeaker,
+    label: "Model Drift Detection",
+    href: "/admin/ai-lab/model-drift",
+    description: "Monitor when models need retraining",
+    category: "ailab",
+  },
+  {
+    icon: Cpu,
+    label: "Compute Resources",
+    href: "/admin/ai-lab/compute",
+    description: "GPU clusters & training jobs",
+    category: "ailab",
+  },
+  {
+    icon: CloudCog,
+    label: "AI Infrastructure",
+    href: "/admin/ai-lab/infrastructure",
+    description: "Deployment, scaling & pipelines",
+    category: "ailab",
+  },
+  {
+    icon: Workflow,
+    label: "API Management",
+    href: "/admin/ai-lab/api-management",
+    description: "Third-party AI service integrations",
+    category: "ailab",
+  },
+
+  // IoT & Sensors - Device Management
+  {
+    icon: Wifi,
+    label: "Device Registry",
+    href: "/admin/iot/device-registry",
+    description: "Manage all connected IoT devices",
+    category: "iot",
+  },
+  {
+    icon: Router,
+    label: "Network Topology",
+    href: "/admin/iot/network-topology",
+    description: "View device connections & gateways",
+    category: "iot",
+  },
+  {
+    icon: Power,
+    label: "Device Status",
+    href: "/admin/iot/device-status",
+    description: "Real-time device health & connectivity",
+    category: "iot",
+  },
+  {
+    icon: BatteryLow,
+    label: "Power Management",
+    href: "/admin/iot/power-management",
+    description: "Battery levels & power optimization",
+    category: "iot",
+  },
+
+  // IoT & Sensors - Environmental Monitoring
+  {
+    icon: Thermometer,
+    label: "Temperature Sensors",
+    href: "/admin/iot/temperature-sensors",
+    description: "Soil & air temperature monitoring",
+    category: "iot",
+  },
+  {
+    icon: Droplets,
+    label: "Moisture Sensors",
+    href: "/admin/iot/moisture-sensors",
+    description: "Soil moisture & irrigation control",
+    category: "iot",
+  },
+  {
+    icon: Wind,
+    label: "Weather Stations",
+    href: "/admin/iot/weather-stations",
+    description: "Wind, humidity & pressure sensors",
+    category: "iot",
+  },
+  {
+    icon: Gauge,
+    label: "Soil Sensors",
+    href: "/admin/iot/soil-sensors",
+    description: "pH, nutrients & soil composition",
+    category: "iot",
+  },
+
+  // IoT & Sensors - Automation & Control
+  {
+    icon: Waves,
+    label: "Irrigation Control",
+    href: "/admin/iot/irrigation-control",
+    description: "Automated watering systems",
+    category: "iot",
+  },
+  {
+    icon: ScanLine,
+    label: "Drone Management",
+    href: "/admin/iot/drone-management",
+    description: "Agricultural drone fleet control",
+    category: "iot",
+  },
+  {
+    icon: Satellite,
+    label: "GPS Tracking",
+    href: "/admin/iot/gps-tracking",
+    description: "Equipment & livestock location",
+    category: "iot",
+  },
+  {
+    icon: Radio,
+    label: "Communication Protocols",
+    href: "/admin/iot/communication-protocols",
+    description: "LoRaWAN, Zigbee, WiFi management",
+    category: "iot",
+  },
+
+  // IoT & Sensors - Data & Analytics
+  {
+    icon: BarChart3,
+    label: "Sensor Data Analytics",
+    href: "/admin/iot/sensor-analytics",
+    description: "Analyze environmental trends",
+    category: "iot",
+  },
+  {
+    icon: Radar,
+    label: "Predictive Maintenance",
+    href: "/admin/iot/predictive-maintenance",
+    description: "Prevent equipment failures",
+    category: "iot",
+  },
+  {
+    icon: Compass,
+    label: "Field Mapping",
+    href: "/admin/iot/field-mapping",
+    description: "IoT-enabled precision agriculture",
+    category: "iot",
+  },
+  {
+    icon: AlertTriangle,
+    label: "Alert Management",
+    href: "/admin/iot/alert-management",
+    description: "Sensor threshold alerts & notifications",
+    category: "iot",
+  },
+
   // System & Security
   {
     icon: Settings,
@@ -163,6 +621,8 @@ const categoryLabels = {
   overview: "Overview",
   users: "User Management",
   platform: "Platform",
+  ailab: "AI Lab",
+  iot: "IoT & Sensors",
   system: "System",
   dev: "Developer Tools",
 };
@@ -174,6 +634,21 @@ export function AdminLayout({
 }: AdminLayoutProps) {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+    new Set()
+  );
+
+  const toggleSection = (category: string) => {
+    setCollapsedSections((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(category)) {
+        newSet.delete(category);
+      } else {
+        newSet.add(category);
+      }
+      return newSet;
+    });
+  };
 
   // Only allow admin users - redirect to admin login if not authenticated
   if (!user || user.role !== "admin") {
@@ -215,7 +690,7 @@ export function AdminLayout({
   return (
     <div className="min-h-screen bg-background flex">
       {/* Admin Sidebar */}
-      <div className="w-72 bg-card border-r border-border flex flex-col">
+      <div className="w-72 bg-card border-r border-border flex flex-col fixed left-0 top-0 h-screen z-40">
         {/* Header */}
         <div className="p-6 border-b border-border">
           <div className="flex items-center gap-3">
@@ -238,45 +713,73 @@ export function AdminLayout({
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {Object.entries(groupedItems).map(([category, items]) => (
-            <div key={category}>
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                {categoryLabels[category as keyof typeof categoryLabels]}
-              </h3>
-              <div className="space-y-1">
-                {items.map((item) => (
+        <ScrollArea className="flex-1">
+          <div className="p-4 space-y-4">
+            {Object.entries(groupedItems).map(([category, items]) => {
+              const isCollapsed = collapsedSections.has(category);
+              const categoryLabel =
+                categoryLabels[category as keyof typeof categoryLabels];
+
+              return (
+                <div key={category}>
                   <Button
-                    key={item.href}
-                    variant={isCurrentPath(item.href) ? "secondary" : "ghost"}
+                    variant="ghost"
                     size="sm"
-                    className="w-full justify-start h-auto p-3 text-left"
-                    asChild
+                    className="w-full justify-between h-auto p-2 mb-2 hover:bg-muted/50"
+                    onClick={() => toggleSection(category)}
                   >
-                    <a href={item.href}>
-                      <item.icon className="h-4 w-4 mr-3 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm truncate">
-                          {item.label}
-                          {item.badge && (
-                            <Badge variant="secondary" className="ml-2 text-xs">
-                              {item.badge}
-                            </Badge>
-                          )}
-                        </div>
-                        {item.description && (
-                          <div className="text-xs text-muted-foreground truncate">
-                            {item.description}
-                          </div>
-                        )}
-                      </div>
-                    </a>
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      {categoryLabel}
+                    </h3>
+                    {isCollapsed ? (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    )}
                   </Button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+
+                  {!isCollapsed && (
+                    <div className="space-y-1 ml-2">
+                      {items.map((item) => (
+                        <Button
+                          key={item.href}
+                          variant={
+                            isCurrentPath(item.href) ? "secondary" : "ghost"
+                          }
+                          size="sm"
+                          className="w-full justify-start h-auto p-3 text-left"
+                          asChild
+                        >
+                          <a href={item.href}>
+                            <item.icon className="h-4 w-4 mr-3 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm truncate">
+                                {item.label}
+                                {item.badge && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="ml-2 text-xs"
+                                  >
+                                    {item.badge}
+                                  </Badge>
+                                )}
+                              </div>
+                              {item.description && (
+                                <div className="text-xs text-muted-foreground truncate">
+                                  {item.description}
+                                </div>
+                              )}
+                            </div>
+                          </a>
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </ScrollArea>
 
         {/* Footer */}
         <div className="p-4 border-t border-border">
@@ -301,7 +804,7 @@ export function AdminLayout({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col ml-72">
         {/* Top Bar */}
         <div className="h-16 bg-card border-b border-border flex items-center justify-between px-6">
           <div>

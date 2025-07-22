@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -107,6 +109,19 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
+  const [deleteUser, setDeleteUser] = useState<User | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set());
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [editUser, setEditUser] = useState<User | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    username: "",
+    email: "",
+    firstName: "",
+    lastName: "",
+    role: "",
+  });
 
   // Fetch admin dashboard data
   const { data: dashboardData, isLoading: dashboardLoading } =
@@ -187,11 +202,114 @@ export default function AdminDashboard() {
   };
 
   const handleEditUser = (user: User) => {
-    // TODO: Implement user editing functionality
-    toast({
-      title: "Edit User",
-      description: `Edit functionality for ${user.username} will be implemented soon.`,
+    setEditUser(user);
+    setEditFormData({
+      username: user.username,
+      email: user.email,
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      role: user.role,
     });
+    setIsEditDialogOpen(true);
+  };
+
+  const editUserMutation = useMutation({
+    mutationFn: async ({ userId, data }: { userId: number; data: any }) => {
+      const response = await apiRequest(
+        "PATCH",
+        `/api/admin/users/${userId}`,
+        data
+      );
+      if (!response.ok) {
+        throw new Error("Failed to update user");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast({
+        title: "User updated",
+        description: "User has been successfully updated.",
+      });
+      setIsEditDialogOpen(false);
+      setEditUser(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const validateEditForm = () => {
+    const errors: string[] = [];
+
+    if (!editFormData.username.trim()) {
+      errors.push("Username is required");
+    } else if (editFormData.username.length < 3) {
+      errors.push("Username must be at least 3 characters");
+    }
+
+    if (!editFormData.email.trim()) {
+      errors.push("Email is required");
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editFormData.email)) {
+      errors.push("Invalid email format");
+    }
+
+    if (!editFormData.role) {
+      errors.push("Role is required");
+    }
+
+    return errors;
+  };
+
+  const handleEditFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editUser) return;
+
+    // Validate form
+    const validationErrors = validateEditForm();
+    if (validationErrors.length > 0) {
+      toast({
+        title: "Validation Error",
+        description: validationErrors.join(", "),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Only send changed fields
+    const changes: any = {};
+    if (editFormData.username !== editUser.username)
+      changes.username = editFormData.username.trim();
+    if (editFormData.email !== editUser.email)
+      changes.email = editFormData.email.trim();
+    if (editFormData.firstName !== (editUser.firstName || ""))
+      changes.firstName = editFormData.firstName.trim() || null;
+    if (editFormData.lastName !== (editUser.lastName || ""))
+      changes.lastName = editFormData.lastName.trim() || null;
+    if (editFormData.role !== editUser.role) changes.role = editFormData.role;
+
+    if (Object.keys(changes).length === 0) {
+      toast({
+        title: "No changes",
+        description: "No changes were made to the user.",
+      });
+      return;
+    }
+
+    editUserMutation.mutate({ userId: editUser.id, data: changes });
+  };
+
+  const handleEditFormChange = (field: string, value: string) => {
+    setEditFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const cancelEditUser = () => {
+    setIsEditDialogOpen(false);
+    setEditUser(null);
   };
 
   const deleteUserMutation = useMutation({
@@ -208,6 +326,9 @@ export default function AdminDashboard() {
         title: "User deleted",
         description: "User has been successfully deleted.",
       });
+      // Close the delete modal
+      setIsDeleteDialogOpen(false);
+      setDeleteUser(null);
     },
     onError: (error: Error) => {
       toast({
@@ -215,13 +336,99 @@ export default function AdminDashboard() {
         description: error.message,
         variant: "destructive",
       });
+      // Keep modal open on error so user can retry or cancel
     },
   });
 
   const handleDeleteUser = (user: User) => {
-    if (confirm(`Are you sure you want to delete user ${user.username}?`)) {
-      deleteUserMutation.mutate(user.id);
+    setDeleteUser(user);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteUser = () => {
+    if (deleteUser) {
+      deleteUserMutation.mutate(deleteUser.id);
     }
+  };
+
+  const cancelDeleteUser = () => {
+    setIsDeleteDialogOpen(false);
+    setDeleteUser(null);
+  };
+
+  // Bulk delete functions
+  const toggleUserSelection = (userId: number) => {
+    const newSelection = new Set(selectedUsers);
+    if (newSelection.has(userId)) {
+      newSelection.delete(userId);
+    } else {
+      newSelection.add(userId);
+    }
+    setSelectedUsers(newSelection);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedUsers.size === userData?.users.length) {
+      setSelectedUsers(new Set());
+    } else {
+      const allUserIds = new Set(userData?.users.map((user) => user.id) || []);
+      setSelectedUsers(allUserIds);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedUsers.size === 0) return;
+    setIsBulkDeleteDialogOpen(true);
+  };
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (userIds: number[]) => {
+      const results = await Promise.allSettled(
+        userIds.map((userId) =>
+          apiRequest("DELETE", `/api/admin/users/${userId}`)
+        )
+      );
+
+      const failures = results
+        .map((result, index) => ({ result, userId: userIds[index] }))
+        .filter(({ result }) => result.status === "rejected")
+        .map(({ userId }) => userId);
+
+      if (failures.length > 0) {
+        throw new Error(`Failed to delete ${failures.length} user(s)`);
+      }
+
+      return results;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast({
+        title: "Users deleted",
+        description: `Successfully deleted ${selectedUsers.size} user(s).`,
+      });
+      setSelectedUsers(new Set());
+      setIsBulkDeleteDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Bulk delete failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const confirmBulkDelete = () => {
+    const userIds = Array.from(selectedUsers);
+    bulkDeleteMutation.mutate(userIds);
+  };
+
+  const cancelBulkDelete = () => {
+    setIsBulkDeleteDialogOpen(false);
+  };
+
+  const getSelectedUsersData = () => {
+    return userData?.users.filter((user) => selectedUsers.has(user.id)) || [];
   };
 
   const formatNumber = (num: number) => {
@@ -476,35 +683,68 @@ export default function AdminDashboard() {
                 <CardTitle>User Management</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex gap-4 mb-6">
-                  <div className="flex-1 relative">
-                    <Input
-                      placeholder="Search users..."
-                      value={userSearch}
-                      onChange={(e) => setUserSearch(e.target.value)}
-                      className="max-w-sm pr-10"
-                    />
-                    {isFiltering && (
-                      <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                    )}
-                  </div>
-                  <Select
-                    value={userRoleFilter}
-                    onValueChange={setUserRoleFilter}
-                  >
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Filter by role" />
+                <div className="space-y-4">
+                  <div className="flex gap-4">
+                    <div className="flex-1 relative">
+                      <Input
+                        placeholder="Search users..."
+                        value={userSearch}
+                        onChange={(e) => setUserSearch(e.target.value)}
+                        className="max-w-sm pr-10"
+                      />
                       {isFiltering && (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
                       )}
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Roles</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="farmer">Farmer</SelectItem>
-                      <SelectItem value="buyer">Buyer</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    </div>
+                    <Select
+                      value={userRoleFilter}
+                      onValueChange={setUserRoleFilter}
+                    >
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Filter by role" />
+                        {isFiltering && (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Roles</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="farmer">Farmer</SelectItem>
+                        <SelectItem value="buyer">Buyer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Bulk Actions */}
+                  {selectedUsers.size > 0 && (
+                    <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                        {selectedUsers.size} user(s) selected
+                      </span>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedUsers(new Set())}
+                        >
+                          Clear Selection
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={handleBulkDelete}
+                          disabled={bulkDeleteMutation.isPending}
+                        >
+                          {bulkDeleteMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4 mr-2" />
+                          )}
+                          Delete Selected
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Users Table */}
@@ -512,6 +752,16 @@ export default function AdminDashboard() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={
+                              selectedUsers.size === userData?.users.length &&
+                              userData?.users.length > 0
+                            }
+                            onCheckedChange={toggleSelectAll}
+                            aria-label="Select all users"
+                          />
+                        </TableHead>
                         <TableHead>User</TableHead>
                         <TableHead>Role</TableHead>
                         <TableHead>Created</TableHead>
@@ -523,6 +773,9 @@ export default function AdminDashboard() {
                         ? // Loading skeleton rows
                           Array.from({ length: 5 }).map((_, index) => (
                             <TableRow key={index}>
+                              <TableCell>
+                                <Skeleton className="h-4 w-4" />
+                              </TableCell>
                               <TableCell>
                                 <div className="space-y-2">
                                   <Skeleton className="h-4 w-32" />
@@ -546,6 +799,15 @@ export default function AdminDashboard() {
                           ))
                         : userData?.users.map((user) => (
                             <TableRow key={user.id}>
+                              <TableCell>
+                                <Checkbox
+                                  checked={selectedUsers.has(user.id)}
+                                  onCheckedChange={() =>
+                                    toggleUserSelection(user.id)
+                                  }
+                                  aria-label={`Select ${user.username}`}
+                                />
+                              </TableCell>
                               <TableCell>
                                 <div>
                                   <div className="font-medium">
@@ -931,6 +1193,298 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Delete User
+            </DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete the
+              user and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+          {deleteUser && (
+            <div className="space-y-4">
+              <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                    <span className="text-red-600 font-semibold text-lg">
+                      {deleteUser.firstName?.[0] ||
+                        deleteUser.username[0].toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="font-medium text-red-900 dark:text-red-100">
+                      {deleteUser.firstName && deleteUser.lastName
+                        ? `${deleteUser.firstName} ${deleteUser.lastName}`
+                        : deleteUser.username}
+                    </div>
+                    <div className="text-sm text-red-700 dark:text-red-300">
+                      {deleteUser.email}
+                    </div>
+                    <div className="text-xs text-red-600 dark:text-red-400 mt-1">
+                      Role: {deleteUser.role}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-sm text-muted-foreground">
+                <p className="font-medium mb-2">This will delete:</p>
+                <ul className="list-disc list-inside space-y-1 text-xs">
+                  <li>User account and profile</li>
+                  <li>All farming data (fields, crops)</li>
+                  <li>Marketplace listings and activity</li>
+                  <li>Notifications and settings</li>
+                  <li>Authentication and security data</li>
+                </ul>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={cancelDeleteUser}
+                  className="flex-1"
+                  disabled={deleteUserMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={confirmDeleteUser}
+                  className="flex-1"
+                  disabled={deleteUserMutation.isPending}
+                >
+                  {deleteUserMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete User
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user information and settings
+            </DialogDescription>
+          </DialogHeader>
+          {editUser && (
+            <form onSubmit={handleEditFormSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-username">Username</Label>
+                <Input
+                  id="edit-username"
+                  value={editFormData.username}
+                  onChange={(e) =>
+                    handleEditFormChange("username", e.target.value)
+                  }
+                  placeholder="Enter username"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={editFormData.email}
+                  onChange={(e) =>
+                    handleEditFormChange("email", e.target.value)
+                  }
+                  placeholder="Enter email"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-firstName">First Name</Label>
+                <Input
+                  id="edit-firstName"
+                  value={editFormData.firstName}
+                  onChange={(e) =>
+                    handleEditFormChange("firstName", e.target.value)
+                  }
+                  placeholder="Enter first name (optional)"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-lastName">Last Name</Label>
+                <Input
+                  id="edit-lastName"
+                  value={editFormData.lastName}
+                  onChange={(e) =>
+                    handleEditFormChange("lastName", e.target.value)
+                  }
+                  placeholder="Enter last name (optional)"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-role">Role</Label>
+                <Select
+                  value={editFormData.role}
+                  onValueChange={(value) => handleEditFormChange("role", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="farmer">Farmer</SelectItem>
+                    <SelectItem value="buyer">Buyer</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={cancelEditUser}
+                  className="flex-1"
+                  disabled={editUserMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={editUserMutation.isPending}
+                >
+                  {editUserMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Update User
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog
+        open={isBulkDeleteDialogOpen}
+        onOpenChange={setIsBulkDeleteDialogOpen}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Delete Multiple Users
+            </DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete{" "}
+              {selectedUsers.size} user(s) and all their associated data.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
+              <h4 className="font-medium text-red-900 dark:text-red-100 mb-3">
+                Users to be deleted ({selectedUsers.size}):
+              </h4>
+              <div className="max-h-32 overflow-y-auto space-y-2">
+                {getSelectedUsersData().map((user) => (
+                  <div
+                    key={user.id}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <div className="w-6 h-6 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                      <span className="text-red-600 font-semibold text-xs">
+                        {user.firstName?.[0] || user.username[0].toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="text-red-900 dark:text-red-100">
+                      {user.firstName && user.lastName
+                        ? `${user.firstName} ${user.lastName}`
+                        : user.username}
+                    </span>
+                    <span className="text-red-700 dark:text-red-300">
+                      ({user.email})
+                    </span>
+                    <Badge
+                      variant={getRoleBadgeVariant(user.role)}
+                      className="ml-auto"
+                    >
+                      {user.role}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="text-sm text-muted-foreground">
+              <p className="font-medium mb-2">
+                This will delete for each user:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-xs">
+                <li>User account and profile</li>
+                <li>All farming data (fields, crops)</li>
+                <li>Marketplace listings and activity</li>
+                <li>Notifications and settings</li>
+                <li>Authentication and security data</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={cancelBulkDelete}
+                className="flex-1"
+                disabled={bulkDeleteMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmBulkDelete}
+                className="flex-1"
+                disabled={bulkDeleteMutation.isPending}
+              >
+                {bulkDeleteMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Deleting {selectedUsers.size} Users...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete {selectedUsers.size} Users
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </AdminLayout>

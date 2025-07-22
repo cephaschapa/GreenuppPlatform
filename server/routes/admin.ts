@@ -11,6 +11,15 @@ import {
   contactForm,
   loginAttempts,
   securityEvents,
+  crops,
+  fields,
+  farmerProfiles,
+  notifications,
+  notificationSettings,
+  weatherPreferences,
+  farmerTasks,
+  carts,
+  plantAnalyses,
 } from "@shared/schema";
 import { eq, desc, count, sql } from "drizzle-orm";
 
@@ -228,15 +237,67 @@ router.delete("/users/:id", async (req, res) => {
       return res.status(403).json({ error: "Cannot delete admin users" });
     }
 
-    // Delete the user
-    await db.delete(users).where(eq(users.id, userId));
+    // Start a transaction to ensure all related data is deleted consistently
+    await db.transaction(async (tx) => {
+      try {
+        // Delete related records in order (to avoid foreign key constraints)
+
+        // 1. Delete notifications and settings first (due to foreign key constraints)
+        await tx.delete(notifications).where(eq(notifications.userId, userId));
+        await tx
+          .delete(notificationSettings)
+          .where(eq(notificationSettings.userId, userId));
+
+        // 2. Delete weather preferences
+        await tx
+          .delete(weatherPreferences)
+          .where(eq(weatherPreferences.userId, userId));
+
+        // 3. Delete farmer tasks
+        await tx.delete(farmerTasks).where(eq(farmerTasks.userId, userId));
+
+        // 4. Delete plant analyses
+        await tx.delete(plantAnalyses).where(eq(plantAnalyses.userId, userId));
+
+        // 5. Delete user's carts
+        await tx.delete(carts).where(eq(carts.userId, userId));
+
+        // 6. Delete authentication related data
+        await tx.delete(loginAttempts).where(eq(loginAttempts.userId, userId));
+        await tx
+          .delete(securityEvents)
+          .where(eq(securityEvents.userId, userId));
+
+        // 7. Delete farming related data
+        await tx.delete(crops).where(eq(crops.userId, userId));
+        await tx.delete(fields).where(eq(fields.userId, userId));
+
+        // 8. Delete marketplace listings (seller)
+        await tx
+          .delete(marketplaceListings)
+          .where(eq(marketplaceListings.sellerId, userId));
+
+        // 9. Delete farmer profile
+        await tx
+          .delete(farmerProfiles)
+          .where(eq(farmerProfiles.userId, userId));
+
+        // 10. Finally delete the user
+        await tx.delete(users).where(eq(users.id, userId));
+
+        logger.info(`Successfully deleted user ${userId} and related data`);
+      } catch (txError) {
+        logger.error("Transaction error during user deletion:", txError);
+        throw txError;
+      }
+    });
 
     logger.info(
-      `User ${existingUser.username} (ID: ${userId}) deleted by admin ${req.session.userId}`
+      `User ${existingUser.username} (ID: ${userId}) and all related data deleted by admin ${req.session.userId}`
     );
 
     res.json({
-      message: "User deleted successfully",
+      message: "User and all related data deleted successfully",
       deletedUser: {
         id: existingUser.id,
         username: existingUser.username,
@@ -245,7 +306,11 @@ router.delete("/users/:id", async (req, res) => {
     });
   } catch (error) {
     logger.error("Error deleting user:", error);
-    res.status(500).json({ error: "Failed to delete user" });
+    console.error("Detailed error:", error);
+    res.status(500).json({
+      error: "Failed to delete user",
+      details: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 });
 
