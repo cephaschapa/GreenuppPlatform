@@ -9,7 +9,6 @@ import SocialProof from "@/components/SocialProof";
 import MobileExperience from "@/components/MobileExperience";
 import GettingStartedSteps from "@/components/GettingStartedSteps";
 import PricingSection from "@/components/PricingSection";
-import CtaSection from "@/components/CtaSection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
 import { SystemHealthStatus } from "@/components/SystemHealthStatus";
@@ -92,9 +91,6 @@ const Home = () => {
 
         {/* Pricing Section */}
         <PricingSection />
-
-        {/* CTA Section */}
-        <CtaSection />
 
         {/* Contact Section */}
         <ContactSection />

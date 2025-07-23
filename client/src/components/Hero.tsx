@@ -1,215 +1,382 @@
 import { motion } from "framer-motion";
-import droneFieldImage from "../assets/drone-field.svg";
-import greenuppLogo from "../assets/greenupp-full-logo.png"; // This now uses the updated logo
+import { useState } from "react";
 import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import greenuppLogo from "../assets/greenupp-full-logo.png";
+import {
+  Users,
+  Tractor,
+  Store,
+  ArrowRight,
+  CheckCircle,
+  Star,
+  MessageSquare,
+  Shield,
+  Globe,
+  Smartphone,
+  TrendingUp,
+  Heart,
+  Brain,
+  Database,
+  Lock,
+  KeyRound,
+} from "lucide-react";
+
+const userTypes = [
+  {
+    id: "smallholder",
+    icon: Users,
+    title: "Ba Farmer Ba Kuchikolo",
+    subtitle: "Small-scale Farmers",
+    description: "0.5-5 hectares • Maize, Groundnuts, Beans",
+    challenges: ["Limited capital", "Weather risks", "Market access"],
+    benefits: [
+      "40% yield increase",
+      "K2,000 savings/hectare",
+      "Direct market access",
+    ],
+    ctaText: "Start with K50/month",
+    gradient: "from-emerald-500 to-green-600",
+    users: "1,800+",
+  },
+  {
+    id: "commercial",
+    icon: Tractor,
+    title: "Ba Farmer Ba Ukulu",
+    subtitle: "Commercial Farmers",
+    description: "5+ hectares • Mechanized operations",
+    challenges: [
+      "Operational efficiency",
+      "Cost management",
+      "Scale optimization",
+    ],
+    benefits: [
+      "30% cost reduction",
+      "Precision agriculture",
+      "Supply chain control",
+    ],
+    ctaText: "Book consultation",
+    gradient: "from-blue-500 to-indigo-600",
+    users: "200+",
+  },
+  {
+    id: "agro-dealer",
+    icon: Store,
+    title: "Ba Business",
+    subtitle: "Agro-dealers & Buyers",
+    description: "Input suppliers • Produce buyers",
+    challenges: [
+      "Farmer connections",
+      "Inventory management",
+      "Quality assurance",
+    ],
+    benefits: ["Verified farmer network", "Quality tracking", "Reduced waste"],
+    ctaText: "Join marketplace",
+    gradient: "from-purple-500 to-pink-600",
+    users: "150+",
+  },
+];
+
+const trustIndicators = [
+  { icon: Brain, text: "AI First" },
+  { icon: Database, text: "Blockchain" },
+  { icon: Shield, text: "Trust" },
+  { icon: KeyRound, text: "Data Integrity" },
+  { icon: Lock, text: "Privacy" },
+];
 
 const Hero = () => {
+  const [selectedUserType, setSelectedUserType] = useState<string | null>(null);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+
   return (
-    <header className="pt-24 md:pt-28 pb-16 md:pb-24 relative overflow-hidden bg-background">
-      {/* Background pattern */}
-      <div className="absolute inset-0 z-0 opacity-20" 
-        style={{
-          backgroundImage: "radial-gradient(var(--primary) 1px, transparent 1px)",
-          backgroundSize: "20px 20px"
-        }}
-      />
-      
-      {/* Decorative blur elements */}
-      <div className="absolute top-[20%] left-[10%] w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-[10%] right-[5%] w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
-      
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-12 items-center">
-          {/* Left column - Value proposition */}
-          <div className="order-2 md:order-1 text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start mb-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-                <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                <span className="text-primary text-xs font-mono tracking-wider">AI-POWERED PLATFORM</span>
-              </div>
-            </div>
-            
-            <motion.h1 
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-space mb-4 md:mb-6 leading-tight"
+    <section className="relative min-h-screen bg-gradient-to-br from-slate-50 via-green-50/30 to-emerald-50 dark:from-slate-950 dark:via-green-950/30 dark:to-emerald-950 overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
+        <div
+          className="w-full h-full"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23059669' fill-opacity='1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundSize: "60px 60px",
+          }}
+        />
+      </div>
+
+      {/* Floating Elements */}
+      <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-green-400/20 to-emerald-500/20 rounded-full blur-xl animate-pulse"></div>
+      <div className="absolute bottom-20 right-10 w-40 h-40 bg-gradient-to-br from-blue-400/20 to-indigo-500/20 rounded-full blur-xl animate-pulse delay-1000"></div>
+      <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-gradient-to-br from-purple-400/20 to-pink-500/20 rounded-full blur-xl animate-pulse delay-2000"></div>
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10">
+        <div className="pt-20 pb-16 lg:pt-28 lg:pb-24">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
+              className="mb-6"
             >
-              Transform Your Farm with <span className="bg-gradient-to-r from-[#00CC66] to-[#06E775] bg-clip-text text-transparent">AI-Powered Intelligence</span>
+              <Badge
+                variant="outline"
+                className="mb-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-4 py-2"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  Pangeni Ulimi Wanu • Transform Your Farm
+                </div>
+              </Badge>
+              <img
+                src={greenuppLogo}
+                alt="GreenUpp"
+                className="h-12 mx-auto mb-6"
+              />
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.1 }}
+              className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-tight"
+            >
+              <span className="bg-gradient-to-r from-slate-800 via-green-800 to-emerald-800 dark:from-slate-100 dark:via-green-100 dark:to-emerald-100 bg-clip-text text-transparent">
+                Smart Farming for
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                Zambian Farmers
+              </span>
             </motion.h1>
-            
-            <motion.p 
-              className="text-base md:text-lg mb-6 md:mb-8 text-muted-foreground leading-relaxed max-w-xl mx-auto md:mx-0"
+
+            <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="text-lg sm:text-xl lg:text-2xl text-slate-600 dark:text-slate-300 mb-8 max-w-4xl mx-auto leading-relaxed"
             >
-              Increase yields, reduce costs, and simplify management with the complete digital farming platform that brings AI, IoT, blockchain, and social networking together in one seamless experience.
+              Join{" "}
+              <span className="font-semibold text-green-700 dark:text-green-400">
+                2,000+ Zambian farmers
+              </span>{" "}
+              increasing yields by 40% with AI-powered agriculture technology
+              that works offline and speaks your language.
             </motion.p>
-            
-            <motion.div 
-              className="flex flex-col sm:flex-row justify-center md:justify-start gap-4 sm:gap-4"
+
+            {/* Trust Indicators */}
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
+              className="flex flex-wrap justify-center gap-4 mb-12"
             >
-              <Link href="/auth" className="group bg-primary hover:bg-primary/90 text-secondary px-6 sm:px-8 py-3 rounded-md transition-all duration-300 font-medium inline-flex items-center justify-center">
-                <span>Get Started</span>
-                <i className="fas fa-arrow-right ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all"></i>
-              </Link>
-              
-              <button className="border border-primary/50 hover:border-primary bg-muted/50 hover:bg-muted px-6 sm:px-8 py-3 rounded-md transition-all duration-300 font-medium inline-flex items-center justify-center">
-                <i className="fas fa-play-circle mr-2 text-primary"></i>
-                <span>Watch Demo</span>
-              </button>
-            </motion.div>
-            
-            {/* Trust indicators */}
-            <motion.div 
-              className="mt-8 md:mt-12 space-y-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-            >
-              <div className="flex items-center justify-center md:justify-start gap-4 md:gap-6">
-                <div className="flex -space-x-3">
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center overflow-hidden">
-                    <i className="fas fa-user-alt text-primary/60 text-xs"></i>
-                  </div>
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center overflow-hidden">
-                    <i className="fas fa-user-alt text-primary/60 text-xs"></i>
-                  </div>
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center overflow-hidden">
-                    <i className="fas fa-user-alt text-primary/60 text-xs"></i>
-                  </div>
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-background bg-primary/20 flex items-center justify-center text-xs font-medium">
-                    5k+
-                  </div>
+              {trustIndicators.map((indicator, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700"
+                >
+                  <indicator.icon className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {indicator.text}
+                  </span>
                 </div>
-                <div>
-                  <p className="text-xs md:text-sm text-muted-foreground">Trusted by <span className="text-primary font-semibold">5,000+</span> farmers countrywide</p>
-                </div>
-              </div>
-              
-              {/* Technology badges */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-3 border-t border-border">
-                <div className="flex items-center bg-card/80 px-3 py-1 rounded-full border border-primary/10 text-xs">
-                  <i className="fas fa-brain text-primary mr-2 text-xs"></i>
-                  <span>OpenAI Powered</span>
-                </div>
-                <div className="flex items-center bg-card/80 px-3 py-1 rounded-full border border-primary/10 text-xs">
-                  <i className="fas fa-link text-primary mr-2 text-xs"></i>
-                  <span>Blockchain Verified</span>
-                </div>
-                <div className="flex items-center bg-card/80 px-3 py-1 rounded-full border border-primary/10 text-xs">
-                  <i className="fas fa-wifi text-primary mr-2 text-xs"></i>
-                  <span>IoT Ready</span>
-                </div>
-              </div>
+              ))}
             </motion.div>
           </div>
-          
-          {/* Right column - Animation & visualization */}
-          <motion.div 
-            className="order-1 md:order-2 relative"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
+
+          {/* User Type Selector */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="mb-16"
           >
-            <div className="relative rounded-2xl overflow-hidden border border-primary/20 shadow-xl shadow-primary/10 z-10 bg-card"
-              style={{ animation: "float 6s ease-in-out infinite" }}
-            >
-              {/* Digital farm landscape visualization */}
-              <div className="aspect-[4/3] w-full relative overflow-hidden">
-                <img 
-                  src={droneFieldImage} 
-                  alt="Digital farm landscape with data visualization" 
-                  className="w-full h-auto rounded-t-xl"
-                />
-                
-                {/* Animated data points overlaid on image */}
-                <div className="absolute top-0 left-0 w-full h-full">
-                  <div className="absolute top-[20%] left-[30%] w-4 h-4 bg-primary/30 rounded-full pulse-animation"></div>
-                  <div className="absolute top-[40%] left-[60%] w-5 h-5 bg-blue-500/30 rounded-full pulse-animation" style={{animationDelay: "1s"}}></div>
-                  <div className="absolute top-[65%] left-[45%] w-6 h-6 bg-amber-500/30 rounded-full pulse-animation" style={{animationDelay: "2s"}}></div>
-                </div>
-                
-                {/* Data visualization layer */}
-                <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/40 to-transparent">
-                  <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center gap-2 text-xs font-medium">
-                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                        <span className="font-mono text-primary">AI analysis in progress</span>
+            <div className="text-center mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100 mb-4">
+                Choose Your Farming Journey
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400 text-lg">
+                Select your farming type to see personalized benefits
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+              {userTypes.map((type, index) => (
+                <motion.div
+                  key={type.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.6 + index * 0.1 }}
+                  className="group"
+                  onMouseEnter={() => setHoveredCard(type.id)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                >
+                  <Card
+                    className={`relative overflow-hidden transition-all duration-500 cursor-pointer border-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm hover:shadow-2xl hover:shadow-green-500/10 ${
+                      selectedUserType === type.id
+                        ? "border-green-500 shadow-xl shadow-green-500/20 scale-105"
+                        : hoveredCard === type.id
+                        ? "border-green-300 shadow-lg hover:scale-105"
+                        : "border-slate-200 dark:border-slate-700 hover:border-green-200"
+                    }`}
+                    onClick={() =>
+                      setSelectedUserType(
+                        selectedUserType === type.id ? null : type.id
+                      )
+                    }
+                  >
+                    {/* Gradient Background */}
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-br ${type.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
+                    />
+
+                    <CardContent className="p-8 relative z-10">
+                      {/* Header */}
+                      <div className="text-center mb-6">
+                        <div
+                          className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${type.gradient} p-0.5 group-hover:scale-110 transition-transform duration-300`}
+                        >
+                          <div className="w-full h-full bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center">
+                            <type.icon className="w-8 h-8 text-slate-700 dark:text-slate-300" />
+                          </div>
+                        </div>
+
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">
+                          {type.title}
+                        </h3>
+                        <p className="text-green-600 dark:text-green-400 font-medium mb-2">
+                          {type.subtitle}
+                        </p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                          {type.description}
+                        </p>
+
+                        <div className="flex items-center justify-center gap-2 mb-4">
+                          <Users className="w-4 h-4 text-green-600" />
+                          <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                            {type.users} farmers
+                          </span>
+                        </div>
                       </div>
-                    </div>
+
+                      {/* Benefits Preview */}
+                      <div className="space-y-3 mb-6">
+                        {type.benefits.slice(0, 3).map((benefit, idx) => (
+                          <div key={idx} className="flex items-center gap-3">
+                            <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                              {benefit}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* CTA */}
+                      <Button
+                        className={`w-full bg-gradient-to-r ${type.gradient} hover:shadow-lg hover:shadow-green-500/25 transition-all duration-300 text-white font-medium`}
+                        size="lg"
+                        asChild
+                      >
+                        <a href="/testing-waitlist">
+                          {type.ctaText}
+                          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </a>
+                      </Button>
+
+                      {/* Expanded Content */}
+                      {selectedUserType === type.id && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700"
+                        >
+                          <h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-3">
+                            Common Challenges:
+                          </h4>
+                          <div className="space-y-2 mb-4">
+                            {type.challenges.map((challenge, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-2"
+                              >
+                                <div className="w-2 h-2 bg-red-400 rounded-full" />
+                                <span className="text-sm text-slate-600 dark:text-slate-400">
+                                  {challenge}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <Link href="/auth">
+                            <Button variant="outline" className="w-full">
+                              Get Started Now
+                            </Button>
+                          </Link>
+                        </motion.div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Main CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+            className="text-center"
+          >
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mb-8">
+              <Link href="/auth">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-4 text-lg font-medium shadow-lg hover:shadow-xl hover:shadow-green-500/25 transition-all duration-300"
+                >
+                  Yambani Lelo (Start Today)
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
+
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-2 border-slate-300 hover:border-green-500 bg-white/80 backdrop-blur-sm px-8 py-4 text-lg font-medium hover:bg-green-50 transition-all duration-300"
+              >
+                <MessageSquare className="w-5 h-5 mr-2" />
+                WhatsApp Demo
+              </Button>
+            </div>
+
+            {/* Success Metrics */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+              {[
+                { icon: TrendingUp, value: "40%", label: "Yield Increase" },
+                { icon: Users, value: "2,000+", label: "Active Farmers" },
+                { icon: Heart, value: "10", label: "Provinces Covered" },
+                { icon: Star, value: "4.8", label: "User Rating" },
+              ].map((metric, index) => (
+                <div key={index} className="text-center">
+                  <div className="w-12 h-12 mx-auto mb-2 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 rounded-xl flex items-center justify-center">
+                    <metric.icon className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                    {metric.value}
+                  </div>
+                  <div className="text-sm text-slate-600 dark:text-slate-400">
+                    {metric.label}
                   </div>
                 </div>
-              </div>
-              
-              {/* Live dashboard preview */}
-              <div className="p-4 border-t border-border">
-                <div className="flex justify-between items-center mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <i className="fas fa-chart-line text-primary text-xs"></i>
-                    </div>
-                    <span className="font-medium text-sm">Farm Dashboard</span>
-                  </div>
-                  <div className="px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-mono">LIVE</div>
-                </div>
-                
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-muted/50 rounded-md p-2 text-center">
-                    <div className="text-xs text-muted-foreground">Soil Moisture</div>
-                    <div className="font-medium text-sm">68<span className="text-xs">%</span></div>
-                  </div>
-                  <div className="bg-muted/50 rounded-md p-2 text-center">
-                    <div className="text-xs text-muted-foreground">Temperature</div>
-                    <div className="font-medium text-sm">24<span className="text-xs">°C</span></div>
-                  </div>
-                  <div className="bg-muted/50 rounded-md p-2 text-center">
-                    <div className="text-xs text-muted-foreground">Yield Forecast</div>
-                    <div className="font-medium text-sm text-primary">+12<span className="text-xs">%</span></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Tech element decorations */}
-            <div className="absolute -top-2 -left-2 w-8 h-8 md:w-12 md:h-12 border border-primary/40 rounded-lg z-0 backdrop-blur-sm bg-card/80 hidden md:flex items-center justify-center">
-              <span className="text-xs md:text-sm font-mono text-primary">AI</span>
-            </div>
-            <div className="absolute top-1/4 -right-3 w-8 h-8 md:w-12 md:h-12 border border-primary/40 rounded-lg z-0 backdrop-blur-sm bg-card/80 hidden md:flex items-center justify-center rotate-12">
-              <span className="text-xs md:text-sm font-mono text-primary">IoT</span>
-            </div>
-            <div className="absolute -bottom-4 left-1/4 w-8 h-8 md:w-12 md:h-12 border border-primary/40 rounded-lg z-0 backdrop-blur-sm bg-card/80 hidden md:flex items-center justify-center -rotate-6">
-              <span className="text-xs md:text-sm font-mono text-primary">ML</span>
+              ))}
             </div>
           </motion.div>
         </div>
       </div>
-      
-      {/* CSS for pulse animation */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-        
-        @keyframes pulse-animation {
-          0% { transform: scale(1); opacity: 0.8; }
-          50% { transform: scale(1.5); opacity: 0.4; }
-          100% { transform: scale(1); opacity: 0.8; }
-        }
-        
-        .pulse-animation {
-          animation: pulse-animation 4s infinite;
-        }
-        `
-      }} />
-    </header>
+    </section>
   );
 };
 

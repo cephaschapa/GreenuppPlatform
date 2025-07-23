@@ -85,21 +85,28 @@ export default function PublicMarketplacePage() {
       const matchesSearch = searchQuery
         ? listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (listing.description &&
-            listing.description.toLowerCase().includes(searchQuery.toLowerCase()))
+            listing.description
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase()))
         : true;
 
-      const matchesCategory = selectedCategory && selectedCategory !== "all"
-        ? listing.category === selectedCategory
-        : true;
+      const matchesCategory =
+        selectedCategory && selectedCategory !== "all"
+          ? listing.category === selectedCategory
+          : true;
 
       return matchesSearch && matchesCategory && listing.status === "active";
     })
     .sort((a, b) => {
       switch (sortOrder) {
         case "newest":
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
         case "oldest":
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
         case "price_asc":
           return parseFloat(a.price) - parseFloat(b.price);
         case "price_desc":
@@ -112,8 +119,11 @@ export default function PublicMarketplacePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Navbar */}
-      <Navbar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
-      
+      <Navbar
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+      />
+
       {/* Hero Section */}
       <section className="py-12 md:py-16 bg-secondary/30">
         <div className="container mx-auto max-w-6xl px-4">
@@ -122,17 +132,25 @@ export default function PublicMarketplacePage() {
               Greenupp Marketplace
             </h1>
             <p className="text-muted-foreground max-w-2xl mb-4">
-              Browse agricultural products from local farmers and suppliers. Connect directly with producers for the freshest goods and farming supplies.
+              Browse agricultural products from local farmers and suppliers.
+              Connect directly with producers for the freshest goods and farming
+              supplies.
             </p>
             <div className="flex items-center justify-center gap-4 mb-6">
               <Button variant="outline" asChild>
-                <Link href="/marketplace/sellers" className="flex items-center gap-2">
+                <Link
+                  href="/marketplace/sellers"
+                  className="flex items-center gap-2"
+                >
                   <Users className="h-4 w-4" />
                   <span>Browse Sellers</span>
                 </Link>
               </Button>
               <Button variant="default" asChild>
-                <Link href="/auth?mode=register" className="flex items-center gap-2">
+                <Link
+                  href="/auth?mode=register"
+                  className="flex items-center gap-2"
+                >
                   <ShoppingBag className="h-4 w-4" />
                   <span>Start Selling</span>
                 </Link>
@@ -169,7 +187,9 @@ export default function PublicMarketplacePage() {
                   <SelectItem value="livestock">Livestock</SelectItem>
                   <SelectItem value="harvest">Harvest & Produce</SelectItem>
                   <SelectItem value="feed">Animal Feed</SelectItem>
-                  <SelectItem value="irrigation">Irrigation Supplies</SelectItem>
+                  <SelectItem value="irrigation">
+                    Irrigation Supplies
+                  </SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
@@ -184,7 +204,10 @@ export default function PublicMarketplacePage() {
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-4">
               <div className="hidden md:block text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{filteredListings.length}</span> items
+                <span className="font-medium text-foreground">
+                  {filteredListings.length}
+                </span>{" "}
+                items
               </div>
               <div className="flex border rounded-md overflow-hidden">
                 <button
@@ -253,7 +276,9 @@ export default function PublicMarketplacePage() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="mt-4 text-muted-foreground">Loading marketplace listings...</p>
+              <p className="mt-4 text-muted-foreground">
+                Loading marketplace listings...
+              </p>
             </div>
           ) : isError ? (
             <div className="text-center py-12">
@@ -270,7 +295,9 @@ export default function PublicMarketplacePage() {
             </div>
           ) : filteredListings.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-lg mb-4">No listings found matching your criteria.</p>
+              <p className="text-lg mb-4">
+                No listings found matching your criteria.
+              </p>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -289,7 +316,10 @@ export default function PublicMarketplacePage() {
                   className="overflow-hidden transition-all duration-200 hover:shadow-md flex flex-col h-full"
                 >
                   <div className="relative h-48 bg-muted">
-                    <Link href={`/marketplace/${listing.id}`} className="block h-full">
+                    <Link
+                      href={`/marketplace/${listing.id}`}
+                      className="block h-full"
+                    >
                       {listing.images && listing.images.length > 0 ? (
                         <img
                           src={listing.images[0]}
@@ -298,7 +328,9 @@ export default function PublicMarketplacePage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-muted">
-                          <span className="text-muted-foreground">No image</span>
+                          <span className="text-muted-foreground">
+                            No image
+                          </span>
                         </div>
                       )}
                     </Link>
@@ -320,11 +352,7 @@ export default function PublicMarketplacePage() {
                     </p>
                   </CardContent>
                   <CardFooter className="pt-0 pb-4 px-4">
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      asChild
-                    >
+                    <Button variant="outline" className="w-full" asChild>
                       <Link href={`/marketplace/${listing.id}`}>
                         View Details
                       </Link>
@@ -341,7 +369,7 @@ export default function PublicMarketplacePage() {
                   className="overflow-hidden transition-all duration-200 hover:shadow-md"
                 >
                   <div className="flex flex-col sm:flex-row">
-                    <Link 
+                    <Link
                       href={`/marketplace/${listing.id}`}
                       className="block w-full sm:w-48 h-48 overflow-hidden bg-muted relative"
                     >
@@ -353,7 +381,9 @@ export default function PublicMarketplacePage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-muted">
-                          <span className="text-muted-foreground">No image</span>
+                          <span className="text-muted-foreground">
+                            No image
+                          </span>
                         </div>
                       )}
                     </Link>
@@ -374,17 +404,17 @@ export default function PublicMarketplacePage() {
                       </p>
                       <div className="flex items-center justify-between">
                         <div className="font-semibold text-lg">
-                          {formatCurrency(parseFloat(listing.price), listing.priceCurrency || "ZMW")}
+                          {formatCurrency(
+                            parseFloat(listing.price),
+                            listing.priceCurrency || "ZMW"
+                          )}
                           {listing.priceUnit && (
                             <span className="text-xs text-muted-foreground ml-1">
                               per {listing.priceUnit}
                             </span>
                           )}
                         </div>
-                        <Button
-                          variant="outline"
-                          asChild
-                        >
+                        <Button variant="outline" asChild>
                           <Link href={`/marketplace/${listing.id}`}>
                             View Details
                           </Link>
@@ -406,21 +436,18 @@ export default function PublicMarketplacePage() {
             Ready to join our agricultural marketplace?
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-            Create an account to buy, sell, and connect with other agricultural professionals.
+            Create an account to buy, sell, and connect with other agricultural
+            professionals.
           </p>
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             <Button
               size="lg"
               className="w-full sm:w-auto"
-              onClick={() => window.location.href = "/auth"}
+              onClick={() => (window.location.href = "/auth")}
             >
               Get Started
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="w-full sm:w-auto"
-            >
+            <Button variant="outline" size="lg" className="w-full sm:w-auto">
               Learn More
             </Button>
           </div>

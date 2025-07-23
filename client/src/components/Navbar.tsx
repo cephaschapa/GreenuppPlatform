@@ -1,352 +1,483 @@
 import { FC, useEffect, useState } from "react";
 import { Link } from "wouter";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "./ThemeToggle";
 import greenuppLogo from "../assets/greenupp-full-logo.png";
+import {
+  Menu,
+  X,
+  ChevronDown,
+  Globe,
+  MessageSquare,
+  Phone,
+  Users,
+  Tractor,
+  Store,
+  Sprout,
+  MapPin,
+  Star,
+  Shield,
+} from "lucide-react";
 
 interface NavbarProps {
   mobileMenuOpen: boolean;
   setMobileMenuOpen: (open: boolean) => void;
 }
 
-const Navbar: FC<NavbarProps> = ({ mobileMenuOpen, setMobileMenuOpen }) => {
-  // Check if we're on app subdomain
+const navigationItems = [
+  {
+    id: "solutions",
+    label: "Solutions",
+    labelLocal: "Mayankho",
+    hasDropdown: true,
+    items: [
+      {
+        icon: Users,
+        title: "Ba Farmer Ba Kuchikolo",
+        subtitle: "Small-scale Farmers",
+        description: "0.5-5 hectares • Weather alerts • Market access",
+        href: "#smallholder",
+        gradient: "from-emerald-500 to-green-600",
+      },
+      {
+        icon: Tractor,
+        title: "Ba Farmer Ba Ukulu",
+        subtitle: "Commercial Farmers",
+        description: "5+ hectares • Precision agriculture • Analytics",
+        href: "#commercial",
+        gradient: "from-blue-500 to-indigo-600",
+      },
+      {
+        icon: Store,
+        title: "Ba Business",
+        subtitle: "Agro-dealers & Buyers",
+        description: "Input suppliers • Quality tracking • Networks",
+        href: "#business",
+        gradient: "from-purple-500 to-pink-600",
+      },
+    ],
+  },
+  {
+    id: "features",
+    label: "Features",
+    labelLocal: "Zinthu",
+    href: "#features",
+  },
+  {
+    id: "pricing",
+    label: "Pricing",
+    labelLocal: "Mitengo",
+    href: "#pricing",
+  },
+];
+
+const contactOptions = [
+  {
+    icon: MessageSquare,
+    label: "WhatsApp",
+    value: "+260-975-808-758",
+    href: "https://wa.me/260975808750",
+    popular: true,
+  },
+  {
+    icon: Phone,
+    label: "Call",
+    value: "Toll-free: 8888",
+    href: "tel:8888",
+    popular: false,
+  },
+];
+
+const ZambianNavbar: FC<NavbarProps> = ({
+  mobileMenuOpen,
+  setMobileMenuOpen,
+}) => {
   const [isAppSubdomain, setIsAppSubdomain] = useState(false);
-  
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+
   useEffect(() => {
-    // Set whether we're on app.domain.com
-    setIsAppSubdomain(window.location.hostname.startsWith('app.'));
+    setIsAppSubdomain(window.location.hostname.startsWith("app."));
+
+    // Handle scroll effect
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const toggleDropdown = (id: string) => {
+    setActiveDropdown(activeDropdown === id ? null : id);
+  };
+
   return (
-    <nav className="fixed w-full bg-background/95 backdrop-blur-md z-50 border-b border-primary/20 shadow-md shadow-black/10 dark:shadow-black/20">
-      <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-2 md:py-3 flex justify-between items-center">
-        <div className="flex items-center">
-          <Link
-            href="/"
-            className="group relative"
+    <motion.nav
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.6 }}
+      className={`fixed w-full z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-lg border-b border-slate-200 dark:border-slate-700"
+          : "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-700/50"
+      }`}
+    >
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div className="flex justify-between items-center h-16 lg:h-20">
+          {/* Logo */}
+          <motion.div
+            className="flex items-center"
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.2 }}
           >
-            <img 
-              src={greenuppLogo} 
-              alt="Greenupp Logo" 
-              className="h-8 md:h-10 w-auto"
-            />
-            <span className="absolute -top-2 -right-8 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full font-semibold">
-              BETA
-            </span>
-          </Link>
-        </div>
+            <Link href="/" className="group relative flex items-center">
+              <img
+                src={greenuppLogo}
+                alt="GreenUpp Logo"
+                className="h-8 lg:h-10 w-auto"
+              />
+              <Badge
+                variant="outline"
+                className="ml-3 bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-200 dark:border-green-700 text-xs px-2 py-1"
+              >
+                <MapPin className="w-3 h-3 mr-1" />
+                Zambia
+              </Badge>
+            </Link>
+          </motion.div>
 
-        <div className="hidden md:flex space-x-6 lg:space-x-8 items-center">
-          {isAppSubdomain ? (
-            // App subdomain navigation - dashboard focused
-            <>
-              <Link
-                href="/fields"
-                className="hover:text-primary transition duration-300 relative group"
-              >
-                Fields
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-              </Link>
-              <Link
-                href="/tasks"
-                className="hover:text-primary transition duration-300 relative group"
-              >
-                Tasks
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-              </Link>
-              <Link
-                href="/marketplace"
-                className="hover:text-primary transition duration-300 relative group"
-              >
-                Marketplace
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-              </Link>
-              <Link
-                href="/social"
-                className="hover:text-primary transition duration-300 relative group"
-              >
-                Green Socials
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-              </Link>
-              <Link
-                href="/notifications"
-                className="hover:text-primary transition duration-300 relative group"
-              >
-                Notifications
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-              </Link>
-              <ThemeToggle />
-              <Link
-                href="/profile"
-                className="group bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md transition-all duration-300 font-medium inline-flex items-center"
-              >
-                <span>My Profile</span>
-                <i className="fas fa-user ml-2"></i>
-              </Link>
-            </>
-          ) : (
-            // Main domain navigation - marketing focused
-            <>
-              <Link
-                href="/#features"
-                className="hover:text-primary transition duration-300 relative group"
-              >
-                Features
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-              </Link>
-              <Link
-                href="/#advanced-features"
-                className="hover:text-primary transition duration-300 relative group"
-              >
-                Platform
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-              </Link>
-              <Link
-                href="/about"
-                className="hover:text-primary transition duration-300 relative group"
-              >
-                About Us
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-              </Link>
-              <Link
-                href="/marketplace"
-                className="hover:text-primary transition duration-300 relative group"
-              >
-                Marketplace
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-              </Link>
-              <Link
-                href="/trace"
-                className="hover:text-primary transition duration-300 relative group"
-              >
-                Verify Products
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-              </Link>
-              <Link
-                href="/ai-knowledge-base"
-                className="hover:text-primary transition duration-300 relative group"
-              >
-               FAQ
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all duration-300"></span>
-              </Link>
-              <ThemeToggle />
-              <Link
-                href="/auth"
-                className="group bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-md transition-all duration-300 font-medium inline-flex items-center"
-              >
-                <span>Get Started</span>
-                <i className="fas fa-arrow-right ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all"></i>
-              </Link>
-            </>
-          )}
-        </div>
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex items-center space-x-8">
+            {isAppSubdomain ? (
+              // App subdomain navigation - dashboard focused
+              <>
+                <Link
+                  href="/fields"
+                  className="text-slate-700 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200 font-medium"
+                >
+                  Fields
+                </Link>
+                <Link
+                  href="/tasks"
+                  className="text-slate-700 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200 font-medium"
+                >
+                  Tasks
+                </Link>
+                <Link
+                  href="/marketplace"
+                  className="text-slate-700 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200 font-medium"
+                >
+                  Marketplace
+                </Link>
+                <Link
+                  href="/weather"
+                  className="text-slate-700 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200 font-medium"
+                >
+                  Weather
+                </Link>
+              </>
+            ) : (
+              // Main domain navigation - marketing focused
+              navigationItems.map((item) => (
+                <div key={item.id} className="relative">
+                  {item.hasDropdown ? (
+                    <button
+                      onClick={() => toggleDropdown(item.id)}
+                      className="flex items-center gap-1 text-slate-700 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200 font-medium"
+                    >
+                      {item.label}
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                          activeDropdown === item.id ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+                  ) : (
+                    <a
+                      href={item.href}
+                      className="text-slate-700 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200 font-medium"
+                    >
+                      {item.label}
+                    </a>
+                  )}
 
-        <div className="md:hidden flex items-center gap-3">
+                  {/* Dropdown Menu */}
+                  {item.hasDropdown && activeDropdown === item.id && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full left-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden"
+                      onMouseLeave={() => setActiveDropdown(null)}
+                    >
+                      <div className="p-4">
+                        <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">
+                          Choose Your Farming Type
+                        </h3>
+                        <div className="space-y-3">
+                          {item.items?.map((subItem, index) => (
+                            <a
+                              key={index}
+                              href={subItem.href}
+                              className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-200 group"
+                            >
+                              <div
+                                className={`w-10 h-10 rounded-lg bg-gradient-to-br ${subItem.gradient} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200`}
+                              >
+                                <subItem.icon className="w-5 h-5 text-white" />
+                              </div>
+                              <div>
+                                <div className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
+                                  {subItem.title}
+                                </div>
+                                <div className="text-green-600 dark:text-green-400 text-xs font-medium">
+                                  {subItem.subtitle}
+                                </div>
+                                <div className="text-slate-600 dark:text-slate-400 text-xs mt-1">
+                                  {subItem.description}
+                                </div>
+                              </div>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Right Side Actions */}
+          <div className="hidden lg:flex items-center space-x-4">
+            {/* Contact Options */}
+            <div className="flex items-center space-x-3">
+              {contactOptions.map((contact, index) => (
+                <a
+                  key={index}
+                  href={contact.href}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    contact.popular
+                      ? "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800"
+                      : "text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <contact.icon className="w-4 h-4" />
+                  <span className="hidden xl:inline">{contact.label}</span>
+                  {contact.popular && (
+                    <Badge className="bg-green-600 text-white text-xs px-1 py-0">
+                      Popular
+                    </Badge>
+                  )}
+                </a>
+              ))}
+            </div>
+
+            {/* Language Toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+            >
+              <Globe className="w-4 h-4 mr-2" />
+              EN
+            </Button>
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
+            {/* Auth Buttons */}
+            {!isAppSubdomain && (
+              <div className="flex items-center space-x-3">
+                <Link href="/testing-waitlist">
+                  <Button
+                    size="sm"
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium px-6 shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    <Sprout className="w-4 h-4 mr-2" />
+                    Join the Waiting List
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
           <button
-            className="flex items-center justify-center w-9 h-9 rounded-md border border-primary/30 hover:border-primary/80 hover:bg-primary/10 transition-all duration-300"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle mobile menu"
+            className="lg:hidden p-2 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-200"
           >
             {mobileMenuOpen ? (
-              <i className="fas fa-times text-primary text-lg"></i>
+              <X className="w-6 h-6" />
             ) : (
-              <i className="fas fa-bars text-primary text-lg"></i>
+              <Menu className="w-6 h-6" />
             )}
           </button>
         </div>
       </div>
 
       {/* Mobile Menu */}
-      <div
-        className={`
-          ${mobileMenuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0 pointer-events-none"} 
-          md:hidden fixed left-0 right-0 top-[51px] bg-background/95 backdrop-blur-md border-t border-primary/20
-          transition-all duration-300 ease-in-out transform-gpu overflow-hidden
-        `}
-      >
-        <div className="container mx-auto px-4 py-2 md:px-6 lg:px-8 max-w-7xl flex flex-col space-y-2">
-          {isAppSubdomain ? (
-            // App subdomain mobile menu - dashboard focused
-            <>
-              <Link
-                href="/fields"
-                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-                  <i className="fas fa-map-marker-alt text-primary text-xs"></i>
-                </div>
-                <span>Fields</span>
-                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-              </Link>
-              <Link
-                href="/tasks"
-                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-                  <i className="fas fa-tasks text-primary text-xs"></i>
-                </div>
-                <span>Tasks</span>
-                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-              </Link>
-              <Link
-                href="/marketplace"
-                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-                  <i className="fas fa-store text-primary text-xs"></i>
-                </div>
-                <span>Marketplace</span>
-                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-              </Link>
-              <Link
-                href="/social"
-                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-                  <i className="fas fa-users text-primary text-xs"></i>
-                </div>
-                <span>Green Socials</span>
-                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-              </Link>
-              <Link
-                href="/notifications"
-                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-                  <i className="fas fa-bell text-primary text-xs"></i>
-                </div>
-                <span>Notifications</span>
-                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-              </Link>
-              <Link
-                href="/profile"
-                className="group bg-background hover:bg-primary text-primary hover:text-primary-foreground py-3 rounded-md transition-all duration-300 font-medium text-center mt-2 border border-primary flex items-center justify-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span>My Profile</span>
-                <i className="fas fa-user ml-2"></i>
-              </Link>
-            </>
-          ) : (
-            // Main domain mobile menu - marketing focused
-            <>
-              <Link
-                href="/#features"
-                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-                  <span className="font-mono text-primary text-xs">01</span>
-                </div>
-                <span>Features</span>
-                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-              </Link>
-              <Link
-                href="/#solutions"
-                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-                  <span className="font-mono text-primary text-xs">02</span>
-                </div>
-                <span>Solutions</span>
-                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-              </Link>
-              <Link
-                href="/#advanced-features"
-                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-                  <span className="font-mono text-primary text-xs">03</span>
-                </div>
-                <span>Platform</span>
-                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-              </Link>
-              <Link
-                href="/about"
-                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-                  <span className="font-mono text-primary text-xs">04</span>
-                </div>
-                <span>About Us</span>
-                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-              </Link>
-              <Link
-                href="/marketplace"
-                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-                  <span className="font-mono text-primary text-xs">05</span>
-                </div>
-                <span>Marketplace</span>
-                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-              </Link>
-              <Link
-                href="/#benefits"
-                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-                  <span className="font-mono text-primary text-xs">06</span>
-                </div>
-                <span>Benefits</span>
-                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-              </Link>
-              <Link
-                href="/#community"
-                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-                  <span className="font-mono text-primary text-xs">07</span>
-                </div>
-                <span>Community</span>
-                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-              </Link>
-              <Link
-                href="/trace"
-                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-                  <span className="font-mono text-primary text-xs">08</span>
-                </div>
-                <span>Verify Products</span>
-                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-              </Link>
-              <Link
-                href="/ai-knowledge-base"
-                className="py-3 border-b border-border hover:text-primary hover:pl-2 transition-all duration-300 flex items-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center mr-3">
-                  <span className="font-mono text-primary text-xs">09</span>
-                </div>
-                <span>AI Knowledge</span>
-                <i className="fas fa-chevron-right ml-auto text-xs text-primary/70"></i>
-              </Link>
-              <Link
-                href="/auth"
-                className="group bg-background hover:bg-primary text-primary hover:text-primary-foreground py-3 rounded-md transition-all duration-300 font-medium text-center mt-2 border border-primary flex items-center justify-center"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span>Get Started</span>
-                <i className="fas fa-arrow-right ml-2 group-hover:ml-3 transition-all"></i>
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
-    </nav>
+      {mobileMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.3 }}
+          className="lg:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 shadow-lg"
+        >
+          <div className="container mx-auto px-4 py-6 max-w-7xl">
+            {/* Mobile Navigation Items */}
+            <div className="space-y-4 mb-6">
+              {isAppSubdomain ? (
+                // App subdomain mobile navigation
+                <>
+                  <Link
+                    href="/fields"
+                    className="block py-3 text-slate-700 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Fields
+                  </Link>
+                  <Link
+                    href="/tasks"
+                    className="block py-3 text-slate-700 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Tasks
+                  </Link>
+                  <Link
+                    href="/marketplace"
+                    className="block py-3 text-slate-700 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Marketplace
+                  </Link>
+                  <Link
+                    href="/weather"
+                    className="block py-3 text-slate-700 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Weather
+                  </Link>
+                </>
+              ) : (
+                // Main domain mobile navigation
+                navigationItems.map((item) => (
+                  <div key={item.id}>
+                    {item.hasDropdown ? (
+                      <div>
+                        <button
+                          onClick={() => toggleDropdown(item.id)}
+                          className="flex items-center justify-between w-full py-3 text-slate-700 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 font-medium"
+                        >
+                          <span>{item.label}</span>
+                          <ChevronDown
+                            className={`w-4 h-4 transition-transform duration-200 ${
+                              activeDropdown === item.id ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+
+                        {activeDropdown === item.id && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            transition={{ duration: 0.2 }}
+                            className="pl-4 mt-2 space-y-3"
+                          >
+                            {item.items?.map((subItem, index) => (
+                              <a
+                                key={index}
+                                href={subItem.href}
+                                className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800"
+                                onClick={() => setMobileMenuOpen(false)}
+                              >
+                                <div
+                                  className={`w-8 h-8 rounded-lg bg-gradient-to-br ${subItem.gradient} flex items-center justify-center flex-shrink-0`}
+                                >
+                                  <subItem.icon className="w-4 h-4 text-white" />
+                                </div>
+                                <div>
+                                  <div className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
+                                    {subItem.title}
+                                  </div>
+                                  <div className="text-green-600 dark:text-green-400 text-xs">
+                                    {subItem.subtitle}
+                                  </div>
+                                </div>
+                              </a>
+                            ))}
+                          </motion.div>
+                        )}
+                      </div>
+                    ) : (
+                      <a
+                        href={item.href}
+                        className="block py-3 text-slate-700 dark:text-slate-300 hover:text-green-600 dark:hover:text-green-400 font-medium"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {item.label}
+                      </a>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Mobile Contact Options */}
+            <div className="border-t border-slate-200 dark:border-slate-700 pt-6 mb-6">
+              <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">
+                Get Help
+              </h3>
+              <div className="space-y-3">
+                {contactOptions.map((contact, index) => (
+                  <a
+                    key={index}
+                    href={contact.href}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-200"
+                  >
+                    <contact.icon className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    <div>
+                      <div className="font-medium text-slate-800 dark:text-slate-200">
+                        {contact.label}
+                      </div>
+                      <div className="text-sm text-slate-600 dark:text-slate-400">
+                        {contact.value}
+                      </div>
+                    </div>
+                    {contact.popular && (
+                      <Badge className="bg-green-100 text-green-800 text-xs ml-auto">
+                        Popular
+                      </Badge>
+                    )}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Mobile Auth Buttons */}
+            {!isAppSubdomain && (
+              <div className="border-t border-slate-200 dark:border-slate-700 pt-6 space-y-3">
+                <Link
+                  href="/testing-waitlist"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Button className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium shadow-lg">
+                    <Sprout className="w-4 h-4 mr-2" />
+                    Join the Waiting List
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
+    </motion.nav>
   );
 };
 
-export default Navbar;
+export default ZambianNavbar;
