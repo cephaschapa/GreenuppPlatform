@@ -38,8 +38,8 @@ const zambianChallenges = [
       reach: "Available in all 10 provinces",
     },
     testimonial: {
-      name: "John Mwanza",
-      location: "Chongwe District",
+      name: "Joseph Phiri",
+      location: "Mumbwa District",
       quote:
         "GreenUpp yamfundisha ukwaba nge mvula. Saino ninshi nabweza chakudya chikulu.",
     },
@@ -67,10 +67,10 @@ const zambianChallenges = [
       reach: "Connected to 500+ verified buyers",
     },
     testimonial: {
-      name: "Mary Banda",
-      location: "Mazabuka",
+      name: "Ruth Mwila",
+      location: "Solwezi",
       quote:
-        "Ninagulitsa direct ku Shoprite nge GreenUpp. Ndalanda K15/kg instead of K8!",
+        "Ninagulitsa direct ku Shoprite nge GreenUpp. Ndalanda K16/kg instead of K9!",
     },
   },
   {
@@ -91,13 +91,13 @@ const zambianChallenges = [
       "Peer-to-peer knowledge sharing",
     ],
     metrics: {
-      improvement: "40% average yield increase",
-      savings: "K2,000 saved on unnecessary inputs",
+      improvement: "45% average yield increase",
+      savings: "K2,500 saved on unnecessary inputs",
       reach: "Available in Bemba, Nyanja, Tonga",
     },
     testimonial: {
-      name: "Peter Sikanyika",
-      location: "Mkushi",
+      name: "Daniel Tembo",
+      location: "Kasama",
       quote:
         "Ba expert bali nge phone. Bampafundisha ukupanga fertilizer properly.",
     },

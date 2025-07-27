@@ -475,13 +475,7 @@ export default function AdminDashboard() {
     >
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground">
-              System administration, user management, and performance monitoring
-            </p>
-          </div>
+        <div className="flex items-center justify-end">
           <Button onClick={handleRefresh} variant="outline" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
@@ -684,7 +678,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex gap-4">
+                  <div className="flex gap-4 mb-4">
                     <div className="flex-1 relative">
                       <Input
                         placeholder="Search users..."

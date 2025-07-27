@@ -63,30 +63,31 @@ const navigationItems = [
     id: "features",
     label: "Features",
     labelLocal: "Zinthu",
-    href: "#features",
+    href: "/features",
+  },
+  {
+    id: "about",
+    label: "About",
+    labelLocal: "Za Ife",
+    href: "/about",
+  },
+  {
+    id: "rnd",
+    label: "R&D",
+    labelLocal: "Kafukufuku",
+    href: "/rnd",
+  },
+  {
+    id: "privacy",
+    label: "Privacy",
+    labelLocal: "Chinsinsi",
+    href: "/privacy",
   },
   {
     id: "pricing",
     label: "Pricing",
     labelLocal: "Mitengo",
     href: "#pricing",
-  },
-];
-
-const contactOptions = [
-  {
-    icon: MessageSquare,
-    label: "WhatsApp",
-    value: "+260-975-808-758",
-    href: "https://wa.me/260975808750",
-    popular: true,
-  },
-  {
-    icon: Phone,
-    label: "Call",
-    value: "Toll-free: 8888",
-    href: "tel:8888",
-    popular: false,
   },
 ];
 
@@ -254,29 +255,6 @@ const ZambianNavbar: FC<NavbarProps> = ({
 
           {/* Right Side Actions */}
           <div className="hidden lg:flex items-center space-x-4">
-            {/* Contact Options */}
-            <div className="flex items-center space-x-3">
-              {contactOptions.map((contact, index) => (
-                <a
-                  key={index}
-                  href={contact.href}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    contact.popular
-                      ? "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800"
-                      : "text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
-                  }`}
-                >
-                  <contact.icon className="w-4 h-4" />
-                  <span className="hidden xl:inline">{contact.label}</span>
-                  {contact.popular && (
-                    <Badge className="bg-green-600 text-white text-xs px-1 py-0">
-                      Popular
-                    </Badge>
-                  )}
-                </a>
-              ))}
-            </div>
-
             {/* Language Toggle */}
             <Button
               variant="ghost"
@@ -426,37 +404,6 @@ const ZambianNavbar: FC<NavbarProps> = ({
                   </div>
                 ))
               )}
-            </div>
-
-            {/* Mobile Contact Options */}
-            <div className="border-t border-slate-200 dark:border-slate-700 pt-6 mb-6">
-              <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">
-                Get Help
-              </h3>
-              <div className="space-y-3">
-                {contactOptions.map((contact, index) => (
-                  <a
-                    key={index}
-                    href={contact.href}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-200"
-                  >
-                    <contact.icon className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    <div>
-                      <div className="font-medium text-slate-800 dark:text-slate-200">
-                        {contact.label}
-                      </div>
-                      <div className="text-sm text-slate-600 dark:text-slate-400">
-                        {contact.value}
-                      </div>
-                    </div>
-                    {contact.popular && (
-                      <Badge className="bg-green-100 text-green-800 text-xs ml-auto">
-                        Popular
-                      </Badge>
-                    )}
-                  </a>
-                ))}
-              </div>
             </div>
 
             {/* Mobile Auth Buttons */}

@@ -15,6 +15,9 @@ import PublicTraceVerificationPage from "@/pages/PublicTraceVerificationPage";
 import TestingWaitlistPage from "@/pages/TestingWaitlistPage";
 import AiKnowledgeBasePage from "@/pages/AiKnowledgeBasePage";
 import AboutPage from "@/pages/AboutPage";
+import PrivacyPage from "@/pages/PrivacyPage";
+import FeaturesPage from "@/pages/FeaturesPage";
+import RnDPage from "@/pages/RnDPage";
 import GreenSocialsPage from "@/pages/GreenSocialsPage";
 import StreamChatPage from "@/pages/StreamChatPage";
 import FarmingAssistantPage from "@/pages/FarmingAssistantPage";
@@ -166,6 +169,9 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
       <Route path="/" component={Home} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/about" component={AboutPage} />
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/features" component={FeaturesPage} />
+      <Route path="/rnd" component={RnDPage} />
       <Route path="/marketplace" component={PublicMarketplacePage} />
       <Route path="/marketplace/sellers" component={PublicSellersPage} />
       <Route

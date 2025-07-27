@@ -33,8 +33,8 @@ const userTypes = [
     description: "0.5-5 hectares • Maize, Groundnuts, Beans",
     challenges: ["Limited capital", "Weather risks", "Market access"],
     benefits: [
-      "40% yield increase",
-      "K2,000 savings/hectare",
+      "35% yield increase",
+      "K1,800 savings/hectare",
       "Direct market access",
     ],
     ctaText: "Start with K50/month",
@@ -53,7 +53,7 @@ const userTypes = [
       "Scale optimization",
     ],
     benefits: [
-      "30% cost reduction",
+      "25% cost reduction",
       "Precision agriculture",
       "Supply chain control",
     ],
@@ -160,7 +160,7 @@ const Hero = () => {
               <span className="font-semibold text-green-700 dark:text-green-400">
                 2,000+ Zambian farmers
               </span>{" "}
-              increasing yields by 40% with AI-powered agriculture technology
+              increasing yields by 35% with AI-powered agriculture technology
               that works offline and speaks your language.
             </motion.p>
 
@@ -355,7 +355,7 @@ const Hero = () => {
             {/* Success Metrics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
               {[
-                { icon: TrendingUp, value: "40%", label: "Yield Increase" },
+                { icon: TrendingUp, value: "35%", label: "Yield Increase" },
                 { icon: Users, value: "2,000+", label: "Active Farmers" },
                 { icon: Heart, value: "10", label: "Provinces Covered" },
                 { icon: Star, value: "4.8", label: "User Rating" },

@@ -26,6 +26,8 @@ import {
   Bot,
   CloudRain,
   CheckCircle,
+  Lightbulb,
+  Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -64,6 +66,12 @@ const footerSections = [
     title: "Features",
     titleLocal: "Zinthu",
     links: [
+      {
+        name: "All Features",
+        nameLocal: "Zonse",
+        href: "/features",
+        icon: Zap,
+      },
       {
         name: "Weather Alerts",
         nameLocal: "Uthenga Wa Mvula",
@@ -125,6 +133,18 @@ const footerSections = [
     titleLocal: "Kampani",
     links: [
       { name: "About Us", nameLocal: "Za Ife", href: "/about", icon: Users },
+      {
+        name: "Privacy Policy",
+        nameLocal: "Dongosolo La Chinsinsi",
+        href: "/privacy",
+        icon: Shield,
+      },
+      {
+        name: "Research & Development",
+        nameLocal: "Kafukufuku",
+        href: "/rnd",
+        icon: Lightbulb,
+      },
       {
         name: "Our Mission",
         nameLocal: "Cholinga Chathu",
@@ -287,7 +307,7 @@ const ZambianFooter = () => {
             >
               <Card className="bg-slate-800/50 backdrop-blur-sm border border-slate-700">
                 <CardContent className="p-6">
-                  <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex flex-col sm:flex-row gap-4 mb-4">
                     <div className="flex-1">
                       <Input
                         type="tel"
@@ -304,6 +324,29 @@ const ZambianFooter = () => {
                       <Send className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
+
+                  {/* WhatsApp Contact Button */}
+                  <div className="text-center">
+                    <p className="text-slate-400 text-sm mb-3">
+                      Or get instant help:
+                    </p>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="lg"
+                      className="border-green-500 text-green-400 hover:bg-green-500 hover:text-white"
+                    >
+                      <a
+                        href="https://wa.me/260975808750?text=Hi%20GreenUpp%2C%20I%20need%20help%20with%20farming"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <MessageSquare className="w-5 h-5 mr-2" />
+                        WhatsApp Support (+260-975-808-750)
+                      </a>
+                    </Button>
+                  </div>
+
                   <p className="text-xs text-slate-400 mt-3 text-center">
                     Free SMS alerts • Unsubscribe anytime • Privacy protected
                   </p>

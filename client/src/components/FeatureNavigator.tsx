@@ -41,7 +41,7 @@ const zambianFeatures = [
       "Province-specific climate data",
     ],
     testimonial: {
-      farmer: "John Mwanza, Chongwe",
+      farmer: "Grace Mulenga, Kabwe",
       quote:
         "Weather alerts yamfundisha ukwaba nge mvula. Nabweza chakudya chikulu!",
     },
@@ -65,7 +65,7 @@ const zambianFeatures = [
       "Pest management in local languages",
     ],
     testimonial: {
-      farmer: "Mary Banda, Mazabuka",
+      farmer: "Samuel Mbewe, Chipata",
       quote: "Ba AI bampafundisha ukupanga fertilizer properly. Very helpful!",
     },
     keyFeature: "Available 24/7 via WhatsApp",
@@ -88,8 +88,8 @@ const zambianFeatures = [
       "Bulk selling for cooperatives",
     ],
     testimonial: {
-      farmer: "Peter Sikanyika, Mkushi",
-      quote: "Ndalanda K15/kg instead of K8/kg from middlemen. Big difference!",
+      farmer: "Agnes Chanda, Monze",
+      quote: "Ndalanda K18/kg instead of K9/kg from middlemen. Amazing!",
     },
     keyFeature: "Verified buyers with guaranteed payments",
   },
@@ -102,8 +102,8 @@ const zambianFeatures = [
       "Digital tools designed for Zambian farmers to manage fields, crops, and farming activities efficiently.",
     descriptionLocal:
       "Zipangizo za pa phone zokuthandizani kukonza minda yanu bwino.",
-    gradient: "from-orange-500 via-amber-500 to-yellow-500",
-    stats: "40% increase in farm productivity",
+    gradient: "from-orange-500 via-red-500 to-pink-500",
+    stats: "50% increase in farm productivity",
     benefits: [
       "Field mapping with GPS coordinates",
       "Crop calendar for Zambian seasons",
