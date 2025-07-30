@@ -28,6 +28,7 @@ export const notificationTypes = [
   "social_follow",
   "social_mention",
   "social_save",
+  "security_alert",
 ] as const;
 
 export type NotificationType = (typeof notificationTypes)[number];
@@ -506,7 +507,7 @@ async function sendNotificationEmail(
 
     const result = await sendEmail({
       to: email,
-      from: `${fromName} <notifications@greenupp.app>`,
+      from: `${fromName} <support@greenupp.earth>`,
       subject: notification.title,
       html,
       text,
@@ -516,5 +517,47 @@ async function sendNotificationEmail(
   } catch (error) {
     console.error("Email sending failed:", error);
     return { success: false };
+  }
+}
+
+// Create a security alert notification for new device logins
+export async function createNewDeviceNotification(
+  userId: number,
+  deviceInfo: {
+    deviceName?: string;
+    browser?: string;
+    os?: string;
+    location?: string;
+    city?: string;
+    country?: string;
+    ipAddress?: string;
+  }
+): Promise<void> {
+  try {
+    const deviceName =
+      deviceInfo.deviceName || `${deviceInfo.browser} on ${deviceInfo.os}`;
+    const location =
+      deviceInfo.location ||
+      deviceInfo.city ||
+      deviceInfo.country ||
+      deviceInfo.ipAddress ||
+      "Unknown location";
+
+    await createNotification({
+      userId,
+      type: "security_alert",
+      title: "New Device Login",
+      message: `We detected a login from a new device: ${deviceName} in ${location}. If this wasn't you, please secure your account immediately.`,
+      metadata: {
+        deviceInfo,
+        timestamp: new Date().toISOString(),
+        securityLevel: "medium",
+      },
+      actionUrl: "/security",
+    });
+
+    logger.info(`New device notification created for user ${userId}`);
+  } catch (error) {
+    logger.error("Failed to create new device notification:", error);
   }
 }

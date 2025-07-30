@@ -133,11 +133,47 @@ export function setupAuth(app: Express) {
             user = await storage.getUserByUsername(emailOrUsername);
           }
 
-          if (
-            !user ||
-            !(await AuthService.comparePasswords(password, user.password))
-          ) {
-            return done(null, false, { message: "Invalid credentials" });
+          if (!user) {
+            return done(null, false, {
+              message: "No account found with that email or username",
+            });
+          }
+
+          // Check if account is locked
+          const isLocked = await AuthService.isAccountLocked(user.id);
+          if (isLocked) {
+            const remainingTime = await AuthService.getRemainingLockTime(
+              user.id
+            );
+            const minutes = remainingTime ? Math.ceil(remainingTime / 60) : 15;
+            return done(null, false, {
+              message: `Account temporarily locked due to too many failed login attempts. Try again in ${minutes} minutes.`,
+              accountLocked: true,
+              remainingTime: remainingTime,
+            } as any);
+          }
+
+          // Verify password
+          const passwordValid = await AuthService.comparePasswords(
+            password,
+            user.password
+          );
+          if (!passwordValid) {
+            // Record failed attempt
+            await AuthService.recordFailedLoginAttempt(user.id);
+            return done(null, false, { message: "Incorrect password" });
+          }
+
+          // Clear any failed attempts on successful login
+          await AuthService.clearFailedLoginAttempts(user.id);
+
+          // Check if email is verified
+          if (!user.emailVerified) {
+            return done(null, false, {
+              message: "Please verify your email address before logging in",
+              requiresEmailVerification: true,
+              email: user.email,
+            } as any);
           }
 
           return done(null, user as unknown as Express.User);
@@ -172,7 +208,8 @@ export function setupAuth(app: Express) {
 
             // Check if user exists with the same email
             if (profile.emails && profile.emails[0]) {
-              user = await storage.getUserByEmail(profile.emails[0].value);
+              user =
+                (await storage.getUserByEmail(profile.emails[0].value)) || null;
 
               if (user) {
                 // Link existing account to Google
@@ -258,7 +295,8 @@ export function setupAuth(app: Express) {
 
             // Check if user exists with the same email
             if (profile.emails && profile.emails[0]) {
-              user = await storage.getUserByEmail(profile.emails[0].value);
+              user =
+                (await storage.getUserByEmail(profile.emails[0].value)) || null;
 
               if (user) {
                 // Link existing account to Facebook
@@ -381,11 +419,47 @@ export function setupAuth(app: Express) {
       // Remove password from response
       const { password, ...userWithoutPassword } = user;
 
-      // Automatically log the user in after registration
-      req.login(user as unknown as Express.User, (err) => {
-        if (err) return next(err);
-        res.status(201).json(userWithoutPassword);
-      });
+      // Generate verification token and send email
+      try {
+        const verificationToken =
+          await AuthService.generateEmailVerificationToken(user.id);
+
+        // Determine frontend URL for verification link
+        const isDevelopment = process.env.NODE_ENV !== "production";
+        let frontendUrl;
+
+        if (isDevelopment) {
+          const protocol = req.secure ? "https" : "http";
+          const host = req.get("host") || "localhost:3001";
+          frontendUrl =
+            host.includes("localhost") || host.includes("127.0.0.1")
+              ? "http://localhost:3001"
+              : `${protocol}://${host}`;
+        } else {
+          frontendUrl =
+            process.env.FRONTEND_URL ||
+            "https://greenuppplatform-production.up.railway.app";
+        }
+
+        const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
+        await AuthService.sendVerificationEmail(user.email, verificationUrl);
+
+        res.status(201).json({
+          message:
+            "Registration successful! Please check your email to verify your account before logging in.",
+          requiresEmailVerification: true,
+          email: user.email,
+        });
+      } catch (emailError) {
+        logger.error("Failed to send verification email:", emailError);
+        // Still return success but mention email issue
+        res.status(201).json({
+          message:
+            "Registration successful! However, we couldn't send the verification email. Please contact support.",
+          requiresEmailVerification: true,
+          email: user.email,
+        });
+      }
     } catch (error) {
       next(error);
     }
@@ -407,6 +481,25 @@ export function setupAuth(app: Express) {
 
         if (!user) {
           logger.warn("Login failed:", info?.message || "Invalid credentials");
+
+          // Check if it's an email verification issue
+          if ((info as any)?.requiresEmailVerification) {
+            return res.status(401).json({
+              message: info?.message || "Email verification required",
+              requiresEmailVerification: true,
+              email: (info as any)?.email,
+            });
+          }
+
+          // Check if account is locked
+          if ((info as any)?.accountLocked) {
+            return res.status(423).json({
+              message: info?.message || "Account temporarily locked",
+              accountLocked: true,
+              remainingTime: (info as any)?.remainingTime,
+            });
+          }
+
           return res
             .status(401)
             .json({ message: info?.message || "Login failed" });

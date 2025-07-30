@@ -12,11 +12,11 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
-  options?: { isFormData?: boolean, credentials?: RequestCredentials }
+  options?: { isFormData?: boolean; credentials?: RequestCredentials }
 ): Promise<Response> {
   const headers: Record<string, string> = {};
   let body: any = undefined;
-  
+
   if (data) {
     if (options?.isFormData) {
       // FormData should be sent without Content-Type header
@@ -27,9 +27,9 @@ export async function apiRequest(
       body = JSON.stringify(data);
     }
   }
-  
+
   console.log(`Making ${method} request to: ${url}`);
-  
+
   try {
     // Add credentials to the request to ensure cookies are sent
     const res = await fetch(url, {
@@ -45,13 +45,37 @@ export async function apiRequest(
     if (document.cookie) {
       console.log(`Cookie length: ${document.cookie.length}`);
     }
-    
+
     if (!res.ok) {
       const text = await res.text();
       console.error(`API error: ${res.status}`, text);
-      throw new Error(`${res.status}: ${text || res.statusText}`);
+
+      // Try to parse JSON error response
+      let errorMessage = text || res.statusText;
+      try {
+        const errorData = JSON.parse(text);
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch (parseError) {
+        // If not JSON, use the raw text
+      }
+
+      const error = new Error(errorMessage);
+      // Attach the full response data for more detailed error handling
+      (error as any).response = {
+        status: res.status,
+        data: (() => {
+          try {
+            return JSON.parse(text);
+          } catch {
+            return { message: text };
+          }
+        })(),
+      };
+      throw error;
     }
-    
+
     return res;
   } catch (error) {
     console.error(`Request error for ${method} ${url}:`, error);
@@ -67,14 +91,14 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     console.log(`Executing query for: ${queryKey[0]}`);
     console.log(`Cookies present: ${!!document.cookie}`);
-    
+
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
       headers: {
-        'Accept': 'application/json',
-      }
+        Accept: "application/json",
+      },
     });
-    
+
     console.log(`Query response status: ${res.status}`);
     if (res.status === 401) {
       console.log("Authentication failed for request");
@@ -106,7 +130,7 @@ export const queryClient = new QueryClient({
 });
 
 // Make queryClient globally accessible for WebSocket-driven updates
-// This allows components outside the React rendering tree to access 
+// This allows components outside the React rendering tree to access
 // the queryClient instance (like WebSocket event handlers)
 declare global {
   interface Window {
@@ -115,6 +139,6 @@ declare global {
 }
 
 // Assign the queryClient to the window object for global access
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.__TANSTACK_QUERY_CLIENT__ = queryClient;
 }

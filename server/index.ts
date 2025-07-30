@@ -9,6 +9,7 @@ import { logger, logApiRequest } from "./lib/logger";
 import morgan from "morgan";
 import { stream } from "./lib/logger";
 import { initializeFirebase } from "./services/firebase.js";
+import { setupSecurityMiddleware } from "./middleware/security.js";
 
 // Fix for __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -18,6 +19,9 @@ const app = express();
 // Increase JSON payload size limit to 25MB for image uploads
 app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: false, limit: "25mb" }));
+
+// Setup security middleware
+setupSecurityMiddleware(app);
 
 // Setup request logging
 app.use(morgan("combined", { stream }));

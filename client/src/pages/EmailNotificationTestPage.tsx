@@ -1,23 +1,41 @@
-import React, { useState } from 'react';
-import { useAuth } from '@/hooks/use-auth';
-import { Link, Redirect } from 'wouter';
-import { Helmet } from 'react-helmet-async';
-import EmailTestPanel from '@/components/EmailTestPanel';
-import { Separator } from '@/components/ui/separator';
-import { Loader2, Mail, KeyRound } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
+import React, { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { Link, Redirect } from "wouter";
+import { Helmet } from "react-helmet-async";
+import EmailTestPanel from "@/components/EmailTestPanel";
+import ProfessionalEmailTestPanel from "@/components/ProfessionalEmailTestPanel";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, Mail, KeyRound } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 // Login validation schema
 const loginSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters" }),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -30,8 +48,8 @@ export default function EmailNotificationTestPage() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
     },
   });
 
@@ -70,7 +88,10 @@ export default function EmailNotificationTestPage() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={form.control}
                   name="email"
@@ -123,7 +144,7 @@ export default function EmailNotificationTestPage() {
                       Logging in...
                     </>
                   ) : (
-                    'Login'
+                    "Login"
                   )}
                 </Button>
               </form>
@@ -131,7 +152,7 @@ export default function EmailNotificationTestPage() {
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-sm text-muted-foreground mt-2">
-              Don't have an account?{' '}
+              Don't have an account?{" "}
               <Link
                 href="/auth"
                 className="text-primary underline-offset-4 hover:underline"
@@ -152,24 +173,32 @@ export default function EmailNotificationTestPage() {
       </Helmet>
 
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Email Notification Test</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Email Notification Test
+        </h1>
         <p className="text-muted-foreground mt-2">
-          Test the email notification system for GreenUpp's Green Socials feature
+          Test the email notification system for GreenUpp's Green Socials
+          feature
         </p>
       </div>
 
       <Separator className="my-6" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-6">
           <EmailTestPanel />
+          <ProfessionalEmailTestPanel />
         </div>
 
         <div className="space-y-6">
           <div className="bg-muted p-6 rounded-lg">
-            <h3 className="text-lg font-medium mb-2">About Email Notifications</h3>
+            <h3 className="text-lg font-medium mb-2">
+              About Email Notifications
+            </h3>
             <p className="mb-4">
-              GreenUpp sends email notifications for important social activities to help users stay connected even when they're not actively using the platform.
+              GreenUpp sends email notifications for important social activities
+              to help users stay connected even when they're not actively using
+              the platform.
             </p>
             <h4 className="font-medium mt-4 mb-2">Notification Types:</h4>
             <ul className="list-disc list-inside space-y-1">
@@ -186,17 +215,23 @@ export default function EmailNotificationTestPage() {
           <div className="bg-muted p-6 rounded-lg">
             <h3 className="text-lg font-medium mb-2">User Settings</h3>
             <p>
-              Users can customize their notification preferences in their account settings. They can choose which types of notifications they want to receive via email.
+              Users can customize their notification preferences in their
+              account settings. They can choose which types of notifications
+              they want to receive via email.
             </p>
           </div>
 
           <div className="bg-muted p-6 rounded-lg">
             <h3 className="text-lg font-medium mb-2">How It Works</h3>
             <p>
-              When an activity occurs, GreenUpp first creates an in-app notification. If email notifications are enabled, it also sends an email with details about the activity and a link to view it in the app.
+              When an activity occurs, GreenUpp first creates an in-app
+              notification. If email notifications are enabled, it also sends an
+              email with details about the activity and a link to view it in the
+              app.
             </p>
             <p className="mt-2">
-              All emails include unsubscribe links so users can easily opt out if they wish.
+              All emails include unsubscribe links so users can easily opt out
+              if they wish.
             </p>
           </div>
         </div>

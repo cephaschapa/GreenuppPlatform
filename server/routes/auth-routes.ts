@@ -13,6 +13,30 @@ interface ExtendedSession {
 
 const router = Router();
 
+// Helper function to determine the correct frontend URL
+function getFrontendUrl(req: Request): string {
+  const isDevelopment = process.env.NODE_ENV !== "production";
+
+  if (isDevelopment) {
+    // In development, use localhost with the correct port
+    const protocol = req.secure ? "https" : "http";
+    const host = req.get("host") || "localhost:3001";
+
+    // If running locally, use localhost:3001 (Vite dev server)
+    if (host.includes("localhost") || host.includes("127.0.0.1")) {
+      return "http://localhost:3001";
+    }
+
+    return `${protocol}://${host}`;
+  }
+
+  // In production, use the configured frontend URL
+  return (
+    process.env.FRONTEND_URL ||
+    "https://greenuppplatform-production.up.railway.app"
+  );
+}
+
 // Helper function to get client IP
 function getClientIP(req: Request): string {
   return (
@@ -588,5 +612,129 @@ router.post(
     }
   }
 );
+
+// Resend verification email (for users who haven't verified yet)
+router.post("/resend-verification", async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  try {
+    const user = await storage.getUserByEmail(email);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.emailVerified) {
+      return res.status(400).json({ message: "Email already verified" });
+    }
+
+    const verificationToken = await AuthService.generateEmailVerificationToken(
+      user.id
+    );
+    const frontendUrl = getFrontendUrl(req);
+    const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
+
+    await AuthService.sendVerificationEmail(user.email, verificationUrl);
+
+    res.json({ message: "Verification email sent" });
+  } catch (error) {
+    logger.error("Resend verification error:", error);
+    res.status(500).json({ message: "Failed to send verification email" });
+  }
+});
+
+// Email verification routes
+router.post("/send-verification", async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  try {
+    const user = await storage.getUserByEmail(email);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.emailVerified) {
+      return res.status(400).json({ message: "Email already verified" });
+    }
+
+    const verificationToken = await AuthService.generateEmailVerificationToken(
+      user.id
+    );
+    const frontendUrl = getFrontendUrl(req);
+    const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
+
+    await AuthService.sendVerificationEmail(user.email, verificationUrl);
+
+    res.json({ message: "Verification email sent" });
+  } catch (error) {
+    logger.error("Send verification error:", error);
+    res.status(500).json({ message: "Failed to send verification email" });
+  }
+});
+
+router.post("/verify-email", async (req: Request, res: Response) => {
+  const { token } = req.body;
+
+  try {
+    const userId = await AuthService.verifyEmailToken(token);
+    if (!userId) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    await storage.updateUser(userId, { emailVerified: true });
+
+    res.json({ message: "Email verified successfully" });
+  } catch (error) {
+    logger.error("Email verification error:", error);
+    res.status(500).json({ message: "Email verification failed" });
+  }
+});
+
+// Password reset routes
+router.post("/forgot-password", async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  try {
+    const user = await storage.getUserByEmail(email);
+    if (!user) {
+      // Don't reveal if user exists or not
+      return res.json({
+        message: "If an account exists, a reset email has been sent",
+      });
+    }
+
+    const resetToken = await AuthService.generatePasswordResetToken(user.id);
+    const frontendUrl = getFrontendUrl(req);
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+
+    await AuthService.sendPasswordResetEmail(user.email, resetUrl);
+
+    res.json({ message: "If an account exists, a reset email has been sent" });
+  } catch (error) {
+    logger.error("Forgot password error:", error);
+    res.status(500).json({ message: "Failed to process request" });
+  }
+});
+
+router.post("/reset-password", async (req: Request, res: Response) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    const userId = await AuthService.verifyPasswordResetToken(token);
+    if (!userId) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    const hashedPassword = await AuthService.hashPassword(newPassword);
+    await storage.updateUser(userId, { password: hashedPassword });
+
+    // Invalidate all existing sessions for security
+    await AuthService.revokeAllUserSessions(userId);
+
+    res.json({ message: "Password reset successfully" });
+  } catch (error) {
+    logger.error("Password reset error:", error);
+    res.status(500).json({ message: "Password reset failed" });
+  }
+});
 
 export default router;

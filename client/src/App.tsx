@@ -5,6 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import AuthPage from "@/pages/auth-page";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
+import EmailVerificationPage from "@/pages/EmailVerificationPage";
 import DashboardPage from "@/pages/dashboard-page";
 import ProfileCreationPage from "@/pages/profile-creation-page";
 import PublicMarketplacePage from "@/pages/PublicMarketplacePage";
@@ -86,6 +89,9 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
         {/* In app subdomain, the root shows the dashboard */}
         <ProtectedRoute path="/" component={DashboardPage} />
         <Route path="/auth" component={AuthPage} />
+        <Route path="/forgot-password" component={ForgotPasswordPage} />
+        <Route path="/reset-password" component={ResetPasswordPage} />
+        <Route path="/verify-email" component={EmailVerificationPage} />
 
         {/* Dashboard main pages - without /dashboard prefix on app subdomain */}
         <ProtectedRoute path="/fields" component={FieldsPage} />
@@ -168,6 +174,9 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
       {/* Public/landing pages on main domain */}
       <Route path="/" component={Home} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
+      <Route path="/verify-email" component={EmailVerificationPage} />
       <Route path="/about" component={AboutPage} />
       <Route path="/privacy" component={PrivacyPage} />
       <Route path="/features" component={FeaturesPage} />

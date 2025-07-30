@@ -24,7 +24,7 @@ export async function sendSmtpEmail({
   text?: string;
 }) {
   const mailOptions = {
-    from: from || process.env.SMTP_FROM || "notifications@greenupp.app",
+    from: from || process.env.SMTP_FROM || "GreenUpp <support@greenupp.earth>",
     to,
     subject,
     html,

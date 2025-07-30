@@ -31,7 +31,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { registerUserSchema, loginUserSchema } from "@shared/schema";
 import { z } from "zod";
-import { Redirect } from "wouter";
+import { Redirect, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -164,8 +164,13 @@ export default function AuthPage() {
 }
 
 function LoginForm() {
-  const { loginMutation, refetchUser } = useAuth();
+  const { loginMutation, refetchUser, resendVerificationMutation } = useAuth();
   const [requires2FA, setRequires2FA] = useState(false);
+  const [requiresEmailVerification, setRequiresEmailVerification] =
+    useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string>("");
+  const [accountLocked, setAccountLocked] = useState(false);
+  const [lockRemaining, setLockRemaining] = useState<number | null>(null);
   const [pendingCredentials, setPendingCredentials] = useState<{
     email: string;
     password: string;
@@ -196,14 +201,40 @@ function LoginForm() {
         await refetchUser();
       },
       onError: async (error: any) => {
+        // Check if account is locked
+        if (error?.response?.data?.accountLocked) {
+          setAccountLocked(true);
+          setLockRemaining(error?.response?.data?.remainingTime);
+          toast({
+            title: "Account Locked",
+            description:
+              error?.response?.data?.message ||
+              "Account temporarily locked due to too many failed login attempts",
+            variant: "destructive",
+          });
+        }
+        // Check if email verification is required
+        else if (error?.response?.data?.requiresEmailVerification) {
+          setRequiresEmailVerification(true);
+          setUnverifiedEmail(error?.response?.data?.email || values.email);
+          toast({
+            title: "Email Verification Required",
+            description:
+              error?.response?.data?.message ||
+              "Please verify your email address before logging in",
+            variant: "destructive",
+          });
+        }
         // Check if 2FA is required
-        if (error?.response?.data?.requires2FA) {
+        else if (error?.response?.data?.requires2FA) {
           setRequires2FA(true);
         } else {
           toast({
             title: "Login Failed",
             description:
-              error?.response?.data?.message || "Invalid credentials",
+              error?.response?.data?.message ||
+              error.message ||
+              "Invalid credentials",
             variant: "destructive",
           });
         }
@@ -277,6 +308,114 @@ function LoginForm() {
     setRequires2FA(false);
     setPendingCredentials(null);
   };
+
+  if (accountLocked) {
+    const remainingMinutes = lockRemaining ? Math.ceil(lockRemaining / 60) : 15;
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-space text-red-600">
+            Account Temporarily Locked
+          </CardTitle>
+          <CardDescription>
+            Too many failed login attempts detected
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-center">
+            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <svg
+                className="w-8 h-8 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m0 0v2m0-2h2m-2 0H10m0-6V9a6 6 0 1 1 12 0v4m-6 6V9a6 6 0 0 0-12 0v4"
+                />
+              </svg>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Your account has been temporarily locked due to multiple failed
+              login attempts.
+            </p>
+            <p className="text-sm font-medium mb-4">
+              Please try again in approximately{" "}
+              <strong>{remainingMinutes} minutes</strong>.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              If you continue to have trouble accessing your account, please
+              contact support.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setAccountLocked(false);
+                setLockRemaining(null);
+              }}
+            >
+              Back to Login
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (requiresEmailVerification) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-space">
+            Email Verification Required
+          </CardTitle>
+          <CardDescription>
+            Please verify your email address before logging in
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground mb-4">
+              We sent a verification email to <strong>{unverifiedEmail}</strong>
+            </p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Click the link in the email to verify your account, then return
+              here to log in.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => resendVerificationMutation.mutate(unverifiedEmail)}
+              disabled={resendVerificationMutation.isPending}
+            >
+              {resendVerificationMutation.isPending
+                ? "Sending..."
+                : "Resend Verification Email"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setRequiresEmailVerification(false);
+                setUnverifiedEmail("");
+              }}
+            >
+              Back to Login
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (requires2FA) {
     return (
@@ -388,9 +527,12 @@ function LoginForm() {
       <CardFooter className="flex justify-center">
         <p className="text-sm text-gray-500">
           Forgot your password?{" "}
-          <a href="#" className="text-green-600 hover:text-green-800">
+          <Link
+            href="/forgot-password"
+            className="text-green-600 hover:text-green-800"
+          >
             Reset it here
-          </a>
+          </Link>
         </p>
       </CardFooter>
     </Card>

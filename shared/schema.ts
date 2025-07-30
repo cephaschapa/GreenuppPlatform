@@ -37,6 +37,11 @@ export const users = pgTable("users", {
   lastName: text("last_name"),
   profileImage: text("profile_image"),
   phone: text("phone"), // Phone number for SMS notifications
+  emailVerified: boolean("email_verified").default(false), // Email verification status
+  // Password attempt tracking
+  failedLoginAttempts: integer("failed_login_attempts").default(0), // Number of consecutive failed attempts
+  accountLockedUntil: timestamp("account_locked_until"), // When the account will be unlocked (null if not locked)
+  lastFailedLoginAt: timestamp("last_failed_login_at"), // When the last failed attempt occurred
   // Push notification fields
   fcmToken: text("fcm_token"), // Firebase Cloud Messaging token
   fcmTokenUpdatedAt: timestamp("fcm_token_updated_at"), // When the token was last updated
@@ -1397,6 +1402,19 @@ export const securityEvents = pgTable("security_events", {
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
   metadata: jsonb("metadata").$type<Record<string, any>>(), // Additional event data
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Verification tokens for email verification and password reset
+export const verificationTokens = pgTable("verification_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  token: text("token").notNull().unique(),
+  type: text("type").notNull(), // 'email_verification', 'password_reset'
+  used: boolean("used").default(false),
+  expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

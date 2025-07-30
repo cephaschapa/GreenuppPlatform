@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Trash2,
   RefreshCw,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,7 +54,7 @@ export function NotificationCenter() {
     queryFn: async () => {
       const response = await apiRequest(
         "GET",
-        "/api/notifications/unread/count",
+        "/api/notifications/unread/count"
       );
       const data = await response.json();
       return data.count;
@@ -72,7 +73,7 @@ export function NotificationCenter() {
     queryFn: async () => {
       const response = await apiRequest(
         "GET",
-        `/api/notifications?status=${activeTab}`,
+        `/api/notifications?status=${activeTab}`
       );
       return await response.json();
     },
@@ -84,7 +85,7 @@ export function NotificationCenter() {
     mutationFn: async (notificationId: number) => {
       const response = await apiRequest(
         "PATCH",
-        `/api/notifications/${notificationId}/read`,
+        `/api/notifications/${notificationId}/read`
       );
       return await response.json();
     },
@@ -101,7 +102,7 @@ export function NotificationCenter() {
     mutationFn: async (notificationId: number) => {
       const response = await apiRequest(
         "PATCH",
-        `/api/notifications/${notificationId}/archive`,
+        `/api/notifications/${notificationId}/archive`
       );
       return await response.json();
     },
@@ -139,6 +140,8 @@ export function NotificationCenter() {
         return <MessageSquare className="h-4 w-4 text-purple-500" />;
       case "market_price_alert":
         return <Bell className="h-4 w-4 text-green-500" />;
+      case "security_alert":
+        return <Shield className="h-4 w-4 text-red-500" />;
       case "system_notification":
       default:
         return <Info className="h-4 w-4 text-gray-500" />;
@@ -150,12 +153,12 @@ export function NotificationCenter() {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60 * 60),
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
     );
 
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor(
-        (now.getTime() - date.getTime()) / (1000 * 60),
+        (now.getTime() - date.getTime()) / (1000 * 60)
       );
       return `${diffInMinutes} minute${diffInMinutes !== 1 ? "s" : ""} ago`;
     } else if (diffInHours < 24) {
@@ -209,7 +212,7 @@ export function NotificationCenter() {
           <TabsContent value="unread" className="m-0">
             <NotificationList
               notifications={notifications.filter(
-                (n: Notification) => n.status === "unread",
+                (n: Notification) => n.status === "unread"
               )}
               isLoading={isNotificationsLoading}
               isError={isNotificationsError}
@@ -326,7 +329,7 @@ function NotificationList({
             key={notification.id}
             className={cn(
               "flex p-3 border-b last:border-b-0 transition-colors hover:bg-muted/40",
-              notification.status === "unread" ? "bg-muted/20" : "",
+              notification.status === "unread" ? "bg-muted/20" : ""
             )}
           >
             <div className="mr-3 mt-1">
@@ -342,7 +345,7 @@ function NotificationList({
                     "text-sm",
                     notification.status === "unread"
                       ? "font-medium"
-                      : "font-normal",
+                      : "font-normal"
                   )}
                 >
                   {notification.title}

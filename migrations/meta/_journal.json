@@ -71,6 +71,20 @@
       "when": 1752909919400,
       "tag": "0009_unique_logan",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1753874517527,
+      "tag": "0010_even_silver_surfer",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1753877603614,
+      "tag": "0011_nasty_secret_warriors",
+      "breakpoints": true
     }
   ]
 }

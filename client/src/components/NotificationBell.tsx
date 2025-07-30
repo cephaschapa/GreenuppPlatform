@@ -25,17 +25,14 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
 
   // Group notifications by date
-  const groupedNotifications = notifications.reduce(
-    (groups, notification) => {
-      const date = new Date(notification.createdAt).toLocaleDateString();
-      if (!groups[date]) {
-        groups[date] = [];
-      }
-      groups[date].push(notification);
-      return groups;
-    },
-    {} as Record<string, typeof notifications>,
-  );
+  const groupedNotifications = notifications.reduce((groups, notification) => {
+    const date = new Date(notification.createdAt).toLocaleDateString();
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(notification);
+    return groups;
+  }, {} as Record<string, typeof notifications>);
 
   const getIconForType = (type: string) => {
     switch (type) {
@@ -51,6 +48,8 @@ export function NotificationBell() {
         return "✉️";
       case "crop_update":
         return "🌱";
+      case "security_alert":
+        return "🛡️";
       default:
         return "📣";
     }
@@ -102,7 +101,7 @@ export function NotificationBell() {
 
                   // Mark all unread notifications as read
                   Promise.all(unreadIds.map((id) => markAsRead(id))).then(() =>
-                    refetchNotifications(),
+                    refetchNotifications()
                   );
                 }}
               >
@@ -128,11 +127,13 @@ export function NotificationBell() {
                         "flex cursor-pointer flex-col p-3 hover:bg-accent",
                         notification.status === "unread" &&
                           "border-l-4 border-primary bg-accent/30",
+                        notification.type === "security_alert" &&
+                          "border-l-4 border-red-500 bg-red-50 dark:bg-red-950/20"
                       )}
                       onClick={() =>
                         handleNotificationClick(
                           notification.id,
-                          notification.actionUrl,
+                          notification.actionUrl
                         )
                       }
                     >
@@ -171,7 +172,7 @@ export function NotificationBell() {
                                     >
                                       {action.label}
                                     </Button>
-                                  ),
+                                  )
                                 )}
                               </div>
                             )}
@@ -192,7 +193,7 @@ export function NotificationBell() {
                     </div>
                   ))}
                 </div>
-              ),
+              )
             )
           ) : (
             <div className="flex h-40 flex-col items-center justify-center p-4 text-center text-muted-foreground">
