@@ -5,6 +5,7 @@ import { logger } from "../lib/logger.js";
 import { hasRole } from "../middleware/auth.js";
 import { storage } from "../storage.js";
 import adminAlertsRouter from "./admin-alerts.js";
+import pestOutbreaksRouter from "./pest-outbreaks.js";
 import { db } from "../db.js";
 import {
   users,
@@ -31,6 +32,9 @@ router.use(hasRole("admin"));
 
 // Mount alert routes
 router.use("/alerts", adminAlertsRouter);
+
+// Mount pest outbreak routes
+router.use("/pest-outbreaks", pestOutbreaksRouter);
 
 /**
  * GET /api/admin/dashboard

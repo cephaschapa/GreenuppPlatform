@@ -1447,3 +1447,99 @@ export const waitlistRegistrations = pgTable("waitlist_registrations", {
   invitedAt: timestamp("invited_at"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// Pest and Disease Management Tables
+
+// Pest/Disease types with risk levels and characteristics
+export const pestDiseaseTypes = pgTable("pest_disease_types", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(), // e.g., "Fall Armyworm", "Late Blight"
+  scientificName: text("scientific_name"), // e.g., "Spodoptera frugiperda"
+  category: text("category").notNull(), // pest, disease, fungal, bacterial, viral
+  riskLevel: text("risk_level").notNull(), // low, medium, high, critical
+  affectedCrops: text("affected_crops").array().notNull(), // crops that can be affected
+  symptoms: text("symptoms").array().notNull(), // list of symptoms
+  treatmentRecommendations: text("treatment_recommendations").array().notNull(),
+  preventionMeasures: text("prevention_measures").array().notNull(),
+  imageUrls: text("image_urls").array().default([]), // reference images
+  isQuarantinable: boolean("is_quarantinable").default(false), // requires quarantine measures
+  spreadRate: text("spread_rate").notNull(), // slow, moderate, fast, very_fast
+  economicImpact: text("economic_impact").notNull(), // minimal, moderate, severe, devastating
+  seasonality: text("seasonality").array().default([]), // months when most active
+  geographicRisk: text("geographic_risk").array().default([]), // regions at higher risk
+  alertThreshold: integer("alert_threshold").default(3), // number of cases to trigger alert
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Outbreak tracking for coordinated response
+export const pestOutbreaks = pgTable("pest_outbreaks", {
+  id: serial("id").primaryKey(),
+  pestDiseaseId: integer("pest_disease_id")
+    .notNull()
+    .references(() => pestDiseaseTypes.id),
+  locationArea: text("location_area").notNull(), // general area/region
+  severity: text("severity").notNull(), // isolated, localized, widespread, epidemic
+  status: text("status").notNull(), // active, contained, resolved, monitoring
+  firstReportedAt: timestamp("first_reported_at").notNull(),
+  lastUpdatedAt: timestamp("last_updated_at").notNull(),
+  affectedFarms: integer("affected_farms").default(0),
+  estimatedLosses: decimal("estimated_losses", { precision: 12, scale: 2 }), // economic losses
+  containmentMeasures: text("containment_measures").array().default([]),
+  adminNotes: text("admin_notes"),
+  alertLevel: text("alert_level").notNull(), // watch, advisory, warning, emergency
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Individual pest/disease reports from farmers
+export const pestReports = pgTable("pest_reports", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  plantAnalysisId: integer("plant_analysis_id").references(
+    () => plantAnalyses.id
+  ), // link to plant diagnosis
+  pestDiseaseId: integer("pest_disease_id")
+    .notNull()
+    .references(() => pestDiseaseTypes.id),
+  location: text("location").notNull(), // farmer's location
+  coordinates: jsonb("coordinates").$type<{ lat: number; lng: number }>(), // GPS coordinates
+  severity: text("severity").notNull(), // mild, moderate, severe, critical
+  confidence: integer("confidence").notNull(), // AI confidence score 0-100
+  affectedArea: decimal("affected_area", { precision: 8, scale: 2 }), // hectares affected
+  cropType: text("crop_type").notNull(),
+  growthStage: text("growth_stage").notNull(),
+  weatherConditions: text("weather_conditions"),
+  images: text("images").array().default([]), // uploaded images
+  symptoms: text("symptoms").array().default([]), // observed symptoms
+  farmerNotes: text("farmer_notes"),
+  verifiedByExpert: boolean("verified_by_expert").default(false),
+  expertNotes: text("expert_notes"),
+  treatmentApplied: text("treatment_applied").array().default([]),
+  followUpRequired: boolean("follow_up_required").default(false),
+  reportedAt: timestamp("reported_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Risk assessments for predictive alerts
+export const riskAssessments = pgTable("risk_assessments", {
+  id: serial("id").primaryKey(),
+  pestDiseaseId: integer("pest_disease_id")
+    .notNull()
+    .references(() => pestDiseaseTypes.id),
+  location: text("location").notNull(),
+  riskScore: integer("risk_score").notNull(), // 0-100
+  factors: jsonb("factors")
+    .$type<{
+      recentReports: number;
+      weatherSuitability: number;
+      cropVulnerability: number;
+      seasonalRisk: number;
+      geographicProximity: number;
+    }>()
+    .notNull(),
+  recommendations: text("recommendations").array().notNull(),
+  alertTriggered: boolean("alert_triggered").default(false),
+  assessmentDate: timestamp("assessment_date").notNull().defaultNow(),
+});

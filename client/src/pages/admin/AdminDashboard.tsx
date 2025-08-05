@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { AdminAlertCenter } from "@/components/admin/AdminAlertCenter";
+import { PestOutbreakDashboard } from "@/components/admin/PestOutbreakDashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +51,7 @@ import {
   Search,
   Filter,
   Megaphone,
+  Bug,
   RefreshCw,
   Eye,
   Edit,
@@ -490,12 +492,16 @@ export default function AdminDashboard() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="alerts">
               <Megaphone className="h-4 w-4 mr-2" />
               Alerts
+            </TabsTrigger>
+            <TabsTrigger value="pest-outbreaks">
+              <Bug className="h-4 w-4 mr-2" />
+              Pest Outbreaks
             </TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
@@ -911,6 +917,11 @@ export default function AdminDashboard() {
           {/* Alert Center Tab */}
           <TabsContent value="alerts" className="space-y-6">
             <AdminAlertCenter />
+          </TabsContent>
+
+          {/* Pest Outbreak Dashboard Tab */}
+          <TabsContent value="pest-outbreaks" className="space-y-6">
+            <PestOutbreakDashboard />
           </TabsContent>
 
           {/* Analytics Tab */}

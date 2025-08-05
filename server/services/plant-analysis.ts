@@ -17,7 +17,7 @@ const openai = new OpenAI({
 
 interface AnalysisResult {
   disease: {
-    name: string;
+    name: string; // Can be disease name, pest name, or insect name
     confidence: number; // 0-100
     description: string;
   } | null;
@@ -223,11 +223,11 @@ function convertImageForOpenAI(imageData: string): {
 }
 
 /**
- * Analyze a plant image for disease, health, and nutrient issues
+ * Analyze a plant image for diseases, pests, insects, health, and nutrient issues
  * @param imageData The image data (can be base64 string or data URL)
  * @param plantType Optional plant type to provide context to the AI
  * @param additionalNotes Any additional notes or context about the plant
- * @returns Structured analysis of the plant's condition
+ * @returns Structured analysis of the plant's condition including pest identification
  */
 export async function analyzePlantImage(
   imageData: string,
@@ -240,7 +240,7 @@ export async function analyzePlantImage(
 
     // Construct prompt with any context provided
     let contextPrompt =
-      "Analyze this plant image for diseases, health issues, and nutrient deficiencies.";
+      "Analyze this plant image for diseases, pests, insects, health issues, and nutrient deficiencies. Pay special attention to identifying any visible insects, larvae, caterpillars, or pest damage on the plant.";
 
     if (plantType) {
       contextPrompt += ` This is a ${plantType} plant.`;
@@ -255,9 +255,9 @@ export async function analyzePlantImage(
     Respond with a detailed assessment in the following JSON format only:
     {
       "disease": {
-        "name": "Disease name or null if none detected",
+        "name": "Disease, pest, or insect name (e.g., 'Fall Armyworm', 'Army Worm', 'Aphids', 'Bacterial Wilt') or null if none detected",
         "confidence": "Number between 0-100 indicating confidence in the diagnosis",
-        "description": "Brief description of the disease if detected"
+        "description": "Brief description of the disease, pest, or insect if detected, including visible symptoms or damage patterns"
       },
       "health": {
         "status": "One of: healthy, minor issues, moderate issues, severe issues",
@@ -278,7 +278,7 @@ export async function analyzePlantImage(
         {
           role: "system",
           content:
-            "You are an expert agricultural plant pathologist specializing in crop disease identification and treatment. Provide accurate, scientific diagnoses based on visual evidence.",
+            "You are an expert agricultural plant pathologist and entomologist specializing in crop disease identification, pest identification, and treatment. Provide accurate, scientific diagnoses based on visual evidence. Pay special attention to identifying insects, larvae, caterpillars, and other pests that may be visible in the image, including army worms, fall armyworms, aphids, and other common agricultural pests.",
         },
         {
           role: "user",

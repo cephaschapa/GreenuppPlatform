@@ -475,4 +475,7 @@ function getAlertStyles(alertType: string, severity: string) {
   };
 }
 
+// Export functions for internal use by pest alert service
+export { getTargetUsers, sendAlertToUser };
+
 export default router;

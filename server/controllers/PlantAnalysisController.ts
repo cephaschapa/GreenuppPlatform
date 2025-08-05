@@ -6,6 +6,34 @@ import {
 } from "../services/plant-analysis.js";
 import { insertPlantAnalysisSchema } from "@shared/schema";
 import { logger } from "../utils/logger.js";
+import { db } from "../db.js";
+import { farmerProfiles, users } from "@shared/schema";
+import { eq } from "drizzle-orm";
+
+/**
+ * Get user's location for pest reporting
+ */
+async function getUserLocation(userId: number): Promise<string | null> {
+  try {
+    // Try to get location from farmer profile first
+    const [profile] = await db
+      .select({ location: farmerProfiles.farmLocation })
+      .from(farmerProfiles)
+      .where(eq(farmerProfiles.userId, userId))
+      .limit(1);
+
+    if (profile?.location) {
+      return profile.location;
+    }
+
+    // If no farmer profile location, you could add other location sources here
+    // For now, return a default or null
+    return null;
+  } catch (error) {
+    logger.error("Error getting user location:", error);
+    return null;
+  }
+}
 
 export class PlantAnalysisController {
   static async list(req: Request, res: Response) {
@@ -54,7 +82,15 @@ export class PlantAnalysisController {
   static async create(req: Request, res: Response) {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: "Not authenticated" });
-    const { imageData, plantType, fieldId, cropId, notes } = req.body;
+    const {
+      imageData,
+      plantType,
+      fieldId,
+      cropId,
+      notes,
+      location,
+      coordinates,
+    } = req.body;
     if (!imageData)
       return res.status(400).json({ message: "Image data is required" });
     try {
@@ -74,7 +110,61 @@ export class PlantAnalysisController {
       );
       insertPlantAnalysisSchema.parse(plantAnalysisData);
       const saved = await PlantAnalysisModel.create(plantAnalysisData);
-      res.status(201).json(saved);
+
+      // ✨ NEW: Integrate pest/disease reporting system
+      try {
+        logger.info("🔬 Starting pest reporting integration for analysis:", {
+          plantAnalysisId: saved.id,
+          userId,
+          hasDisease: !!analysisResult.disease,
+          diseaseName: analysisResult.disease?.name,
+          confidence: analysisResult.disease?.confidence,
+        });
+
+        // Get user's location for pest reporting
+        const userLocation = location || (await getUserLocation(userId));
+        logger.info("📍 User location for pest reporting:", userLocation);
+
+        if (userLocation) {
+          // Import pest alert service
+          const { createPestReportFromAnalysis } = await import(
+            "../services/pest-alert-service.js"
+          );
+
+          // Create enhanced analysis result with additional data
+          const enhancedAnalysisResult = {
+            ...analysisResult,
+            cropType: plantType,
+            images: [imageData],
+            notes,
+            coordinates,
+            userId,
+            plantAnalysisId: saved.id,
+          };
+
+          logger.info("🚀 Calling createPestReportFromAnalysis...");
+
+          // Create pest report if threats detected
+          await createPestReportFromAnalysis(
+            saved.id,
+            enhancedAnalysisResult,
+            userId,
+            userLocation
+          );
+
+          logger.info("✅ Pest reporting integration completed");
+        } else {
+          logger.warn("⚠️ No user location found, skipping pest reporting");
+        }
+      } catch (pestError) {
+        // Log pest reporting error but don't fail the analysis
+        logger.error("❌ Error creating pest report from analysis:", pestError);
+      }
+
+      res.status(201).json({
+        ...saved,
+        pestReportingEnabled: true, // Indicate that pest monitoring is active
+      });
     } catch (error: unknown) {
       logger.error("Error creating plant analysis:", error);
       res.status(500).json({ message: "Failed to create plant analysis" });
