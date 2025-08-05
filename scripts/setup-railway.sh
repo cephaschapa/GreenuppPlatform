@@ -75,6 +75,11 @@ if [ ! -z "$STREAM_API_SECRET" ]; then
     railway variables set STREAM_API_SECRET="$STREAM_API_SECRET"
 fi
 
+read -p "Enter your Google Maps API Key (for admin user map): " VITE_GOOGLE_MAPS_API_KEY
+if [ ! -z "$VITE_GOOGLE_MAPS_API_KEY" ]; then
+    railway variables set VITE_GOOGLE_MAPS_API_KEY="$VITE_GOOGLE_MAPS_API_KEY"
+fi
+
 read -p "Enter your Anthropic API Key (optional): " ANTHROPIC_API_KEY
 if [ ! -z "$ANTHROPIC_API_KEY" ]; then
     railway variables set ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY"
