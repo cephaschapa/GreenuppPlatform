@@ -1,0 +1,3 @@
+warning: in the working copy of 'server/routes/admin-user-map.ts', LF will be replaced by CRLF the next time Git touches it
+client/src/components/admin/AdminUserMap.tsx
+server/routes/admin-user-map.ts

@@ -111,7 +111,7 @@ export function AdminUserMap() {
   const [showUserDialog, setShowUserDialog] = useState(false);
   const [mapType, setMapType] = useState<
     "roadmap" | "satellite" | "hybrid" | "terrain"
-  >("roadmap");
+  >("satellite");
   const [showClusters, setShowClusters] = useState(true);
   const [showFields, setShowFields] = useState(true);
   const [showPestReports, setShowPestReports] = useState(false);
@@ -150,7 +150,10 @@ export function AdminUserMap() {
   const { data: pestOutbreaks } = useQuery({
     queryKey: ["/api/admin/users/pest-outbreaks"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/admin/users/pest-outbreaks");
+      const response = await apiRequest(
+        "GET",
+        "/api/admin/users/pest-outbreaks"
+      );
       return response.json() as Promise<any[]>;
     },
     enabled: showPestReports,
@@ -160,7 +163,10 @@ export function AdminUserMap() {
   const { data: analytics } = useQuery({
     queryKey: ["/api/admin/users/farming-analytics"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/admin/users/farming-analytics");
+      const response = await apiRequest(
+        "GET",
+        "/api/admin/users/farming-analytics"
+      );
       return response.json() as Promise<any>;
     },
     enabled: showAnalytics,
@@ -175,19 +181,30 @@ export function AdminUserMap() {
         zoom: 6,
         center: { lat: -15.3875, lng: 28.3228 }, // Centered on Zambia
         mapTypeId: mapType,
-        styles: [
-          {
-            featureType: "poi",
-            elementType: "labels",
-            stylers: [{ visibility: "off" }],
-          },
-        ],
+        zoomControl: true,
+        mapTypeControl: true,
+        scaleControl: true,
+        streetViewControl: true,
+        rotateControl: true,
+        fullscreenControl: true,
+        gestureHandling: "auto",
+        tilt: mapType === "satellite" || mapType === "hybrid" ? 45 : 0, // Enable 3D tilt for satellite view
+        heading: 0,
+        styles:
+          mapType === "roadmap"
+            ? [
+                {
+                  featureType: "poi",
+                  elementType: "labels",
+                  stylers: [{ visibility: "off" }],
+                },
+              ]
+            : [], // Only apply custom styles to roadmap
       });
 
       mapInstanceRef.current = map;
 
       // Add map type controls
-      const mapTypeControl = new window.google.maps.MapTypeId();
       map.setOptions({
         mapTypeControl: true,
         mapTypeControlOptions: {
@@ -290,7 +307,15 @@ export function AdminUserMap() {
     if (hasValidLocations) {
       mapInstanceRef.current.fitBounds(bounds);
     }
-  }, [mapData, showFields, showClusters, showPestReports, pestOutbreaks, showAnalytics, analytics]);
+  }, [
+    mapData,
+    showFields,
+    showClusters,
+    showPestReports,
+    pestOutbreaks,
+    showAnalytics,
+    analytics,
+  ]);
 
   const createUserMarker = (user: UserMapData) => {
     if (!mapInstanceRef.current || !user.location) return null;
@@ -383,7 +408,10 @@ export function AdminUserMap() {
     else if (outbreak.severity === "low") markerColor = "#10B981";
 
     const marker = new window.google.maps.Marker({
-      position: { lat: outbreak.coordinates.latitude, lng: outbreak.coordinates.longitude },
+      position: {
+        lat: outbreak.coordinates.latitude,
+        lng: outbreak.coordinates.longitude,
+      },
       map: mapInstanceRef.current,
       title: `Pest Outbreak: ${outbreak.pestInfo.name}`,
       icon: {
@@ -406,14 +434,28 @@ export function AdminUserMap() {
           <p class="text-sm font-medium mb-1">${outbreak.pestInfo.name}</p>
           <p class="text-xs text-gray-600 mb-2">${outbreak.location}</p>
           <div class="space-y-1 text-xs">
-            <p><strong>Severity:</strong> <span class="capitalize">${outbreak.severity}</span></p>
-            <p><strong>Status:</strong> <span class="capitalize">${outbreak.status}</span></p>
+            <p><strong>Severity:</strong> <span class="capitalize">${
+              outbreak.severity
+            }</span></p>
+            <p><strong>Status:</strong> <span class="capitalize">${
+              outbreak.status
+            }</span></p>
             <p><strong>Affected Farms:</strong> ${outbreak.affectedFarms}</p>
             <p><strong>Reports:</strong> ${outbreak.reportCount}</p>
-            <p><strong>Risk Level:</strong> <span class="capitalize">${outbreak.pestInfo.riskLevel}</span></p>
-            <p><strong>Economic Impact:</strong> <span class="capitalize">${outbreak.pestInfo.economicImpact}</span></p>
+            <p><strong>Risk Level:</strong> <span class="capitalize">${
+              outbreak.pestInfo.riskLevel
+            }</span></p>
+            <p><strong>Economic Impact:</strong> <span class="capitalize">${
+              outbreak.pestInfo.economicImpact
+            }</span></p>
           </div>
-          ${outbreak.firstReported ? `<p class="text-xs text-gray-500 mt-2">First reported: ${new Date(outbreak.firstReported).toLocaleDateString()}</p>` : ''}
+          ${
+            outbreak.firstReported
+              ? `<p class="text-xs text-gray-500 mt-2">First reported: ${new Date(
+                  outbreak.firstReported
+                ).toLocaleDateString()}</p>`
+              : ""
+          }
         </div>
       `,
     });
@@ -432,7 +474,10 @@ export function AdminUserMap() {
     const scale = Math.min(Math.max(hotspot.totalActivity / 2, 6), 20);
 
     const marker = new window.google.maps.Marker({
-      position: { lat: hotspot.coordinates.latitude, lng: hotspot.coordinates.longitude },
+      position: {
+        lat: hotspot.coordinates.latitude,
+        lng: hotspot.coordinates.longitude,
+      },
       map: mapInstanceRef.current,
       title: `Activity Hotspot: ${hotspot.location}`,
       icon: {
@@ -457,7 +502,13 @@ export function AdminUserMap() {
             <p><strong>Total Activity:</strong> ${hotspot.totalActivity}</p>
             <p><strong>Pest Reports:</strong> ${hotspot.pestReports}</p>
             <p><strong>Plant Analyses:</strong> ${hotspot.plantAnalyses}</p>
-            ${hotspot.lastActivity ? `<p><strong>Last Activity:</strong> ${new Date(hotspot.lastActivity).toLocaleDateString()}</p>` : ''}
+            ${
+              hotspot.lastActivity
+                ? `<p><strong>Last Activity:</strong> ${new Date(
+                    hotspot.lastActivity
+                  ).toLocaleDateString()}</p>`
+                : ""
+            }
           </div>
         </div>
       `,
@@ -756,31 +807,35 @@ export function AdminUserMap() {
                   <span className="text-sm">Show Fields</span>
                 </label>
 
-                                 <label className="flex items-center gap-2 cursor-pointer">
-                   <input
-                     type="checkbox"
-                     checked={showPestReports}
-                     onChange={(e) => setShowPestReports(e.target.checked)}
-                     className="rounded"
-                   />
-                   <span className="text-sm">Pest Outbreaks</span>
-                 </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showPestReports}
+                    onChange={(e) => setShowPestReports(e.target.checked)}
+                    className="rounded"
+                  />
+                  <span className="text-sm">Pest Outbreaks</span>
+                </label>
 
-                 <label className="flex items-center gap-2 cursor-pointer">
-                   <input
-                     type="checkbox"
-                     checked={showAnalytics}
-                     onChange={(e) => setShowAnalytics(e.target.checked)}
-                     className="rounded"
-                   />
-                   <span className="text-sm">Activity Hotspots</span>
-                 </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showAnalytics}
+                    onChange={(e) => setShowAnalytics(e.target.checked)}
+                    className="rounded"
+                  />
+                  <span className="text-sm">Activity Hotspots</span>
+                </label>
               </div>
             </div>
 
             {/* Map Container */}
             <div className="relative">
-              <div ref={mapRef} className="w-full h-96 rounded-lg border" />
+              <div
+                ref={mapRef}
+                className="w-full h-[600px] rounded-lg border"
+                style={{ minHeight: "600px" }}
+              />
 
               {/* Map Legend */}
               <div className="absolute top-4 right-4 bg-white p-3 rounded-lg shadow-lg">
@@ -802,39 +857,39 @@ export function AdminUserMap() {
                     <div className="w-3 h-3 rounded-full bg-gray-400"></div>
                     <span>Inactive Users</span>
                   </div>
-                                     {showFields && (
-                     <div className="flex items-center gap-2">
-                       <div
-                         className="w-3 h-3 bg-purple-500"
-                         style={{
-                           clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
-                         }}
-                       ></div>
-                       <span>Farm Fields</span>
-                     </div>
-                   )}
-                   {showPestReports && (
-                     <>
-                       <div className="flex items-center gap-2">
-                         <div className="w-3 h-3 rounded-full bg-red-600 border-2 border-white"></div>
-                         <span>High Risk Outbreaks</span>
-                       </div>
-                       <div className="flex items-center gap-2">
-                         <div className="w-3 h-3 rounded-full bg-yellow-500 border-2 border-white"></div>
-                         <span>Medium Risk Outbreaks</span>
-                       </div>
-                       <div className="flex items-center gap-2">
-                         <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-white"></div>
-                         <span>Low Risk Outbreaks</span>
-                       </div>
-                     </>
-                   )}
-                   {showAnalytics && (
-                     <div className="flex items-center gap-2">
-                       <div className="w-3 h-3 rounded-full bg-purple-500 opacity-60"></div>
-                       <span>Activity Hotspots</span>
-                     </div>
-                   )}
+                  {showFields && (
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 bg-purple-500"
+                        style={{
+                          clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
+                        }}
+                      ></div>
+                      <span>Farm Fields</span>
+                    </div>
+                  )}
+                  {showPestReports && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-600 border-2 border-white"></div>
+                        <span>High Risk Outbreaks</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-yellow-500 border-2 border-white"></div>
+                        <span>Medium Risk Outbreaks</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-white"></div>
+                        <span>Low Risk Outbreaks</span>
+                      </div>
+                    </>
+                  )}
+                  {showAnalytics && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-purple-500 opacity-60"></div>
+                      <span>Activity Hotspots</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -855,15 +910,22 @@ export function AdminUserMap() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                {analytics.cropDistribution?.slice(0, 10).map((item: any, index: number) => (
-                  <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <div>
-                      <p className="font-medium text-sm">{item.cropType}</p>
-                      <p className="text-xs text-gray-600">{item.location}</p>
+                {analytics.cropDistribution
+                  ?.slice(0, 10)
+                  .map((item: any, index: number) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center p-2 bg-gray-50 rounded"
+                    >
+                      <div>
+                        <p className="font-medium text-sm">{item.cropType}</p>
+                        <p className="text-xs text-gray-600">{item.location}</p>
+                      </div>
+                      <Badge variant="secondary">
+                        {item.farmerCount} farmers
+                      </Badge>
                     </div>
-                    <Badge variant="secondary">{item.farmerCount} farmers</Badge>
-                  </div>
-                ))}
+                  ))}
               </div>
             </CardContent>
           </Card>
@@ -878,18 +940,20 @@ export function AdminUserMap() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                {analytics.farmSizeDistribution?.slice(0, 8).map((item: any, index: number) => (
-                  <div key={index} className="p-2 bg-gray-50 rounded">
-                    <div className="flex justify-between items-center mb-1">
-                      <p className="font-medium text-sm">{item.location}</p>
-                      <Badge variant="outline">{item.farmCount} farms</Badge>
+                {analytics.farmSizeDistribution
+                  ?.slice(0, 8)
+                  .map((item: any, index: number) => (
+                    <div key={index} className="p-2 bg-gray-50 rounded">
+                      <div className="flex justify-between items-center mb-1">
+                        <p className="font-medium text-sm">{item.location}</p>
+                        <Badge variant="outline">{item.farmCount} farms</Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                        <span>Avg: {item.avgFarmSize} ha</span>
+                        <span>Total: {item.totalFarmArea} ha</span>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                      <span>Avg: {item.avgFarmSize} ha</span>
-                      <span>Total: {item.totalFarmArea} ha</span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </CardContent>
           </Card>
@@ -904,28 +968,36 @@ export function AdminUserMap() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                {analytics.activityHotspots?.slice(0, 8).map((item: any, index: number) => (
-                  <div key={index} className="p-2 bg-gray-50 rounded">
-                    <div className="flex justify-between items-center mb-1">
-                      <p className="font-medium text-sm">{item.location}</p>
-                      <Badge 
-                        variant={item.totalActivity > 10 ? "destructive" : 
-                                item.totalActivity > 5 ? "default" : "secondary"}
-                      >
-                        {item.totalActivity} activities
-                      </Badge>
+                {analytics.activityHotspots
+                  ?.slice(0, 8)
+                  .map((item: any, index: number) => (
+                    <div key={index} className="p-2 bg-gray-50 rounded">
+                      <div className="flex justify-between items-center mb-1">
+                        <p className="font-medium text-sm">{item.location}</p>
+                        <Badge
+                          variant={
+                            item.totalActivity > 10
+                              ? "destructive"
+                              : item.totalActivity > 5
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {item.totalActivity} activities
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                        <span>🐛 {item.pestReports} pest reports</span>
+                        <span>🌱 {item.plantAnalyses} analyses</span>
+                      </div>
+                      {item.lastActivity && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Last:{" "}
+                          {new Date(item.lastActivity).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                      <span>🐛 {item.pestReports} pest reports</span>
-                      <span>🌱 {item.plantAnalyses} analyses</span>
-                    </div>
-                    {item.lastActivity && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Last: {new Date(item.lastActivity).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  ))}
               </div>
             </CardContent>
           </Card>

@@ -49,21 +49,8 @@ router.get("/map-data", async (req, res) => {
       conditions.push(eq(users.role, userType as string));
     }
 
-    if (activityStatus === "active") {
-      // Consider users active if they've logged in within the last 30 days
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      conditions.push(gte(users.lastLoginAt, thirtyDaysAgo));
-    } else if (activityStatus === "inactive") {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      conditions.push(
-        or(
-          sql`${users.lastLoginAt} IS NULL`,
-          sql`${users.lastLoginAt} < ${thirtyDaysAgo}`
-        )
-      );
-    }
+    // Note: Activity filtering will be done after getting device session data
+    // since we need to check lastActiveAt from deviceSessions table
 
     if (searchQuery) {
       conditions.push(
@@ -94,6 +81,7 @@ router.get("/map-data", async (req, res) => {
             state: deviceSessions.state,
             country: deviceSessions.country,
             location: deviceSessions.location,
+            lastActiveAt: deviceSessions.lastActiveAt,
           })
           .from(deviceSessions)
           .where(eq(deviceSessions.userId, user.id))
@@ -130,10 +118,12 @@ router.get("/map-data", async (req, res) => {
           .from(plantAnalyses)
           .where(eq(plantAnalyses.userId, user.id));
 
-        // Determine if user is active
+        // Determine if user is active (based on device session activity)
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const isActive = user.lastLoginAt && user.lastLoginAt > thirtyDaysAgo;
+        const isActive =
+          latestSession &&
+          new Date(latestSession.lastActiveAt || 0) > thirtyDaysAgo;
 
         return {
           id: user.id,
@@ -143,7 +133,8 @@ router.get("/map-data", async (req, res) => {
           role: user.role,
           isActive: !!isActive,
           lastActiveAt:
-            user.lastLoginAt?.toISOString() || user.createdAt.toISOString(),
+            latestSession?.lastActiveAt?.toISOString() ||
+            user.createdAt.toISOString(),
           createdAt: user.createdAt.toISOString(),
           location:
             latestSession?.latitude && latestSession?.longitude
@@ -180,14 +171,22 @@ router.get("/map-data", async (req, res) => {
             pestReports: pestReportCount.count,
             plantAnalyses: plantAnalysisCount.count,
             lastLogin:
-              user.lastLoginAt?.toISOString() || user.createdAt.toISOString(),
+              latestSession?.lastActiveAt?.toISOString() ||
+              user.createdAt.toISOString(),
           },
         };
       })
     );
 
     // Filter out null results (users that didn't match country filter)
-    const filteredResults = enrichedResults.filter((result) => result !== null);
+    let filteredResults = enrichedResults.filter((result) => result !== null);
+
+    // Apply activity status filter
+    if (activityStatus === "active") {
+      filteredResults = filteredResults.filter((result) => result.isActive);
+    } else if (activityStatus === "inactive") {
+      filteredResults = filteredResults.filter((result) => !result.isActive);
+    }
 
     res.json(filteredResults);
   } catch (error) {
@@ -215,7 +214,8 @@ router.get("/map-stats", async (req, res) => {
     const [activeUsersResult] = await db
       .select({ count: count() })
       .from(users)
-      .where(gte(users.lastLoginAt, thirtyDaysAgo));
+      .leftJoin(deviceSessions, eq(users.id, deviceSessions.userId))
+      .where(gte(deviceSessions.lastActiveAt, thirtyDaysAgo));
 
     // Get farmer users
     const [farmerUsersResult] = await db
@@ -357,21 +357,22 @@ router.get("/pest-outbreaks", async (req, res) => {
       .select({
         outbreak: pestOutbreaks,
         pestInfo: pestDiseaseTypes,
-        reportCount: count(pestReports.id),
       })
       .from(pestOutbreaks)
-      .leftJoin(pestDiseaseTypes, eq(pestOutbreaks.pestDiseaseTypeId, pestDiseaseTypes.id))
-      .leftJoin(pestReports, eq(pestOutbreaks.id, pestReports.outbreakId))
+      .leftJoin(
+        pestDiseaseTypes,
+        eq(pestOutbreaks.pestDiseaseId, pestDiseaseTypes.id)
+      )
       .where(eq(pestOutbreaks.status, "active"))
-      .groupBy(pestOutbreaks.id, pestDiseaseTypes.id)
       .limit(100);
 
     // Get location coordinates for each outbreak
     const enrichedOutbreaks = await Promise.all(
-      outbreaksWithLocation.map(async ({ outbreak, pestInfo, reportCount }) => {
-        // Try to get coordinates from recent reports
-        const [locationData] = await db
+      outbreaksWithLocation.map(async ({ outbreak, pestInfo }) => {
+        // Get related reports count for this pest/disease type in the same area
+        const [reportData] = await db
           .select({
+            reportCount: count(pestReports.id),
             latitude: deviceSessions.latitude,
             longitude: deviceSessions.longitude,
             city: deviceSessions.city,
@@ -379,43 +380,61 @@ router.get("/pest-outbreaks", async (req, res) => {
             country: deviceSessions.country,
           })
           .from(pestReports)
-          .leftJoin(deviceSessions, eq(pestReports.userId, deviceSessions.userId))
-          .where(eq(pestReports.outbreakId, outbreak.id))
-          .orderBy(desc(pestReports.reportedAt))
+          .leftJoin(
+            deviceSessions,
+            eq(pestReports.userId, deviceSessions.userId)
+          )
+          .where(
+            and(
+              eq(pestReports.pestDiseaseId, outbreak.pestDiseaseId),
+              sql`${deviceSessions.latitude} IS NOT NULL`,
+              sql`${deviceSessions.longitude} IS NOT NULL`
+            )
+          )
+          .groupBy(
+            deviceSessions.latitude,
+            deviceSessions.longitude,
+            deviceSessions.city,
+            deviceSessions.state,
+            deviceSessions.country
+          )
+          .orderBy(desc(count(pestReports.id)))
           .limit(1);
 
-        if (!locationData?.latitude || !locationData?.longitude) {
+        if (!reportData?.latitude || !reportData?.longitude) {
           return null; // Skip outbreaks without location data
         }
 
         return {
           id: outbreak.id,
-          location: outbreak.location,
+          location: outbreak.locationArea,
           severity: outbreak.severity,
           status: outbreak.status,
           affectedFarms: outbreak.affectedFarms || 0,
           coordinates: {
-            latitude: parseFloat(locationData.latitude as string),
-            longitude: parseFloat(locationData.longitude as string),
+            latitude: parseFloat(reportData.latitude as string),
+            longitude: parseFloat(reportData.longitude as string),
           },
-          city: locationData.city,
-          state: locationData.state,
-          country: locationData.country,
+          city: reportData.city,
+          state: reportData.state,
+          country: reportData.country,
           pestInfo: {
             name: pestInfo?.name || "Unknown",
             category: pestInfo?.category || "Unknown",
             riskLevel: pestInfo?.riskLevel || "medium",
             economicImpact: pestInfo?.economicImpact || "medium",
           },
-          reportCount: reportCount || 0,
-          firstReported: outbreak.firstReported?.toISOString(),
-          lastUpdated: outbreak.updatedAt?.toISOString(),
+          reportCount: reportData.reportCount || 0,
+          firstReported: outbreak.firstReportedAt?.toISOString(),
+          lastUpdated: outbreak.lastUpdatedAt?.toISOString(),
         };
       })
     );
 
     // Filter out null results
-    const validOutbreaks = enrichedOutbreaks.filter(outbreak => outbreak !== null);
+    const validOutbreaks = enrichedOutbreaks.filter(
+      (outbreak) => outbreak !== null
+    );
 
     res.json(validOutbreaks);
   } catch (error) {
@@ -448,7 +467,7 @@ router.get("/farming-analytics", async (req, res) => {
       .where(sql`${farmerProfiles.mainCrops} IS NOT NULL`)
       .groupBy(
         deviceSessions.country,
-        deviceSessions.state, 
+        deviceSessions.state,
         deviceSessions.city,
         sql`unnest(${farmerProfiles.mainCrops})`
       )
@@ -500,29 +519,38 @@ router.get("/farming-analytics", async (req, res) => {
         deviceSessions.latitude,
         deviceSessions.longitude
       )
-      .having(sql`COUNT(${pestReports.id}) > 0 OR COUNT(${plantAnalyses.id}) > 0`)
+      .having(
+        sql`COUNT(${pestReports.id}) > 0 OR COUNT(${plantAnalyses.id}) > 0`
+      )
       .orderBy(desc(sql`COUNT(${pestReports.id}) + COUNT(${plantAnalyses.id})`))
       .limit(50);
 
     const analytics = {
-      cropDistribution: cropDistribution.map(item => ({
-        location: `${item.city || ''}, ${item.state || ''}, ${item.country || ''}`.replace(/^,\s*|,\s*$/g, ''),
+      cropDistribution: cropDistribution.map((item) => ({
+        location: `${item.city || ""}, ${item.state || ""}, ${
+          item.country || ""
+        }`.replace(/^,\s*|,\s*$/g, ""),
         cropType: item.cropType,
         farmerCount: item.farmerCount,
         country: item.country,
         state: item.state,
         city: item.city,
       })),
-      farmSizeDistribution: farmSizeDistribution.map(item => ({
-        location: `${item.state || ''}, ${item.country || ''}`.replace(/^,\s*|,\s*$/g, ''),
+      farmSizeDistribution: farmSizeDistribution.map((item) => ({
+        location: `${item.state || ""}, ${item.country || ""}`.replace(
+          /^,\s*|,\s*$/g,
+          ""
+        ),
         avgFarmSize: Math.round(item.avgFarmSize || 0),
         totalFarmArea: Math.round(item.totalFarmArea || 0),
         farmCount: item.farmCount,
         country: item.country,
         state: item.state,
       })),
-      activityHotspots: activityHotspots.map(item => ({
-        location: `${item.city || ''}, ${item.state || ''}, ${item.country || ''}`.replace(/^,\s*|,\s*$/g, ''),
+      activityHotspots: activityHotspots.map((item) => ({
+        location: `${item.city || ""}, ${item.state || ""}, ${
+          item.country || ""
+        }`.replace(/^,\s*|,\s*$/g, ""),
         coordinates: {
           latitude: parseFloat(item.latitude as string),
           longitude: parseFloat(item.longitude as string),
