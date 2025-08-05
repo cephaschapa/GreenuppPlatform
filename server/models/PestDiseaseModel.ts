@@ -465,11 +465,50 @@ export class PestDiseaseModel {
           desc(pestOutbreaks.lastUpdatedAt)
         );
 
-      // Flatten the structure to match frontend expectations
-      return results.map(({ outbreak, pestInfo }) => ({
-        ...outbreak,
-        pestInfo,
-      }));
+      // Get related reports for each outbreak
+      const outbreaksWithReports = await Promise.all(
+        results.map(async ({ outbreak, pestInfo }) => {
+          // Get the first few reports for this outbreak
+          const reports = await db
+            .select({
+              report: pestReports,
+              user: {
+                id: users.id,
+                firstName: users.firstName,
+                lastName: users.lastName,
+                email: users.email,
+              },
+              farmerProfile: {
+                farmName: farmerProfiles.farmName,
+                farmLocation: farmerProfiles.farmLocation,
+                farmSize: farmerProfiles.farmSize,
+              },
+            })
+            .from(pestReports)
+            .leftJoin(users, eq(pestReports.userId, users.id))
+            .leftJoin(farmerProfiles, eq(users.id, farmerProfiles.userId))
+            .where(
+              and(
+                eq(pestReports.pestDiseaseId, outbreak.pestDiseaseId),
+                eq(pestReports.location, outbreak.locationArea)
+              )
+            )
+            .orderBy(desc(pestReports.reportedAt))
+            .limit(5); // Get up to 5 recent reports
+
+          return {
+            ...outbreak,
+            pestInfo,
+            recentReports: reports.map(({ report, user, farmerProfile }) => ({
+              ...report,
+              farmer: user,
+              farmDetails: farmerProfile,
+            })),
+          };
+        })
+      );
+
+      return outbreaksWithReports;
     } catch (error) {
       logger.error("Error fetching active outbreaks:", error);
       throw new Error("Failed to fetch active outbreaks");
