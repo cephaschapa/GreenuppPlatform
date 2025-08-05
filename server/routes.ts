@@ -17,6 +17,7 @@ import streamChatRoutes from "./routes/stream-chat-routes";
 import streamChatWebhooks from "./routes/stream-chat-webhooks";
 import farmingAssistantRoutes from "./routes/farming-assistant";
 import searchRoutes from "./routes/search";
+import { mapsConfigRouter } from "./routes/maps-config";
 import { setWebSocketNotifier } from "./services/websocket-notifier";
 import { registerMvcRoutes } from "./routes/index-mvc.js";
 import { setupAuth } from "./auth";
@@ -93,6 +94,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up AI farming assistant routes
   app.use("/api/farming-assistant", farmingAssistantRoutes);
+
+  // Set up maps configuration routes (admin only)
+  app.use("/api/maps", mapsConfigRouter);
 
   // Auto-generate treatment plan from analysis - MIGRATED TO MVC
   // All treatment plan routes have been moved to server/routes/treatment-mvc.ts

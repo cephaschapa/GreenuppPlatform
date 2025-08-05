@@ -20,7 +20,7 @@ $optionalVars = @{
     "STREAM_API_KEY" = "your-stream-api-key"
     "STREAM_API_SECRET" = "your-stream-api-secret"
     "VITE_STREAM_API_KEY" = "your-stream-api-key"
-    "VITE_GOOGLE_MAPS_API_KEY" = "AIzaSyC-your-google-maps-api-key"
+    "GOOGLE_MAPS_API_KEY" = "AIzaSyC-your-google-maps-api-key"
     "ANTHROPIC_API_KEY" = "sk-ant-your-anthropic-api-key"
 }
 

@@ -172,8 +172,20 @@ export function AdminUserMap() {
     enabled: showAnalytics,
   });
 
+  // Fetch Google Maps API key from server
+  const { data: mapsConfig } = useQuery({
+    queryKey: ["/api/maps/config"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/maps/config");
+      return response.json() as Promise<{ success: boolean; apiKey: string }>;
+    },
+  });
+
   // Initialize Google Maps
   useEffect(() => {
+    // Don't initialize if we don't have the API key yet
+    if (!mapsConfig?.success || !mapsConfig?.apiKey) return;
+
     const initializeMap = () => {
       if (!mapRef.current || !window.google) return;
 
@@ -217,9 +229,7 @@ export function AdminUserMap() {
     // Load Google Maps API if not already loaded
     if (!window.google) {
       const script = document.createElement("script");
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${
-        import.meta.env.VITE_GOOGLE_MAPS_API_KEY
-      }&libraries=geometry,places,visualization`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${mapsConfig.apiKey}&libraries=geometry,places,visualization`;
       script.async = true;
       script.defer = true;
       script.onload = initializeMap;
@@ -227,7 +237,7 @@ export function AdminUserMap() {
     } else {
       initializeMap();
     }
-  }, [mapType]);
+  }, [mapType, mapsConfig]);
 
   // Update markers when data changes
   useEffect(() => {
