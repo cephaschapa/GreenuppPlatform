@@ -505,9 +505,12 @@ async function sendNotificationEmail(
         : ""
     }\n\n${footerText}`;
 
+    // Use verified SMTP_FROM address for SendGrid compliance
+    const verifiedSender = process.env.SMTP_FROM || "support@greenupp.earth";
+
     const result = await sendEmail({
       to: email,
-      from: `${fromName} <support@greenupp.earth>`,
+      from: `${fromName} <${verifiedSender}>`,
       subject: notification.title,
       html,
       text,

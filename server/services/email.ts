@@ -50,11 +50,11 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
   } catch (err) {
     const error = err as any;
     console.error("Failed to send email via SMTP:", error);
-    // Fallback to dev logger
-    logEmailToDev(options);
+
+    // Return the actual error instead of falling back silently
     return {
-      success: true,
-      error: "SMTP error, but logged to console in development mode",
+      success: false,
+      error: `SMTP Error: ${error.message || error}`,
     };
   }
 }

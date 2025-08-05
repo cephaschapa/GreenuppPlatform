@@ -29,9 +29,9 @@ router.post("/api/test-email", async (req, res) => {
       });
     }
 
-    const success = await testEmail(email);
+    const result = await testEmail(email);
 
-    if (success) {
+    if (result.success) {
       res.json({
         success: true,
         message: `Test email sent to ${email}`,
@@ -39,7 +39,7 @@ router.post("/api/test-email", async (req, res) => {
     } else {
       res.status(500).json({
         success: false,
-        message: "Failed to send test email",
+        message: result.error || "Failed to send test email",
       });
     }
   } catch (error) {

@@ -4,6 +4,7 @@ import { getCacheStats, clearCachePrefix } from "../lib/cache.js";
 import { logger } from "../lib/logger.js";
 import { hasRole } from "../middleware/auth.js";
 import { storage } from "../storage.js";
+import adminAlertsRouter from "./admin-alerts.js";
 import { db } from "../db.js";
 import {
   users,
@@ -27,6 +28,9 @@ const router = Router();
 
 // Apply admin role middleware to all admin routes
 router.use(hasRole("admin"));
+
+// Mount alert routes
+router.use("/alerts", adminAlertsRouter);
 
 /**
  * GET /api/admin/dashboard

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
+import { AdminAlertCenter } from "@/components/admin/AdminAlertCenter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,7 @@ import {
   Clock,
   Search,
   Filter,
+  Megaphone,
   RefreshCw,
   Eye,
   Edit,
@@ -488,9 +490,13 @@ export default function AdminDashboard() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="alerts">
+              <Megaphone className="h-4 w-4 mr-2" />
+              Alerts
+            </TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
@@ -900,6 +906,11 @@ export default function AdminDashboard() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Alert Center Tab */}
+          <TabsContent value="alerts" className="space-y-6">
+            <AdminAlertCenter />
           </TabsContent>
 
           {/* Analytics Tab */}

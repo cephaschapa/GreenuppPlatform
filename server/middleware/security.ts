@@ -51,13 +51,25 @@ export const createRateLimiters = () => {
     };
   };
 
-  // More lenient limits for development, stricter for production
+  // Configurable rate limits with environment variables
   const isDevelopment = process.env.NODE_ENV !== "production";
 
+  // Allow environment variable overrides for rate limits
+  const generalLimit = parseInt(
+    process.env.RATE_LIMIT_GENERAL || (isDevelopment ? "1000" : "500")
+  );
+  const authLimit = parseInt(
+    process.env.RATE_LIMIT_AUTH || (isDevelopment ? "50" : "30")
+  );
+  const passwordResetLimit = parseInt(
+    process.env.RATE_LIMIT_PASSWORD_RESET || (isDevelopment ? "20" : "5")
+  );
+
   return {
-    generalLimiter: createLimiter(15 * 60 * 1000, isDevelopment ? 1000 : 100), // 15 min, 1000/100 requests
-    authLimiter: createLimiter(15 * 60 * 1000, isDevelopment ? 50 : 5), // 15 min, 50/5 requests
-    passwordResetLimiter: createLimiter(60 * 60 * 1000, isDevelopment ? 20 : 3), // 1 hour, 20/3 requests
+    generalLimiter: createLimiter(15 * 60 * 1000, generalLimit), // 15 min window
+    authLimiter: createLimiter(15 * 60 * 1000, authLimit), // 15 min window
+    passwordResetLimiter: createLimiter(60 * 60 * 1000, passwordResetLimit), // 1 hour window
+    rateLimitStore, // Expose store for clearing if needed
   };
 };
 
@@ -250,7 +262,8 @@ export const sessionSecurity = (
 
 // Export all middleware as a single function for easy setup
 export const setupSecurityMiddleware = (app: any) => {
-  const limiters = createRateLimiters();
+  const { generalLimiter, authLimiter, passwordResetLimiter, rateLimitStore } =
+    createRateLimiters();
 
   // Basic security headers
   app.use(securityHeaders);
@@ -271,19 +284,31 @@ export const setupSecurityMiddleware = (app: any) => {
   app.use(sessionSecurity);
 
   // Rate limiting
-  app.use("/api/auth", limiters.authLimiter);
-  app.use("/api/auth/forgot-password", limiters.passwordResetLimiter);
-  app.use("/api/auth/reset-password", limiters.passwordResetLimiter);
-  app.use("/api", limiters.generalLimiter);
+  app.use("/api/auth", authLimiter);
+  app.use("/api/auth/forgot-password", passwordResetLimiter);
+  app.use("/api/auth/reset-password", passwordResetLimiter);
+  app.use("/api", generalLimiter);
 
   // Development endpoint to clear rate limits
   if (process.env.NODE_ENV !== "production") {
     app.post("/api/dev/clear-rate-limits", (req: any, res: any) => {
-      // Access the rate limit store (we need to expose it)
-      logger.info("Clearing rate limits for development");
+      rateLimitStore.clear();
+      logger.info("Rate limits cleared for development");
       res.json({ message: "Rate limits cleared" });
     });
   }
 
-  return limiters;
+  // Admin endpoint to clear rate limits (with authentication)
+  app.post("/api/admin/clear-rate-limits", (req: any, res: any) => {
+    // Check if user is admin
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    rateLimitStore.clear();
+    logger.info(`Rate limits cleared by admin user: ${req.user.id}`);
+    res.json({ message: "Rate limits cleared successfully" });
+  });
+
+  return { generalLimiter, authLimiter, passwordResetLimiter, rateLimitStore };
 };
