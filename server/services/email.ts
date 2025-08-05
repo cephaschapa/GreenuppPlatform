@@ -349,17 +349,17 @@ export function generateHtmlEmail(
         ${message}
       </div>
       
-      ${
-        actionUrl && actionText
-          ? `
+        ${
+          actionUrl && actionText
+            ? `
       <div class="cta-container">
         <a href="${actionUrl}" class="cta-button">
-          ${actionText}
-        </a>
-      </div>
-      `
-          : ""
-      }
+              ${actionText}
+            </a>
+          </div>
+        `
+            : ""
+        }
       
       <div class="divider"></div>
       
@@ -421,7 +421,7 @@ export function generateHtmlEmail(
            <a href="https://www.greenupp.earth/unsubscribe">Unsubscribe</a> | 
            <a href="https://www.greenupp.earth/privacy">Privacy Policy</a> | 
            <a href="https://www.greenupp.earth/terms">Terms of Service</a>
-         </div>
+        </div>
       </div>
     </div>
   </div>

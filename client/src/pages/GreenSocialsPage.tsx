@@ -809,7 +809,7 @@ const GreenSocialsPage = () => {
 
       const response = await apiRequest(
         "POST",
-        "/api/test/upload-single",
+        "/api/uploads/single",
         formData,
         { isFormData: true }
       );
@@ -923,7 +923,7 @@ const GreenSocialsPage = () => {
 
       const response = await apiRequest(
         "POST",
-        "/api/test/upload-multiple",
+        "/api/uploads/multiple",
         formData,
         { isFormData: true }
       );

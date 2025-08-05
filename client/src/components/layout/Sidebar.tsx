@@ -60,6 +60,21 @@ export function Sidebar() {
     setIsAppSubdomain(window.location.hostname.startsWith("app."));
   }, []);
 
+  // Get the role-based base path for the current user
+  const getRoleBasePath = () => {
+    if (!user) return "";
+    const userId = user.id.toString();
+
+    if (user.role === UserRole.FARMER) return `/farmer/${userId}`;
+    if (user.role === UserRole.BUYER) return `/buyer/${userId}`;
+    if (user.role === UserRole.SUPPLIER || user.role === "seller")
+      return `/seller/${userId}`;
+
+    return "";
+  };
+
+  const basePath = getRoleBasePath();
+
   // Toggle expanded state for items with submenus
   const toggleExpanded = (itemTitle: string) => {
     setExpandedItems((prev) => {
@@ -94,164 +109,155 @@ export function Sidebar() {
   const farmerNavItems = [
     {
       title: "Overview",
-      href: "/dashboard",
+      href: `${basePath}/dashboard`,
       icon: <LayoutDashboard className="h-5 w-5" />,
       mobileIcon: <Home className="h-6 w-6" />,
-      active: location === "/dashboard",
+      active: location === `${basePath}/dashboard` || location === basePath,
       showInMobileNav: true,
     },
     {
       title: "Fields & Crops",
-      href: "/dashboard/fields",
+      href: `${basePath}/fields`,
       icon: <TractorIcon className="h-5 w-5" />,
       mobileIcon: <TractorIcon className="h-6 w-6" />,
-      active: location === "/dashboard/fields",
+      active: location === `${basePath}/fields`,
       showInMobileNav: false,
     },
     {
       title: "Tasks",
-      href: "/dashboard/tasks",
+      href: `${basePath}/tasks`,
       icon: <ClipboardList className="h-5 w-5" />,
       mobileIcon: <ClipboardList className="h-6 w-6" />,
-      active: location === "/dashboard/tasks",
+      active: location === `${basePath}/tasks`,
       showInMobileNav: false,
     },
     {
       title: "Weather",
-      href: "/dashboard/weather",
+      href: `${basePath}/weather`,
       icon: <Cloud className="h-5 w-5" />,
       mobileIcon: <Cloud className="h-6 w-6" />,
-      active: location === "/dashboard/weather",
+      active: location === `${basePath}/weather`,
       showInMobileNav: true,
     },
     {
       title: "Diagnose",
-      href: "/dashboard/plant-diagnosis",
+      href: `${basePath}/diagnose`,
       icon: <Sprout className="h-5 w-5" />,
       mobileIcon: <Sprout className="h-6 w-6" />,
-      active: location === "/dashboard/plant-diagnosis",
+      active: location === `${basePath}/diagnose`,
       showInMobileNav: true,
     },
     {
       title: "Product Verification",
-      href: "/dashboard/verification",
+      href: `${basePath}/verification`,
       icon: <ShieldCheck className="h-5 w-5" />,
       mobileIcon: <ShieldCheck className="h-6 w-6" />,
-      active: location === "/dashboard/verification",
+      active: location === `${basePath}/verification`,
       showInMobileNav: true,
     },
     {
       title: "Shop",
-      href: "/dashboard/marketplace",
+      href: `${basePath}/marketplace`,
       icon: <ShoppingBag className="h-5 w-5" />,
       mobileIcon: <ShoppingBag className="h-6 w-6" />,
-      active: location.startsWith("/dashboard/marketplace"),
+      active: location.startsWith(`${basePath}/marketplace`),
       showInMobileNav: true,
       subItems: [
         {
           title: "All Products",
-          href: "/dashboard/marketplace",
-          active: location === "/dashboard/marketplace",
+          href: `${basePath}/marketplace`,
+          active: location === `${basePath}/marketplace`,
         },
         {
           title: "Orders",
-          href: "/dashboard/orders",
-          active: location === "/dashboard/orders",
+          href: `${basePath}/orders`,
+          active: location === `${basePath}/orders`,
         },
         {
           title: "Inventory",
-          href: "/dashboard/inventory",
-          active: location === "/dashboard/inventory",
+          href: `${basePath}/inventory`,
+          active: location === `${basePath}/inventory`,
         },
         {
           title: "Expert Directory",
-          href: "/dashboard/experts",
-          active: location === "/dashboard/experts",
+          href: `${basePath}/experts`,
+          active: location === `${basePath}/experts`,
         },
         {
           title: "Dealer Directory",
-          href: "/dashboard/dealers",
-          active: location === "/dashboard/dealers",
+          href: `${basePath}/dealers`,
+          active: location === `${basePath}/dealers`,
         },
       ],
     },
     {
       title: "Predictions",
-      href: "/dashboard/predictions",
+      href: `${basePath}/predictions`,
       icon: <Sparkles className="h-5 w-5" />,
       mobileIcon: <Sparkles className="h-6 w-6" />,
-      active: location === "/dashboard/predictions",
+      active: location === `${basePath}/predictions`,
       showInMobileNav: false,
     },
-
     {
       title: "Profile",
-      href: "/dashboard/profile",
+      href: `${basePath}/profile`,
       icon: <User className="h-5 w-5" />,
       mobileIcon: <User className="h-6 w-6" />,
-      active: location === "/dashboard/profile",
+      active: location === `${basePath}/profile`,
       showInMobileNav: false,
     },
     {
       title: "Settings",
-      href: "/dashboard/settings",
+      href: `${basePath}/settings`,
       icon: <Settings className="h-5 w-5" />,
       mobileIcon: <Settings className="h-6 w-6" />,
       active:
-        location === "/dashboard/settings" ||
-        location === "/dashboard/security",
+        location === `${basePath}/settings` ||
+        location === `${basePath}/security`,
       showInMobileNav: false,
       subItems: [
         {
           title: "General Settings",
-          href: "/dashboard/settings",
-          active: location === "/dashboard/settings",
+          href: `${basePath}/settings`,
+          active: location === `${basePath}/settings`,
         },
         {
           title: "Security Settings",
-          href: "/dashboard/security",
-          active: location === "/dashboard/security",
+          href: `${basePath}/security`,
+          active: location === `${basePath}/security`,
         },
       ],
     },
     {
-      title: "AI Knowledge Base",
-      href: "/ai-knowledge-base",
-      icon: <Sparkles className="h-5 w-5" />,
-      mobileIcon: <Sparkles className="h-6 w-6" />,
-      active: location === "/ai-knowledge-base",
-      showInMobileNav: false,
-    },
-    {
       title: "Socials",
-      href: "/dashboard/social",
+      href: `${basePath}/social`,
       icon: <Users className="h-5 w-5" />,
       mobileIcon: <Users className="h-6 w-6" />,
-      active: location === "/dashboard/social",
+      active: location === `${basePath}/social`,
       showInMobileNav: true,
     },
     {
       title: "Stream Chat",
-      href: "/dashboard/stream-chat",
+      href: `${basePath}/chat`,
       icon: <MessageSquare className="h-5 w-5" />,
       mobileIcon: <MessageSquare className="h-6 w-6" />,
-      active: location === "/dashboard/stream-chat",
+      active: location === `${basePath}/chat`,
       showInMobileNav: true,
     },
     {
       title: "AI Farming Assistant",
-      href: "/dashboard/farming-assistant",
+      href: `${basePath}/assistant`,
       icon: <Brain className="h-5 w-5" />,
       mobileIcon: <Brain className="h-6 w-6" />,
-      active: location === "/dashboard/farming-assistant",
+      active: location === `${basePath}/assistant`,
       showInMobileNav: true,
     },
     {
       title: "System Health",
-      href: "/dashboard/system-health",
+      href: "/system-health",
       icon: <Activity className="h-5 w-5" />,
       mobileIcon: <Activity className="h-6 w-6" />,
-      active: location === "/dashboard/system-health",
+      active: location === "/system-health",
       showInMobileNav: false,
     },
   ];
@@ -259,58 +265,78 @@ export function Sidebar() {
   const supplierNavItems = [
     {
       title: "Overview",
-      href: "/dashboard",
+      href: `${basePath}/dashboard`,
       icon: <LayoutDashboard className="h-5 w-5" />,
       mobileIcon: <Home className="h-6 w-6" />,
-      active: location === "/dashboard",
+      active: location === `${basePath}/dashboard` || location === basePath,
       showInMobileNav: true,
     },
     {
-      title: "Marketplace",
-      href: "/dashboard/marketplace",
+      title: "Products",
+      href: `${basePath}/products`,
       icon: <ShoppingBag className="h-5 w-5" />,
       mobileIcon: <ShoppingBag className="h-6 w-6" />,
-      active: location.startsWith("/dashboard/marketplace"),
+      active: location.startsWith(`${basePath}/products`),
+      showInMobileNav: true,
+      subItems: [
+        {
+          title: "All Products",
+          href: `${basePath}/products`,
+          active: location === `${basePath}/products`,
+        },
+        {
+          title: "Add New Product",
+          href: `${basePath}/products/new`,
+          active: location === `${basePath}/products/new`,
+        },
+      ],
+    },
+    {
+      title: "Orders",
+      href: `${basePath}/orders`,
+      icon: <ClipboardList className="h-5 w-5" />,
+      mobileIcon: <ClipboardList className="h-6 w-6" />,
+      active: location === `${basePath}/orders`,
+      showInMobileNav: true,
+    },
+    {
+      title: "Inventory",
+      href: `${basePath}/inventory`,
+      icon: <Grid className="h-5 w-5" />,
+      mobileIcon: <Grid className="h-6 w-6" />,
+      active: location === `${basePath}/inventory`,
       showInMobileNav: true,
     },
     {
       title: "Verify Products",
-      href: "/trace",
+      href: `${basePath}/verification`,
       icon: <ShieldCheck className="h-5 w-5" />,
       mobileIcon: <ShieldCheck className="h-6 w-6" />,
-      active: location === "/trace",
-      showInMobileNav: false,
-    },
-    {
-      title: "AI Knowledge Base",
-      href: "/ai-knowledge-base",
-      icon: <Sparkles className="h-5 w-5" />,
-      mobileIcon: <Sparkles className="h-6 w-6" />,
-      active: location === "/ai-knowledge-base",
+      active: location === `${basePath}/verification`,
       showInMobileNav: false,
     },
     {
       title: "Green Socials",
-      href: "/dashboard/social",
+      href: `${basePath}/social`,
       icon: <Users className="h-5 w-5" />,
       mobileIcon: <Users className="h-6 w-6" />,
-      active: location === "/dashboard/social",
+      active: location === `${basePath}/social`,
       showInMobileNav: true,
     },
     {
       title: "Stream Chat",
-      href: "/dashboard/stream-chat",
+      href: `${basePath}/chat`,
       icon: <MessageSquare className="h-5 w-5" />,
       mobileIcon: <MessageSquare className="h-6 w-6" />,
-      active: location === "/dashboard/stream-chat",
+      active: location === `${basePath}/chat`,
       showInMobileNav: true,
     },
     {
       title: "Farming Assistant",
-      href: "/dashboard/farming-assistant",
+      href: `${basePath}/assistant`,
       icon: <Brain className="h-5 w-5" />,
       mobileIcon: <Brain className="h-6 w-6" />,
-      active: location === "/dashboard/farming-assistant",
+      active: location === `${basePath}/assistant`,
       showInMobileNav: true,
     },
     // Add more supplier-specific navigation items here
@@ -319,70 +345,88 @@ export function Sidebar() {
   const buyerNavItems = [
     {
       title: "Overview",
-      href: "/dashboard",
+      href: `${basePath}/dashboard`,
       icon: <LayoutDashboard className="h-5 w-5" />,
       mobileIcon: <Home className="h-6 w-6" />,
-      active: location === "/dashboard",
+      active: location === `${basePath}/dashboard` || location === basePath,
       showInMobileNav: true,
     },
     {
       title: "Marketplace",
-      href: "/dashboard/marketplace",
+      href: `${basePath}/marketplace`,
       icon: <ShoppingBag className="h-5 w-5" />,
       mobileIcon: <ShoppingBag className="h-6 w-6" />,
-      active: location.startsWith("/dashboard/marketplace"),
+      active: location.startsWith(`${basePath}/marketplace`),
+      showInMobileNav: true,
+      subItems: [
+        {
+          title: "Browse Products",
+          href: `${basePath}/marketplace`,
+          active: location === `${basePath}/marketplace`,
+        },
+        {
+          title: "Shopping Cart",
+          href: `${basePath}/marketplace/cart`,
+          active: location === `${basePath}/marketplace/cart`,
+        },
+      ],
+    },
+    {
+      title: "Orders",
+      href: `${basePath}/orders`,
+      icon: <ClipboardList className="h-5 w-5" />,
+      mobileIcon: <ClipboardList className="h-6 w-6" />,
+      active: location === `${basePath}/orders`,
       showInMobileNav: true,
     },
     {
       title: "Verify Products",
-      href: "/trace",
+      href: `${basePath}/verification`,
       icon: <ShieldCheck className="h-5 w-5" />,
       mobileIcon: <ShieldCheck className="h-6 w-6" />,
-      active: location === "/trace",
-      showInMobileNav: false,
-    },
-    {
-      title: "AI Knowledge Base",
-      href: "/ai-knowledge-base",
-      icon: <Sparkles className="h-5 w-5" />,
-      mobileIcon: <Sparkles className="h-6 w-6" />,
-      active: location === "/ai-knowledge-base",
+      active: location === `${basePath}/verification`,
       showInMobileNav: false,
     },
     {
       title: "Green Socials",
-      href: "/dashboard/social",
+      href: `${basePath}/social`,
       icon: <Users className="h-5 w-5" />,
       mobileIcon: <Users className="h-6 w-6" />,
-      active: location === "/dashboard/social",
+      active: location === `${basePath}/social`,
       showInMobileNav: true,
     },
     {
       title: "Stream Chat",
-      href: "/dashboard/stream-chat",
+      href: `${basePath}/chat`,
       icon: <MessageSquare className="h-5 w-5" />,
       mobileIcon: <MessageSquare className="h-6 w-6" />,
-      active: location === "/dashboard/stream-chat",
+      active: location === `${basePath}/chat`,
       showInMobileNav: true,
     },
     {
       title: "AI Farming Assistant",
-      href: "/dashboard/farming-assistant",
+      href: `${basePath}/assistant`,
       icon: <Brain className="h-5 w-5" />,
       mobileIcon: <Brain className="h-6 w-6" />,
-      active: location === "/dashboard/farming-assistant",
+      active: location === `${basePath}/assistant`,
       showInMobileNav: true,
     },
     // Add more buyer-specific navigation items here
   ];
 
-  // Function to rewrite URLs for subdomain
+  // Function to rewrite URLs for subdomain - now simplified since we use role-based paths
   const getPathForSubdomain = (path: string): string => {
     if (!isAppSubdomain) return path; // Keep as is for main domain
 
-    // For app subdomain, remove '/dashboard' prefix
-    if (path.startsWith("/dashboard")) {
-      return path === "/dashboard" ? "/" : path.replace("/dashboard/", "/");
+    // For app subdomain, if path starts with role-based structure, simplify it
+    if (path.startsWith(`/farmer/${user?.id}/`)) {
+      return path.replace(`/farmer/${user?.id}`, "");
+    }
+    if (path.startsWith(`/buyer/${user?.id}/`)) {
+      return path.replace(`/buyer/${user?.id}`, "");
+    }
+    if (path.startsWith(`/seller/${user?.id}/`)) {
+      return path.replace(`/seller/${user?.id}`, "");
     }
 
     return path; // Keep paths like /trace and /ai-knowledge-base as is
@@ -443,6 +487,7 @@ export function Sidebar() {
         items = farmerNavItems;
         break;
       case UserRole.SUPPLIER:
+      case "seller": // Handle both supplier and seller roles
         items = supplierNavItems;
         break;
       case UserRole.BUYER:

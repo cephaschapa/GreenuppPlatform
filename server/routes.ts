@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 
 import cartRoutes from "./routes/cart";
 import sellerRoutes from "./routes/seller";
+import buyerRoutes from "./routes/buyer";
 import cropTraceRoutes from "./routes/croptrace";
 import waitlistRoutes from "./routes/waitlist";
 import notificationRoutes from "./routes/notifications";
@@ -53,6 +54,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up seller routes
   app.use("/api/marketplace/sellers", sellerRoutes);
+
+  // Set up buyer routes
+  app.use("/api/buyer", buyerRoutes);
 
   // Set up search routes
   searchRoutes(app);

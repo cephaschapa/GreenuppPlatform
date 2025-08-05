@@ -1,6 +1,7 @@
 import { Redirect } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { BuyerDashboard } from "@/components/dashboards/BuyerDashboard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -357,8 +358,14 @@ export default function DashboardPage() {
   }
 
   if (user.role === "buyer") {
-    // Could redirect to a buyer-specific page in the future
-    return <Redirect to="/dashboard/buyer" />;
+    return (
+      <DashboardLayout
+        title="Dashboard"
+        description="Your personalized buyer experience"
+      >
+        <BuyerDashboard />
+      </DashboardLayout>
+    );
   }
 
   // FARMER DASHBOARD

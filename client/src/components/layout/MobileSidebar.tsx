@@ -27,7 +27,6 @@ import {
   Grid,
   Brain,
   MessageSquare,
-  FileText,
   BarChart3,
   SquareDashedBottom,
 } from "lucide-react";
@@ -140,12 +139,6 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
           active: location === "/trace",
         },
         {
-          title: "AI Knowledge Base",
-          href: "/ai-knowledge-base",
-          icon: <FileText className="h-5 w-5" />,
-          active: location === "/ai-knowledge-base",
-        },
-        {
           title: "Profile",
           href: "/dashboard/profile",
           icon: <User className="h-5 w-5" />,
@@ -195,12 +188,6 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
           href: "/trace",
           icon: <ShieldCheck className="h-5 w-5" />,
           active: location === "/trace",
-        },
-        {
-          title: "AI Knowledge Base",
-          href: "/ai-knowledge-base",
-          icon: <FileText className="h-5 w-5" />,
-          active: location === "/ai-knowledge-base",
         },
         {
           title: "Profile",
@@ -283,12 +270,6 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
           href: "/trace",
           icon: <ShieldCheck className="h-5 w-5" />,
           active: location === "/trace",
-        },
-        {
-          title: "AI Knowledge Base",
-          href: "/ai-knowledge-base",
-          icon: <FileText className="h-5 w-5" />,
-          active: location === "/ai-knowledge-base",
         },
         {
           title: "Profile",

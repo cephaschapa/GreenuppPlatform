@@ -103,7 +103,7 @@ export default function FieldsPage() {
       }
       return await response.json();
     },
-    enabled: !!user?.id,
+    enabled: Boolean(user?.id),
   });
 
   // Fetch crops
@@ -116,7 +116,7 @@ export default function FieldsPage() {
       }
       return await response.json();
     },
-    enabled: !!user?.id,
+    enabled: Boolean(user?.id),
   });
 
   // Update crop status mutation

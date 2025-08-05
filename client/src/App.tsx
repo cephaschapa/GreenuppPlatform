@@ -45,6 +45,7 @@ import { WebSocketProvider } from "@/hooks/use-websocket";
 
 // Import farmer-specific pages
 import FieldsPage from "@/pages/farmer/FieldsPage";
+import CropsPage from "@/pages/farmer/CropsPage";
 import TasksPage from "@/pages/farmer/TasksPage";
 import WeatherPage from "@/pages/farmer/WeatherPage";
 import PredictionsPage from "@/pages/farmer/PredictionsPage";
@@ -66,9 +67,273 @@ import OrdersPage from "./pages/farmer/OrdersPage";
 import InventoryPage from "./pages/farmer/InventoryPage";
 import ProductVerificationPage from "./pages/farmer/ProductVerificationPage";
 import { PushNotificationDebug } from "./components/PushNotificationDebug";
+import { useLocation } from "wouter";
+
+// Role-based layout components
+function FarmerRouter({ userId }: { userId: string }) {
+  return (
+    <Switch>
+      <ProtectedRoute path={`/farmer/${userId}`} component={DashboardPage} />
+      <ProtectedRoute
+        path={`/farmer/${userId}/dashboard`}
+        component={DashboardPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/fields`}
+        component={FieldsPage}
+      />
+      <ProtectedRoute path={`/farmer/${userId}/crops`} component={CropsPage} />
+      <ProtectedRoute path={`/farmer/${userId}/tasks`} component={TasksPage} />
+      <ProtectedRoute
+        path={`/farmer/${userId}/weather`}
+        component={WeatherPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/diagnose`}
+        component={PlantDiagnosisPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/verification`}
+        component={ProductVerificationPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/predictions`}
+        component={PredictionsPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/marketplace`}
+        component={MarketplacePage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/marketplace/new`}
+        component={CreateListingPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/marketplace/cart`}
+        component={CartPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/marketplace/checkout`}
+        component={CheckoutPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/marketplace/payment/confirmation`}
+        component={CheckoutPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/marketplace/list-crop`}
+        component={ListCropOnMarketplace}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/marketplace/:id`}
+        component={MarketplaceDetailPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/orders`}
+        component={OrdersPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/inventory`}
+        component={InventoryPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/experts`}
+        component={ExpertDirectoryPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/dealers`}
+        component={DealerDirectoryPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/crops/:cropId/trace`}
+        component={CropTraceabilityPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/notifications`}
+        component={NotificationsPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/notification-settings`}
+        component={NotificationSettingsPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/social`}
+        component={GreenSocialsPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/chat`}
+        component={StreamChatPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/assistant`}
+        component={FarmingAssistantPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/profile`}
+        component={ProfilePage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/settings`}
+        component={SettingsPage}
+      />
+      <ProtectedRoute
+        path={`/farmer/${userId}/security`}
+        component={SecuritySettings}
+      />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
+function BuyerRouter({ userId }: { userId: string }) {
+  return (
+    <Switch>
+      <ProtectedRoute path={`/buyer/${userId}`} component={DashboardPage} />
+      <ProtectedRoute
+        path={`/buyer/${userId}/dashboard`}
+        component={DashboardPage}
+      />
+      <ProtectedRoute
+        path={`/buyer/${userId}/marketplace`}
+        component={MarketplacePage}
+      />
+      <ProtectedRoute
+        path={`/buyer/${userId}/marketplace/cart`}
+        component={CartPage}
+      />
+      <ProtectedRoute
+        path={`/buyer/${userId}/marketplace/checkout`}
+        component={CheckoutPage}
+      />
+      <ProtectedRoute
+        path={`/buyer/${userId}/marketplace/payment/confirmation`}
+        component={CheckoutPage}
+      />
+      <ProtectedRoute
+        path={`/buyer/${userId}/marketplace/:id`}
+        component={MarketplaceDetailPage}
+      />
+      <ProtectedRoute path={`/buyer/${userId}/orders`} component={OrdersPage} />
+      <ProtectedRoute
+        path={`/buyer/${userId}/verification`}
+        component={ProductVerificationPage}
+      />
+      <ProtectedRoute
+        path={`/buyer/${userId}/crops/:cropId/trace`}
+        component={CropTraceabilityPage}
+      />
+      <ProtectedRoute
+        path={`/buyer/${userId}/notifications`}
+        component={NotificationsPage}
+      />
+      <ProtectedRoute
+        path={`/buyer/${userId}/notification-settings`}
+        component={NotificationSettingsPage}
+      />
+      <ProtectedRoute
+        path={`/buyer/${userId}/social`}
+        component={GreenSocialsPage}
+      />
+      <ProtectedRoute
+        path={`/buyer/${userId}/chat`}
+        component={StreamChatPage}
+      />
+      <ProtectedRoute
+        path={`/buyer/${userId}/assistant`}
+        component={FarmingAssistantPage}
+      />
+      <ProtectedRoute
+        path={`/buyer/${userId}/profile`}
+        component={ProfilePage}
+      />
+      <ProtectedRoute
+        path={`/buyer/${userId}/settings`}
+        component={SettingsPage}
+      />
+      <ProtectedRoute
+        path={`/buyer/${userId}/security`}
+        component={SecuritySettings}
+      />
+    </Switch>
+  );
+}
+
+function SellerRouter({ userId }: { userId: string }) {
+  return (
+    <Switch>
+      <ProtectedRoute path={`/seller/${userId}`} component={DashboardPage} />
+      <ProtectedRoute
+        path={`/seller/${userId}/dashboard`}
+        component={DashboardPage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/products`}
+        component={MarketplacePage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/products/new`}
+        component={CreateListingPage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/products/:id`}
+        component={MarketplaceDetailPage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/orders`}
+        component={OrdersPage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/inventory`}
+        component={InventoryPage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/verification`}
+        component={ProductVerificationPage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/crops/:cropId/trace`}
+        component={CropTraceabilityPage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/notifications`}
+        component={NotificationsPage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/notification-settings`}
+        component={NotificationSettingsPage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/social`}
+        component={GreenSocialsPage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/chat`}
+        component={StreamChatPage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/assistant`}
+        component={FarmingAssistantPage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/profile`}
+        component={ProfilePage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/settings`}
+        component={SettingsPage}
+      />
+      <ProtectedRoute
+        path={`/seller/${userId}/security`}
+        component={SecuritySettings}
+      />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
 
 function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
   const { user, isLoading } = useAuth();
+  const [location] = useLocation();
 
   // If we're on app.domain.com, we should display app-specific routes without /dashboard prefix
   if (isAppSubdomain) {
@@ -84,91 +349,70 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
       );
     }
 
-    return (
-      <Switch>
-        {/* In app subdomain, the root shows the dashboard */}
-        <ProtectedRoute path="/" component={DashboardPage} />
-        <Route path="/auth" component={AuthPage} />
-        <Route path="/forgot-password" component={ForgotPasswordPage} />
-        <Route path="/reset-password" component={ResetPasswordPage} />
-        <Route path="/verify-email" component={EmailVerificationPage} />
+    // Role-based routing for app subdomain
+    if (user) {
+      const userId = user.id.toString();
 
-        {/* Dashboard main pages - without /dashboard prefix on app subdomain */}
-        <ProtectedRoute path="/fields" component={FieldsPage} />
-        <ProtectedRoute path="/tasks" component={TasksPage} />
-        <ProtectedRoute path="/weather" component={WeatherPage} />
-        <ProtectedRoute path="/predictions" component={PredictionsPage} />
-        <ProtectedRoute
-          path="/plant-diagnosis"
-          component={PlantDiagnosisPage}
-        />
-        <ProtectedRoute path="/profile" component={ProfilePage} />
-        <ProtectedRoute path="/settings" component={SettingsPage} />
-        <ProtectedRoute path="/security" component={SecuritySettings} />
-        <ProtectedRoute
-          path="/profile-creation"
-          component={ProfileCreationPage}
-        />
+      return (
+        <Switch>
+          <Route path="/auth" component={AuthPage} />
+          <Route path="/forgot-password" component={ForgotPasswordPage} />
+          <Route path="/reset-password" component={ResetPasswordPage} />
+          <Route path="/verify-email" component={EmailVerificationPage} />
 
-        {/* Marketplace routes - without /dashboard prefix on app subdomain */}
-        <ProtectedRoute path="/marketplace" component={MarketplacePage} />
-        <ProtectedRoute path="/marketplace/new" component={CreateListingPage} />
-        <ProtectedRoute path="/marketplace/cart" component={CartPage} />
-        <ProtectedRoute path="/marketplace/checkout" component={CheckoutPage} />
-        <ProtectedRoute
-          path="/marketplace/payment/confirmation"
-          component={CheckoutPage}
-        />
-        <ProtectedRoute
-          path="/marketplace/:id"
-          component={MarketplaceDetailPage}
-        />
-        <ProtectedRoute path="/orders" component={OrdersPage} />
-        <ProtectedRoute path="/inventory" component={InventoryPage} />
-        <ProtectedRoute path="/experts" component={ExpertDirectoryPage} />
-        <ProtectedRoute path="/dealers" component={DealerDirectoryPage} />
+          {/* Role-based routes */}
+          {user.role === "farmer" && (
+            <Route path="/farmer/:userId/*">
+              {(params) => <FarmerRouter userId={params.userId} />}
+            </Route>
+          )}
 
-        {/* CropTrace routes - without /dashboard prefix on app subdomain */}
-        <ProtectedRoute
-          path="/crops/:cropId/trace"
-          component={CropTraceabilityPage}
-        />
-        <ProtectedRoute
-          path="/marketplace/list-crop"
-          component={ListCropOnMarketplace}
-        />
-        <ProtectedRoute
-          path="/verification"
-          component={ProductVerificationPage}
-        />
+          {user.role === "buyer" && (
+            <Route path="/buyer/:userId/*">
+              {(params) => <BuyerRouter userId={params.userId} />}
+            </Route>
+          )}
 
-        {/* Notification routes - without /dashboard prefix on app subdomain */}
-        <ProtectedRoute path="/notifications" component={NotificationsPage} />
-        <ProtectedRoute
-          path="/notification-settings"
-          component={NotificationSettingsPage}
-        />
+          {(user.role === "supplier" || user.role === "seller") && (
+            <Route path="/seller/:userId/*">
+              {(params) => <SellerRouter userId={params.userId} />}
+            </Route>
+          )}
 
-        {/* Green Socials routes - without /dashboard prefix on app subdomain */}
-        <ProtectedRoute path="/social" component={GreenSocialsPage} />
+          {/* Admin routes */}
+          {user.role === "admin" && (
+            <>
+              <ProtectedRoute path="/admin" component={AdminDashboard} />
+              <ProtectedRoute
+                path="/system-health"
+                component={SystemHealthPage}
+              />
+            </>
+          )}
 
-        {/* Chat routes - without /dashboard prefix on app subdomain */}
-        <ProtectedRoute path="/stream-chat" component={StreamChatPage} />
-        <ProtectedRoute
-          path="/farming-assistant"
-          component={FarmingAssistantPage}
-        />
+          {/* Default redirects based on role */}
+          <Route path="/">
+            {user.role === "farmer" && (
+              <Redirect to={`/farmer/${userId}/dashboard`} />
+            )}
+            {user.role === "buyer" && (
+              <Redirect to={`/buyer/${userId}/dashboard`} />
+            )}
+            {(user.role === "supplier" || user.role === "seller") && (
+              <Redirect to={`/seller/${userId}/dashboard`} />
+            )}
+            {user.role === "admin" && <Redirect to="/admin" />}
+          </Route>
 
-        {/* Admin routes - without /dashboard prefix on app subdomain */}
-        <ProtectedRoute path="/admin" component={AdminDashboard} />
-        <ProtectedRoute path="/system-health" component={SystemHealthPage} />
+          {/* <Route component={NotFound} /> */}
+        </Switch>
+      );
+    }
 
-        <Route component={NotFound} />
-      </Switch>
-    );
+    return null; // Loading state
   }
 
-  // Otherwise, we're on the main domain - show the public site with dashboard routes
+  // Otherwise, we're on the main domain - show the public site with role-based dashboard routes
   return (
     <Switch>
       {/* Public/landing pages on main domain */}
@@ -201,96 +445,57 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
       {/* Admin login route - public access */}
       <Route path="/admin/login" component={AdminLoginPage} />
 
-      {/* Dashboard routes on main domain - with /dashboard prefix */}
-      <ProtectedRoute path="/dashboard" component={DashboardPage} />
-      <ProtectedRoute path="/dashboard/fields" component={FieldsPage} />
-      <ProtectedRoute path="/dashboard/tasks" component={TasksPage} />
-      <ProtectedRoute path="/dashboard/weather" component={WeatherPage} />
+      {/* Role-based dashboard routes on main domain */}
+      {user && (
+        <>
+          {user.role === "farmer" && (
+            <Route path="/farmer/:userId/*">
+              {(params) => <FarmerRouter userId={params.userId} />}
+            </Route>
+          )}
+
+          {user.role === "buyer" && (
+            <Route path="/buyer/:userId/*">
+              {(params) => <BuyerRouter userId={params.userId} />}
+            </Route>
+          )}
+
+          {(user.role === "supplier" || user.role === "seller") && (
+            <Route path="/seller/:userId/*">
+              {(params) => <SellerRouter userId={params.userId} />}
+            </Route>
+          )}
+        </>
+      )}
+
+      {/* Legacy dashboard routes - redirect to new role-based routes */}
       <ProtectedRoute
-        path="/dashboard/predictions"
-        component={PredictionsPage}
-      />
-      <ProtectedRoute
-        path="/dashboard/plant-diagnosis"
-        component={PlantDiagnosisPage}
-      />
-      <ProtectedRoute path="/dashboard/profile" component={ProfilePage} />
-      <ProtectedRoute path="/dashboard/settings" component={SettingsPage} />
-      <ProtectedRoute path="/dashboard/security" component={SecuritySettings} />
-      <ProtectedRoute
-        path="/profile-creation"
-        component={ProfileCreationPage}
+        path="/dashboard"
+        component={() => {
+          if (!user) return <Redirect to="/auth" />;
+          if (user.role === "farmer")
+            return <Redirect to={`/farmer/${user.id}/dashboard`} />;
+          if (user.role === "buyer")
+            return <Redirect to={`/buyer/${user.id}/dashboard`} />;
+          if (user.role === "supplier" || user.role === "seller")
+            return <Redirect to={`/seller/${user.id}/dashboard`} />;
+          return <Redirect to="/auth" />;
+        }}
       />
 
-      {/* Marketplace routes on main domain - with /dashboard prefix */}
-      <ProtectedRoute
-        path="/dashboard/marketplace"
-        component={MarketplacePage}
-      />
-      <ProtectedRoute
-        path="/dashboard/marketplace/new"
-        component={CreateListingPage}
-      />
-      <ProtectedRoute path="/dashboard/marketplace/cart" component={CartPage} />
-      <ProtectedRoute
-        path="/dashboard/marketplace/checkout"
-        component={CheckoutPage}
-      />
-      <ProtectedRoute
-        path="/dashboard/marketplace/payment/confirmation"
-        component={CheckoutPage}
-      />
-      <ProtectedRoute
-        path="/dashboard/marketplace/:id"
-        component={MarketplaceDetailPage}
-      />
-      <ProtectedRoute path="/dashboard/orders" component={OrdersPage} />
-      <ProtectedRoute path="/dashboard/inventory" component={InventoryPage} />
-      <ProtectedRoute
-        path="/dashboard/experts"
-        component={ExpertDirectoryPage}
-      />
-      <ProtectedRoute
-        path="/dashboard/dealers"
-        component={DealerDirectoryPage}
-      />
-
-      {/* CropTrace routes on main domain - with /dashboard prefix */}
-      <ProtectedRoute
-        path="/dashboard/crops/:cropId/trace"
-        component={CropTraceabilityPage}
-      />
-      <ProtectedRoute
-        path="/dashboard/marketplace/list-crop"
-        component={ListCropOnMarketplace}
-      />
-      <ProtectedRoute
-        path="/dashboard/verification"
-        component={ProductVerificationPage}
-      />
-
-      {/* Notification routes on main domain - with /dashboard prefix */}
-      <ProtectedRoute
-        path="/dashboard/notifications"
-        component={NotificationsPage}
-      />
-      <ProtectedRoute
-        path="/dashboard/notification-settings"
-        component={NotificationSettingsPage}
-      />
-
-      {/* Green Socials routes on main domain - with /dashboard prefix */}
-      <ProtectedRoute path="/dashboard/social" component={GreenSocialsPage} />
-
-      {/* Chat routes on main domain - with /dashboard prefix */}
-      <ProtectedRoute
-        path="/dashboard/stream-chat"
-        component={StreamChatPage}
-      />
-      <ProtectedRoute
-        path="/dashboard/farming-assistant"
-        component={FarmingAssistantPage}
-      />
+      <Route path="/dashboard/*">
+        {() => {
+          if (!user) return <Redirect to="/auth" />;
+          const newPath = location.replace("/dashboard", "");
+          if (user.role === "farmer")
+            return <Redirect to={`/farmer/${user.id}${newPath}`} />;
+          if (user.role === "buyer")
+            return <Redirect to={`/buyer/${user.id}${newPath}`} />;
+          if (user.role === "supplier" || user.role === "seller")
+            return <Redirect to={`/seller/${user.id}${newPath}`} />;
+          return <Redirect to="/auth" />;
+        }}
+      </Route>
 
       {/* Admin routes on main domain */}
       <ProtectedRoute path="/admin" component={AdminDashboard} />
@@ -303,17 +508,27 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
         component={WaitlistManagementPage}
       />
 
-      {/* Role-specific dashboard redirects */}
+      {/* Profile creation - role-agnostic */}
       <ProtectedRoute
-        path="/buyer"
-        component={() => <Redirect to="/dashboard/marketplace" />}
-      />
-      <ProtectedRoute
-        path="/supplier"
-        component={() => <Redirect to="/dashboard/marketplace" />}
+        path="/profile-creation"
+        component={ProfileCreationPage}
       />
 
-      <Route component={NotFound} />
+      <>
+        {() => {
+          // show a loader here if user profile is loading else show the 404 page
+          if (isLoading) {
+            return (
+              <div className="flex justify-center items-center h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto">
+                  loading
+                </div>
+              </div>
+            );
+          }
+          return <Route component={NotFound} />;
+        }}
+      </>
     </Switch>
   );
 }

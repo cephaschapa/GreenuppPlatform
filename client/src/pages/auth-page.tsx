@@ -40,9 +40,11 @@ import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import { TwoFactorVerification } from "@/components/auth/TwoFactorVerification";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useRoleNavigation } from "@/hooks/use-role-navigation";
 
 export default function AuthPage() {
   const { user, isLoading } = useAuth();
+  const { getDashboardUrl, getMarketplaceUrl } = useRoleNavigation();
   const [checked, setChecked] = useState(false);
   const isAppSubdomain = window.location.hostname.startsWith("app.");
 
@@ -72,20 +74,15 @@ export default function AuthPage() {
       return <Redirect to="/admin" />;
     }
 
-    // If we're on app subdomain, don't use /dashboard prefix
-    if (isAppSubdomain) {
-      if (user.role === "buyer" || user.role === "supplier") {
-        return <Redirect to="/marketplace" />;
-      } else {
-        return <Redirect to="/" />;
-      }
+    // Use role-based routing for all user types
+    if (
+      user.role === "buyer" ||
+      user.role === "supplier" ||
+      user.role === "seller"
+    ) {
+      return <Redirect to={getMarketplaceUrl()} />;
     } else {
-      // On main domain, use /dashboard prefix
-      if (user.role === "buyer" || user.role === "supplier") {
-        return <Redirect to="/dashboard/marketplace" />;
-      } else {
-        return <Redirect to="/dashboard" />;
-      }
+      return <Redirect to={getDashboardUrl()} />;
     }
   }
 
