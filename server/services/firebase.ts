@@ -8,6 +8,23 @@ import { eq } from "drizzle-orm";
 let firebaseApp: admin.app.App | null = null;
 
 /**
+ * Get the correct frontend URL based on environment
+ */
+function getFrontendUrl(): string {
+  const isDevelopment = process.env.NODE_ENV !== "production";
+
+  if (isDevelopment) {
+    return "http://localhost:3000";
+  }
+
+  // In production, use the configured frontend URL
+  return (
+    process.env.FRONTEND_URL ||
+    "https://greenuppplatform-production.up.railway.app"
+  );
+}
+
+/**
  * Initialize Firebase Admin SDK
  */
 export function initializeFirebase(): void {
@@ -106,7 +123,7 @@ export async function sendPushNotification(
           ],
         },
         fcmOptions: {
-          link: data?.actionUrl || "https://greenupp.app",
+          link: data?.actionUrl || getFrontendUrl(),
         },
       },
     };
@@ -192,7 +209,7 @@ export async function sendPushNotificationToMultiple(
           ],
         },
         fcmOptions: {
-          link: data?.actionUrl || "https://greenupp.app",
+          link: data?.actionUrl || getFrontendUrl(),
         },
       },
     };
@@ -260,7 +277,7 @@ export async function sendPushNotificationToTopic(
           badge: "/badge.png",
         },
         fcmOptions: {
-          link: data?.actionUrl || "https://greenupp.app",
+          link: data?.actionUrl || getFrontendUrl(),
         },
       },
     };

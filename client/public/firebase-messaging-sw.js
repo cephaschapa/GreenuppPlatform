@@ -25,7 +25,56 @@ messaging.onBackgroundMessage(function (payload) {
   const notificationOptions = {
     body: payload.notification.body,
     icon: "/favicon.ico",
+    badge: "/favicon.ico",
+    data: payload.data,
+    actions: [
+      {
+        action: "view",
+        title: "View",
+      },
+      {
+        action: "dismiss",
+        title: "Dismiss",
+      },
+    ],
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// Handle notification click events
+self.addEventListener("notificationclick", function (event) {
+  console.log("[firebase-messaging-sw.js] Notification click received.");
+
+  event.notification.close();
+
+  // Get the action URL from the notification data
+  const actionUrl = event.notification.data?.actionUrl;
+
+  if (event.action === "dismiss") {
+    // Just close the notification
+    return;
+  }
+
+  // Default action or "view" action - open the app
+  const urlToOpen = actionUrl || self.location.origin;
+
+  event.waitUntil(
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then(function (clientList) {
+        // Check if there's already a window/tab open with the target URL
+        for (let i = 0; i < clientList.length; i++) {
+          const client = clientList[i];
+          if (client.url === urlToOpen && "focus" in client) {
+            return client.focus();
+          }
+        }
+
+        // If no existing window/tab, open a new one
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
 });
