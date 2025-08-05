@@ -6,6 +6,7 @@ import { hasRole } from "../middleware/auth.js";
 import { storage } from "../storage.js";
 import adminAlertsRouter from "./admin-alerts.js";
 import pestOutbreaksRouter from "./pest-outbreaks.js";
+import adminUserMapRouter from "./admin-user-map.js";
 import { db } from "../db.js";
 import {
   users,
@@ -35,6 +36,9 @@ router.use("/alerts", adminAlertsRouter);
 
 // Mount pest outbreak routes
 router.use("/pest-outbreaks", pestOutbreaksRouter);
+
+// Mount user map routes
+router.use("/users", adminUserMapRouter);
 
 /**
  * GET /api/admin/dashboard
