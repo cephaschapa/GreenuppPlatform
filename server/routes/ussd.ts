@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { Request, Response } from "express";
-import { logger } from "../lib/logger";
-import { db } from "../db";
+import { logger } from "../lib/logger.js";
+import { db } from "../db.js";
 import { users } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
