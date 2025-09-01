@@ -21,6 +21,7 @@ import { setupTreatmentRoutes } from "./treatment-mvc.js";
 import adminRoutes from "./admin.js";
 import adminAuthRoutes from "./admin-auth.js";
 import pushNotificationRoutes from "./push-notifications.js";
+import ussdRoutes from "./ussd.js";
 
 /**
  * Register all routes following MVC pattern
@@ -91,6 +92,9 @@ export function registerMvcRoutes(app: Express): void {
 
   // Push notification routes
   app.use("/api/push-notifications", pushNotificationRoutes);
+
+  // USSD routes
+  app.use("/api/ussd", ussdRoutes);
 
   // You can add more route modules here:
   // app.use("/api/products", productRoutes);

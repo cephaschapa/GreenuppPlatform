@@ -80,3 +80,18 @@ out/
 # Uploads and user content
 uploads/*
 !uploads/.gitkeep
+
+# Sensitive files
+cookies.txt
+*.cookie
+session-data*
+
+# Git artifacts and temp files
+*error
+*.orig
+*.rej
+*.bak
+
+# Additional log files
+all.log
+error.log
