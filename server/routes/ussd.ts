@@ -76,15 +76,15 @@ async function handleUSSDRequest({
 
 // Show main menu
 function showMainMenu(): string {
-  return `CON Welcome to the Greenupp Your Smart Farming Assistant!
-    
-    1. Weather Forecast
-    2. Market Price Updates
-    4. My Account
-    5. Help & Support
-    6. Exit
-
-    `;
+  return (
+    "CON Welcome to Greenupp!" +
+    "\n1. Weather Forecast" +
+    "\n2. Market Prices" +
+    "\n3. My Account" +
+    "\n4. Pest Alert" +
+    "\n5. Help & Support" +
+    "\n0. Exit"
+  );
 }
 
 // Handle main menu selection
@@ -142,38 +142,49 @@ async function showWeatherForecast(
     const user = await findUserByPhone(cleanedPhoneNumber);
 
     if (!user) {
-      return `END 📱 Phone not registered!
-
-Please register at:
-🌐 greenupp.com
-
-Or SMS 'REGISTER' to +260XXX
-
-Thank you! 🌾`;
+      return (
+        "END 📱 Phone not registered!" +
+        "\nPlease register at: greenupp.com" +
+        "\nOr SMS 'REGISTER' to +260XXX" +
+        "\nThank you! 🌾"
+      );
     }
 
     // Get weather data
     const weather = await getWeatherData(user.location || "Lusaka");
     if (!weather) {
-      return `END 🌤️ Weather service unavailable
-  
-  For weather updates:
-  📱 SMS 'WEATHER' to +260XXX
-  🌐 Visit greenupp.com
-  
-  Sorry for the inconvenience!`;
+      return (
+        "END 🌤️ Weather service unavailable" +
+        "\nFor weather updates:" +
+        "\n📱 SMS 'WEATHER' to +260XXX" +
+        "\n🌐 Visit greenupp.com" +
+        "\nSorry for the inconvenience!"
+      );
     }
 
-    return `CON 🌤️ Weather - ${user.location || "Lusaka"}
-
-    Today: ${weather.today}
-    Temp: ${weather.minTemp}°C - ${weather.maxTemp}°C
-    Rain: ${weather.rainChance}%
-    
-    1. Tomorrow's forecast
-    2. 3-day forecast  
-    3. Planting advice
-    0. Back to main menu`;
+    return (
+      "CON 🌤️ Weather - " + user.location ||
+      "Lusaka" +
+        "\n" +
+        "\n" +
+        "Today: " +
+        weather.today +
+        "\n" +
+        "Temp: " +
+        weather.minTemp +
+        "°C - " +
+        weather.maxTemp +
+        "°C" +
+        "\n" +
+        "Rain: " +
+        weather.rainChance +
+        "%" +
+        "\n" +
+        "1. Tomorrow's forecast" +
+        "2. 3-day forecast" +
+        "3. Planting advice" +
+        "0. Back to main menu"
+    );
   } catch (error) {
     logger.error("Weather forecast error:", error);
     return "END Weather service unavailable. Please try again later.";
