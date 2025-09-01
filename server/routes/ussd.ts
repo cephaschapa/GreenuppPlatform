@@ -74,7 +74,7 @@ async function handleUSSDRequest({
   }
 }
 
-// Show main menu\
+// Show main menu
 function showMainMenu(): string {
   return `CON Welcome to the Greenupp Your Smart Farming Assistant!
     
