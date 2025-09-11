@@ -9,14 +9,11 @@ import {
   Bot,
   Store,
   CloudRain,
-  Shield,
-  Users,
   CheckCircle,
   ArrowRight,
   Smartphone,
   MessageSquare,
   TrendingUp,
-  MapPin,
   Star,
   Zap,
   Globe,
@@ -123,8 +120,8 @@ const ZambianFeatureNavigator = () => {
   const [activeFeature, setActiveFeature] = useState(zambianFeatures[0].id);
   const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
 
-  const currentFeature =
-    zambianFeatures.find((f) => f.id === activeFeature) || zambianFeatures[0];
+  // const currentFeature =
+  //   zambianFeatures.find((f) => f.id === activeFeature) || zambianFeatures[0];
 
   return (
     <section className="py-20 lg:py-28 relative overflow-hidden bg-gradient-to-b from-emerald-50/50 via-white to-blue-50/30 dark:from-emerald-950/50 dark:via-slate-900 dark:to-blue-950/30">
@@ -194,7 +191,7 @@ const ZambianFeatureNavigator = () => {
             {/* Feature Tabs */}
             <div className="flex justify-center mb-12">
               <TabsList className="grid grid-cols-2 lg:grid-cols-4 gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-2 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg h-[120px]">
-                {zambianFeatures.map((feature, index) => (
+                {zambianFeatures.map((feature, _index) => (
                   <TabsTrigger
                     key={feature.id}
                     value={feature.id}

@@ -1,31 +1,23 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import greenuppLogo from "../assets/greenupp-full-logo.png";
 import {
-  MapPin,
   Phone,
   Mail,
   MessageSquare,
   Globe,
-  Users,
-  Shield,
-  Star,
   Facebook,
   Twitter,
   Instagram,
   Youtube,
-  ArrowRight,
   Send,
-  Heart,
   Sprout,
   Tractor,
   Store,
   Bot,
   CloudRain,
-  CheckCircle,
   Lightbulb,
   Zap,
 } from "lucide-react";
@@ -157,32 +149,32 @@ const footerSections = [
   },
 ];
 
-const zambianOffices = [
-  {
-    city: "Lusaka",
-    address: "Plot 123, Great East Road",
-    district: "Lusaka District",
-    phone: "+260-XXX-XXXX",
-    whatsapp: "+260-XXX-XXXX",
-    isMain: true,
-  },
-  {
-    city: "Ndola",
-    address: "Copperbelt Agricultural Center",
-    district: "Ndola District",
-    phone: "+260-XXX-XXXX",
-    whatsapp: "+260-XXX-XXXX",
-    isMain: false,
-  },
-  {
-    city: "Livingstone",
-    address: "Southern Province Hub",
-    district: "Livingstone District",
-    phone: "+260-XXX-XXXX",
-    whatsapp: "+260-XXX-XXXX",
-    isMain: false,
-  },
-];
+// const zambianOffices = [
+//   {
+//     city: "Lusaka",
+//     address: "Plot 123, Great East Road",
+//     district: "Lusaka District",
+//     phone: "+260-XXX-XXXX",
+//     whatsapp: "+260-XXX-XXXX",
+//     isMain: true,
+//   },
+//   {
+//     city: "Ndola",
+//     address: "Copperbelt Agricultural Center",
+//     district: "Ndola District",
+//     phone: "+260-XXX-XXXX",
+//     whatsapp: "+260-XXX-XXXX",
+//     isMain: false,
+//   },
+//   {
+//     city: "Livingstone",
+//     address: "Southern Province Hub",
+//     district: "Livingstone District",
+//     phone: "+260-XXX-XXXX",
+//     whatsapp: "+260-XXX-XXXX",
+//     isMain: false,
+//   },
+// ];
 
 const socialLinks = [
   {
