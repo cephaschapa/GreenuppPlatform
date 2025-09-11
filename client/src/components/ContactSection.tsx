@@ -68,7 +68,7 @@ const ContactSection = () => {
         variant: "default",
       });
       form.reset();
-    } catch (_error) {
+    } catch {
       toast({
         title: "Something went wrong.",
         description: "Your message could not be sent. Please try again.",

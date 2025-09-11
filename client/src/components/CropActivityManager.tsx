@@ -21,8 +21,7 @@ import {
 import { Loader2, CalendarIcon, Plus, Edit2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { Crop, CropActivity } from "@shared/schema";
-import { format } from "date-fns";
+import { Crop, CropActivity, InsertCropActivity } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface CropActivityManagerProps {
@@ -62,7 +61,7 @@ export function CropActivityManager({
 
   // Create activity mutation
   const createActivityMutation = useMutation({
-    mutationFn: async (activityData: any) => {
+    mutationFn: async (activityData: Partial<InsertCropActivity>) => {
       return apiRequest(
         "POST",
         `/api/crops/${crop?.id}/activities`,
@@ -91,7 +90,7 @@ export function CropActivityManager({
 
   // Update activity mutation
   const updateActivityMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<CropActivity> }) => {
       return apiRequest("PATCH", `/api/crop-activities/${id}`, data);
     },
     onSuccess: () => {

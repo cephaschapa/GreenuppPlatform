@@ -23,7 +23,6 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Crop } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { format } from "date-fns";
 
 interface CropDateManagerProps {
   crop: Crop;
@@ -68,7 +67,7 @@ export function CropDateManager({ crop, onClose }: CropDateManagerProps) {
 
   // Update crop mutation
   const updateCropMutation = useMutation({
-    mutationFn: async (cropData: any) => {
+    mutationFn: async (cropData: Partial<Crop>) => {
       return apiRequest("PATCH", `/api/crops/${crop.id}`, cropData);
     },
     onSuccess: () => {
@@ -105,7 +104,7 @@ export function CropDateManager({ crop, onClose }: CropDateManagerProps) {
     if (!dateString) return "Not set";
     try {
       return new Date(dateString).toLocaleDateString();
-    } catch (e) {
+    } catch {
       return "Invalid date";
     }
   };
