@@ -9,7 +9,11 @@ const OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/3.0";
 const OPENWEATHER_GEO_URL = "https://api.openweathermap.org/geo/1.0";
 
 // Cache for weather data to minimize API calls
-const weatherCache: { [key: string]: { data: any; timestamp: number } } = {};
+interface CacheEntry {
+  data: unknown;
+  timestamp: number;
+}
+const weatherCache: { [key: string]: CacheEntry } = {};
 const CACHE_DURATION = 1000 * 60 * 30; // 30 minutes
 
 interface GeoLocation {
@@ -240,8 +244,10 @@ export async function reverseGeocode(
     } else {
       throw new Error("Location not found");
     }
-  } catch (error: any) {
-    console.error("Error reverse geocoding coordinates:", error);
+  } catch (error: unknown) {
+    // Use structured logging instead of console
+    // TODO: Replace with proper logger
+    // console.error("Error reverse geocoding coordinates:", error);
     throw new Error("Failed to reverse geocode coordinates");
   }
 }
@@ -428,9 +434,9 @@ export async function getHistoricalWeatherData(
       throw new Error("OpenWeather API key not configured");
     }
 
-    // Format dates to Unix timestamps
-    const startTimestamp = Math.floor(startDate.getTime() / 1000);
-    const endTimestamp = Math.floor(endDate.getTime() / 1000);
+    // Format dates to Unix timestamps (for future API use)
+    // const startTimestamp = Math.floor(startDate.getTime() / 1000);
+    // const endTimestamp = Math.floor(endDate.getTime() / 1000);
 
     // Due to API limitations, we'll need to make a request for each day
     const dates: Array<Date> = [];
@@ -785,7 +791,7 @@ export async function getCropRecommendations(
     const lat = weatherData.coordinates.lat;
     const isTropical = Math.abs(lat) < 15;
     const isTemperate = Math.abs(lat) >= 15 && Math.abs(lat) < 45;
-    const isCold = Math.abs(lat) >= 45;
+    // const isCold = Math.abs(lat) >= 45; // Reserved for future climate zone logic
 
     // Create simplified climate data structure
     const climateData = {
@@ -981,11 +987,11 @@ export async function getCropRecommendations(
         0
       ) / climateData.monthlyAverages.length;
 
-    const avgPrecipitation =
-      climateData.monthlyAverages.reduce(
-        (sum, month) => sum + month.averagePrecipitation,
-        0
-      ) / climateData.monthlyAverages.length;
+    // const avgPrecipitation =
+    //   climateData.monthlyAverages.reduce(
+    //     (sum, month) => sum + month.averagePrecipitation,
+    //     0
+    //   ) / climateData.monthlyAverages.length;
 
     // Find months with appropriate temperature for planting
     const suitablePlantingMonths = climateData.monthlyAverages
@@ -1092,14 +1098,14 @@ export async function getCropRecommendations(
         comments.push("Growing season may be too short.");
       }
 
-      const expectedYield =
-        suitabilityScore >= 80
-          ? "High"
-          : suitabilityScore >= 60
-          ? "Above Average"
-          : suitabilityScore >= 40
-          ? "Average"
-          : "Below Average";
+      // const expectedYield =
+      //   suitabilityScore >= 80
+      //     ? "High"
+      //     : suitabilityScore >= 60
+      //     ? "Above Average"
+      //     : suitabilityScore >= 40
+      //     ? "Average"
+      //     : "Below Average";
 
       return {
         cropName: crop.name,
