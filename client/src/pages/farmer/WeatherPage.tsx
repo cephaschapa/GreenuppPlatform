@@ -5,7 +5,7 @@ import { EnhancedWeatherDashboard } from "@/components/farmer/EnhancedWeatherDas
 import { WeatherAlertSystem } from "@/components/farmer/WeatherAlertSystem";
 import { useWeatherPreferences } from "@/hooks/use-weather-preferences";
 import RegionalSeedRecommendations from "@/components/RegionalSeedRecommendations";
-import { WeatherPreferences as WeatherPreferencesType } from "@shared/schema";
+// import { WeatherPreferences as WeatherPreferencesType } from "@shared/schema";
 import {
   Card,
   CardContent,
@@ -20,9 +20,9 @@ import { Button } from "@/components/ui/button";
 import {
   Loader2,
   Cloud,
-  Droplets,
-  Thermometer,
-  Wind,
+  // Droplets,
+  // Thermometer,
+  // Wind,
   CloudRain,
   Sun,
   RefreshCw,
@@ -35,15 +35,15 @@ import {
   CloudSnow,
   CloudDrizzle,
   CloudSun,
-  Umbrella,
-  CalendarDays,
-  BarChart2,
+  // Umbrella,
+  // CalendarDays,
+  // BarChart2,
   History,
   Settings,
   MapPin,
   Navigation,
 } from "lucide-react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+// import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import {
   HoverCard,
@@ -747,7 +747,7 @@ export default function WeatherPage() {
       setSearchQuery("");
       setSearchResults([]);
       window.location.reload();
-    } catch (error) {
+    } catch {
       toast({
         title: "Failed to save location",
         description: "Please try again or save it manually in Preferences",
