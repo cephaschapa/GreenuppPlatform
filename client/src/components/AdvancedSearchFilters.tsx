@@ -76,7 +76,10 @@ export function AdvancedSearchFilters({
     localFilters.sortBy !== "newest";
 
   // Handle filter changes
-  const handleFilterChange = (key: keyof FilterState, value: FilterState[keyof FilterState]) => {
+  const handleFilterChange = (
+    key: keyof FilterState,
+    value: FilterState[keyof FilterState]
+  ) => {
     const newFilters = { ...localFilters, [key]: value };
     setLocalFilters(newFilters);
   };

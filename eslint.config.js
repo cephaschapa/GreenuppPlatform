@@ -33,7 +33,7 @@ export default [
         module: "readonly",
         require: "readonly",
         exports: "readonly",
-        
+
         // Browser globals
         window: "readonly",
         document: "readonly",

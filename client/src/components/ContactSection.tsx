@@ -5,19 +5,38 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z.object({
-  firstName: z.string().min(2, { message: "First name must be at least 2 characters" }),
-  lastName: z.string().min(2, { message: "Last name must be at least 2 characters" }),
+  firstName: z
+    .string()
+    .min(2, { message: "First name must be at least 2 characters" }),
+  lastName: z
+    .string()
+    .min(2, { message: "Last name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   farmType: z.string().min(1, { message: "Please select a farm type" }),
-  message: z.string().min(10, { message: "Message must be at least 10 characters" }),
+  message: z
+    .string()
+    .min(10, { message: "Message must be at least 10 characters" }),
   newsletter: z.boolean().default(false),
 });
 
@@ -26,7 +45,7 @@ type FormValues = z.infer<typeof formSchema>;
 const ContactSection = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -64,7 +83,7 @@ const ContactSection = () => {
     <section id="contact" className="py-20 bg-card/95 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary/5 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-primary/5 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
-      
+
       <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <motion.div
@@ -73,10 +92,18 @@ const ContactSection = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h5 className="text-primary uppercase tracking-widest font-semibold mb-2 font-mono">Contact Us</h5>
-            <h2 className="text-3xl md:text-4xl font-bold font-space mb-6">Ready to <span className="text-primary">Transform</span> Your Farm?</h2>
-            <p className="text-muted-foreground mb-8">Get in touch with our agricultural technology experts to discover how Greenupp can be tailored to your specific farming operation.</p>
-            
+            <h5 className="text-primary uppercase tracking-widest font-semibold mb-2 font-mono">
+              Contact Us
+            </h5>
+            <h2 className="text-3xl md:text-4xl font-bold font-space mb-6">
+              Ready to <span className="text-primary">Transform</span> Your
+              Farm?
+            </h2>
+            <p className="text-muted-foreground mb-8">
+              Get in touch with our agricultural technology experts to discover
+              how Greenupp can be tailored to your specific farming operation.
+            </p>
+
             <div className="space-y-6 mb-8">
               <div className="flex items-start">
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-4 shrink-0">
@@ -84,57 +111,98 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <h4 className="font-bold mb-1">Email Us</h4>
-                  <p className="text-muted-foreground mb-1">Our team typically responds within 24 hours</p>
+                  <p className="text-muted-foreground mb-1">
+                    Our team typically responds within 24 hours
+                  </p>
                   <div className="space-y-1">
-                    <a href="mailto:cephas@metatronltd.com" className="text-primary block">cephas@metatronltd.com</a>
-                    <a href="mailto:cephaschapa@gmail.com" className="text-primary block">cephaschapa@gmail.com</a>
+                    <a
+                      href="mailto:cephas@metatronltd.com"
+                      className="text-primary block"
+                    >
+                      cephas@metatronltd.com
+                    </a>
+                    <a
+                      href="mailto:cephaschapa@gmail.com"
+                      className="text-primary block"
+                    >
+                      cephaschapa@gmail.com
+                    </a>
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex items-start">
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-4 shrink-0">
                   <i className="fas fa-phone-alt text-primary"></i>
                 </div>
                 <div>
                   <h4 className="font-bold mb-1">Call Us</h4>
-                  <p className="text-muted-foreground mb-1">Available Monday-Friday, 8am-6pm</p>
-                  <a href="tel:+260975808750" className="text-primary">+260 975 808 750</a>
+                  <p className="text-muted-foreground mb-1">
+                    Available Monday-Friday, 8am-6pm
+                  </p>
+                  <a href="tel:+260975808750" className="text-primary">
+                    +260 975 808 750
+                  </a>
                 </div>
               </div>
-              
+
               <div className="flex items-start">
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-4 shrink-0">
                   <i className="fas fa-map-marker-alt text-primary"></i>
                 </div>
                 <div>
                   <h4 className="font-bold mb-1">Visit Us</h4>
-                  <p className="text-muted-foreground mb-1">Come visit our headquarters</p>
-                  <address className="text-primary not-italic">Metatron Technologies<br/>Murex Shopping Complex<br/>Alick Nkhata Road<br/>Lusaka, Zambia</address>
+                  <p className="text-muted-foreground mb-1">
+                    Come visit our headquarters
+                  </p>
+                  <address className="text-primary not-italic">
+                    Metatron Technologies
+                    <br />
+                    Murex Shopping Complex
+                    <br />
+                    Alick Nkhata Road
+                    <br />
+                    Lusaka, Zambia
+                  </address>
                 </div>
               </div>
             </div>
-            
+
             <div className="flex space-x-4">
-              <a href="#" className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition duration-300">
+              <a
+                href="#"
+                className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition duration-300"
+              >
                 <i className="fab fa-twitter text-primary"></i>
               </a>
-              <a href="#" className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition duration-300">
+              <a
+                href="#"
+                className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition duration-300"
+              >
                 <i className="fab fa-linkedin-in text-primary"></i>
               </a>
-              <a href="#" className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition duration-300">
+              <a
+                href="#"
+                className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition duration-300"
+              >
                 <i className="fab fa-facebook-f text-primary"></i>
               </a>
-              <a href="#" className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition duration-300">
+              <a
+                href="#"
+                className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition duration-300"
+              >
                 <i className="fab fa-instagram text-primary"></i>
               </a>
-              <a href="#" className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition duration-300">
+              <a
+                href="#"
+                className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition duration-300"
+              >
                 <i className="fab fa-youtube text-primary"></i>
               </a>
             </div>
           </motion.div>
-          
-          <motion.div 
+
+          <motion.div
             className="bg-secondary rounded-xl p-8 border border-primary/20 relative"
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -142,12 +210,22 @@ const ContactSection = () => {
             transition={{ duration: 0.8 }}
           >
             <div className="absolute -top-3 -right-3 w-6 h-6 bg-primary rounded-full animate-pulse"></div>
-            <div className="absolute -bottom-3 -left-3 w-6 h-6 bg-primary rounded-full" style={{ animation: "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}></div>
-            
-            <h3 className="text-xl font-bold font-space mb-6">Get Started Today</h3>
-            
+            <div
+              className="absolute -bottom-3 -left-3 w-6 h-6 bg-primary rounded-full"
+              style={{
+                animation: "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+              }}
+            ></div>
+
+            <h3 className="text-xl font-bold font-space mb-6">
+              Get Started Today
+            </h3>
+
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -156,10 +234,10 @@ const ContactSection = () => {
                       <FormItem>
                         <FormLabel>First Name</FormLabel>
                         <FormControl>
-                          <Input 
+                          <Input
                             className="w-full bg-card border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50"
-                            placeholder="John" 
-                            {...field} 
+                            placeholder="John"
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -173,10 +251,10 @@ const ContactSection = () => {
                       <FormItem>
                         <FormLabel>Last Name</FormLabel>
                         <FormControl>
-                          <Input 
+                          <Input
                             className="w-full bg-card border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50"
-                            placeholder="Doe" 
-                            {...field} 
+                            placeholder="Doe"
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -184,7 +262,7 @@ const ContactSection = () => {
                     )}
                   />
                 </div>
-                
+
                 <FormField
                   control={form.control}
                   name="email"
@@ -192,25 +270,28 @@ const ContactSection = () => {
                     <FormItem>
                       <FormLabel>Email Address</FormLabel>
                       <FormControl>
-                        <Input 
+                        <Input
                           className="w-full bg-card border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50"
-                          type="email" 
-                          placeholder="your@email.com" 
-                          {...field} 
+                          type="email"
+                          placeholder="your@email.com"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="farmType"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Farm Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger className="w-full bg-card border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50">
                             <SelectValue placeholder="Select your farm type" />
@@ -220,8 +301,12 @@ const ContactSection = () => {
                           <SelectItem value="crop">Crop Farming</SelectItem>
                           <SelectItem value="livestock">Livestock</SelectItem>
                           <SelectItem value="mixed">Mixed Farming</SelectItem>
-                          <SelectItem value="hydroponics">Hydroponics</SelectItem>
-                          <SelectItem value="aquaculture">Aquaculture</SelectItem>
+                          <SelectItem value="hydroponics">
+                            Hydroponics
+                          </SelectItem>
+                          <SelectItem value="aquaculture">
+                            Aquaculture
+                          </SelectItem>
                           <SelectItem value="other">Other</SelectItem>
                         </SelectContent>
                       </Select>
@@ -229,7 +314,7 @@ const ContactSection = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="message"
@@ -237,18 +322,18 @@ const ContactSection = () => {
                     <FormItem>
                       <FormLabel>Message</FormLabel>
                       <FormControl>
-                        <Textarea 
+                        <Textarea
                           className="w-full bg-card border border-primary/20 rounded-md px-4 py-2 focus:outline-none focus:border-primary/50"
-                          placeholder="Tell us about your farming operation and needs..." 
-                          rows={4} 
-                          {...field} 
+                          placeholder="Tell us about your farming operation and needs..."
+                          rows={4}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="newsletter"
@@ -263,15 +348,16 @@ const ContactSection = () => {
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel className="text-sm text-muted-foreground">
-                          Subscribe to our newsletter for tips, news, and updates
+                          Subscribe to our newsletter for tips, news, and
+                          updates
                         </FormLabel>
                       </div>
                     </FormItem>
                   )}
                 />
-                
-                <Button 
-                  type="submit" 
+
+                <Button
+                  type="submit"
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-md transition duration-300 font-medium"
                   disabled={isSubmitting}
                 >
