@@ -5,14 +5,14 @@ import {
   MapPin,
   Star,
   Phone,
-  Mail,
+  // Mail,
   Filter,
   Store,
   Award,
   Clock,
   DollarSign,
   Truck,
-  Package,
+  // Package,
   Users,
   CheckCircle,
 } from "lucide-react";
@@ -36,7 +36,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+// import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";

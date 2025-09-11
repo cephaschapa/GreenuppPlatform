@@ -15,16 +15,16 @@ import {
   Loader2,
   TractorIcon,
   Leaf,
-  Calendar,
+  // Calendar,
   ClipboardList,
   Cloud,
   Sparkles,
   ChevronRight,
   AlertCircle,
-  CheckCircle,
+  // CheckCircle,
 } from "lucide-react";
 import { Link } from "wouter";
-import { cn } from "@/lib/utils";
+// import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Progress } from "@/components/ui/progress";
 

@@ -3,31 +3,31 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   Field,
   Crop,
-  CropActivity,
-  insertFieldSchema,
-  insertCropSchema,
+  // CropActivity,
+  // insertFieldSchema,
+  // insertCropSchema,
 } from "@shared/schema";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
+  // CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import FieldMapDisplay from "@/components/farmer/FieldMapDisplay";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogDescription,
+//   DialogFooter,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogTrigger,
+// } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
+// import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -58,8 +58,8 @@ import {
   TractorIcon,
   Leaf,
   MapPin,
-  Ruler,
-  Calendar,
+  // Ruler,
+  // Calendar,
   Search,
   Filter,
   MoreHorizontal,
@@ -321,7 +321,7 @@ export default function FieldsPage() {
     if (!dateStr) return "Not set";
     try {
       return new Date(dateStr).toLocaleDateString();
-    } catch (e) {
+    } catch {
       return "Invalid date";
     }
   };
