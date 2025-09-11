@@ -35,8 +35,8 @@ router.post("/africas-talking", async (req: Request, res: Response) => {
 
 // Main function to handle USSD request
 async function handleUSSDRequest({
-  sessionId,
-  serviceCode,
+  sessionId: _sessionId,
+  serviceCode: _serviceCode,
   phoneNumber,
   text,
 }: {
@@ -130,7 +130,7 @@ async function handleSubMenuSelection(
 }
 
 // Show weather forecast submenu
-async function showWeatherForecast(
+async function _showWeatherForecast(
   subChoice: string,
   phoneNumber: string
 ): Promise<string> {
@@ -163,27 +163,17 @@ async function showWeatherForecast(
     }
 
     return (
-      "CON 🌤️ Weather - " + user.location ||
-      "Lusaka" +
-        "\n" +
-        "\n" +
-        "Today: " +
-        weather.today +
-        "\n" +
-        "Temp: " +
-        weather.minTemp +
-        "°C - " +
-        weather.maxTemp +
-        "°C" +
-        "\n" +
-        "Rain: " +
-        weather.rainChance +
-        "%" +
-        "\n" +
-        "1. Tomorrow's forecast" +
-        "2. 3-day forecast" +
-        "3. Planting advice" +
-        "0. Back to main menu"
+      `CON 🌤️ Weather - ${user.location || "Lusaka"}\n` +
+      `\n` +
+      `Today: ${weather.today}\n` +
+      `Temp: ${weather.minTemp}°C - ${weather.maxTemp}°C` +
+      `\n` +
+      `Rain: ${weather.rainChance}%` +
+      `\n` +
+      `1. Tomorrow's forecast` +
+      `2. 3-day forecast` +
+      `3. Planting advice` +
+      `0. Back to main menu`
     );
   } catch (error) {
     logger.error("Weather forecast error:", error);
@@ -204,7 +194,7 @@ async function handleWeatherSubMenu(
   }
 
   switch (choice) {
-    case "1":
+    case "1": {
       const tomorrow = await getTomorrowWeather(user.location);
       return `END 🌅 Tomorrow's Weather
   
@@ -213,6 +203,7 @@ async function handleWeatherSubMenu(
   Rain: ${tomorrow.rainChance}%
   
   Have a great day farming! 🌾`;
+    }
 
     case "2":
       return `END 📅 3-Day Forecast
@@ -223,7 +214,7 @@ async function handleWeatherSubMenu(
   
   Thank you! 🌤️`;
 
-    case "3":
+    case "3": {
       const advice = await getPlantingAdvice(user.location);
       return `END 🌱 Planting Advice
   
@@ -233,6 +224,7 @@ async function handleWeatherSubMenu(
   🌐 greenupp.com/tips
   
   Happy farming! 🚜`;
+    }
 
     case "0":
       return showMainMenu();
@@ -281,11 +273,11 @@ async function getWeatherData(location: string): Promise<any> {
     minTemp: 18,
     maxTemp: 28,
     rainChance: 30,
-    location: location,
+    location,
   };
 }
 
-async function getTomorrowWeather(location: string): Promise<any> {
+async function getTomorrowWeather(_location: string): Promise<any> {
   return {
     summary: "Sunny with light clouds",
     minTemp: 16,
@@ -294,12 +286,12 @@ async function getTomorrowWeather(location: string): Promise<any> {
   };
 }
 
-async function getPlantingAdvice(location: string): Promise<string> {
+async function getPlantingAdvice(_location: string): Promise<string> {
   return "Good conditions for planting maize. Soil moisture adequate. Consider planting in next 2-3 days.";
 }
 
 // Show market prices
-async function showMarketPrices(phoneNumber: string): Promise<string> {
+async function _showMarketPrices(phoneNumber: string): Promise<string> {
   try {
     const cleanPhone = phoneNumber.replace(/[\s+]/g, "");
     const user = await findUserByPhone(cleanPhone);
@@ -348,7 +340,7 @@ async function handleMarketSubMenu(
   const user = await findUserByPhone(cleanPhone);
 
   switch (choice) {
-    case "1":
+    case "1": {
       const morePrices = await getMoreMarketPrices(user?.location);
       return `END 💰 More Prices
   
@@ -358,6 +350,7 @@ async function handleMarketSubMenu(
   🌐 greenupp.com/marketplace
   
   Happy selling! 🛒`;
+    }
 
     case "2":
       return `END 🏪 Other Markets
@@ -387,7 +380,7 @@ async function handleMarketSubMenu(
 }
 
 // Mock market prices function (replace with your actual marketplace API)
-async function getMarketPrices(location: string): Promise<any[]> {
+async function getMarketPrices(_location: string): Promise<any[]> {
   // TODO: Replace with your actual marketplace API call
   return [
     { crop: "Maize", price: 85, unit: "50kg bag" },
@@ -397,7 +390,7 @@ async function getMarketPrices(location: string): Promise<any[]> {
   ];
 }
 
-async function getMoreMarketPrices(location: string): Promise<string> {
+async function getMoreMarketPrices(_location: string): Promise<string> {
   return `Tomatoes: K25/box
   Cabbage: K18/head
   Onions: K22/kg
@@ -405,7 +398,7 @@ async function getMoreMarketPrices(location: string): Promise<string> {
 }
 
 // Show account information
-async function showAccountInfo(phoneNumber: string): Promise<string> {
+async function _showAccountInfo(phoneNumber: string): Promise<string> {
   try {
     const cleanPhone = phoneNumber.replace(/[\s+]/g, "");
     const user = await findUserByPhone(cleanPhone);
@@ -441,7 +434,7 @@ async function showAccountInfo(phoneNumber: string): Promise<string> {
 }
 
 // Show pest alert menu
-function showPestAlert(): string {
+function _showPestAlert(): string {
   return `END 🐛 Pest Alert
   
   Report crop problems:
@@ -457,7 +450,7 @@ function showPestAlert(): string {
 }
 
 // Show help menu
-function showHelpMenu(): string {
+function _showHelpMenu(): string {
   return `CON ❓ Help & Support
   
   1. How to use USSD
@@ -548,7 +541,7 @@ function handleHelpSubMenu(choice: string): string {
 }
 
 // Mock function for account info
-async function getUserAccountInfo(userId: number): Promise<any> {
+async function getUserAccountInfo(_userId: number): Promise<any> {
   // TODO: Replace with actual account/subscription logic
   return {
     plan: "Basic",

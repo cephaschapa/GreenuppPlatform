@@ -1,7 +1,7 @@
 import * as h3 from "h3-js";
 import { db } from "../db";
 import { locations, marketplaceListings } from "@shared/schema";
-import { eq, desc, sql, inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 /**
  * Server-side H3 geospatial utilities for location-based features

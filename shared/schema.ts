@@ -9,7 +9,6 @@ import {
   pgEnum,
   date,
   decimal,
-  primaryKey,
   varchar,
   json,
 } from "drizzle-orm/pg-core";

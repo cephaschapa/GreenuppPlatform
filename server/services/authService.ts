@@ -8,13 +8,13 @@ import {
   securityEvents,
   verificationTokens,
 } from "@shared/schema";
-import { eq, and, or, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import { logger } from "../lib/logger.js";
-import { getIPLocation, IPLocation } from "./ipGeolocationService.js";
+import { getIPLocation } from "./ipGeolocationService.js";
 
 const scryptAsync = promisify(scrypt);
 

@@ -1,6 +1,5 @@
 import { Router, Request, Response } from "express";
 import { createNotification } from "../services/notifications";
-import { streamChatService } from "../services/stream-chat-service";
 import { logger } from "../lib/logger";
 
 const router = Router();

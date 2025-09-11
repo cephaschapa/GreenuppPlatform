@@ -6,7 +6,7 @@ import {
   type Notification,
 } from "@shared/schema";
 import { eq, and, desc, lt, gte, count, or, isNull } from "drizzle-orm";
-import { sendEmail } from "./email";
+// import { sendEmail } from "./email"; // Currently unused"
 import { sendWebSocketNotification } from "./websocket-notifier";
 import { sendPushNotification } from "./firebase.js";
 import { logger } from "../lib/logger.js";

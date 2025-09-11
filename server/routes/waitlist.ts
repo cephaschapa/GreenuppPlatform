@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db.js";
 import { waitlistRegistrations } from "@shared/schema";
-import { eq, desc, and, like, sql, count } from "drizzle-orm";
+import { eq, desc, sql, count } from "drizzle-orm";
 import { z } from "zod";
 
 const router = Router();

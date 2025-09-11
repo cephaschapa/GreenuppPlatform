@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db";
 import { fields, crops, locations } from "@shared/schema";
-import { eq, and, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, isNotNull } from "drizzle-orm";
 import { isAuthenticated } from "../middleware/auth";
 
 const router = Router();

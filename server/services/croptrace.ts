@@ -3,7 +3,6 @@ import { qrCodeService } from "./qrcode";
 import { db } from "../db";
 import { crops, cropTraceEvents, marketplaceListings } from "@shared/schema";
 import { eq } from "drizzle-orm";
-import { nanoid } from "nanoid";
 
 /**
  * Service for managing crop traceability
