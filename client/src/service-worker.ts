@@ -2,23 +2,23 @@
 /* eslint-env serviceworker */
 /* global self, caches, ExtendableEvent, ServiceWorkerGlobalScope, FetchEvent, Response, SyncEvent, MessageEvent, indexedDB, IDBDatabase */
 
-const CACHE_NAME = 'greenupp-v1';
-const STATIC_CACHE_NAME = 'greenupp-static-v1';
-const API_CACHE_NAME = 'greenupp-api-v1';
-const IMAGE_CACHE_NAME = 'greenupp-images-v1';
-const FONT_CACHE_NAME = 'greenupp-fonts-v1';
+const CACHE_NAME = "greenupp-v1";
+const STATIC_CACHE_NAME = "greenupp-static-v1";
+const API_CACHE_NAME = "greenupp-api-v1";
+const IMAGE_CACHE_NAME = "greenupp-images-v1";
+const FONT_CACHE_NAME = "greenupp-fonts-v1";
 
 // Assets to be cached immediately upon service worker installation
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/offline.html',
-  '/manifest.json',
-  '/icon.svg',
+  "/",
+  "/index.html",
+  "/offline.html",
+  "/manifest.json",
+  "/icon.svg",
 ];
 
 // Install event - cache critical assets
-self.addEventListener('install', (event: ExtendableEvent) => {
+self.addEventListener("install", (event: ExtendableEvent) => {
   event.waitUntil(
     Promise.all([
       // Cache static assets
@@ -27,10 +27,9 @@ self.addEventListener('install', (event: ExtendableEvent) => {
       }),
       // Cache the offline page separately to ensure it's available
       caches.open(CACHE_NAME).then((cache) => {
-        return cache.add('/offline.html');
+        return cache.add("/offline.html");
       }),
-    ])
-    .then(() => {
+    ]).then(() => {
       // Skip waiting to activate the new service worker immediately
       return (self as unknown as ServiceWorkerGlobalScope).skipWaiting();
     })
@@ -38,13 +37,22 @@ self.addEventListener('install', (event: ExtendableEvent) => {
 });
 
 // Activation event - clean up old caches
-self.addEventListener('activate', (event: ExtendableEvent) => {
-  const currentCaches = [CACHE_NAME, STATIC_CACHE_NAME, API_CACHE_NAME, IMAGE_CACHE_NAME, FONT_CACHE_NAME];
-  
+self.addEventListener("activate", (event: ExtendableEvent) => {
+  const currentCaches = [
+    CACHE_NAME,
+    STATIC_CACHE_NAME,
+    API_CACHE_NAME,
+    IMAGE_CACHE_NAME,
+    FONT_CACHE_NAME,
+  ];
+
   event.waitUntil(
-    caches.keys()
+    caches
+      .keys()
       .then((cacheNames) => {
-        return cacheNames.filter((cacheName) => !currentCaches.includes(cacheName));
+        return cacheNames.filter(
+          (cacheName) => !currentCaches.includes(cacheName)
+        );
       })
       .then((cachesToDelete) => {
         return Promise.all(
@@ -61,66 +69,66 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
 });
 
 // Fetch event - handle resource requests
-self.addEventListener('fetch', (event: FetchEvent) => {
+self.addEventListener("fetch", (event: FetchEvent) => {
   const request = event.request;
   const url = new URL(request.url);
-  
+
   // Only handle GET requests, let others pass through
-  if (request.method !== 'GET') {
+  if (request.method !== "GET") {
     return;
   }
-  
+
   // Handle navigation requests (HTML pages)
-  if (request.mode === 'navigate') {
+  if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
-        .catch(() => {
-          // If offline, serve the cached offline page
-          return caches.match('/offline.html') as Promise<Response>;
-        })
+      fetch(request).catch(() => {
+        // If offline, serve the cached offline page
+        return caches.match("/offline.html") as Promise<Response>;
+      })
     );
     return;
   }
-  
+
   // Handle API requests
-  if (url.pathname.startsWith('/api/')) {
+  if (url.pathname.startsWith("/api/")) {
     // For weather API, use "stale while revalidate" strategy
-    if (url.pathname.includes('/api/weather')) {
+    if (url.pathname.includes("/api/weather")) {
       event.respondWith(
-        caches.open(API_CACHE_NAME)
-          .then((cache) => {
-            return cache.match(request)
-              .then((cachedResponse) => {
-                const fetchPromise = fetch(request)
-                  .then((networkResponse) => {
-                    // If we got a valid response, cache it
-                    if (networkResponse.ok) {
-                      // Clone the response since it can only be used once
-                      cache.put(request, networkResponse.clone());
+        caches.open(API_CACHE_NAME).then((cache) => {
+          return cache.match(request).then((cachedResponse) => {
+            const fetchPromise = fetch(request)
+              .then((networkResponse) => {
+                // If we got a valid response, cache it
+                if (networkResponse.ok) {
+                  // Clone the response since it can only be used once
+                  cache.put(request, networkResponse.clone());
+                }
+                return networkResponse;
+              })
+              .catch(() => {
+                // If fetch fails and we have no cached response, return offline data
+                if (!cachedResponse) {
+                  return new Response(
+                    JSON.stringify({
+                      offline: true,
+                      message: "You are offline. Using cached data.",
+                    }),
+                    {
+                      headers: { "Content-Type": "application/json" },
                     }
-                    return networkResponse;
-                  })
-                  .catch(() => {
-                    // If fetch fails and we have no cached response, return offline data
-                    if (!cachedResponse) {
-                      return new Response(JSON.stringify({
-                        offline: true,
-                        message: 'You are offline. Using cached data.'
-                      }), {
-                        headers: { 'Content-Type': 'application/json' }
-                      });
-                    }
-                    return cachedResponse;
-                  });
-                
-                // Return cached response immediately if available, otherwise wait for network
-                return cachedResponse || fetchPromise;
+                  );
+                }
+                return cachedResponse;
               });
-          })
+
+            // Return cached response immediately if available, otherwise wait for network
+            return cachedResponse || fetchPromise;
+          });
+        })
       );
       return;
     }
-    
+
     // For other API requests, network first with cache fallback
     event.respondWith(
       fetch(request)
@@ -141,83 +149,82 @@ self.addEventListener('fetch', (event: FetchEvent) => {
             if (cachedResponse) {
               return cachedResponse;
             }
-            
+
             // Otherwise, return a JSON response indicating offline status
-            if (request.headers.get('Accept')?.includes('application/json')) {
-              return new Response(JSON.stringify({
-                offline: true,
-                message: 'You are offline and no cached data is available.'
-              }), {
-                headers: { 'Content-Type': 'application/json' }
-              });
+            if (request.headers.get("Accept")?.includes("application/json")) {
+              return new Response(
+                JSON.stringify({
+                  offline: true,
+                  message: "You are offline and no cached data is available.",
+                }),
+                {
+                  headers: { "Content-Type": "application/json" },
+                }
+              );
             }
-            
+
             // For other resources, return offline page
-            return caches.match('/offline.html') as Promise<Response>;
+            return caches.match("/offline.html") as Promise<Response>;
           });
         })
     );
     return;
   }
-  
+
   // Handle font requests with cache first strategy
   if (
-    request.url.includes('fonts.googleapis.com') || 
-    request.url.includes('fonts.gstatic.com') ||
-    request.destination === 'font'
+    request.url.includes("fonts.googleapis.com") ||
+    request.url.includes("fonts.gstatic.com") ||
+    request.destination === "font"
   ) {
     event.respondWith(
-      caches.match(request)
-        .then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        return fetch(request).then((response) => {
+          if (!response || !response.ok) {
+            return response;
           }
-          
-          return fetch(request)
-            .then((response) => {
-              if (!response || !response.ok) {
-                return response;
-              }
-              
-              const clonedResponse = response.clone();
-              caches.open(FONT_CACHE_NAME).then((cache) => {
-                cache.put(request, clonedResponse);
-              });
-              
-              return response;
-            });
-        })
+
+          const clonedResponse = response.clone();
+          caches.open(FONT_CACHE_NAME).then((cache) => {
+            cache.put(request, clonedResponse);
+          });
+
+          return response;
+        });
+      })
     );
     return;
   }
-  
+
   // Handle image requests with cache first strategy
-  if (request.destination === 'image') {
+  if (request.destination === "image") {
     event.respondWith(
-      caches.match(request)
-        .then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        return fetch(request).then((response) => {
+          if (!response || !response.ok) {
+            return response;
           }
-          
-          return fetch(request)
-            .then((response) => {
-              if (!response || !response.ok) {
-                return response;
-              }
-              
-              const clonedResponse = response.clone();
-              caches.open(IMAGE_CACHE_NAME).then((cache) => {
-                cache.put(request, clonedResponse);
-              });
-              
-              return response;
-            });
-        })
+
+          const clonedResponse = response.clone();
+          caches.open(IMAGE_CACHE_NAME).then((cache) => {
+            cache.put(request, clonedResponse);
+          });
+
+          return response;
+        });
+      })
     );
     return;
   }
-  
+
   // Default strategy for other resources - network first, falling back to cache
   event.respondWith(
     fetch(request)
@@ -239,15 +246,15 @@ self.addEventListener('fetch', (event: FetchEvent) => {
 });
 
 // Background sync for storing form submissions when offline
-self.addEventListener('sync', (event: SyncEvent) => {
-  if (event.tag === 'sync-forms') {
+self.addEventListener("sync", (event: SyncEvent) => {
+  if (event.tag === "sync-forms") {
     event.waitUntil(syncForms());
   }
 });
 
 // Message event - for controlling service worker
-self.addEventListener('message', (event: MessageEvent) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+self.addEventListener("message", (event: MessageEvent) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
     (self as unknown as ServiceWorkerGlobalScope).skipWaiting();
   }
 });
@@ -255,31 +262,31 @@ self.addEventListener('message', (event: MessageEvent) => {
 // Helper function to synchronize forms when back online
 async function syncForms() {
   // Open the IndexedDB database
-  const dbPromise = indexedDB.open('greenupp-db', 1);
-  
+  const dbPromise = indexedDB.open("greenupp-db", 1);
+
   dbPromise.onupgradeneeded = (_event) => {
     const db = dbPromise.result;
-    if (!db.objectStoreNames.contains('formData')) {
-      db.createObjectStore('formData', { keyPath: 'id', autoIncrement: true });
+    if (!db.objectStoreNames.contains("formData")) {
+      db.createObjectStore("formData", { keyPath: "id", autoIncrement: true });
     }
   };
-  
+
   // Wait for database to open
   const db = await new Promise<IDBDatabase>((resolve, reject) => {
     dbPromise.onsuccess = () => resolve(dbPromise.result);
     dbPromise.onerror = () => reject(dbPromise.error);
   });
-  
+
   // Get all stored form data
   const formDataList = await new Promise<unknown[]>((resolve, reject) => {
-    const transaction = db.transaction('formData', 'readonly');
-    const store = transaction.objectStore('formData');
+    const transaction = db.transaction("formData", "readonly");
+    const store = transaction.objectStore("formData");
     const request = store.getAll();
-    
+
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
-  
+
   // Process each stored form submission
   for (const formData of formDataList) {
     try {
@@ -287,17 +294,17 @@ async function syncForms() {
       const response = await fetch(formData.url, {
         method: formData.method,
         headers: formData.headers,
-        body: formData.body
+        body: formData.body,
       });
-      
+
       // If successful, remove from database
       if (response.ok) {
-        const transaction = db.transaction('formData', 'readwrite');
-        const store = transaction.objectStore('formData');
+        const transaction = db.transaction("formData", "readwrite");
+        const store = transaction.objectStore("formData");
         await store.delete(formData.id);
       }
     } catch (error) {
-      console.error('Error syncing form data:', error);
+      console.error("Error syncing form data:", error);
       // Will be retried on next sync event
     }
   }

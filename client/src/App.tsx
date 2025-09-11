@@ -535,7 +535,9 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
 
 function App() {
   // Check if we're on the app subdomain
-  const isAppSubdomain = typeof window !== "undefined" && window.location.hostname.startsWith("app.");
+  const isAppSubdomain =
+    typeof window !== "undefined" &&
+    window.location.hostname.startsWith("app.");
 
   return (
     <ThemeProvider defaultTheme="system">

@@ -90,7 +90,13 @@ export function CropActivityManager({
 
   // Update activity mutation
   const updateActivityMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<CropActivity> }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: Partial<CropActivity>;
+    }) => {
       return apiRequest("PATCH", `/api/crop-activities/${id}`, data);
     },
     onSuccess: () => {
