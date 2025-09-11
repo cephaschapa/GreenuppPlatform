@@ -4,14 +4,14 @@ import StreamChatComponent from "@/components/chat/StreamChatComponent";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { Input } from "@/components/ui/input";
+// import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  // DialogTrigger,
 } from "@/components/ui/dialog";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -21,17 +21,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AlertTriangle, Loader2, MessageSquare, Users } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 // Get the Stream Chat API key from environment variables
 const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY || "";
 
+interface StreamChatUser {
+  id: string;
+  name: string;
+  email?: string;
+  image?: string;
+  role?: string;
+}
+
 function DiagnosticPanel() {
-  const [status, setStatus] = useState<any>(null);
-  const [testResult, setTestResult] = useState<any>(null);
-  const [webhookStatus, setWebhookStatus] = useState<any>(null);
+  const [status, setStatus] = useState<unknown>(null);
+  const [testResult, setTestResult] = useState<unknown>(null);
+  const [webhookStatus, setWebhookStatus] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
   const [testLoading, setTestLoading] = useState(false);
   const [webhookLoading, setWebhookLoading] = useState(false);
@@ -75,7 +83,7 @@ function DiagnosticPanel() {
           variant: "destructive",
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: "Failed to test Stream Chat connection",
@@ -308,12 +316,12 @@ function NewChatDialogContent({
                 const userId = e.target.value;
                 setNewChatUserId(userId);
                 setSelectedUser(
-                  users.find((u: any) => u.id.toString() === userId) || null
+                  users.find((u: StreamChatUser) => u.id.toString() === userId) || null
                 );
               }}
             >
               <option value="">Select a user</option>
-              {users.map((u: any) => (
+              {users.map((u: StreamChatUser) => (
                 <option key={u.id} value={u.id.toString()}>
                   {u.name} ({u.role})
                 </option>

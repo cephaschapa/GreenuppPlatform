@@ -141,7 +141,7 @@ export default function TestingWaitlistPage() {
           "You've been added to our testing waitlist. We'll be in touch soon!",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Registration Failed",
         description: error.message || "Something went wrong. Please try again.",
