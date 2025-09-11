@@ -10,20 +10,16 @@ import {
   X,
   ChevronDown,
   Globe,
-  MessageSquare,
-  Phone,
   Users,
   Tractor,
   Store,
   Sprout,
   MapPin,
-  Star,
-  Shield,
 } from "lucide-react";
 
 interface NavbarProps {
   mobileMenuOpen: boolean;
-  setMobileMenuOpen: (open: boolean) => void;
+  setMobileMenuOpen: (_open: boolean) => void;
 }
 
 const navigationItems = [

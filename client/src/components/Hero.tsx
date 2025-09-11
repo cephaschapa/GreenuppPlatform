@@ -14,8 +14,6 @@ import {
   Star,
   MessageSquare,
   Shield,
-  Globe,
-  Smartphone,
   TrendingUp,
   Heart,
   Brain,

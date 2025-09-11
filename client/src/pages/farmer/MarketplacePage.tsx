@@ -318,18 +318,20 @@ export default function MarketplacePage() {
           return (
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
-        case "price-low":
+        case "price-low": {
           const aPrice =
             typeof a.price === "string" ? parseFloat(a.price) : Number(a.price);
           const bPrice =
             typeof b.price === "string" ? parseFloat(b.price) : Number(b.price);
           return aPrice - bPrice;
-        case "price-high":
+        }
+        case "price-high": {
           const aPrice2 =
             typeof a.price === "string" ? parseFloat(a.price) : Number(a.price);
           const bPrice2 =
             typeof b.price === "string" ? parseFloat(b.price) : Number(b.price);
           return bPrice2 - aPrice2;
+        }
         default:
           return 0;
       }
