@@ -31,7 +31,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  // DialogTrigger,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -45,12 +45,8 @@ import {
   Shield,
   Settings,
   BarChart3,
-  FileText,
   AlertTriangle,
   CheckCircle,
-  Clock,
-  Search,
-  Filter,
   Megaphone,
   Bug,
   MapPin,
@@ -73,9 +69,9 @@ interface AdminDashboardData {
     totalLoginAttempts: number;
     failedLoginAttempts: number;
   };
-  performance: any;
-  cache: any;
-  system: any;
+  performance: unknown;
+  cache: unknown;
+  system: unknown;
 }
 
 interface User {
@@ -174,7 +170,7 @@ export default function AdminDashboard() {
     });
 
   // Fetch analytics data
-  const { data: analyticsData, isLoading: analyticsLoading } = useQuery({
+  const { data: _analyticsData, isLoading: analyticsLoading } = useQuery({
     queryKey: ["admin-analytics"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/admin/analytics");
