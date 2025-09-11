@@ -1,3 +1,7 @@
+/* eslint-env serviceworker */
+/* eslint-disable no-undef */
+/* global importScripts, firebase, self, clients */
+
 importScripts(
   "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"
 );
@@ -17,6 +21,7 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(function (payload) {
+  // eslint-disable-next-line no-console
   console.log(
     "[firebase-messaging-sw.js] Received background message ",
     payload
@@ -44,6 +49,7 @@ messaging.onBackgroundMessage(function (payload) {
 
 // Handle notification click events
 self.addEventListener("notificationclick", function (event) {
+  // eslint-disable-next-line no-console
   console.log("[firebase-messaging-sw.js] Notification click received.");
 
   event.notification.close();

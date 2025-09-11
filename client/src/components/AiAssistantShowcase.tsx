@@ -8,7 +8,6 @@ import {
   MessageSquare,
   Smartphone,
   Globe,
-  Zap,
   CheckCircle,
   ArrowRight,
   Send,
@@ -16,10 +15,8 @@ import {
   Camera,
   Star,
   Users,
-  Clock,
   Languages,
   Brain,
-  Sparkles,
 } from "lucide-react";
 
 const chatMessages = [
@@ -123,7 +120,7 @@ const ZambianAiShowcase = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const currentMessage = chatMessages[currentMessageIndex];
+  // const currentMessage = chatMessages[currentMessageIndex]; // Currently unused
 
   return (
     <section className="py-20 lg:py-28 relative overflow-hidden bg-gradient-to-b from-blue-50/30 via-white to-purple-50/30 dark:from-blue-950/30 dark:via-slate-900 dark:to-purple-950/30">

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Filter, X, MapPin, DollarSign, SlidersHorizontal } from "lucide-react";
+import { X, MapPin, DollarSign, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -61,7 +61,7 @@ export function AdvancedSearchFilters({
   filters,
   onFiltersChange,
   onReset,
-  className,
+  className: _className,
 }: AdvancedSearchFiltersProps) {
   const [localFilters, setLocalFilters] = useState<FilterState>(filters);
 

@@ -1,3 +1,4 @@
+/* eslint-env browser */
 export async function registerFcmToken(token: string) {
   const res = await fetch("/api/push-notifications/register", {
     method: "POST",

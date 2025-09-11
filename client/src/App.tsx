@@ -36,7 +36,7 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { SocketIOProvider } from "@/hooks/use-socketio";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import InstallPWA from "@/components/ui/InstallPWA";
+// import InstallPWA from "@/components/ui/InstallPWA"; // Currently unused
 import OfflineIndicator from "@/components/ui/OfflineIndicator";
 import { CartProvider } from "@/hooks/use-cart";
 import { HelmetProvider } from "react-helmet-async";
@@ -66,7 +66,7 @@ import DealerDirectoryPage from "@/pages/farmer/DealerDirectoryPage";
 import OrdersPage from "./pages/farmer/OrdersPage";
 import InventoryPage from "./pages/farmer/InventoryPage";
 import ProductVerificationPage from "./pages/farmer/ProductVerificationPage";
-import { PushNotificationDebug } from "./components/PushNotificationDebug";
+// import { PushNotificationDebug } from "./components/PushNotificationDebug"; // Currently unused
 import { useLocation } from "wouter";
 
 // Role-based layout components
@@ -535,7 +535,7 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
 
 function App() {
   // Check if we're on the app subdomain
-  const isAppSubdomain = window.location.hostname.startsWith("app.");
+  const isAppSubdomain = typeof window !== "undefined" && window.location.hostname.startsWith("app.");
 
   return (
     <ThemeProvider defaultTheme="system">

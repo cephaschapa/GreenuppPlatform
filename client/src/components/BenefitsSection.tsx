@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import farmerTechSvg from "../assets/farmer-tech.svg";
+// import farmerTechSvg from "../assets/farmer-tech.svg"; // Currently unused
 
 const benefits = [
   {
