@@ -1,4 +1,6 @@
 /// <reference lib="webworker" />
+/* eslint-env serviceworker */
+/* global self, caches, ExtendableEvent, ServiceWorkerGlobalScope, FetchEvent, Response, SyncEvent, MessageEvent, indexedDB, IDBDatabase */
 
 const CACHE_NAME = 'greenupp-v1';
 const STATIC_CACHE_NAME = 'greenupp-static-v1';
@@ -255,7 +257,7 @@ async function syncForms() {
   // Open the IndexedDB database
   const dbPromise = indexedDB.open('greenupp-db', 1);
   
-  dbPromise.onupgradeneeded = (event) => {
+  dbPromise.onupgradeneeded = (_event) => {
     const db = dbPromise.result;
     if (!db.objectStoreNames.contains('formData')) {
       db.createObjectStore('formData', { keyPath: 'id', autoIncrement: true });
@@ -269,7 +271,7 @@ async function syncForms() {
   });
   
   // Get all stored form data
-  const formDataList = await new Promise<any[]>((resolve, reject) => {
+  const formDataList = await new Promise<unknown[]>((resolve, reject) => {
     const transaction = db.transaction('formData', 'readonly');
     const store = transaction.objectStore('formData');
     const request = store.getAll();

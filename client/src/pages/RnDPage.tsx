@@ -3,23 +3,11 @@ import { Link } from "wouter";
 import { Helmet } from "react-helmet-async";
 import {
   ArrowLeft,
-  Cpu,
   Radio,
-  Thermometer,
-  Droplets,
-  Zap,
-  Satellite,
   Brain,
   Database,
-  Camera,
   Wifi,
-  Battery,
-  MapPin,
-  BarChart3,
   Calendar,
-  Clock,
-  CheckCircle,
-  Wrench,
   Beaker,
   Lightbulb,
   Target,
@@ -260,44 +248,44 @@ const RnDPage = () => {
     },
   ];
 
-  const researchPartners = [
-    {
-      name: "University of Zambia",
-      type: "Academic Research",
-      focus: "Agricultural science and crop modeling",
-      logo: "🎓",
-    },
-    {
-      name: "CGIAR Research Centers",
-      type: "International Collaboration",
-      focus: "Climate-smart agriculture technologies",
-      logo: "🌍",
-    },
-    {
-      name: "Zambia Agricultural Research Institute",
-      type: "Government Partnership",
-      focus: "Local crop varieties and farming practices",
-      logo: "🏛️",
-    },
-    {
-      name: "Microsoft AI for Good",
-      type: "Technology Partnership",
-      focus: "AI model development and cloud infrastructure",
-      logo: "☁️",
-    },
-    {
-      name: "Hyperledger Foundation",
-      type: "Open Source",
-      focus: "Blockchain infrastructure and standards",
-      logo: "🔗",
-    },
-    {
-      name: "LoRa Alliance",
-      type: "Industry Consortium",
-      focus: "IoT connectivity standards and certification",
-      logo: "📡",
-    },
-  ];
+  // const researchPartners = [
+  //   {
+  //     name: "University of Zambia",
+  //     type: "Academic Research",
+  //     focus: "Agricultural science and crop modeling",
+  //     logo: "🎓",
+  //   },
+  //   {
+  //     name: "CGIAR Research Centers",
+  //     type: "International Collaboration",
+  //     focus: "Climate-smart agriculture technologies",
+  //     logo: "🌍",
+  //   },
+  //   {
+  //     name: "Zambia Agricultural Research Institute",
+  //     type: "Government Partnership",
+  //     focus: "Local crop varieties and farming practices",
+  //     logo: "🏛️",
+  //   },
+  //   {
+  //     name: "Microsoft AI for Good",
+  //     type: "Technology Partnership",
+  //     focus: "AI model development and cloud infrastructure",
+  //     logo: "☁️",
+  //   },
+  //   {
+  //     name: "Hyperledger Foundation",
+  //     type: "Open Source",
+  //     focus: "Blockchain infrastructure and standards",
+  //     logo: "🔗",
+  //   },
+  //   {
+  //     name: "LoRa Alliance",
+  //     type: "Industry Consortium",
+  //     focus: "IoT connectivity standards and certification",
+  //     logo: "📡",
+  //   },
+  // ];
 
   const upcomingMilestones = [
     {
@@ -408,7 +396,7 @@ const RnDPage = () => {
             className="mb-16"
           >
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {researchAreas.map((area, index) => (
+              {researchAreas.map((area, _index) => (
                 <Card
                   key={area.id}
                   className="hover:shadow-lg transition-shadow cursor-pointer"
