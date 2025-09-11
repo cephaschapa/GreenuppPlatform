@@ -49,7 +49,7 @@ const ContactSection = () => {
         variant: "default",
       });
       form.reset();
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Something went wrong.",
         description: "Your message could not be sent. Please try again.",
