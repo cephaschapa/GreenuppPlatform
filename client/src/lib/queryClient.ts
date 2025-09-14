@@ -3,7 +3,7 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    console.error(`API Error: ${res.status}: ${text}`);
+    // console.error(`API Error: ${res.status}: ${text}`);
     throw new Error(`${res.status}: ${text}`);
   }
 }
@@ -28,7 +28,7 @@ export async function apiRequest(
     }
   }
 
-  console.log(`Making ${method} request to: ${url}`);
+  // console.log(`Making ${method} request to: ${url}`);
 
   try {
     // Add credentials to the request to ensure cookies are sent
@@ -40,15 +40,15 @@ export async function apiRequest(
     });
 
     // Log response status, cookies, and important headers
-    console.log(`Response status: ${res.status}`);
-    console.log(`Response cookies present: ${!!document.cookie}`);
+    // console.log(`Response status: ${res.status}`);
+    // console.log(`Response cookies present: ${!!document.cookie}`);
     if (document.cookie) {
-      console.log(`Cookie length: ${document.cookie.length}`);
+      // console.log(`Cookie length: ${document.cookie.length}`);
     }
 
     if (!res.ok) {
       const text = await res.text();
-      console.error(`API error: ${res.status}`, text);
+      // console.error(`API error: ${res.status}`, text);
 
       // Try to parse JSON error response
       let errorMessage = text || res.statusText;
@@ -78,7 +78,7 @@ export async function apiRequest(
 
     return res;
   } catch (error) {
-    console.error(`Request error for ${method} ${url}:`, error);
+    // console.error(`Request error for ${method} ${url}:`, error);
     throw error;
   }
 }
@@ -89,8 +89,8 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    console.log(`Executing query for: ${queryKey[0]}`);
-    console.log(`Cookies present: ${!!document.cookie}`);
+    // console.log(`Executing query for: ${queryKey[0]}`);
+    // console.log(`Cookies present: ${!!document.cookie}`);
 
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
@@ -99,11 +99,11 @@ export const getQueryFn: <T>(options: {
       },
     });
 
-    console.log(`Query response status: ${res.status}`);
+    // console.log(`Query response status: ${res.status}`);
     if (res.status === 401) {
-      console.log("Authentication failed for request");
+      // console.log("Authentication failed for request");
     } else {
-      console.log("Request authenticated successfully");
+      // console.log("Request authenticated successfully");
     }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

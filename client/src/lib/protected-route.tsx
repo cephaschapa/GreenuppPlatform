@@ -25,11 +25,11 @@ export function ProtectedRoute({
     if (!isLoading && !user && retryCount < MAX_RETRIES) {
       const doRetry = async () => {
         setIsRetrying(true);
-        console.log("Protected route: No user found, attempting to refetch...");
+        // console.log("Protected route: No user found, attempting to refetch...");
         try {
           await refetchUser();
         } catch (error) {
-          console.error("Error refetching user data:", error);
+          // console.error("Error refetching user data:", error);
         }
         setIsRetrying(false);
         setRetryCount((prev) => prev + 1);
@@ -58,13 +58,13 @@ export function ProtectedRoute({
 
         // Role-based access control
         if (allowedRoles && !allowedRoles.includes(user.role)) {
-          console.warn(
-            `User role ${
-              user.role
-            } not allowed for route ${path}. Allowed roles: ${allowedRoles.join(
-              ", "
-            )}`
-          );
+          // console.warn(
+          //   `User role ${
+          //     user.role
+          //   } not allowed for route ${path}. Allowed roles: ${allowedRoles.join(
+          //     ", "
+          //   )}`
+          // );
           return <Redirect to="/auth" />;
         }
 
@@ -75,9 +75,9 @@ export function ProtectedRoute({
         if (userId) {
           // Ensure user can only access their own routes
           if (userId !== user.id.toString()) {
-            console.warn(
-              `User ${user.id} attempted to access route for user ${userId}`
-            );
+            // console.warn(
+            //   `User ${user.id} attempted to access route for user ${userId}`
+            // );
             // Redirect to their own equivalent route
             const redirectPath = currentPath.replace(
               `/${userId}/`,
@@ -91,9 +91,9 @@ export function ProtectedRoute({
           const expectedRolePrefix = getRolePrefixForUser(user.role);
 
           if (rolePrefix && rolePrefix !== expectedRolePrefix) {
-            console.warn(
-              `User with role ${user.role} attempted to access ${rolePrefix} route`
-            );
+            // console.warn(
+            //   `User with role ${user.role} attempted to access ${rolePrefix} route`
+            // );
             // Redirect to correct role-based route
             const correctedPath = currentPath.replace(
               `/${rolePrefix}/${userId}/`,

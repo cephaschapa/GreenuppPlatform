@@ -99,7 +99,7 @@ export default function ProfessionalEmailTestPanel() {
         throw new Error(result.message || "Failed to send email");
       }
     } catch (error) {
-      console.error("Error sending professional email:", error);
+      // console.error("Error sending professional email:", error);
       toast({
         title: "Failed to Send Email",
         description:

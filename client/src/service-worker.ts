@@ -304,7 +304,7 @@ async function syncForms() {
         await store.delete(formData.id);
       }
     } catch (error) {
-      console.error("Error syncing form data:", error);
+      // console.error("Error syncing form data:", error);
       // Will be retried on next sync event
     }
   }

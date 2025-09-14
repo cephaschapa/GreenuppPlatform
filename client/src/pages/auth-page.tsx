@@ -194,7 +194,7 @@ function LoginForm() {
     // First, try to login normally
     loginMutation.mutate(values, {
       onSuccess: async () => {
-        console.log("Login successful, explicitly refetching user data");
+        // console.log("Login successful, explicitly refetching user data");
         await refetchUser();
       },
       onError: async (error: any) => {
@@ -555,7 +555,7 @@ function RegisterForm() {
   function onSubmit(values: z.infer<typeof registerUserSchema>) {
     registerMutation.mutate(values, {
       onSuccess: async () => {
-        console.log("Registration successful, explicitly refetching user data");
+        // console.log("Registration successful, explicitly refetching user data");
         // Force refetch user data after registration to ensure session is properly recognized
         await refetchUser();
       },

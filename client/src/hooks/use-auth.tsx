@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Only refetch if we don't have user data and we're not already loading
     if (!user && !isLoading) {
-      console.log("No user data available, refetching");
+      // console.log("No user data available, refetching");
       refetchUser();
     }
   }, [user, isLoading, refetchUser]);
@@ -70,9 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       !user &&
       !isLoading
     ) {
-      console.log(
-        "Authentication cookie detected, but no user data - refetching"
-      );
+      // console.log(
+      //   "Authentication cookie detected, but no user data - refetching"
+      // );
       refetchUser();
     }
   }, [user, isLoading, refetchUser]);

@@ -50,7 +50,7 @@ const UploadTestPage = () => {
       const formData = new FormData();
       formData.append("file", file);
 
-      console.log("Uploading single file:", file.name);
+      // console.log("Uploading single file:", file.name);
 
       // Send request
       const response = await apiRequest(
@@ -65,7 +65,7 @@ const UploadTestPage = () => {
       }
 
       const data = await response.json();
-      console.log("Single upload response:", data);
+      // console.log("Single upload response:", data);
 
       // Update state with response
       setResponseData(data);
@@ -76,7 +76,7 @@ const UploadTestPage = () => {
         description: "Image was uploaded successfully",
       });
     } catch (error) {
-      console.error("Single upload error:", error);
+      // console.error("Single upload error:", error);
       toast({
         title: "Upload failed",
         description:
@@ -115,7 +115,7 @@ const UploadTestPage = () => {
         formData.append("files", file);
       });
 
-      console.log(`Uploading ${e.target.files.length} files as batch`);
+      // console.log(`Uploading ${e.target.files.length} files as batch`);
 
       // Send request
       const response = await apiRequest(
@@ -130,7 +130,7 @@ const UploadTestPage = () => {
       }
 
       const data = await response.json();
-      console.log("Multiple upload response:", data);
+      // console.log("Multiple upload response:", data);
 
       // Update state with response
       setResponseData(data);
@@ -141,7 +141,7 @@ const UploadTestPage = () => {
         description: `${data.files.length} images were uploaded successfully`,
       });
     } catch (error) {
-      console.error("Multiple upload error:", error);
+      // console.error("Multiple upload error:", error);
       toast({
         title: "Upload failed",
         description:
