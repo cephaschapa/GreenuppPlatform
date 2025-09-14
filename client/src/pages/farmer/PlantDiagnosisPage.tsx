@@ -90,7 +90,7 @@ const PlantDiagnosisPage = () => {
   // Upload analysis mutation
   const { mutate: uploadAnalysis, isPending: isUploadingAnalysis } =
     useMutation({
-      mutationFn: async (data: any) => {
+      mutationFn: async (data: unknown) => {
         const response = await apiRequest("POST", "/api/plant-analyses", data);
         return response.json();
       },
@@ -103,7 +103,7 @@ const PlantDiagnosisPage = () => {
         handleReset();
         setActiveTab("history");
       },
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         toast({
           title: "Analysis Failed",
           description:
@@ -192,7 +192,7 @@ const PlantDiagnosisPage = () => {
       }
       setCameraStream(stream);
     } catch (error) {
-      console.error("Error accessing camera:", error);
+      // console.error("Error accessing camera:", error);
       toast({
         title: "Camera Error",
         description: "Unable to access camera. Please check permissions.",

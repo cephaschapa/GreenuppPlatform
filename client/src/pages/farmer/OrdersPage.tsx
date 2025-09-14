@@ -85,10 +85,10 @@ export default function OrdersPage() {
         const data = await response.json();
         setOrders(data);
       } else {
-        console.error("Failed to fetch orders");
+        // console.error("Failed to fetch orders");
       }
     } catch (error) {
-      console.error("Error fetching orders:", error);
+      // console.error("Error fetching orders:", error);
     } finally {
       setLoading(false);
     }
