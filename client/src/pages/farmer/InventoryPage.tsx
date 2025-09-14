@@ -24,15 +24,15 @@ import {
 import {
   Package,
   AlertTriangle,
-  Plus,
+  // Plus,
   Edit,
   TrendingUp,
   TrendingDown,
   Search,
-  Filter,
+  // Filter,
   RefreshCw,
   Eye,
-  BarChart3,
+  // BarChart3,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
