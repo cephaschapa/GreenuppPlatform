@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -88,11 +88,11 @@ export function Sidebar() {
     });
   };
 
-  // Check if an item should be expanded by default
-  const shouldBeExpanded = (item: NavItem) => {
+  // Check if an item should be expanded by default (stable reference)
+  const shouldBeExpanded = useCallback((item: NavItem) => {
     if (!item.subItems) return false;
     return item.subItems.some((subItem) => subItem.active);
-  };
+  }, []);
 
   // Initialize expanded items based on active subitems
   useEffect(() => {
@@ -104,7 +104,7 @@ export function Sidebar() {
       }
     });
     setExpandedItems(newExpandedItems);
-  }, [location]);
+  }, [location, shouldBeExpanded]);
 
   const farmerNavItems = [
     {
@@ -501,7 +501,10 @@ export function Sidebar() {
     return createSubdomainNavItems(items);
   };
 
-  const navItems = getNavItems();
+  const navItems = useMemo(
+    () => getNavItems(),
+    [user, isAppSubdomain, location]
+  );
   const mobileNavItems = navItems.filter((item) => item.showInMobileNav);
 
   return (

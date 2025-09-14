@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -73,9 +73,9 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-  }, [activeTab]);
+  }, [activeTab, fetchOrders]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const role = activeTab === "selling" ? "seller" : "buyer";
@@ -92,7 +92,7 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {

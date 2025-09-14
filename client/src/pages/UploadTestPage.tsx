@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -29,130 +29,134 @@ const UploadTestPage = () => {
   >([]);
   const [responseData, setResponseData] = useState<any>(null);
 
-  const handleSingleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
+  const handleSingleUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!e.target.files || e.target.files.length === 0) return;
 
-    const file = e.target.files[0];
-    setIsUploading(true);
+      const file = e.target.files[0];
+      setIsUploading(true);
 
-    try {
-      // Validation
-      if (!file.type.startsWith("image/")) {
-        throw new Error("Please select an image file");
-      }
-
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      if (file.size > maxSize) {
-        throw new Error("File size exceeds 5MB limit");
-      }
-
-      // Create form data
-      const formData = new FormData();
-      formData.append("file", file);
-
-      // console.log("Uploading single file:", file.name);
-
-      // Send request
-      const response = await apiRequest(
-        "POST",
-        "/api/uploads/single",
-        formData,
-        { isFormData: true }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Upload failed with status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      // console.log("Single upload response:", data);
-
-      // Update state with response
-      setResponseData(data);
-      setUploadedImages([...uploadedImages, data.file]);
-
-      toast({
-        title: "Upload successful",
-        description: "Image was uploaded successfully",
-      });
-    } catch (error) {
-      // console.error("Single upload error:", error);
-      toast({
-        title: "Upload failed",
-        description:
-          error instanceof Error ? error.message : "Unknown error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
-      e.target.value = "";
-    }
-  };
-
-  const handleMultipleUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-
-    setIsUploading(true);
-
-    try {
-      // Create form data
-      const formData = new FormData();
-
-      // Add all files to formData and validate
-      Array.from(e.target.files).forEach((file) => {
-        // Validate each file
+      try {
+        // Validation
         if (!file.type.startsWith("image/")) {
-          throw new Error(`File "${file.name}" is not an image`);
+          throw new Error("Please select an image file");
         }
 
         const maxSize = 5 * 1024 * 1024; // 5MB
         if (file.size > maxSize) {
-          throw new Error(`File "${file.name}" exceeds 5MB size limit`);
+          throw new Error("File size exceeds 5MB limit");
         }
 
-        formData.append("files", file);
-      });
+        // Create form data
+        const formData = new FormData();
+        formData.append("file", file);
 
-      // console.log(`Uploading ${e.target.files.length} files as batch`);
+        // console.log("Uploading single file:", file.name);
 
-      // Send request
-      const response = await apiRequest(
-        "POST",
-        "/api/uploads/multiple",
-        formData,
-        { isFormData: true }
-      );
+        // Send request
+        const response = await apiRequest(
+          "POST",
+          "/api/uploads/single",
+          formData,
+          { isFormData: true }
+        );
 
-      if (!response.ok) {
-        throw new Error(`Upload failed with status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`Upload failed with status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        // console.log("Single upload response:", data);
+
+        // Update state with response
+        setResponseData(data);
+        setUploadedImages([...uploadedImages, data.file]);
+
+        toast({
+          title: "Upload successful",
+          description: "Image was uploaded successfully",
+        });
+      } catch (error) {
+        // console.error("Single upload error:", error);
+        toast({
+          title: "Upload failed",
+          description:
+            error instanceof Error ? error.message : "Unknown error occurred",
+          variant: "destructive",
+        });
+      } finally {
+        setIsUploading(false);
+        e.target.value = "";
       }
+    },
+    [toast]
+  );
 
-      const data = await response.json();
-      // console.log("Multiple upload response:", data);
+  const handleMultipleUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!e.target.files || e.target.files.length === 0) return;
 
-      // Update state with response
-      setResponseData(data);
-      setUploadedImages([...uploadedImages, ...data.files]);
+      setIsUploading(true);
 
-      toast({
-        title: "Multiple upload successful",
-        description: `${data.files.length} images were uploaded successfully`,
-      });
-    } catch (error) {
-      // console.error("Multiple upload error:", error);
-      toast({
-        title: "Upload failed",
-        description:
-          error instanceof Error ? error.message : "Unknown error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploading(false);
-      e.target.value = "";
-    }
-  };
+      try {
+        // Create form data
+        const formData = new FormData();
+
+        // Add all files to formData and validate
+        Array.from(e.target.files).forEach((file) => {
+          // Validate each file
+          if (!file.type.startsWith("image/")) {
+            throw new Error(`File "${file.name}" is not an image`);
+          }
+
+          const maxSize = 5 * 1024 * 1024; // 5MB
+          if (file.size > maxSize) {
+            throw new Error(`File "${file.name}" exceeds 5MB size limit`);
+          }
+
+          formData.append("files", file);
+        });
+
+        // console.log(`Uploading ${e.target.files.length} files as batch`);
+
+        // Send request
+        const response = await apiRequest(
+          "POST",
+          "/api/uploads/multiple",
+          formData,
+          { isFormData: true }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Upload failed with status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        // console.log("Multiple upload response:", data);
+
+        // Update state with response
+        setResponseData(data);
+        setUploadedImages([...uploadedImages, ...data.files]);
+
+        toast({
+          title: "Multiple upload successful",
+          description: `${data.files.length} images were uploaded successfully`,
+        });
+      } catch (error) {
+        // console.error("Multiple upload error:", error);
+        toast({
+          title: "Upload failed",
+          description:
+            error instanceof Error ? error.message : "Unknown error occurred",
+          variant: "destructive",
+        });
+      } finally {
+        setIsUploading(false);
+        e.target.value = "";
+      }
+    },
+    [toast]
+  );
 
   const handleRemoveImage = (index: number) => {
     const updatedImages = [...uploadedImages];

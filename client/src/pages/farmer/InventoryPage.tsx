@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -88,7 +88,7 @@ export default function InventoryPage() {
   });
 
   // Fetch inventory data
-  const fetchInventory = async () => {
+  const fetchInventory = useCallback(async () => {
     try {
       setLoading(true);
       // First get user's listings
@@ -159,13 +159,13 @@ export default function InventoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, toast]);
 
   useEffect(() => {
     if (user) {
       fetchInventory();
     }
-  }, [user]);
+  }, [user, fetchInventory]);
 
   // Filter inventory based on search and status
   const filteredInventory = inventory.filter((item) => {
