@@ -2495,8 +2495,8 @@ const GreenSocialsPage = () => {
                                     );
                                     // console.log(
                                     //   "Like button clicked for post:",
-                                      post.post.id
-                                    );
+                                    //   post.post.id
+                                    // );
                                   }}
                                 >
                                   {likedPosts[post.post.id] ? (
@@ -2522,8 +2522,8 @@ const GreenSocialsPage = () => {
                                     });
                                     // console.log(
                                     //   "Comment button clicked for post:",
-                                      post.post.id
-                                    );
+                                    //   post.post.id
+                                    // );
                                   }}
                                 >
                                   <MessageCircle className="h-4 w-4" />
@@ -2655,8 +2655,8 @@ const GreenSocialsPage = () => {
                                             });
                                             // console.log(
                                             //   "Save post clicked for post:",
-                                              post.post.id
-                                            );
+                                            //   post.post.id
+                                            // );
                                           }}
                                         >
                                           <Bookmark className="mr-2 h-4 w-4" />

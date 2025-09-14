@@ -3,7 +3,13 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, /* Upload, */ Plus, X, MapPin, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  /* Upload, */ Plus,
+  X,
+  MapPin,
+  Loader2,
+} from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import LocationSelector, {
   LocationData,
