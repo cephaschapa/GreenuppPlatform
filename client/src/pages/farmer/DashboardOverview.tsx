@@ -42,7 +42,7 @@ export default function DashboardOverview() {
           }
           return await response.json();
         } catch (error) {
-          console.error("Error fetching profile:", error);
+          // console.error("Error fetching profile:", error);
           return null;
         }
       },
@@ -59,7 +59,7 @@ export default function DashboardOverview() {
         }
         return await response.json();
       } catch (error) {
-        console.error("Error fetching fields:", error);
+        // console.error("Error fetching fields:", error);
         return [];
       }
     },
@@ -76,7 +76,7 @@ export default function DashboardOverview() {
         }
         return await response.json();
       } catch (error) {
-        console.error("Error fetching crops:", error);
+        // console.error("Error fetching crops:", error);
         return [];
       }
     },
@@ -93,7 +93,7 @@ export default function DashboardOverview() {
         }
         return await response.json();
       } catch (error) {
-        console.error("Error fetching tasks:", error);
+        // console.error("Error fetching tasks:", error);
         return [];
       }
     },
@@ -122,7 +122,7 @@ export default function DashboardOverview() {
         }
         return await response.json();
       } catch (error) {
-        console.error("Error fetching weather:", error);
+        // console.error("Error fetching weather:", error);
         return null;
       }
     },

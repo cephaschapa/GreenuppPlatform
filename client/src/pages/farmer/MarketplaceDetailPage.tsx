@@ -13,7 +13,7 @@ import {
   Phone,
   MessageCircle,
   Tag,
-  DollarSign,
+  // DollarSign,
   Ruler,
   ShoppingCart,
   Plus,

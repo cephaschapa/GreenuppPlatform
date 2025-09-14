@@ -116,7 +116,7 @@ export default function ProfilePage() {
         }
         return await response.json();
       } catch (error) {
-        console.error("Error fetching farmer profile:", error);
+        // console.error("Error fetching farmer profile:", error);
         return null;
       }
     },
@@ -144,7 +144,7 @@ export default function ProfilePage() {
           completedTasks: tasks.filter((task: any) => task.completed).length,
         };
       } catch (error) {
-        console.error("Error fetching stats:", error);
+        // console.error("Error fetching stats:", error);
         return {
           totalFields: 0,
           totalCrops: 0,

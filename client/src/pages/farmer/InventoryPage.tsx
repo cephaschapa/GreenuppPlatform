@@ -94,7 +94,7 @@ export default function InventoryPage() {
       // First get user's listings
       const listingsResponse = await apiRequest(
         "GET",
-        `/api/marketplace/listings?sellerId=${  user?.id}`
+        `/api/marketplace/listings?sellerId=${user?.id}`
       );
       const listings = await listingsResponse.json();
 
@@ -134,10 +134,10 @@ export default function InventoryPage() {
             }
           }
         } catch (error) {
-          console.error(
-            `Error fetching inventory for listing ${listing.id}:`,
-            error
-          );
+          // console.error(
+          //   `Error fetching inventory for listing ${listing.id}:`,
+          //   error
+          // );
         }
       }
 
@@ -150,7 +150,7 @@ export default function InventoryPage() {
         currency: "ZMW",
       });
     } catch (error) {
-      console.error("Error fetching inventory:", error);
+      // console.error("Error fetching inventory:", error);
       toast({
         title: "Error",
         description: "Failed to load inventory data",
@@ -209,7 +209,7 @@ export default function InventoryPage() {
         throw new Error("Failed to update inventory");
       }
     } catch (error) {
-      console.error("Error updating inventory:", error);
+      // console.error("Error updating inventory:", error);
       toast({
         title: "Error",
         description: "Failed to update inventory",
