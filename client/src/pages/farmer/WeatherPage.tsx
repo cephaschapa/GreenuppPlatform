@@ -435,10 +435,10 @@ export default function WeatherPage() {
       ) {
         // Either no active location or saved location is no longer in preferences
         // Set the first location as active
-        console.log(
-          "Setting active location from preferences:",
-          preferences.locations[0]
-        );
+        // console.log(
+        //   "Setting active location from preferences:",
+        //   preferences.locations[0]
+        // );
         setActiveLocation(preferences.locations[0]);
       }
     }
@@ -447,11 +447,11 @@ export default function WeatherPage() {
   // Fetch weather for the active location
   useEffect(() => {
     if (!activeLocation) {
-      console.log("No active location, skipping weather fetch");
+      // console.log("No active location, skipping weather fetch");
       return;
     }
 
-    console.log("Fetching weather for location:", activeLocation);
+    // console.log("Fetching weather for location:", activeLocation);
     const fetchWeather = async () => {
       setLoadingWeather(true);
       try {
@@ -481,7 +481,7 @@ export default function WeatherPage() {
         const data = await response.json();
         setWeatherData(data);
       } catch (error: any) {
-        console.error("Error fetching weather:", error);
+        // console.error("Error fetching weather:", error);
 
         // Provide a user-friendly error message
         toast({
@@ -550,7 +550,7 @@ export default function WeatherPage() {
       const data = await response.json();
       setClimateData(data);
     } catch (error: any) {
-      console.error("Error fetching climate data:", error);
+      // console.error("Error fetching climate data:", error);
 
       toast({
         title: "Climate Data Unavailable",
@@ -599,7 +599,7 @@ export default function WeatherPage() {
       const data = await response.json();
       setCropRecommendations(data);
     } catch (error: any) {
-      console.error("Error fetching crop recommendations:", error);
+      // console.error("Error fetching crop recommendations:", error);
 
       toast({
         title: "Crop Recommendations Unavailable",
@@ -649,7 +649,7 @@ export default function WeatherPage() {
       const data = await response.json();
       setHistoricalData(data);
     } catch (error: any) {
-      console.error("Error fetching historical data:", error);
+      // console.error("Error fetching historical data:", error);
 
       toast({
         title: "Historical Weather Data Unavailable",
