@@ -160,7 +160,7 @@ export default function MarketplacePage() {
           console.log(
             "User location:",
             position.coords.latitude,
-            position.coords.longitude,
+            position.coords.longitude
           );
         },
         (error) => {
@@ -170,7 +170,7 @@ export default function MarketplacePage() {
             description: "Enable location services to see listings near you",
             variant: "destructive",
           });
-        },
+        }
       );
     }
   }, []);
@@ -220,7 +220,7 @@ export default function MarketplacePage() {
           // Favorites filter
           if (showFavoritesOnly) {
             const isFavorited = favorites?.some(
-              (fav) => fav.listingId === listing.id,
+              (fav) => fav.listingId === listing.id
             );
             if (!isFavorited) {
               return false;
@@ -235,7 +235,7 @@ export default function MarketplacePage() {
                 .includes(filters.search.toLowerCase())
             ) {
               console.log(
-                `Filtering out by search: ${listing.id} - ${listing.title}`,
+                `Filtering out by search: ${listing.id} - ${listing.title}`
               );
               return false;
             }
@@ -249,7 +249,7 @@ export default function MarketplacePage() {
           ) {
             if (listing.category !== filters.category) {
               console.log(
-                `Filtering out by category: ${listing.id} - category: ${listing.category}`,
+                `Filtering out by category: ${listing.id} - category: ${listing.category}`
               );
               return false;
             }
@@ -271,7 +271,7 @@ export default function MarketplacePage() {
                 (priceValue < filters.minPrice || priceValue > filters.maxPrice)
               ) {
                 console.log(
-                  `Filtering out by price: ${listing.id} - price: ${priceValue}`,
+                  `Filtering out by price: ${listing.id} - price: ${priceValue}`
                 );
                 return false;
               }
@@ -279,7 +279,7 @@ export default function MarketplacePage() {
           } catch (priceError) {
             console.error(
               `Price filter error for listing ${listing.id}:`,
-              priceError,
+              priceError
             );
           }
 
@@ -389,7 +389,9 @@ export default function MarketplacePage() {
         }}
       >
         <Heart
-          className={`h-4 w-4 text-primary transition-all ${isFav ? "fill-primary" : "hover:fill-primary"}`}
+          className={`h-4 w-4 text-primary transition-all ${
+            isFav ? "fill-primary" : "hover:fill-primary"
+          }`}
         />
       </Button>
     );
@@ -432,8 +434,8 @@ export default function MarketplacePage() {
                 star <= displayRating
                   ? "text-yellow-500 fill-yellow-500"
                   : star - 0.5 === displayRating
-                    ? "text-yellow-500 fill-yellow-500/50"
-                    : "text-muted-foreground"
+                  ? "text-yellow-500 fill-yellow-500/50"
+                  : "text-muted-foreground"
               }`}
             />
           ))}
@@ -660,7 +662,11 @@ export default function MarketplacePage() {
                 />
                 <div className="flex items-center gap-1">
                   <Heart
-                    className={`h-3 w-3 ${showFavoritesOnly ? "fill-primary text-primary" : "text-muted-foreground"}`}
+                    className={`h-3 w-3 ${
+                      showFavoritesOnly
+                        ? "fill-primary text-primary"
+                        : "text-muted-foreground"
+                    }`}
                   />
                   <label className="text-sm font-medium">Favorites Only</label>
                 </div>
@@ -693,7 +699,7 @@ export default function MarketplacePage() {
                               listing.images.length > 0
                             ) {
                               const validImages = listing.images.filter(
-                                (img) => img && img !== "",
+                                (img) => img && img !== ""
                               );
                               if (validImages.length > 0)
                                 imageUrl = validImages[0];
@@ -716,7 +722,7 @@ export default function MarketplacePage() {
                         } catch (error) {
                           console.error(
                             `Error processing image for featured listing ${listing.id}:`,
-                            error,
+                            error
                           );
                         }
 
@@ -836,7 +842,7 @@ export default function MarketplacePage() {
                                   ) {
                                     // Get first valid image from array
                                     const validImages = listing.images.filter(
-                                      (img) => img && img !== "",
+                                      (img) => img && img !== ""
                                     );
                                     if (validImages.length > 0) {
                                       imageUrl = validImages[0];
@@ -863,7 +869,7 @@ export default function MarketplacePage() {
                               } catch (error) {
                                 console.error(
                                   `Error processing image for listing ${listing.id}:`,
-                                  error,
+                                  error
                                 );
                               }
 
@@ -875,7 +881,7 @@ export default function MarketplacePage() {
                                   onError={(e) => {
                                     console.log(
                                       `Image load error for ${listing.id}:`,
-                                      e,
+                                      e
                                     );
                                     e.currentTarget.src =
                                       "https://placehold.co/700x500/green/white?text=No+Image";
@@ -926,12 +932,12 @@ export default function MarketplacePage() {
                               {(() => {
                                 try {
                                   const createdDate = new Date(
-                                    listing.createdAt,
+                                    listing.createdAt
                                   );
                                   const now = new Date();
                                   const diffDays = Math.floor(
                                     (now.getTime() - createdDate.getTime()) /
-                                      (1000 * 60 * 60 * 24),
+                                      (1000 * 60 * 60 * 24)
                                   );
 
                                   if (diffDays < 3) {
@@ -981,14 +987,14 @@ export default function MarketplacePage() {
                                     new Date(listing.createdAt),
                                     {
                                       addSuffix: true,
-                                    },
+                                    }
                                   );
                                 } catch (error) {
                                   console.error(
                                     "Date formatting error:",
-                                    error,
+                                    error
                                   );
-                                  return "Recently";
+                                  return "Recently!";
                                 }
                               })()}
                             </span>
@@ -998,7 +1004,7 @@ export default function MarketplacePage() {
                     } catch (error) {
                       console.error(
                         `Error rendering listing ${listing.id}:`,
-                        error,
+                        error
                       );
                       return (
                         <Card
