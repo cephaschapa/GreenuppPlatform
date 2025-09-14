@@ -325,9 +325,11 @@ export function AdminUserMap() {
     pestOutbreaks,
     showAnalytics,
     analytics,
+    createUserMarker,
+    createFieldMarker,
   ]);
 
-  const createUserMarker = (user: UserMapData) => {
+  const createUserMarker = useCallback((user: UserMapData) => {
     if (!mapInstanceRef.current || !user.location) return null;
 
     // Determine marker color based on user status and role
@@ -372,9 +374,9 @@ export function AdminUserMap() {
 
     (marker as any).infoWindow = infoWindow;
     return marker;
-  };
+  }, []);
 
-  const createFieldMarker = (field: any, user: UserMapData) => {
+  const createFieldMarker = useCallback((field: any, user: UserMapData) => {
     if (!mapInstanceRef.current) return null;
 
     const marker = new window.google.maps.Marker({
@@ -406,7 +408,7 @@ export function AdminUserMap() {
     });
 
     return marker;
-  };
+  }, []);
 
   const createPestOutbreakMarker = (outbreak: any) => {
     if (!mapInstanceRef.current) return null;
