@@ -116,14 +116,14 @@ export default function MarketplaceDetailPage() {
   } = useQuery<MarketplaceListing>({
     queryKey: ["/api/marketplace/listings", params.id],
     queryFn: async () => {
-      console.log(`Fetching listing with ID: ${params.id}`);
+      // console.log(`Fetching listing with ID: ${params.id}`);
       const response = await fetch(`/api/marketplace/listings/${params.id}`, {
         credentials: "include",
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Error fetching listing: ${response.status}`, errorText);
+        // console.error(`Error fetching listing: ${response.status}`, errorText);
         throw new Error(
           `Failed to fetch listing: ${response.status} ${
             errorText || response.statusText
@@ -132,7 +132,7 @@ export default function MarketplaceDetailPage() {
       }
 
       const data = await response.json();
-      console.log("Listing data from API:", data);
+      // console.log("Listing data from API:", data);
       return data;
     },
   });
@@ -149,12 +149,12 @@ export default function MarketplaceDetailPage() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Error fetching location: ${response.status}`, errorText);
+        // console.error(`Error fetching location: ${response.status}`, errorText);
         return null;
       }
 
       const data = await response.json();
-      console.log("Location data from API:", data);
+      // console.log("Location data from API:", data);
       return data;
     },
     enabled: !!listing?.locationId,
@@ -244,7 +244,7 @@ export default function MarketplaceDetailPage() {
         description: "Item has been added to your shopping cart",
       });
     } catch (error) {
-      console.error("Error adding to cart:", error);
+      // console.error("Error adding to cart:", error);
       toast({
         title: "Failed to add to cart",
         description: "There was an error adding this item to your cart",
@@ -291,8 +291,8 @@ export default function MarketplaceDetailPage() {
   }
 
   // Log all listing data for debugging
-  console.log("Listing data:", JSON.stringify(listing, null, 2));
-  console.log("Images data:", listing.images);
+  // console.log("Listing data:", JSON.stringify(listing, null, 2));
+  // console.log("Images data:", listing.images);
 
   // Prepare images from the database with more robust handling
   let imageArray: string[] = [];

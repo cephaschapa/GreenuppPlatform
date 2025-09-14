@@ -160,7 +160,7 @@ export default function CreateListingPage() {
         }
         return await response.json();
       } catch (error) {
-        console.error("Error fetching crops:", error);
+        // console.error("Error fetching crops:", error);
         return [];
       }
     },
@@ -177,7 +177,7 @@ export default function CreateListingPage() {
         }
         return await response.json();
       } catch (error) {
-        console.error("Error fetching profile:", error);
+        // console.error("Error fetching profile:", error);
         return null;
       }
     },
@@ -325,7 +325,7 @@ export default function CreateListingPage() {
 
   // Log user data when component mounts
   useEffect(() => {
-    console.log("Current user data:", user);
+    // console.log("Current user data:", user);
   }, [user]);
 
   // Get the selected category to show relevant subcategories
@@ -407,7 +407,7 @@ export default function CreateListingPage() {
               });
             }
           } catch (error) {
-            console.error("Error fetching location data:", error);
+            // console.error("Error fetching location data:", error);
             toast({
               title: "Location error",
               description:
@@ -419,7 +419,7 @@ export default function CreateListingPage() {
           }
         },
         (error) => {
-          console.error("Error getting location:", error);
+          // console.error("Error getting location:", error);
           setLocationLoading(false);
 
           toast({
@@ -436,8 +436,8 @@ export default function CreateListingPage() {
   // Create listing mutation
   const createListingMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      console.log("Creating listing with form data");
-      console.log("API endpoint:", "/api/marketplace/listings");
+      // console.log("Creating listing with form data");
+      // console.log("API endpoint:", "/api/marketplace/listings");
 
       // Log form data entries in a safer way
       const entries: string[] = [];
