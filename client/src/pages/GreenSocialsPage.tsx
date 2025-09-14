@@ -345,23 +345,23 @@ const GreenSocialsPage = () => {
 
   const createPostMutation = useMutation({
     mutationFn: async (payload: CreatePostPayload) => {
-      console.log("Creating post with the provided payload:");
-      console.log(JSON.stringify(payload, null, 2));
+      // console.log("Creating post with the provided payload:");
+      // console.log(JSON.stringify(payload, null, 2));
 
       const res = await apiRequest("POST", "/api/social/posts", payload);
 
       // Log the response status
-      console.log("Post creation response status:", res.status);
+      // console.log("Post creation response status:", res.status);
 
       // If there was an error, try to get more details
       if (!res.ok) {
         const errorText = await res.text();
-        console.error("Post creation error details:", errorText);
+        // console.error("Post creation error details:", errorText);
         throw new Error(`Failed to create post: ${errorText}`);
       }
 
       const responseData = await res.json();
-      console.log("Post creation response:", responseData);
+      // console.log("Post creation response:", responseData);
       return responseData;
     },
     onSuccess: () => {
@@ -819,11 +819,11 @@ const GreenSocialsPage = () => {
       }
 
       const data = await response.json();
-      console.log("Upload response:", data);
+      // console.log("Upload response:", data);
 
       // Process the URL to ensure it's correctly formatted
       const processedUrl = getFullUrl(data.file.url);
-      console.log("Processed URL for upload:", processedUrl);
+      // console.log("Processed URL for upload:", processedUrl);
 
       // Add the uploaded image to mediaUrls array with processed URL
       setMediaUrls([
@@ -919,7 +919,7 @@ const GreenSocialsPage = () => {
         formData.append("files", file);
       });
 
-      console.log(`Uploading ${files.length} files as batch`);
+      // console.log(`Uploading ${files.length} files as batch`);
 
       const response = await apiRequest(
         "POST",
@@ -933,7 +933,7 @@ const GreenSocialsPage = () => {
       }
 
       const data = await response.json();
-      console.log("Multiple upload response:", data);
+      // console.log("Multiple upload response:", data);
 
       // Add each uploaded file to the mediaUrls array
       const newMediaItems = data.files.map(
@@ -2493,8 +2493,8 @@ const GreenSocialsPage = () => {
                                       post.post.id,
                                       likedPosts[post.post.id] || false
                                     );
-                                    console.log(
-                                      "Like button clicked for post:",
+                                    // console.log(
+                                    //   "Like button clicked for post:",
                                       post.post.id
                                     );
                                   }}
@@ -2520,8 +2520,8 @@ const GreenSocialsPage = () => {
                                       [post.post.id]:
                                         !visibleComments[post.post.id],
                                     });
-                                    console.log(
-                                      "Comment button clicked for post:",
+                                    // console.log(
+                                    //   "Comment button clicked for post:",
                                       post.post.id
                                     );
                                   }}
@@ -2653,8 +2653,8 @@ const GreenSocialsPage = () => {
                                               ...savedPosts,
                                               [post.post.id]: true,
                                             });
-                                            console.log(
-                                              "Save post clicked for post:",
+                                            // console.log(
+                                            //   "Save post clicked for post:",
                                               post.post.id
                                             );
                                           }}

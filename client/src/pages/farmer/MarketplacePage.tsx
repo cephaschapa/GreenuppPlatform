@@ -165,14 +165,14 @@ export default function MarketplacePage() {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           });
-          console.log(
-            "User location:",
+          // console.log(
+          //   "User location:",
             position.coords.latitude,
             position.coords.longitude
           );
         },
         (error) => {
-          console.error("Error getting location:", error);
+          // console.error("Error getting location:", error);
           toast({
             title: "Location access denied",
             description: "Enable location services to see listings near you",
@@ -242,8 +242,8 @@ export default function MarketplacePage() {
                 .toLowerCase()
                 .includes(filters.search.toLowerCase())
             ) {
-              console.log(
-                `Filtering out by search: ${listing.id} - ${listing.title}`
+              // console.log(
+              //   `Filtering out by search: ${listing.id} - ${listing.title}`
               );
               return false;
             }
@@ -279,8 +279,8 @@ export default function MarketplacePage() {
               }
             }
           } catch (priceError) {
-            console.error(
-              `Price filter error for listing ${listing.id}:`,
+            // console.error(
+            //   `Price filter error for listing ${listing.id}:`,
               priceError
             );
           }
@@ -300,7 +300,7 @@ export default function MarketplacePage() {
           // Include this listing
           return true;
         } catch (error) {
-          console.error("Error filtering listing:", error);
+          // console.error("Error filtering listing:", error);
           return true; // Include all listings that cause errors in filtering
         }
       })
@@ -336,7 +336,7 @@ export default function MarketplacePage() {
           return 0;
       }
     } catch (error) {
-      console.error("Error sorting listings:", error);
+      // console.error("Error sorting listings:", error);
       return 0;
     }
   });
@@ -452,7 +452,7 @@ export default function MarketplacePage() {
   // Final listings to display
   const displayedListings = sortedListings;
 
-  console.log("Listings after filtering:", {
+  // console.log("Listings after filtering:", {
     before: listings ? listings.length : 0,
     after: displayedListings.length,
     filters,
@@ -718,8 +718,8 @@ export default function MarketplacePage() {
                             }
                           }
                         } catch (error) {
-                          console.error(
-                            `Error processing image for featured listing ${listing.id}:`,
+                          // console.error(
+                          //   `Error processing image for featured listing ${listing.id}:`,
                             error
                           );
                         }
@@ -816,7 +816,7 @@ export default function MarketplacePage() {
               ) : (
                 displayedListings.map((listing: MarketplaceListing) => {
                   // Debug log each listing in the map function
-                  console.log(`Rendering listing: ${listing.id}`, listing);
+                  // console.log(`Rendering listing: ${listing.id}`, listing);
 
                   // Safe render function to prevent crashes
                   const renderSafely = () => {
@@ -865,8 +865,8 @@ export default function MarketplacePage() {
                                   }
                                 }
                               } catch (error) {
-                                console.error(
-                                  `Error processing image for listing ${listing.id}:`,
+                                // console.error(
+                                //   `Error processing image for listing ${listing.id}:`,
                                   error
                                 );
                               }
@@ -877,8 +877,8 @@ export default function MarketplacePage() {
                                   alt={listing.title || "Marketplace item"}
                                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                   onError={(e) => {
-                                    console.log(
-                                      `Image load error for ${listing.id}:`,
+                                    // console.log(
+                                    //   `Image load error for ${listing.id}:`,
                                       e
                                     );
                                     e.currentTarget.src =
@@ -907,7 +907,7 @@ export default function MarketplacePage() {
                                     ? priceValue.toFixed(2)
                                     : "0.00";
                                 } catch (e) {
-                                  console.error("Price format error:", e);
+                                  // console.error("Price format error:", e);
                                   return "0.00";
                                 }
                               })()}
@@ -988,8 +988,8 @@ export default function MarketplacePage() {
                                     }
                                   );
                                 } catch (error) {
-                                  console.error(
-                                    "Date formatting error:",
+                                  // console.error(
+                                  //   "Date formatting error:",
                                     error
                                   );
                                   return "Recently";
@@ -1000,8 +1000,8 @@ export default function MarketplacePage() {
                         </Card>
                       );
                     } catch (error) {
-                      console.error(
-                        `Error rendering listing ${listing.id}:`,
+                      // console.error(
+                      //   `Error rendering listing ${listing.id}:`,
                         error
                       );
                       return (
