@@ -270,7 +270,7 @@ export default function WeatherPage() {
       // Refresh preferences data
       window.location.reload(); // Simple refresh to update the UI
     } catch (error) {
-      console.error("Error saving location:", error);
+      // console.error("Error saving location:", error);
       toast({
         title: "Failed to save location",
         description: "Please try again or save it manually in Preferences",
@@ -350,7 +350,7 @@ export default function WeatherPage() {
         throw new Error("Location not found");
       }
     } catch (error: any) {
-      console.error("Error detecting location:", error);
+      // console.error("Error detecting location:", error);
 
       let errorMessage =
         "Unable to determine your current location. Please add it manually.";
@@ -387,7 +387,7 @@ export default function WeatherPage() {
       navigator.geolocation
     ) {
       setHasAttemptedAutoDetect(true);
-      console.log("Attempting to auto-detect location...");
+      // console.log("Attempting to auto-detect location...");
 
       // Check if we have permission to access location
       navigator.permissions
@@ -395,19 +395,19 @@ export default function WeatherPage() {
         .then((permissionStatus) => {
           if (permissionStatus.state === "granted") {
             // User has already granted permission, auto-detect
-            console.log("Location permission granted, detecting location...");
+            // console.log("Location permission granted, detecting location...");
             detectCurrentLocation();
           } else {
-            console.log(
-              "Location permission not granted:",
-              permissionStatus.state
-            );
+            // console.log(
+            //   "Location permission not granted:",
+            //   permissionStatus.state
+            // );
           }
           // If permission is 'denied' or 'prompt', don't auto-detect to avoid annoying the user
         })
         .catch(() => {
           // Permissions API not supported, don't auto-detect
-          console.log("Permissions API not supported");
+          // console.log("Permissions API not supported");
         });
     }
   }, [activeLocation, isLoading, hasAttemptedAutoDetect]);
@@ -428,7 +428,7 @@ export default function WeatherPage() {
       // If we have a saved location, check if it's still in user's preferences
       if (activeLocation && preferences.locations.includes(activeLocation)) {
         // Saved location is still valid, keep it
-        console.log("Using saved active location:", activeLocation);
+        // console.log("Using saved active location:", activeLocation);
       } else if (
         !activeLocation ||
         !preferences.locations.includes(activeLocation)

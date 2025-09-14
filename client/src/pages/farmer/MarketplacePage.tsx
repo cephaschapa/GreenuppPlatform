@@ -111,33 +111,33 @@ export default function MarketplacePage() {
   // Add debug effect to log listing data
   useEffect(() => {
     if (listings) {
-      console.log("Listings data from API:", listings);
+      // console.log("Listings data from API:", listings);
 
       // Check structure of first listing if available
-      if (listings.length > 0) {
-        const firstListing = listings[0];
-        console.log("First listing structure:", {
-          id: firstListing.id,
-          title: firstListing.title,
-          price: firstListing.price,
-          priceType: typeof firstListing.price,
-          priceValue: Number(firstListing.price),
-          isNegotiable: firstListing.isNegotiable,
-          isNegotiableType: typeof firstListing.isNegotiable,
-          category: firstListing.category,
-          images: firstListing.images,
-          imagesType: typeof firstListing.images,
-          imagesLength: firstListing.images ? firstListing.images.length : 0,
-          createdAt: firstListing.createdAt,
-          createdAtType: typeof firstListing.createdAt,
-        });
+      // if (listings.length > 0) {
+      //   const firstListing = listings[0];
+      //   console.log("First listing structure:", {
+      //     id: firstListing.id,
+      //     title: firstListing.title,
+      //     price: firstListing.price,
+      //     priceType: typeof firstListing.price,
+      //     priceValue: Number(firstListing.price),
+      //     isNegotiable: firstListing.isNegotiable,
+      //     isNegotiableType: typeof firstListing.isNegotiable,
+      //     category: firstListing.category,
+      //     images: firstListing.images,
+      //     imagesType: typeof firstListing.images,
+      //     imagesLength: firstListing.images ? firstListing.images.length : 0,
+      //     createdAt: firstListing.createdAt,
+      //     createdAtType: typeof firstListing.createdAt,
+      //   });
 
-        // Log each property for debugging
-        console.log("All properties of first listing:");
-        Object.entries(firstListing).forEach(([key, value]) => {
-          console.log(`${key}: ${value} (${typeof value})`);
-        });
-      }
+      //   // Log each property for debugging
+      //   console.log("All properties of first listing:");
+      //   Object.entries(firstListing).forEach(([key, value]) => {
+      //     console.log(`${key}: ${value} (${typeof value})`);
+      //   });
+      // }
 
       if (listings.length === 0) {
         toast({
@@ -148,7 +148,7 @@ export default function MarketplacePage() {
       }
     }
     if (error) {
-      console.error("Marketplace listings error:", error);
+      // console.error("Marketplace listings error:", error);
       toast({
         title: "Error loading listings",
         description: "There was a problem loading marketplace listings.",

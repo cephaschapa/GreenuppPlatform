@@ -180,7 +180,7 @@ const getMediaUrl = (media: any): string => {
       return media[0].url;
     }
   }
-  console.log("Could not extract media URL from:", media);
+  // console.log("Could not extract media URL from:", media);
   return "";
 };
 
@@ -189,7 +189,7 @@ const getFullUrl = (url: string): string => {
   if (!url) return "";
 
   // Log the original URL to help with debugging
-  console.log("Processing URL:", url);
+  // console.log("Processing URL:", url);
 
   // If URL is a data URL (base64 encoded image), return as is
   if (url.startsWith("data:")) {
@@ -204,14 +204,14 @@ const getFullUrl = (url: string): string => {
   // If URL is relative path starting with /uploads, ensure it uses the base URL
   if (url.startsWith("/uploads/")) {
     const fullUrl = `${window.location.origin}${url}`;
-    console.log("Image URL constructed:", fullUrl);
+    // console.log("Image URL constructed:", fullUrl);
     return fullUrl;
   }
 
   // If URL starts with uploads/ (without leading slash), add the leading slash
   if (url.startsWith("uploads/")) {
     const fullUrl = `${window.location.origin}/${url}`;
-    console.log("Fixed uploads URL:", fullUrl);
+    // console.log("Fixed uploads URL:", fullUrl);
     return fullUrl;
   }
 
@@ -222,7 +222,7 @@ const getFullUrl = (url: string): string => {
     if (parts.length > 1) {
       const filename = parts[1];
       const fullUrl = `${window.location.origin}/uploads/${filename}`;
-      console.log("Corrected API uploads URL:", fullUrl);
+      // console.log("Corrected API uploads URL:", fullUrl);
       return fullUrl;
     }
   }
@@ -230,13 +230,13 @@ const getFullUrl = (url: string): string => {
   // If URL is a relative path starting with /, ensure it uses the base URL
   if (url.startsWith("/")) {
     const fullUrl = `${window.location.origin}${url}`;
-    console.log("Constructed URL:", fullUrl);
+    // console.log("Constructed URL:", fullUrl);
     return fullUrl;
   }
 
   // Add leading slash if missing to ensure URL is properly formed
   const fullUrl = `${window.location.origin}/${url}`;
-  console.log("Added leading slash to URL:", fullUrl);
+  // console.log("Added leading slash to URL:", fullUrl);
   return fullUrl;
 };
 
@@ -265,7 +265,7 @@ const GreenSocialsPage = () => {
     enabled: !!user,
   });
 
-  if (feed) console.log(feed);
+  // if (feed) console.log(feed);
 
   // Query for fetching people the user follows
   const followingQuery = useQuery({
@@ -957,7 +957,7 @@ const GreenSocialsPage = () => {
         description: `${files.length} images have been added to the post`,
       });
     } catch (error) {
-      console.error("Multiple upload error:", error);
+      // console.error("Multiple upload error:", error);
       toast({
         title: "Upload failed",
         description:
@@ -979,26 +979,26 @@ const GreenSocialsPage = () => {
       return;
     }
 
-    console.log("Creating post with the following content:");
-    console.log("- Content:", newPostContent);
-    console.log("- Post type:", postType);
-    console.log("- Visibility:", postVisibility);
-    console.log("- Media items count:", mediaUrls.length);
+    // console.log("Creating post with the following content:");
+    // console.log("- Content:", newPostContent);
+    // console.log("- Post type:", postType);
+    // console.log("- Visibility:", postVisibility);
+    // console.log("- Media items count:", mediaUrls.length);
 
     // Log each media item structure
-    if (mediaUrls.length > 0) {
-      console.log("Media items details:");
-      mediaUrls.forEach((media, index) => {
-        console.log(`Media ${index + 1}:`, {
-          url: media.url,
-          type: media.type,
-          caption: media.caption,
-        });
-      });
-    }
+    // if (mediaUrls.length > 0) {
+    //   console.log("Media items details:");
+    //   mediaUrls.forEach((media, index) => {
+    //     console.log(`Media ${index + 1}:`, {
+    //       url: media.url,
+    //       type: media.type,
+    //       caption: media.caption,
+    //     });
+    //   });
+    // }
 
-    console.log("- Hashtags:", hashtags);
-    console.log("- Crops Tags:", cropsTags);
+    // console.log("- Hashtags:", hashtags);
+    // console.log("- Crops Tags:", cropsTags);
 
     // Prepare and log the actual payload that will be sent
     const payload = {
@@ -1010,7 +1010,7 @@ const GreenSocialsPage = () => {
       cropsTags: cropsTags.length > 0 ? cropsTags : undefined,
     };
 
-    console.log("Full post payload:", JSON.stringify(payload, null, 2));
+    // console.log("Full post payload:", JSON.stringify(payload, null, 2));
 
     // Pass the whole payload to the mutation instead of just the content
     createPostMutation.mutate(payload);
