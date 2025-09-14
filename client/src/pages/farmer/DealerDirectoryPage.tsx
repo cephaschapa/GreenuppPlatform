@@ -277,7 +277,7 @@ export default function DealerDirectoryPage() {
           });
         },
         (error) => {
-          console.error("Error getting location:", error);
+          // console.error("Error getting location:", error);
           toast({
             title: "Location access denied",
             description: "Enable location services to see dealers near you",

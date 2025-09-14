@@ -98,8 +98,8 @@ interface MarketplaceListing {
 
 interface VerificationResult {
   crop: Crop;
-  blockchainHistory: any[];
-  verificationResults: any[];
+  blockchainHistory: unknown[];
+  verificationResults: unknown[];
   allVerified: boolean;
 }
 

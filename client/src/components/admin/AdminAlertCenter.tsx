@@ -177,11 +177,11 @@ export function AdminAlertCenter() {
       });
       resetForm();
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast({
         title: "Failed to Send Alert",
         description:
-          error.message || "An error occurred while sending the alert",
+          error instanceof Error ? error.message : "An error occurred while sending the alert",
         variant: "destructive",
       });
     },
@@ -331,8 +331,8 @@ export function AdminAlertCenter() {
                   <Label htmlFor="severity">Severity Level</Label>
                   <Select
                     value={formData.severity}
-                    onValueChange={(value: any) =>
-                      setFormData((prev) => ({ ...prev, severity: value }))
+                    onValueChange={(value: string) =>
+                      setFormData((prev) => ({ ...prev, severity: value as "low" | "medium" | "high" | "critical" }))
                     }
                   >
                     <SelectTrigger>
