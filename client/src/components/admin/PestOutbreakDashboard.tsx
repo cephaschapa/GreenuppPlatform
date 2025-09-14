@@ -41,15 +41,15 @@ import {
   Calendar,
   Users,
   Activity,
-  Shield,
+  // Shield,
   Eye,
   Edit,
   Send,
-  BarChart3,
-  Clock,
+  // BarChart3,
+  // Clock,
   CheckCircle,
   XCircle,
-  AlertCircle,
+  // AlertCircle,
 } from "lucide-react";
 
 interface PestReport {
@@ -268,12 +268,12 @@ export function PestOutbreakDashboard() {
 
   const handleSubmitUpdate = () => {
     if (!selectedOutbreak) {
-      console.error("No outbreak selected");
+      // console.error("No outbreak selected");
       return;
     }
 
     if (!selectedOutbreak.id) {
-      console.error("Selected outbreak has no ID:", selectedOutbreak);
+      // console.error("Selected outbreak has no ID:", selectedOutbreak);
       toast({
         title: "Update Failed",
         description: "Outbreak ID is missing. Please refresh and try again.",

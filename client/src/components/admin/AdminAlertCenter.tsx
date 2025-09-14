@@ -28,7 +28,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
-  AlertTriangle,
+  // AlertTriangle,
   CloudRain,
   Bug,
   Megaphone,
@@ -39,11 +39,11 @@ import {
   Bell,
   Eye,
   Send,
-  Template,
+  // Template,
   Target,
-  Clock,
-  MapPin,
-  UserCheck,
+  // Clock,
+  // MapPin,
+  // UserCheck,
 } from "lucide-react";
 
 interface AlertTemplate {
