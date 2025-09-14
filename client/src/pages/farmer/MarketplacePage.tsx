@@ -167,9 +167,9 @@ export default function MarketplacePage() {
           });
           // console.log(
           //   "User location:",
-            position.coords.latitude,
-            position.coords.longitude
-          );
+          //   position.coords.latitude,
+          //   position.coords.longitude
+          // );
         },
         (error) => {
           // console.error("Error getting location:", error);
@@ -244,7 +244,7 @@ export default function MarketplacePage() {
             ) {
               // console.log(
               //   `Filtering out by search: ${listing.id} - ${listing.title}`
-              );
+              // );
               return false;
             }
           }
@@ -281,8 +281,8 @@ export default function MarketplacePage() {
           } catch (priceError) {
             // console.error(
             //   `Price filter error for listing ${listing.id}:`,
-              priceError
-            );
+            //   priceError
+            // );
           }
 
           // Negotiable filter
@@ -453,10 +453,10 @@ export default function MarketplacePage() {
   const displayedListings = sortedListings;
 
   // console.log("Listings after filtering:", {
-    before: listings ? listings.length : 0,
-    after: displayedListings.length,
-    filters,
-  });
+  //   before: listings ? listings.length : 0,
+  //   after: displayedListings.length,
+  //   filters,
+  // });
 
   return (
     <DashboardLayout
@@ -720,8 +720,8 @@ export default function MarketplacePage() {
                         } catch (error) {
                           // console.error(
                           //   `Error processing image for featured listing ${listing.id}:`,
-                            error
-                          );
+                          //   error
+                          // );
                         }
 
                         return imageUrl ? (
@@ -867,8 +867,8 @@ export default function MarketplacePage() {
                               } catch (error) {
                                 // console.error(
                                 //   `Error processing image for listing ${listing.id}:`,
-                                  error
-                                );
+                                //   error
+                                // );
                               }
 
                               return imageUrl ? (
@@ -879,8 +879,8 @@ export default function MarketplacePage() {
                                   onError={(e) => {
                                     // console.log(
                                     //   `Image load error for ${listing.id}:`,
-                                      e
-                                    );
+                                    //   e
+                                    // );
                                     e.currentTarget.src =
                                       "https://placehold.co/700x500/green/white?text=No+Image";
                                   }}
@@ -990,8 +990,8 @@ export default function MarketplacePage() {
                                 } catch (error) {
                                   // console.error(
                                   //   "Date formatting error:",
-                                    error
-                                  );
+                                  //   error
+                                  // );
                                   return "Recently";
                                 }
                               })()}
@@ -1002,8 +1002,8 @@ export default function MarketplacePage() {
                     } catch (error) {
                       // console.error(
                       //   `Error rendering listing ${listing.id}:`,
-                        error
-                      );
+                      //   error
+                      // );
                       return (
                         <Card
                           key={`error-${listing.id}`}
