@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
+import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
 
 const viteLogger = createLogger();
@@ -22,36 +23,13 @@ export function log(message: string, source = "express") {
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
-    hmr: {
-      server,
-      protocol: "ws",
-      host: "localhost",
-      port: 5000,
-      clientPort: 5000,
-      path: "/__vite_hmr",
-    },
-    watch: {
-      usePolling: true,
-      interval: 100,
-      ignored: ["**/node_modules/**", "**/dist/**"],
-    },
-    fs: {
-      strict: false,
-      allow: [".."],
-    },
-    allowedHosts: true as const,
+    hmr: { server },
+    allowedHosts: true,
   };
 
   const vite = await createViteServer({
+    ...viteConfig,
     configFile: false,
-    root: path.resolve(import.meta.dirname, "..", "client"),
-    resolve: {
-      alias: {
-        "@": path.resolve(import.meta.dirname, "..", "client", "src"),
-        "@shared": path.resolve(import.meta.dirname, "..", "shared"),
-        "@assets": path.resolve(import.meta.dirname, "..", "attached_assets"),
-      },
-    },
     customLogger: {
       ...viteLogger,
       error: (msg, options) => {
@@ -61,17 +39,6 @@ export async function setupVite(app: Express, server: Server) {
     },
     server: serverOptions,
     appType: "custom",
-    plugins: [
-      // Add minimal plugins needed for development
-      {
-        name: "react",
-        config: () => ({
-          esbuild: {
-            jsx: "automatic",
-          },
-        }),
-      },
-    ],
   });
 
   app.use(vite.middlewares);

@@ -20,6 +20,9 @@ import {
   CloudRain,
   Lightbulb,
   Zap,
+  Users,
+  Shield,
+  Heart,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 

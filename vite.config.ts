@@ -3,8 +3,11 @@ import react from "@vitejs/plugin-react";
 import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
 import path from "path";
 
-export default defineConfig({
+export default defineConfig(({ command, mode }) => ({
   plugins: [react(), themePlugin()],
+  define: {
+    "process.env.NODE_ENV": JSON.stringify(mode),
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -35,4 +38,4 @@ export default defineConfig({
   },
   // Remove server config since we're using middleware mode in Express
   // The server configuration is handled in server/vite.ts
-});
+}));
