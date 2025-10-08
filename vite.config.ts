@@ -1,9 +1,11 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
+import runtimeErrorModal from "@replit/vite-plugin-runtime-error-modal";
 import path from "path";
 
 export default defineConfig(({ command, mode }) => ({
-  plugins: [react()],
+  plugins: [react(), themePlugin(), runtimeErrorModal()],
   define: {
     "process.env.NODE_ENV": JSON.stringify(mode),
   },
