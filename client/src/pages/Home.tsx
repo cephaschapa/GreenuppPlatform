@@ -1,17 +1,10 @@
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
-import ProblemSolutionCards from "@/components/ProblemSolutionCards";
 import FeatureNavigator from "@/components/FeatureNavigator";
-import AiAssistantShowcase from "@/components/AiAssistantShowcase";
-import BlockchainTraceability from "@/components/BlockchainTraceability";
 import SocialProof from "@/components/SocialProof";
-import MobileExperience from "@/components/MobileExperience";
-import GettingStartedSteps from "@/components/GettingStartedSteps";
 import PricingSection from "@/components/PricingSection";
-import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
-import { SystemHealthStatus } from "@/components/SystemHealthStatus";
 
 const Home = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -59,41 +52,14 @@ const Home = () => {
         {/* Hero Section */}
         <Hero />
 
-        {/* System Health Status */}
-        <section className="py-8 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto">
-              <SystemHealthStatus variant="compact" />
-            </div>
-          </div>
-        </section>
-
-        {/* Problem-Solution Cards */}
-        <ProblemSolutionCards />
-
-        {/* Feature Navigation */}
-        <FeatureNavigator />
-
-        {/* AI Assistant Showcase */}
-        <AiAssistantShowcase />
-
-        {/* Blockchain Traceability */}
-        <BlockchainTraceability />
-
-        {/* Social Proof */}
+        {/* Social Proof - moved up for credibility */}
         <SocialProof />
 
-        {/* Mobile Experience */}
-        <MobileExperience />
-
-        {/* Getting Started Steps */}
-        <GettingStartedSteps />
+        {/* Feature Navigation - condensed */}
+        <FeatureNavigator />
 
         {/* Pricing Section */}
         <PricingSection />
-
-        {/* Contact Section */}
-        <ContactSection />
       </main>
 
       <Footer />
