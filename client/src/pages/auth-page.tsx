@@ -47,6 +47,7 @@ export default function AuthPage() {
   const { user, isLoading } = useAuth();
   const { getDashboardUrl, getMarketplaceUrl } = useRoleNavigation();
   const [checked, setChecked] = useState(false);
+  const [activeTab, setActiveTab] = useState("login");
   const isAppSubdomain = window.location.hostname.startsWith("app.");
 
   useEffect(() => {
@@ -101,7 +102,7 @@ export default function AuthPage() {
             </p>
           </div>
 
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="register">Register</TabsTrigger>
@@ -112,7 +113,7 @@ export default function AuthPage() {
             </TabsContent>
 
             <TabsContent value="register">
-              <RegisterForm />
+              <RegisterForm onSuccessfulRegistration={() => setActiveTab("login")} />
             </TabsContent>
           </Tabs>
         </div>
@@ -537,7 +538,7 @@ function LoginForm() {
   );
 }
 
-function RegisterForm() {
+function RegisterForm({ onSuccessfulRegistration }: { onSuccessfulRegistration?: () => void }) {
   const { registerMutation, refetchUser } = useAuth();
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
@@ -567,12 +568,21 @@ function RegisterForm() {
         // Show success dialog
         setShowSuccessDialog(true);
         
+        // Reset the form
+        registerForm.reset();
+        
         // console.log("Registration successful, explicitly refetching user data");
         // Force refetch user data after registration to ensure session is properly recognized
         await refetchUser();
       },
     });
   }
+  
+  const handleSuccessDialogClose = () => {
+    setShowSuccessDialog(false);
+    // Switch to login tab when dialog closes
+    onSuccessfulRegistration?.();
+  };
 
   const handleOAuthLogin = (provider: string) => {
     window.location.href = `/api/auth/${provider}`;
@@ -804,7 +814,7 @@ function RegisterForm() {
       {/* Success Dialog */}
       <RegistrationSuccessDialog
         open={showSuccessDialog}
-        onClose={() => setShowSuccessDialog(false)}
+        onClose={handleSuccessDialogClose}
         email={registeredEmail}
         firstName={registeredFirstName}
       />
