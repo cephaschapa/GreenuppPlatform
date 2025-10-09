@@ -690,20 +690,53 @@ body[data-lite-mode="true"] .space-y-4 > * + * {
   margin-top: 1.5rem;
 }
 
-/* Simpler shadows */
+/* Cleaner shadows for depth */
 body[data-lite-mode="true"] * {
-  box-shadow: none !important;
   text-shadow: none !important;
 }
 
 body[data-lite-mode="true"] .card,
 body[data-lite-mode="true"] [class*="Card"] {
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1) !important;
+  box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.08) !important;
+  border: none !important;
+  border-radius: 12px !important;
 }
 
-/* Simplified borders */
+/* Remove most borders for cleaner look */
 body[data-lite-mode="true"] * {
-  border-width: 1px;
+  border: none;
+}
+
+/* Keep borders only for inputs and necessary elements */
+body[data-lite-mode="true"] input,
+body[data-lite-mode="true"] textarea,
+body[data-lite-mode="true"] select {
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px !important;
+}
+
+body[data-lite-mode="true"] input:focus,
+body[data-lite-mode="true"] textarea:focus,
+body[data-lite-mode="true"] select:focus {
+  border-color: #10b981 !important;
+}
+
+/* Button borders */
+body[data-lite-mode="true"] button {
+  border: 2px solid transparent !important;
+  border-radius: 10px !important;
+}
+
+body[data-lite-mode="true"] button[variant="outline"],
+body[data-lite-mode="true"] [class*="outline"] {
+  border: 2px solid #e5e7eb !important;
+  background: white !important;
+}
+
+body[data-lite-mode="true"] button[variant="outline"]:hover,
+body[data-lite-mode="true"] [class*="outline"]:hover {
+  background: #f9fafb !important;
+  border-color: #10b981 !important;
 }
 
 /* Remove complex animations for performance */
@@ -791,8 +824,121 @@ body[data-lite-mode="true"] video {
 /* Priority content spacing */
 body[data-lite-mode="true"] main {
   padding: 1rem;
+  background: #f9fafb;
 }
 
 body[data-lite-mode="true"] section {
   margin-bottom: 1.5rem;
+}
+
+/* Tabs styling */
+body[data-lite-mode="true"] [role="tablist"],
+body[data-lite-mode="true"] [class*="TabsList"] {
+  background: white !important;
+  padding: 0.25rem !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1) !important;
+}
+
+body[data-lite-mode="true"] [role="tab"],
+body[data-lite-mode="true"] [class*="TabsTrigger"] {
+  border-radius: 8px !important;
+  border: none !important;
+}
+
+body[data-lite-mode="true"] [role="tab"][data-state="active"],
+body[data-lite-mode="true"] [class*="TabsTrigger"][data-state="active"] {
+  background: #10b981 !important;
+  color: white !important;
+}
+
+/* Navigation items */
+body[data-lite-mode="true"] nav a,
+body[data-lite-mode="true"] nav button {
+  border-radius: 10px !important;
+  transition: all 0.2s !important;
+}
+
+body[data-lite-mode="true"] nav a:hover,
+body[data-lite-mode="true"] nav button:hover {
+  background: #f0fdf4 !important;
+}
+
+body[data-lite-mode="true"] nav a.active,
+body[data-lite-mode="true"] nav button.active {
+  background: #d1fae5 !important;
+  color: #065f46 !important;
+}
+
+/* Separator/Divider - make more subtle */
+body[data-lite-mode="true"] [class*="Separator"],
+body[data-lite-mode="true"] hr {
+  border: none !important;
+  height: 1px !important;
+  background: #e5e7eb !important;
+  margin: 1.5rem 0 !important;
+}
+
+/* Badge styling */
+body[data-lite-mode="true"] .badge,
+body[data-lite-mode="true"] [class*="Badge"] {
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+
+/* Alert/Card variants with colored backgrounds */
+body[data-lite-mode="true"] [class*="bg-yellow"],
+body[data-lite-mode="true"] [class*="bg-green"],
+body[data-lite-mode="true"] [class*="bg-blue"],
+body[data-lite-mode="true"] [class*="bg-red"] {
+  border: none !important;
+  border-radius: 12px !important;
+}
+
+/* Weather cards and stat cards */
+body[data-lite-mode="true"] [class*="WeatherCard"],
+body[data-lite-mode="true"] [class*="StatCard"] {
+  background: white !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px 0 rgb(0 0 0 / 0.08) !important;
+  padding: 1.25rem !important;
+}
+
+/* Dropdown/Select menus */
+body[data-lite-mode="true"] [role="menu"],
+body[data-lite-mode="true"] [class*="DropdownMenu"] {
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 12px 0 rgb(0 0 0 / 0.15) !important;
+  padding: 0.5rem !important;
+}
+
+body[data-lite-mode="true"] [role="menuitem"] {
+  border-radius: 8px !important;
+  padding: 0.75rem 1rem !important;
+  margin: 0.25rem 0 !important;
+}
+
+/* Clean table styling */
+body[data-lite-mode="true"] table {
+  border-collapse: separate !important;
+  border-spacing: 0 0.5rem !important;
+}
+
+body[data-lite-mode="true"] thead {
+  background: #f9fafb !important;
+}
+
+body[data-lite-mode="true"] tbody tr {
+  background: white !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05) !important;
+}
+
+body[data-lite-mode="true"] th,
+body[data-lite-mode="true"] td {
+  padding: 1rem !important;
+  border: none !important;
 }
