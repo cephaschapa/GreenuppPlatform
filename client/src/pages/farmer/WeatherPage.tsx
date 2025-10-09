@@ -279,14 +279,62 @@ export default function WeatherPage() {
     }
   };
 
+  // Fallback: Detect location from IP address
+  const detectLocationFromIP = async () => {
+    try {
+      const response = await fetch("/api/weather/detect-location-ip", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to detect location from IP");
+      }
+
+      const data = await response.json();
+      
+      if (data && data.name) {
+        const locationName = extractCityName(data.name);
+        setDetectedLocationData(data);
+        setActiveLocation(locationName);
+        setWeatherData(null);
+        setClimateData(null);
+        setCropRecommendations(null);
+        setHistoricalData(null);
+
+        toast({
+          title: "Location detected!",
+          description: `Weather data for ${locationName} (detected from IP)`,
+        });
+      } else {
+        throw new Error("Location not found");
+      }
+    } catch (error) {
+      console.error("Error detecting location from IP:", error);
+      throw error;
+    }
+  };
+
   // Auto-detect user's current location
   const detectCurrentLocation = async () => {
     if (!navigator.geolocation) {
       toast({
-        title: "Location detection failed",
-        description: "Geolocation is not supported by your browser",
-        variant: "destructive",
+        title: "Browser geolocation not supported",
+        description: "Attempting to detect location from your IP address...",
       });
+      
+      setIsDetectingLocation(true);
+      try {
+        await detectLocationFromIP();
+      } catch (error) {
+        toast({
+          title: "Location detection failed",
+          description: "Please add your location manually",
+          variant: "destructive",
+        });
+      } finally {
+        setIsDetectingLocation(false);
+      }
       return;
     }
 
@@ -350,29 +398,51 @@ export default function WeatherPage() {
         throw new Error("Location not found");
       }
     } catch (error: any) {
-      // console.error("Error detecting location:", error);
+      console.error("Error detecting location:", error);
 
+      // If browser geolocation failed, try IP-based detection as fallback
+      if (error.code === 1) {
+        // Permission denied - try IP fallback
+        console.log("Browser geolocation denied, falling back to IP detection");
+        toast({
+          title: "Location permission denied",
+          description: "Attempting to detect location from your IP address...",
+        });
+        
+        try {
+          await detectLocationFromIP();
+          return; // Success - exit early
+        } catch (ipError) {
+          console.error("IP-based detection also failed:", ipError);
+        }
+      }
+
+      // If we get here, all detection methods failed
       let errorMessage =
         "Unable to determine your current location. Please add it manually.";
+      let errorTitle = "Location detection failed";
 
       if (error.code === 1) {
+        errorTitle = "Location access denied";
         errorMessage =
-          "Location access denied. Please allow location access in your browser settings.";
+          "Could not detect your location. Please add it manually from the locations below.";
       } else if (error.code === 2) {
+        errorTitle = "Location unavailable";
         errorMessage =
-          "Location unavailable. Please check your device's location services.";
+          "Your device's location service is unavailable. Please add location manually.";
       } else if (error.code === 3) {
-        errorMessage = "Location request timed out. Please try again.";
+        errorTitle = "Location request timed out";
+        errorMessage = "The location request took too long. Please add location manually.";
+      } else if (error.message) {
+        errorMessage = error.message;
       }
 
-      // Only show error toast if this was a manual detection attempt
-      if (hasAttemptedAutoDetect) {
-        toast({
-          title: "Location detection failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
+      // Show error toast
+      toast({
+        title: errorTitle,
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsDetectingLocation(false);
     }
@@ -387,28 +457,43 @@ export default function WeatherPage() {
       navigator.geolocation
     ) {
       setHasAttemptedAutoDetect(true);
-      // console.log("Attempting to auto-detect location...");
-
-      // Check if we have permission to access location
-      navigator.permissions
-        ?.query({ name: "geolocation" })
-        .then((permissionStatus) => {
-          if (permissionStatus.state === "granted") {
-            // User has already granted permission, auto-detect
-            // console.log("Location permission granted, detecting location...");
-            detectCurrentLocation();
-          } else {
-            // console.log(
-            //   "Location permission not granted:",
-            //   permissionStatus.state
-            // );
+      
+      // Try to check permissions first, but don't block on it
+      const checkPermissions = async () => {
+        try {
+          // Only check if permissions API is available
+          if ('permissions' in navigator && 'query' in navigator.permissions) {
+            const permissionStatus = await navigator.permissions.query({ 
+              name: "geolocation" as PermissionName 
+            });
+            
+            if (permissionStatus.state === "granted") {
+              // User has already granted permission, auto-detect
+              detectCurrentLocation();
+              return;
+            } else if (permissionStatus.state === "denied") {
+              // Permission explicitly denied, don't prompt
+              console.log("Geolocation permission denied by user");
+              toast({
+                title: "Location access denied",
+                description: "Please enable location in your browser settings or add locations manually",
+                variant: "destructive",
+              });
+              return;
+            }
           }
-          // If permission is 'denied' or 'prompt', don't auto-detect to avoid annoying the user
-        })
-        .catch(() => {
-          // Permissions API not supported, don't auto-detect
-          // console.log("Permissions API not supported");
-        });
+          
+          // If permissions API not available or state is "prompt",
+          // don't show toast on initial load, let user click the button
+          console.log("Location permission not yet granted");
+        } catch (error) {
+          // Permissions API failed or not supported
+          // Silently fail and let user manually enable location
+          console.log("Permissions API not available:", error);
+        }
+      };
+      
+      checkPermissions();
     }
   }, [activeLocation, isLoading, hasAttemptedAutoDetect]);
 

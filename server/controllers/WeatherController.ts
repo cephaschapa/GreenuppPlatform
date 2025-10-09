@@ -3,6 +3,7 @@ import { WeatherModel } from "../models/WeatherModel.js";
 import { insertWeatherPreferencesSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { getIPLocation } from "../services/ipGeolocationService.js";
 
 export class WeatherController {
   static async getWeather(req: Request, res: Response) {
@@ -231,6 +232,34 @@ export class WeatherController {
           error: error instanceof Error ? error.message : error,
         });
       }
+    }
+  }
+
+  static async detectLocationFromIP(req: Request, res: Response) {
+    try {
+      // Get the user's IP address
+      const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || 
+                 req.socket.remoteAddress || 
+                 'unknown';
+      
+      // Get location from IP
+      const locationData = await getIPLocation(ip);
+      
+      // Return location information in the same format as reverse-geocode
+      res.json({
+        lat: locationData.lat,
+        lon: locationData.lon,
+        name: locationData.name,
+        country: locationData.country,
+        state: locationData.state,
+        city: locationData.city,
+        geoPath: locationData.geoPath,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Failed to detect location from IP",
+        error: error instanceof Error ? error.message : error,
+      });
     }
   }
 }
