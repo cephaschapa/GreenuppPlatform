@@ -41,6 +41,7 @@ import { TwoFactorVerification } from "@/components/auth/TwoFactorVerification";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useRoleNavigation } from "@/hooks/use-role-navigation";
+import { RegistrationSuccessDialog } from "@/components/auth/RegistrationSuccessDialog";
 
 export default function AuthPage() {
   const { user, isLoading } = useAuth();
@@ -538,6 +539,10 @@ function LoginForm() {
 
 function RegisterForm() {
   const { registerMutation, refetchUser } = useAuth();
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [registeredFirstName, setRegisteredFirstName] = useState("");
+
   const registerForm = useForm<z.infer<typeof registerUserSchema>>({
     resolver: zodResolver(registerUserSchema),
     defaultValues: {
@@ -554,7 +559,14 @@ function RegisterForm() {
 
   function onSubmit(values: z.infer<typeof registerUserSchema>) {
     registerMutation.mutate(values, {
-      onSuccess: async () => {
+      onSuccess: async (response: any) => {
+        // Save registration details for success dialog
+        setRegisteredEmail(values.email);
+        setRegisteredFirstName(values.firstName || "");
+        
+        // Show success dialog
+        setShowSuccessDialog(true);
+        
         // console.log("Registration successful, explicitly refetching user data");
         // Force refetch user data after registration to ensure session is properly recognized
         await refetchUser();
@@ -788,6 +800,14 @@ function RegisterForm() {
           />
         </div>
       </CardContent>
+
+      {/* Success Dialog */}
+      <RegistrationSuccessDialog
+        open={showSuccessDialog}
+        onClose={() => setShowSuccessDialog(false)}
+        email={registeredEmail}
+        firstName={registeredFirstName}
+      />
     </Card>
   );
 }

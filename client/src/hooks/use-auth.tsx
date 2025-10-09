@@ -122,34 +122,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: RegisterUser) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
-      return await res.json();
+      // Add timeout to the request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      try {
+        const res = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(credentials),
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Registration failed");
+        }
+
+        return await res.json();
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          throw new Error("Registration is taking too long. Please try again or contact support.");
+        }
+        throw error;
+      }
     },
     onSuccess: async (response: any) => {
       // Check if email verification is required
       if (response.requiresEmailVerification) {
         toast({
-          title: "Registration successful!",
+          title: "🎉 Account Created Successfully!",
           description:
             response.message ||
             "Please check your email to verify your account before logging in.",
+          duration: 8000, // Show longer for important message
+        });
+        
+        // Show additional success feedback
+        toast({
+          title: "📧 Verification Email Sent",
+          description: `Check your inbox at ${response.email}`,
+          duration: 6000,
         });
       } else {
         // Old flow for backward compatibility
         queryClient.setQueryData(["/api/user"], response);
         await refetchUser();
         toast({
-          title: "Registration successful",
-          description: `Welcome to Greenupp, ${
+          title: "🎉 Welcome to GreenUpp!",
+          description: `Account created for ${
             response.firstName || response.username
-          }!`,
+          }. Redirecting to dashboard...`,
+          duration: 5000,
         });
       }
     },
     onError: (error: Error) => {
       toast({
-        title: "Registration failed",
-        description: error.message,
+        title: "❌ Registration Failed",
+        description: error.message || "Unable to create account. Please try again.",
         variant: "destructive",
       });
     },
