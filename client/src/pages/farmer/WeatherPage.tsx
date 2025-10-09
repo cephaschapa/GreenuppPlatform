@@ -353,15 +353,32 @@ export default function WeatherPage() {
     setIsDetectingLocation(true);
 
     try {
-      const position = await new Promise<GeolocationPosition>(
-        (resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 60000, // 1 minute cache
-          });
-        }
-      );
+      // Try high accuracy first, fallback to low accuracy if it fails
+      let position: GeolocationPosition;
+
+      try {
+        position = await new Promise<GeolocationPosition>(
+          (resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 15000,
+              maximumAge: 300000, // 5 minute cache
+            });
+          }
+        );
+      } catch (highAccuracyError) {
+        console.log("High accuracy GPS failed, trying low accuracy:", highAccuracyError);
+        // Fallback to low accuracy (faster, uses WiFi/cell towers)
+        position = await new Promise<GeolocationPosition>(
+          (resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: false,
+              timeout: 10000,
+              maximumAge: 600000, // 10 minute cache
+            });
+          }
+        );
+      }
 
       const { latitude, longitude } = position.coords;
 
@@ -460,64 +477,118 @@ export default function WeatherPage() {
     }
   };
 
-  // Auto-detect location on page load if no location is set
+  // Smart location detection (like Google/Uber/Airbnb)
   useEffect(() => {
     if (
       !activeLocation &&
       !isLoading &&
-      !hasAttemptedAutoDetect &&
-      navigator.geolocation
+      !hasAttemptedAutoDetect
     ) {
       setHasAttemptedAutoDetect(true);
-      
-      // Try to check permissions first, but don't block on it
-      const checkPermissions = async () => {
+
+      // Step 1: Try cached location first (fastest)
+      const cachedLocation = localStorage.getItem("weatherActiveLocation");
+      if (cachedLocation) {
         try {
-          // Only check if permissions API is available
-          if ('permissions' in navigator && 'query' in navigator.permissions) {
-            const permissionStatus = await navigator.permissions.query({ 
-              name: "geolocation" as PermissionName 
-            });
-            
-            if (permissionStatus.state === "granted") {
-              // User has already granted permission, auto-detect
-              detectCurrentLocation();
-              return;
-            } else if (permissionStatus.state === "denied") {
-              // Permission explicitly denied, don't prompt
-              console.log("Geolocation permission denied by user");
-              toast({
-                title: "Location access denied",
-                description: "Please enable location in your browser settings or add locations manually",
-                variant: "destructive",
-              });
-              return;
+          const locationData = JSON.parse(cachedLocation);
+          const cacheAge = Date.now() - locationData.timestamp;
+          const cacheMaxAge = 24 * 60 * 60 * 1000; // 24 hours
+
+          if (cacheAge < cacheMaxAge) {
+            console.log("Using cached location:", locationData.location);
+            setActiveLocation(locationData.location);
+            if (locationData.coordinates) {
+              setDetectedCoordinates(locationData.coordinates);
             }
+            return; // Don't attempt new detection if we have fresh cache
           }
-          
-          // If permissions API not available or state is "prompt",
-          // don't show toast on initial load, let user click the button
-          console.log("Location permission not yet granted");
         } catch (error) {
-          // Permissions API failed or not supported
-          // Silently fail and let user manually enable location
-          console.log("Permissions API not available:", error);
+          console.error("Error parsing cached location:", error);
+        }
+      }
+
+      // Step 2: Smart multi-tier location detection
+      const smartLocationDetection = async () => {
+        console.log("Starting smart location detection...");
+
+        // First, try IP-based detection (fast and doesn't require permission)
+        try {
+          console.log("Attempting IP-based location detection...");
+          await detectLocationFromIP();
+          console.log("IP-based detection successful");
+          return; // Success - exit early
+        } catch (ipError) {
+          console.log("IP-based detection failed, trying browser geolocation:", ipError);
+        }
+
+        // Step 2: If IP fails, try browser geolocation
+        if (navigator.geolocation) {
+          try {
+            // Check if we already have permission
+            if ('permissions' in navigator && 'query' in navigator.permissions) {
+              const permissionStatus = await navigator.permissions.query({
+                name: "geolocation" as PermissionName
+              });
+
+              if (permissionStatus.state === "granted") {
+                console.log("Browser geolocation permission granted, using GPS");
+                await detectCurrentLocation();
+                return;
+              } else if (permissionStatus.state === "denied") {
+                console.log("Browser geolocation permission denied");
+                toast({
+                  title: "Location access denied",
+                  description: "Please enable location in your browser settings for accurate weather data",
+                  variant: "destructive",
+                });
+                return;
+              }
+            }
+
+            // Permission state is "prompt" - show user a helpful message
+            console.log("Browser geolocation permission not yet granted");
+            toast({
+              title: "Enable location for better accuracy?",
+              description: "Click 'Detect Location' above to get precise weather data for your area",
+            });
+
+          } catch (error) {
+            console.log("Browser geolocation check failed:", error);
+            toast({
+              title: "Location detection available",
+              description: "Click 'Detect Location' to get weather for your area",
+            });
+          }
+        } else {
+          console.log("Browser geolocation not supported");
+          toast({
+            title: "Location services not supported",
+            description: "Please add your location manually from the preferences",
+            variant: "destructive",
+          });
         }
       };
-      
-      checkPermissions();
+
+      smartLocationDetection();
     }
   }, [activeLocation, isLoading, hasAttemptedAutoDetect]);
 
-  // Save active location to localStorage whenever it changes
+  // Smart location caching (like professional apps)
   useEffect(() => {
     if (activeLocation) {
-      localStorage.setItem("weatherActiveLocation", activeLocation);
+      // Cache the location with timestamp for smarter future detection
+      const locationData = {
+        location: activeLocation,
+        timestamp: Date.now(),
+        source: detectedLocationData ? 'gps' : 'ip', // Track how we got this location
+        coordinates: detectedCoordinates
+      };
+      localStorage.setItem("weatherActiveLocation", JSON.stringify(locationData));
     } else {
       // Clear localStorage if no active location
       localStorage.removeItem("weatherActiveLocation");
     }
-  }, [activeLocation]);
+  }, [activeLocation, detectedLocationData, detectedCoordinates]);
 
   // Validate and set active location when preferences load
   useEffect(() => {

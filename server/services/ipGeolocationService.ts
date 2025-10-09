@@ -29,44 +29,62 @@ async function getIPCoordinates(
   ip: string
 ): Promise<{ lat: number; lon: number }> {
   try {
-    // Use a more reliable IP geolocation service (ipapi.co)
-    const response = await axios.get(
-      `https://ipapi.co/${ip}/json/`,
+    // Try multiple IP geolocation services for better accuracy
+    const services = [
+      // Primary: ipapi.co (good accuracy, HTTPS)
       {
-        timeout: 5000, // 5 second timeout
-        headers: {
-          'User-Agent': 'Greenupp/1.0'
-        }
+        url: `https://ipapi.co/${ip}/json/`,
+        getCoords: (data: any) => ({ lat: data.latitude, lon: data.longitude }),
+        timeout: 3000
+      },
+      // Secondary: ip-api.com (reliable fallback)
+      {
+        url: `http://ip-api.com/json/${ip}?fields=lat,lon,status`,
+        getCoords: (data: any) => ({ lat: data.lat, lon: data.lon }),
+        timeout: 3000
+      },
+      // Tertiary: ipinfo.io (another reliable service)
+      {
+        url: `https://ipinfo.io/${ip}/json`,
+        getCoords: (data: any) => {
+          if (data.loc) {
+            const [lat, lon] = data.loc.split(',');
+            return { lat: parseFloat(lat), lon: parseFloat(lon) };
+          }
+          return null;
+        },
+        timeout: 3000
       }
-    );
+    ];
 
-    if (response.data && response.data.latitude && response.data.longitude) {
-      return {
-        lat: response.data.latitude,
-        lon: response.data.longitude,
-      };
+    for (const service of services) {
+      try {
+        const response = await axios.get(service.url, {
+          timeout: service.timeout,
+          headers: {
+            'User-Agent': 'Greenupp/1.0',
+            'Accept': 'application/json'
+          }
+        });
+
+        if (response.data) {
+          const coords = service.getCoords(response.data);
+          if (coords && coords.lat && coords.lon &&
+              !isNaN(coords.lat) && !isNaN(coords.lon) &&
+              coords.lat >= -90 && coords.lat <= 90 &&
+              coords.lon >= -180 && coords.lon <= 180) {
+            return coords;
+          }
+        }
+      } catch (error) {
+        logger.warn(`IP geolocation service ${service.url} failed for ${ip}:`, error.message);
+        continue; // Try next service
+      }
     }
 
-    throw new Error("Invalid coordinates from IP geolocation service");
+    throw new Error("All IP geolocation services failed");
   } catch (error) {
     logger.error(`Error getting IP coordinates for ${ip}:`, error);
-
-    // Try fallback service if first one fails
-    try {
-      const fallbackResponse = await axios.get(
-        `http://ip-api.com/json/${ip}?fields=lat,lon`,
-        { timeout: 5000 }
-      );
-
-      if (fallbackResponse.data && fallbackResponse.data.lat && fallbackResponse.data.lon) {
-        return {
-          lat: fallbackResponse.data.lat,
-          lon: fallbackResponse.data.lon,
-        };
-      }
-    } catch (fallbackError) {
-      logger.error(`Fallback IP geolocation also failed for ${ip}:`, fallbackError);
-    }
 
     // Fallback: return default coordinates (Zambia center)
     return {
@@ -136,9 +154,52 @@ async function reverseGeocodeCoordinates(
   } catch (error) {
     logger.error("Error reverse geocoding coordinates:", error);
 
-    // Provide better fallback based on coordinates
-    // If coordinates look like they're in Zambia, provide Zambia location
+    // Smart fallback based on coordinates and regional knowledge
+    // Zambia bounds: lat -18 to -8, lon 22 to 34
     if (lat >= -18 && lat <= -8 && lon >= 22 && lon <= 34) {
+      // User is likely in Zambia - provide appropriate defaults
+      if (lat >= -16 && lat <= -14 && lon >= 27 && lon <= 29) {
+        // Central Zambia (Lusaka area)
+        return {
+          name: "Lusaka",
+          country: "Zambia",
+          state: "Lusaka Province",
+          city: "Lusaka",
+          geoPath: "Lusaka, Lusaka Province, Zambia",
+        };
+      } else if (lat >= -13 && lat <= -11 && lon >= 30 && lon <= 33) {
+        // Eastern Zambia (Chipata area)
+        return {
+          name: "Chipata",
+          country: "Zambia",
+          state: "Eastern Province",
+          city: "Chipata",
+          geoPath: "Chipata, Eastern Province, Zambia",
+        };
+      } else if (lon >= 25 && lon <= 27) {
+        // Kabwe/Kabwe area
+        return {
+          name: "Kabwe",
+          country: "Zambia",
+          state: "Central Province",
+          city: "Kabwe",
+          geoPath: "Kabwe, Central Province, Zambia",
+        };
+      } else {
+        // General Zambia location
+        return {
+          name: "Lusaka",
+          country: "Zambia",
+          state: "Lusaka Province",
+          city: "Lusaka",
+          geoPath: "Lusaka, Lusaka Province, Zambia",
+        };
+      }
+    }
+
+    // Check if coordinates are in other African countries (basic regional detection)
+    if (lat >= -35 && lat <= 15 && lon >= -20 && lon <= 55) {
+      // Africa region - could be various countries
       return {
         name: "Lusaka",
         country: "Zambia",
@@ -148,10 +209,13 @@ async function reverseGeocodeCoordinates(
       };
     }
 
+    // Default fallback
     return {
-      name: "Unknown",
-      country: "Unknown",
-      geoPath: "Unknown location",
+      name: "Lusaka",
+      country: "Zambia",
+      state: "Lusaka Province",
+      city: "Lusaka",
+      geoPath: "Lusaka, Lusaka Province, Zambia",
     };
   }
 }
