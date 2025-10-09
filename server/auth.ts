@@ -419,47 +419,56 @@ export function setupAuth(app: Express) {
       // Remove password from response
       const { password, ...userWithoutPassword } = user;
 
-      // Generate verification token and send email
-      try {
-        const verificationToken =
-          await AuthService.generateEmailVerificationToken(user.id);
+      // Send response immediately - don't wait for email
+      res.status(201).json({
+        message:
+          "Registration successful! Please check your email to verify your account before logging in.",
+        requiresEmailVerification: true,
+        email: user.email,
+      });
 
-        // Determine frontend URL for verification link
-        const isDevelopment = process.env.NODE_ENV !== "production";
-        let frontendUrl;
+      // Send verification email in background (non-blocking)
+      const sendVerificationEmailAsync = async () => {
+        try {
+          const verificationToken =
+            await AuthService.generateEmailVerificationToken(user.id);
 
-        if (isDevelopment) {
-          const protocol = req.secure ? "https" : "http";
-          const host = req.get("host") || "localhost:3001";
-          frontendUrl =
-            host.includes("localhost") || host.includes("127.0.0.1")
-              ? "http://localhost:3001"
-              : `${protocol}://${host}`;
-        } else {
-          frontendUrl =
-            process.env.FRONTEND_URL ||
-            "https://greenuppplatform-production.up.railway.app";
+          // Determine frontend URL for verification link
+          const isDevelopment = process.env.NODE_ENV !== "production";
+          let frontendUrl;
+
+          if (isDevelopment) {
+            const protocol = req.secure ? "https" : "http";
+            const host = req.get("host") || "localhost:3001";
+            frontendUrl =
+              host.includes("localhost") || host.includes("127.0.0.1")
+                ? "http://localhost:3001"
+                : `${protocol}://${host}`;
+          } else {
+            frontendUrl =
+              process.env.FRONTEND_URL ||
+              "https://greenuppplatform-production.up.railway.app";
+          }
+
+          const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
+          
+          // Set a timeout for email sending
+          await Promise.race([
+            AuthService.sendVerificationEmail(user.email, verificationUrl),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("Email timeout after 15s")), 15000)
+            )
+          ]);
+          
+          logger.info(`Verification email sent to ${user.email}`);
+        } catch (emailError) {
+          logger.error("Failed to send verification email:", emailError);
+          // Email failure doesn't affect registration - user is already created
         }
+      };
 
-        const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
-        await AuthService.sendVerificationEmail(user.email, verificationUrl);
-
-        res.status(201).json({
-          message:
-            "Registration successful! Please check your email to verify your account before logging in.",
-          requiresEmailVerification: true,
-          email: user.email,
-        });
-      } catch (emailError) {
-        logger.error("Failed to send verification email:", emailError);
-        // Still return success but mention email issue
-        res.status(201).json({
-          message:
-            "Registration successful! However, we couldn't send the verification email. Please contact support.",
-          requiresEmailVerification: true,
-          email: user.email,
-        });
-      }
+      // Fire and forget - don't await
+      sendVerificationEmailAsync();
     } catch (error) {
       next(error);
     }
