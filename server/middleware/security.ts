@@ -110,9 +110,11 @@ export const securityHeaders = (
   res.setHeader("X-Frame-Options", "DENY");
   res.setHeader("X-XSS-Protection", "1; mode=block");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  
+  // Allow geolocation for the same origin (self), block microphone and camera
   res.setHeader(
     "Permissions-Policy",
-    "geolocation=(), microphone=(), camera=()"
+    "geolocation=(self), microphone=(), camera=()"
   );
 
   next();

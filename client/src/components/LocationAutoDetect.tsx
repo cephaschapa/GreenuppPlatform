@@ -2,7 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MapPin, Navigation, AlertCircle, CheckCircle } from "lucide-react";
+import {
+  Loader2,
+  MapPin,
+  Navigation,
+  AlertCircle,
+  CheckCircle,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export interface DetectedLocation {
@@ -30,13 +36,14 @@ export default function LocationAutoDetect({
   onLocationDetected,
   onError,
   buttonText = "Detect My Location",
-  autoDetect = false,
+  autoDetect = true,
   showDetails = true,
   className = "",
 }: LocationAutoDetectProps) {
   const [isDetecting, setIsDetecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [detectedLocation, setDetectedLocation] = useState<DetectedLocation | null>(null);
+  const [detectedLocation, setDetectedLocation] =
+    useState<DetectedLocation | null>(null);
   const { toast } = useToast();
 
   const getCurrentPosition = (): Promise<GeolocationPosition> => {
@@ -50,19 +57,21 @@ export default function LocationAutoDetect({
         resolve,
         (error) => {
           let errorMessage = "Failed to get location";
-          
+
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              errorMessage = "Location permission denied. Please enable location access in your browser settings.";
+              errorMessage =
+                "Location permission denied. Please enable location access in your browser settings.";
               break;
             case error.POSITION_UNAVAILABLE:
-              errorMessage = "Location information is unavailable. Please try again.";
+              errorMessage =
+                "Location information is unavailable. Please try again.";
               break;
             case error.TIMEOUT:
               errorMessage = "Location request timed out. Please try again.";
               break;
           }
-          
+
           reject(new Error(errorMessage));
         },
         {
@@ -74,8 +83,11 @@ export default function LocationAutoDetect({
     });
   };
 
+  console.log("detectedLocation", detectedLocation);
+
   const reverseGeocode = async (lat: number, lng: number): Promise<any> => {
     // Use your existing backend geocoding endpoint
+    console.log("reverseGeocode", lat, lng);
     const response = await fetch(
       `/api/geocode/reverse?lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
     );
@@ -130,7 +142,8 @@ export default function LocationAutoDetect({
           : "Location detected successfully",
       });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to detect location";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to detect location";
       console.error("Location detection error:", err);
 
       setError(errorMessage);
@@ -233,7 +246,8 @@ export default function LocationAutoDetect({
                     </Badge>
                   )}
                   <Badge variant="outline" className="text-xs">
-                    {detectedLocation.latitude.toFixed(6)}, {detectedLocation.longitude.toFixed(6)}
+                    {detectedLocation.latitude.toFixed(6)},{" "}
+                    {detectedLocation.longitude.toFixed(6)}
                   </Badge>
                 </div>
               </div>
@@ -244,4 +258,3 @@ export default function LocationAutoDetect({
     </div>
   );
 }
-
