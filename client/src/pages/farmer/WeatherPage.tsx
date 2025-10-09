@@ -229,8 +229,20 @@ export default function WeatherPage() {
 
     // Use the extracted city name for saving
     const cityName = extractCityName(activeLocation);
+    
+    // Get the geoPath from detected location data if available
+    const geoPath = detectedLocationData?.geoPath || activeLocation;
+    
+    // Format: "CityName|GeoPath" for storage
+    const locationWithPath = `${cityName}|${geoPath}`;
 
-    if (preferences?.locations?.includes(cityName)) {
+    // Check if city name already exists (check the part before |)
+    const cityExists = preferences?.locations?.some(loc => {
+      const [existingCity] = loc.split('|');
+      return existingCity === cityName;
+    });
+
+    if (cityExists) {
       toast({
         title: "Location already saved",
         description: `${cityName} is already in your saved locations`,
@@ -240,7 +252,7 @@ export default function WeatherPage() {
 
     try {
       const currentLocations = preferences?.locations || [];
-      const updatedLocations = [...currentLocations, cityName];
+      const updatedLocations = [...currentLocations, locationWithPath];
 
       const updateData = {
         userId: preferences?.userId || 0,
@@ -1103,10 +1115,14 @@ export default function WeatherPage() {
                                 Select a saved location
                               </option>
                               {preferences.locations.map((location) => {
-                                const cityName = extractCityName(location);
+                                // Parse location format: "CityName|GeoPath" or legacy "CityName"
+                                const [cityName, geoPath] = location.includes('|') 
+                                  ? location.split('|')
+                                  : [extractCityName(location), null];
+                                
                                 return (
                                   <option key={cityName} value={cityName}>
-                                    {cityName}
+                                    {geoPath ? `${cityName} (${geoPath})` : cityName}
                                   </option>
                                 );
                               })}

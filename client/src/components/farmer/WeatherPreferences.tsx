@@ -81,12 +81,70 @@ export function WeatherPreferences() {
   }, [preferences, form]);
 
   // Handle adding a new location
-  const handleAddLocation = () => {
+  const handleAddLocation = async () => {
     if (!newLocation.trim()) return;
 
-    const currentLocations = form.getValues("locations") || [];
-    form.setValue("locations", [...currentLocations, newLocation.trim()]);
-    setNewLocation("");
+    try {
+      // Fetch geo information for the location
+      const response = await fetch(
+        `/api/weather/geocode?query=${encodeURIComponent(newLocation.trim())}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.results && data.results.length > 0) {
+          const result = data.results[0];
+          const locationName = result.name;
+          const geoPath = result.geoPath || locationName;
+          
+          // Format: "CityName|GeoPath" for storage
+          const locationWithPath = `${locationName}|${geoPath}`;
+          
+          const currentLocations = form.getValues("locations") || [];
+          
+          // Check if city name already exists
+          const cityExists = currentLocations.some(loc => {
+            const [existingCity] = loc.split('|');
+            return existingCity === locationName;
+          });
+          
+          if (!cityExists) {
+            form.setValue("locations", [...currentLocations, locationWithPath]);
+            setNewLocation("");
+            toast({
+              title: "Location added",
+              description: `${locationName} has been added to your locations`,
+            });
+          } else {
+            toast({
+              title: "Location already exists",
+              description: `${locationName} is already in your locations`,
+            });
+          }
+          return;
+        }
+      }
+      
+      // Fallback: If geocoding fails, save as is
+      const currentLocations = form.getValues("locations") || [];
+      form.setValue("locations", [...currentLocations, newLocation.trim()]);
+      setNewLocation("");
+      
+      toast({
+        title: "Location added",
+        description: "Location details could not be verified, but it has been saved",
+      });
+    } catch (error) {
+      console.error("Error adding location:", error);
+      // Fallback: save the location as entered
+      const currentLocations = form.getValues("locations") || [];
+      form.setValue("locations", [...currentLocations, newLocation.trim()]);
+      setNewLocation("");
+    }
   };
 
   // Handle removing a location
@@ -132,11 +190,22 @@ export function WeatherPreferences() {
 
           if (data && data.name) {
             const locationName = data.name;
+            const geoPath = data.geoPath || locationName;
+            
+            // Format: "CityName|GeoPath" for storage
+            const locationWithPath = `${locationName}|${geoPath}`;
+            
             const currentLocations = form.getValues("locations") || [];
 
+            // Check if city name already exists (check the part before |)
+            const cityExists = currentLocations.some(loc => {
+              const [existingCity] = loc.split('|');
+              return existingCity === locationName;
+            });
+
             // Only add if not already in the list
-            if (!currentLocations.includes(locationName)) {
-              form.setValue("locations", [...currentLocations, locationName]);
+            if (!cityExists) {
+              form.setValue("locations", [...currentLocations, locationWithPath]);
               toast({
                 title: "Location detected",
                 description: `${locationName} has been added to your locations`,
@@ -330,22 +399,34 @@ export function WeatherPreferences() {
 
                         {Array.isArray(field.value) &&
                         field.value.length > 0 ? (
-                          field.value.map((location, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between p-2 bg-muted rounded-md"
-                            >
-                              <span className="text-sm">{location}</span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleRemoveLocation(index)}
+                          field.value.map((location, index) => {
+                            // Parse location format: "CityName|GeoPath" or legacy "CityName"
+                            const [cityName, geoPath] = location.includes('|') 
+                              ? location.split('|')
+                              : [location, null];
+                            
+                            return (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between p-2 bg-muted rounded-md"
                               >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium">{cityName}</span>
+                                  {geoPath && (
+                                    <span className="text-xs text-muted-foreground">{geoPath}</span>
+                                  )}
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleRemoveLocation(index)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            );
+                          })
                         ) : (
                           <p className="text-sm text-muted-foreground p-2">
                             No locations added yet
