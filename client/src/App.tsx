@@ -42,6 +42,7 @@ import { CartProvider } from "@/hooks/use-cart";
 import { HelmetProvider } from "react-helmet-async";
 import { NotificationProvider } from "@/hooks/use-notifications";
 import { WebSocketProvider } from "@/hooks/use-websocket";
+import { LiteModeProvider } from "@/contexts/LiteModeContext";
 
 // Import farmer-specific pages
 import FieldsPage from "@/pages/farmer/FieldsPage";
@@ -541,29 +542,31 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="system">
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          {/* Keep legacy WebSocket provider for backward compatibility */}
-          <WebSocketProvider>
-            <NotificationProvider>
-              {/* Use legacy ChatProvider for now, but start integrating SocketIO */}
-              <SocketIOProvider>
-                <CartProvider>
-                  <HelmetProvider>
-                    <Router isAppSubdomain={isAppSubdomain} />
-                    <Toaster />
-                    {/* PWA Components */}
-                    {/* <InstallPWA /> */}
-                    <OfflineIndicator />
-                    {/* Push Notifications Debug*/}
-                    {/* <PushNotificationDebug /> */}
-                  </HelmetProvider>
-                </CartProvider>
-              </SocketIOProvider>
-            </NotificationProvider>
-          </WebSocketProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+      <LiteModeProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            {/* Keep legacy WebSocket provider for backward compatibility */}
+            <WebSocketProvider>
+              <NotificationProvider>
+                {/* Use legacy ChatProvider for now, but start integrating SocketIO */}
+                <SocketIOProvider>
+                  <CartProvider>
+                    <HelmetProvider>
+                      <Router isAppSubdomain={isAppSubdomain} />
+                      <Toaster />
+                      {/* PWA Components */}
+                      {/* <InstallPWA /> */}
+                      <OfflineIndicator />
+                      {/* Push Notifications Debug*/}
+                      {/* <PushNotificationDebug /> */}
+                    </HelmetProvider>
+                  </CartProvider>
+                </SocketIOProvider>
+              </NotificationProvider>
+            </WebSocketProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </LiteModeProvider>
     </ThemeProvider>
   );
 }

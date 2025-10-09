@@ -2,6 +2,8 @@ import { Redirect } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { BuyerDashboard } from "@/components/dashboards/BuyerDashboard";
+import { LiteModeDashboard } from "@/components/LiteModeDashboard";
+import { useLiteMode } from "@/contexts/LiteModeContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -51,6 +53,7 @@ import Autoplay from "embla-carousel-autoplay";
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
+  const { isLiteMode } = useLiteMode();
   const [location] = useLocation();
   const [showWelcome, setShowWelcome] = useState(false);
 
@@ -370,6 +373,19 @@ export default function DashboardPage() {
 
   // FARMER DASHBOARD
   if (user.role === "farmer") {
+    // Show Lite Mode Dashboard if enabled
+    if (isLiteMode) {
+      return (
+        <DashboardLayout
+          title={`Welcome, ${farmerProfile?.farmName || "Farmer"}`}
+          description="Your farming operations - Simple View"
+        >
+          <LiteModeDashboard />
+        </DashboardLayout>
+      );
+    }
+
+    // Full Dashboard
     return (
       <DashboardLayout
         title={`Welcome, ${farmerProfile?.farmName || "Farmer"}`}

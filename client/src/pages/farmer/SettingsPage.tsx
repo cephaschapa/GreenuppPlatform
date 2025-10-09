@@ -49,6 +49,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ThemeProvider, useTheme } from "@/components/ThemeProvider";
+import { LiteModeToggle } from "@/components/LiteModeToggle";
 
 // Define settings schemas
 const notificationSettingsSchema = z.object({
@@ -644,6 +645,11 @@ export default function SettingsPage() {
               </Form>
             </CardContent>
           </Card>
+
+          {/* Lite Mode Toggle */}
+          <div className="mt-6">
+            <LiteModeToggle />
+          </div>
         </TabsContent>
 
         {/* Notification Settings */}
