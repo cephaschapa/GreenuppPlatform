@@ -95,3 +95,16 @@ session-data*
 # Additional log files
 all.log
 error.log
+
+# Capacitor/Android
+android/.gradle
+android/build
+android/app/build
+android/.idea
+android/local.properties
+android/gradlew
+android/gradlew.bat
+android/gradle/
+*.keystore
+*.jks
+key.properties

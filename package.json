@@ -33,10 +33,17 @@
     "regenerate-qr": "tsx scripts/regenerate-qr-codes.js",
     "optimize:db": "node scripts/optimize-performance.js",
     "optimize:indexes": "node scripts/performance-optimization.sql",
-    "monitor:performance": "tsx scripts/monitor-performance.js"
+    "monitor:performance": "tsx scripts/monitor-performance.js",
+    "build:mobile": "vite build && npx cap sync",
+    "android:dev": "npx cap open android",
+    "android:run": "npx cap run android",
+    "android:sync": "npx cap sync android"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
     "@fullcalendar/core": "^6.1.17",
     "@fullcalendar/daygrid": "^6.1.17",
     "@fullcalendar/react": "^6.1.17",
