@@ -23,6 +23,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import FieldLocationPicker, { FieldLocationData } from "./FieldLocationPicker";
 import FieldBoundaryPicker, { FieldBoundaryData } from "./FieldBoundaryPicker";
+import GoogleLocationDetector, { type DetectedLocation } from "@/components/GoogleLocationDetector";
 
 interface AddFieldDialogProps {
   trigger?: React.ReactNode;
@@ -42,8 +43,36 @@ export default function AddFieldDialog({ trigger }: AddFieldDialogProps) {
   const [sizeUnit, setSizeUnit] = useState("hectares");
   const [soilType, setSoilType] = useState("");
   const [notes, setNotes] = useState("");
+  const [detectedLocation, setDetectedLocation] = useState<DetectedLocation | null>(null);
 
   const queryClient = useQueryClient();
+
+  const handleLocationDetected = (location: DetectedLocation) => {
+    setDetectedLocation(location);
+
+    // Auto-fill the location text field
+    if (location.address) {
+      setLocation(location.address);
+    } else if (location.city && location.country) {
+      setLocation(`${location.city}, ${location.country}`);
+    }
+
+    // Also set the location data for the map
+    if (location.latitude && location.longitude) {
+      const fieldLocationData: FieldLocationData = {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        country: location.country || "",
+        region: location.state || "",
+        city: location.city || "",
+        neighborhood: null,
+        postalCode: location.postalCode || null,
+        formattedAddress: location.address || null,
+        placeId: location.placeId || null,
+      };
+      setLocationData(fieldLocationData);
+    }
+  };
 
   const createFieldMutation = useMutation({
     mutationFn: async (fieldData: {
@@ -276,6 +305,14 @@ export default function AddFieldDialog({ trigger }: AddFieldDialogProps) {
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="Enter location description"
               />
+              <div className="mt-2">
+                <GoogleLocationDetector
+                  onLocationDetected={handleLocationDetected}
+                  buttonText="Auto-Detect Field Location"
+                  showDetails={true}
+                  className="w-full"
+                />
+              </div>
             </div>
           </div>
 

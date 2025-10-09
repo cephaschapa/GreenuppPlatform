@@ -229,20 +229,8 @@ export default function WeatherPage() {
 
     // Use the extracted city name for saving
     const cityName = extractCityName(activeLocation);
-    
-    // Get the geoPath from detected location data if available
-    const geoPath = detectedLocationData?.geoPath || activeLocation;
-    
-    // Format: "CityName|GeoPath" for storage
-    const locationWithPath = `${cityName}|${geoPath}`;
 
-    // Check if city name already exists (check the part before |)
-    const cityExists = preferences?.locations?.some(loc => {
-      const [existingCity] = loc.split('|');
-      return existingCity === cityName;
-    });
-
-    if (cityExists) {
+    if (preferences?.locations?.includes(cityName)) {
       toast({
         title: "Location already saved",
         description: `${cityName} is already in your saved locations`,
@@ -252,7 +240,7 @@ export default function WeatherPage() {
 
     try {
       const currentLocations = preferences?.locations || [];
-      const updatedLocations = [...currentLocations, locationWithPath];
+      const updatedLocations = [...currentLocations, cityName];
 
       const updateData = {
         userId: preferences?.userId || 0,
@@ -291,94 +279,29 @@ export default function WeatherPage() {
     }
   };
 
-  // Fallback: Detect location from IP address
-  const detectLocationFromIP = async () => {
-    try {
-      const response = await fetch("/api/weather/detect-location-ip", {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to detect location from IP");
-      }
-
-      const data = await response.json();
-      
-      if (data && data.name) {
-        const locationName = extractCityName(data.name);
-        setDetectedLocationData(data);
-        setActiveLocation(locationName);
-        setWeatherData(null);
-        setClimateData(null);
-        setCropRecommendations(null);
-        setHistoricalData(null);
-
-        toast({
-          title: "Location detected!",
-          description: `Weather data for ${locationName} (detected from IP)`,
-        });
-      } else {
-        throw new Error("Location not found");
-      }
-    } catch (error) {
-      console.error("Error detecting location from IP:", error);
-      throw error;
-    }
-  };
-
   // Auto-detect user's current location
   const detectCurrentLocation = async () => {
     if (!navigator.geolocation) {
       toast({
-        title: "Browser geolocation not supported",
-        description: "Attempting to detect location from your IP address...",
+        title: "Location detection failed",
+        description: "Geolocation is not supported by your browser",
+        variant: "destructive",
       });
-      
-      setIsDetectingLocation(true);
-      try {
-        await detectLocationFromIP();
-      } catch (error) {
-        toast({
-          title: "Location detection failed",
-          description: "Please add your location manually",
-          variant: "destructive",
-        });
-      } finally {
-        setIsDetectingLocation(false);
-      }
       return;
     }
 
     setIsDetectingLocation(true);
 
     try {
-      // Try high accuracy first, fallback to low accuracy if it fails
-      let position: GeolocationPosition;
-
-      try {
-        position = await new Promise<GeolocationPosition>(
-          (resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true,
-              timeout: 15000,
-              maximumAge: 300000, // 5 minute cache
-            });
-          }
-        );
-      } catch (highAccuracyError) {
-        console.log("High accuracy GPS failed, trying low accuracy:", highAccuracyError);
-        // Fallback to low accuracy (faster, uses WiFi/cell towers)
-        position = await new Promise<GeolocationPosition>(
-          (resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: false,
-              timeout: 10000,
-              maximumAge: 600000, // 10 minute cache
-            });
-          }
-        );
-      }
+      const position = await new Promise<GeolocationPosition>(
+        (resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000, // 1 minute cache
+          });
+        }
+      );
 
       const { latitude, longitude } = position.coords;
 
@@ -427,168 +350,77 @@ export default function WeatherPage() {
         throw new Error("Location not found");
       }
     } catch (error: any) {
-      console.error("Error detecting location:", error);
+      // console.error("Error detecting location:", error);
 
-      // If browser geolocation failed, try IP-based detection as fallback
-      if (error.code === 1) {
-        // Permission denied - try IP fallback
-        console.log("Browser geolocation denied, falling back to IP detection");
-        toast({
-          title: "Location permission denied",
-          description: "Attempting to detect location from your IP address...",
-        });
-        
-        try {
-          await detectLocationFromIP();
-          return; // Success - exit early
-        } catch (ipError) {
-          console.error("IP-based detection also failed:", ipError);
-        }
-      }
-
-      // If we get here, all detection methods failed
       let errorMessage =
         "Unable to determine your current location. Please add it manually.";
-      let errorTitle = "Location detection failed";
 
       if (error.code === 1) {
-        errorTitle = "Location access denied";
         errorMessage =
-          "Could not detect your location. Please add it manually from the locations below.";
+          "Location access denied. Please allow location access in your browser settings.";
       } else if (error.code === 2) {
-        errorTitle = "Location unavailable";
         errorMessage =
-          "Your device's location service is unavailable. Please add location manually.";
+          "Location unavailable. Please check your device's location services.";
       } else if (error.code === 3) {
-        errorTitle = "Location request timed out";
-        errorMessage = "The location request took too long. Please add location manually.";
-      } else if (error.message) {
-        errorMessage = error.message;
+        errorMessage = "Location request timed out. Please try again.";
       }
 
-      // Show error toast
-      toast({
-        title: errorTitle,
-        description: errorMessage,
-        variant: "destructive",
-      });
+      // Only show error toast if this was a manual detection attempt
+      if (hasAttemptedAutoDetect) {
+        toast({
+          title: "Location detection failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsDetectingLocation(false);
     }
   };
 
-  // Smart location detection (like Google/Uber/Airbnb)
+  // Auto-detect location on page load if no location is set
   useEffect(() => {
     if (
       !activeLocation &&
       !isLoading &&
-      !hasAttemptedAutoDetect
+      !hasAttemptedAutoDetect &&
+      navigator.geolocation
     ) {
       setHasAttemptedAutoDetect(true);
+      // console.log("Attempting to auto-detect location...");
 
-      // Step 1: Try cached location first (fastest)
-      const cachedLocation = localStorage.getItem("weatherActiveLocation");
-      if (cachedLocation) {
-        try {
-          const locationData = JSON.parse(cachedLocation);
-          const cacheAge = Date.now() - locationData.timestamp;
-          const cacheMaxAge = 24 * 60 * 60 * 1000; // 24 hours
-
-          if (cacheAge < cacheMaxAge) {
-            console.log("Using cached location:", locationData.location);
-            setActiveLocation(locationData.location);
-            if (locationData.coordinates) {
-              setDetectedCoordinates(locationData.coordinates);
-            }
-            return; // Don't attempt new detection if we have fresh cache
+      // Check if we have permission to access location
+      navigator.permissions
+        ?.query({ name: "geolocation" })
+        .then((permissionStatus) => {
+          if (permissionStatus.state === "granted") {
+            // User has already granted permission, auto-detect
+            // console.log("Location permission granted, detecting location...");
+            detectCurrentLocation();
+          } else {
+            // console.log(
+            //   "Location permission not granted:",
+            //   permissionStatus.state
+            // );
           }
-        } catch (error) {
-          console.error("Error parsing cached location:", error);
-        }
-      }
-
-      // Step 2: Smart multi-tier location detection
-      const smartLocationDetection = async () => {
-        console.log("Starting smart location detection...");
-
-        // First, try IP-based detection (fast and doesn't require permission)
-        try {
-          console.log("Attempting IP-based location detection...");
-          await detectLocationFromIP();
-          console.log("IP-based detection successful");
-          return; // Success - exit early
-        } catch (ipError) {
-          console.log("IP-based detection failed, trying browser geolocation:", ipError);
-        }
-
-        // Step 2: If IP fails, try browser geolocation
-        if (navigator.geolocation) {
-          try {
-            // Check if we already have permission
-            if ('permissions' in navigator && 'query' in navigator.permissions) {
-              const permissionStatus = await navigator.permissions.query({
-                name: "geolocation" as PermissionName
-              });
-
-              if (permissionStatus.state === "granted") {
-                console.log("Browser geolocation permission granted, using GPS");
-                await detectCurrentLocation();
-                return;
-              } else if (permissionStatus.state === "denied") {
-                console.log("Browser geolocation permission denied");
-                toast({
-                  title: "Location access denied",
-                  description: "Please enable location in your browser settings for accurate weather data",
-                  variant: "destructive",
-                });
-                return;
-              }
-            }
-
-            // Permission state is "prompt" - show user a helpful message
-            console.log("Browser geolocation permission not yet granted");
-            toast({
-              title: "Enable location for better accuracy?",
-              description: "Click 'Detect Location' above to get precise weather data for your area",
-            });
-
-          } catch (error) {
-            console.log("Browser geolocation check failed:", error);
-            toast({
-              title: "Location detection available",
-              description: "Click 'Detect Location' to get weather for your area",
-            });
-          }
-        } else {
-          console.log("Browser geolocation not supported");
-          toast({
-            title: "Location services not supported",
-            description: "Please add your location manually from the preferences",
-            variant: "destructive",
-          });
-        }
-      };
-
-      smartLocationDetection();
+          // If permission is 'denied' or 'prompt', don't auto-detect to avoid annoying the user
+        })
+        .catch(() => {
+          // Permissions API not supported, don't auto-detect
+          // console.log("Permissions API not supported");
+        });
     }
   }, [activeLocation, isLoading, hasAttemptedAutoDetect]);
 
-  // Smart location caching (like professional apps)
+  // Save active location to localStorage whenever it changes
   useEffect(() => {
     if (activeLocation) {
-      // Cache the location with timestamp for smarter future detection
-      const locationData = {
-        location: activeLocation,
-        timestamp: Date.now(),
-        source: detectedLocationData ? 'gps' : 'ip', // Track how we got this location
-        coordinates: detectedCoordinates
-      };
-      localStorage.setItem("weatherActiveLocation", JSON.stringify(locationData));
+      localStorage.setItem("weatherActiveLocation", activeLocation);
     } else {
       // Clear localStorage if no active location
       localStorage.removeItem("weatherActiveLocation");
     }
-  }, [activeLocation, detectedLocationData, detectedCoordinates]);
+  }, [activeLocation]);
 
   // Validate and set active location when preferences load
   useEffect(() => {
@@ -1186,14 +1018,10 @@ export default function WeatherPage() {
                                 Select a saved location
                               </option>
                               {preferences.locations.map((location) => {
-                                // Parse location format: "CityName|GeoPath" or legacy "CityName"
-                                const [cityName, geoPath] = location.includes('|') 
-                                  ? location.split('|')
-                                  : [extractCityName(location), null];
-                                
+                                const cityName = extractCityName(location);
                                 return (
                                   <option key={cityName} value={cityName}>
-                                    {geoPath ? `${cityName} (${geoPath})` : cityName}
+                                    {cityName}
                                   </option>
                                 );
                               })}

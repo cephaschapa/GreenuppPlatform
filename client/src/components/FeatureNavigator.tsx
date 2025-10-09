@@ -72,11 +72,11 @@ const FeatureNavigator = () => {
         {/* Features Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {features.map((feature, index) => (
-            <motion.div
+        <motion.div
               key={feature.name}
               initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
               <Card className="h-full border-2 border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-600 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300 hover:scale-105">
@@ -85,24 +85,24 @@ const FeatureNavigator = () => {
                     className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${feature.gradient} p-3 shadow-lg`}
                   >
                     <feature.icon className="w-full h-full text-white" />
-                  </div>
+                          </div>
                   <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1">
-                    {feature.name}
-                  </h3>
+                            {feature.name}
+                          </h3>
                   <p className="text-sm text-green-600 dark:text-green-400 font-medium mb-3">
-                    {feature.nameLocal}
-                  </p>
+                            {feature.nameLocal}
+                          </p>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 leading-relaxed">
-                    {feature.description}
-                  </p>
+                        {feature.description}
+                      </p>
                   <div className="flex items-center justify-center gap-2 text-xs font-semibold text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-950/30 rounded-lg py-2 px-3">
                     <CheckCircle className="w-4 h-4" />
                     {feature.benefit}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                </motion.div>
+            ))}
         </div>
 
         {/* Bottom CTA */}
@@ -121,8 +121,8 @@ const FeatureNavigator = () => {
               <p className="text-green-100 mb-6 text-lg">
                 Start earning more with smarter farming technology
               </p>
-              <Button
-                size="lg"
+                <Button
+                  size="lg"
                 className="bg-white text-green-700 hover:bg-green-50 font-bold px-10 py-6 text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
                 asChild
               >
@@ -130,7 +130,7 @@ const FeatureNavigator = () => {
                   Get Started Now - K50/month
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </a>
-              </Button>
+                </Button>
             </CardContent>
           </Card>
         </motion.div>

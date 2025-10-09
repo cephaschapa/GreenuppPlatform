@@ -2,12 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue 
+  SelectValue
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +28,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { insertFarmerProfileSchema, type InsertFarmerProfile } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import GoogleLocationDetector, { type DetectedLocation } from "@/components/GoogleLocationDetector";
 
 // Extend the farmer profile schema with validation rules
 const farmerProfileSchema = insertFarmerProfileSchema.extend({
@@ -109,7 +110,8 @@ function ProfileForm() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  
+  const [detectedLocation, setDetectedLocation] = useState<DetectedLocation | null>(null);
+
   const form = useForm<FarmerProfileFormValues>({
     resolver: zodResolver(farmerProfileSchema.omit({ mainCrops: true })),
     defaultValues: {
@@ -123,6 +125,17 @@ function ProfileForm() {
       establishedYear: undefined,
     },
   });
+
+  const handleLocationDetected = (location: DetectedLocation) => {
+    setDetectedLocation(location);
+
+    // Auto-fill the location field with detected address
+    if (location.address) {
+      form.setValue("farmLocation", location.address);
+    } else if (location.city && location.country) {
+      form.setValue("farmLocation", `${location.city}, ${location.country}`);
+    }
+  };
   
   const createProfile = useMutation({
     mutationFn: async (data: InsertFarmerProfile) => {
@@ -203,6 +216,15 @@ function ProfileForm() {
                     <FormControl>
                       <Input placeholder="City, State/Province, Country" {...field} />
                     </FormControl>
+                    <FormDescription className="mb-2">
+                      Use auto-detection for accurate location or enter manually
+                    </FormDescription>
+                    <GoogleLocationDetector
+                      onLocationDetected={handleLocationDetected}
+                      buttonText="Auto-Detect Farm Location"
+                      showDetails={true}
+                      className="mt-2"
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
