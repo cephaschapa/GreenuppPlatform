@@ -29,15 +29,21 @@ async function getIPCoordinates(
   ip: string
 ): Promise<{ lat: number; lon: number }> {
   try {
-    // Use a free IP geolocation service
+    // Use a more reliable IP geolocation service (ipapi.co)
     const response = await axios.get(
-      `http://ip-api.com/json/${ip}?fields=lat,lon`
+      `https://ipapi.co/${ip}/json/`,
+      {
+        timeout: 5000, // 5 second timeout
+        headers: {
+          'User-Agent': 'Greenupp/1.0'
+        }
+      }
     );
 
-    if (response.data && response.data.lat && response.data.lon) {
+    if (response.data && response.data.latitude && response.data.longitude) {
       return {
-        lat: response.data.lat,
-        lon: response.data.lon,
+        lat: response.data.latitude,
+        lon: response.data.longitude,
       };
     }
 
@@ -45,10 +51,27 @@ async function getIPCoordinates(
   } catch (error) {
     logger.error(`Error getting IP coordinates for ${ip}:`, error);
 
-    // Fallback: return default coordinates (this should rarely happen)
+    // Try fallback service if first one fails
+    try {
+      const fallbackResponse = await axios.get(
+        `http://ip-api.com/json/${ip}?fields=lat,lon`,
+        { timeout: 5000 }
+      );
+
+      if (fallbackResponse.data && fallbackResponse.data.lat && fallbackResponse.data.lon) {
+        return {
+          lat: fallbackResponse.data.lat,
+          lon: fallbackResponse.data.lon,
+        };
+      }
+    } catch (fallbackError) {
+      logger.error(`Fallback IP geolocation also failed for ${ip}:`, fallbackError);
+    }
+
+    // Fallback: return default coordinates (Zambia center)
     return {
-      lat: 0,
-      lon: 0,
+      lat: -15.3875, // Lusaka coordinates
+      lon: 28.3228,
     };
   }
 }
@@ -68,7 +91,15 @@ async function reverseGeocodeCoordinates(
 }> {
   try {
     if (!OPENWEATHER_API_KEY) {
-      throw new Error("OpenWeather API key not configured");
+      logger.warn("OpenWeather API key not configured, using fallback location");
+      // Return default Zambia location
+      return {
+        name: "Lusaka",
+        country: "Zambia",
+        state: "Lusaka Province",
+        city: "Lusaka",
+        geoPath: "Lusaka, Lusaka Province, Zambia",
+      };
     }
 
     const response = await axios.get(`${OPENWEATHER_GEO_URL}/reverse`, {
@@ -78,6 +109,7 @@ async function reverseGeocodeCoordinates(
         limit: 1,
         appid: OPENWEATHER_API_KEY,
       },
+      timeout: 5000,
     });
 
     if (response.data && response.data.length > 0) {
@@ -103,6 +135,19 @@ async function reverseGeocodeCoordinates(
     }
   } catch (error) {
     logger.error("Error reverse geocoding coordinates:", error);
+
+    // Provide better fallback based on coordinates
+    // If coordinates look like they're in Zambia, provide Zambia location
+    if (lat >= -18 && lat <= -8 && lon >= 22 && lon <= 34) {
+      return {
+        name: "Lusaka",
+        country: "Zambia",
+        state: "Lusaka Province",
+        city: "Lusaka",
+        geoPath: "Lusaka, Lusaka Province, Zambia",
+      };
+    }
+
     return {
       name: "Unknown",
       country: "Unknown",
