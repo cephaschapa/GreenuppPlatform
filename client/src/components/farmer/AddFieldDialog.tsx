@@ -23,7 +23,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import FieldLocationPicker, { FieldLocationData } from "./FieldLocationPicker";
 import FieldBoundaryPicker, { FieldBoundaryData } from "./FieldBoundaryPicker";
-import GoogleLocationDetector, { type DetectedLocation } from "@/components/GoogleLocationDetector";
+import LocationAutoDetect, { type DetectedLocation } from "@/components/LocationAutoDetect";
 
 interface AddFieldDialogProps {
   trigger?: React.ReactNode;
@@ -306,9 +306,9 @@ export default function AddFieldDialog({ trigger }: AddFieldDialogProps) {
                 placeholder="Enter location description"
               />
               <div className="mt-2">
-                <GoogleLocationDetector
+                <LocationAutoDetect
                   onLocationDetected={handleLocationDetected}
-                  buttonText="Auto-Detect Field Location"
+                  buttonText="🌍 Detect Field Location"
                   showDetails={true}
                   className="w-full"
                 />

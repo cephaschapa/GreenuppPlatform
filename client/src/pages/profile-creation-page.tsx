@@ -28,7 +28,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { insertFarmerProfileSchema, type InsertFarmerProfile } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import GoogleLocationDetector, { type DetectedLocation } from "@/components/GoogleLocationDetector";
+import LocationAutoDetect, { type DetectedLocation } from "@/components/LocationAutoDetect";
 
 // Extend the farmer profile schema with validation rules
 const farmerProfileSchema = insertFarmerProfileSchema.extend({
@@ -217,11 +217,11 @@ function ProfileForm() {
                       <Input placeholder="City, State/Province, Country" {...field} />
                     </FormControl>
                     <FormDescription className="mb-2">
-                      Use auto-detection for accurate location or enter manually
+                      Click below to automatically detect your location
                     </FormDescription>
-                    <GoogleLocationDetector
+                    <LocationAutoDetect
                       onLocationDetected={handleLocationDetected}
-                      buttonText="Auto-Detect Farm Location"
+                      buttonText="🌍 Detect My Farm Location"
                       showDetails={true}
                       className="mt-2"
                     />
