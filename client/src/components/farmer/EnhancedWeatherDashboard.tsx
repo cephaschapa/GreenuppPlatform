@@ -276,22 +276,22 @@ export function EnhancedWeatherDashboard({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Current Weather Overview */}
       <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl font-bold">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mobile-p-4">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-lg sm:text-2xl font-bold truncate">
               {weatherData.location}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs sm:text-sm">
               Updated{" "}
               {new Date(
                 weatherData.current.timestamp * 1000
               ).toLocaleTimeString()}
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               variant="outline"
               size="icon"
@@ -306,14 +306,14 @@ export function EnhancedWeatherDashboard({
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <CardContent className="mobile-p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             {/* Main Temperature Display */}
-            <div className="flex flex-col items-center justify-center p-6 bg-white/50 dark:bg-white/10 rounded-lg">
-              <div className="text-6xl font-bold mb-2">
+            <div className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white/50 dark:bg-white/10 rounded-lg">
+              <div className="text-4xl sm:text-6xl font-bold mb-2">
                 {formatTemperature(weatherData.current.temp)}
               </div>
-              <div className="text-xl text-muted-foreground mb-4">
+              <div className="text-base sm:text-xl text-muted-foreground mb-3 sm:mb-4 text-center">
                 {weatherData.current.description}
               </div>
               <div className="flex items-center gap-2">
@@ -322,49 +322,49 @@ export function EnhancedWeatherDashboard({
             </div>
 
             {/* Key Weather Metrics */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col items-center p-4 bg-white/50 dark:bg-white/10 rounded-lg">
-                <Thermometer className="h-8 w-8 mb-2 text-red-500" />
-                <div className="text-sm text-muted-foreground">Feels Like</div>
-                <div className="text-xl font-semibold">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="flex flex-col items-center p-3 sm:p-4 bg-white/50 dark:bg-white/10 rounded-lg">
+                <Thermometer className="h-6 w-6 sm:h-8 sm:w-8 mb-1 sm:mb-2 text-red-500" />
+                <div className="text-xs sm:text-sm text-muted-foreground text-center">Feels Like</div>
+                <div className="text-base sm:text-xl font-semibold">
                   {formatTemperature(weatherData.current.feelsLike)}
                 </div>
               </div>
 
-              <div className="flex flex-col items-center p-4 bg-white/50 dark:bg-white/10 rounded-lg">
-                <Droplets className="h-8 w-8 mb-2 text-blue-500" />
-                <div className="text-sm text-muted-foreground">Humidity</div>
-                <div className="text-xl font-semibold">
+              <div className="flex flex-col items-center p-3 sm:p-4 bg-white/50 dark:bg-white/10 rounded-lg">
+                <Droplets className="h-6 w-6 sm:h-8 sm:w-8 mb-1 sm:mb-2 text-blue-500" />
+                <div className="text-xs sm:text-sm text-muted-foreground text-center">Humidity</div>
+                <div className="text-base sm:text-xl font-semibold">
                   {weatherData.current.humidity}%
                 </div>
               </div>
 
-              <div className="flex flex-col items-center p-4 bg-white/50 dark:bg-white/10 rounded-lg">
-                <Wind className="h-8 w-8 mb-2 text-teal-500" />
-                <div className="text-sm text-muted-foreground">Wind</div>
-                <div className="text-xl font-semibold">
+              <div className="flex flex-col items-center p-3 sm:p-4 bg-white/50 dark:bg-white/10 rounded-lg">
+                <Wind className="h-6 w-6 sm:h-8 sm:w-8 mb-1 sm:mb-2 text-teal-500" />
+                <div className="text-xs sm:text-sm text-muted-foreground text-center">Wind</div>
+                <div className="text-base sm:text-xl font-semibold">
                   {weatherData.current.windSpeed} km/h
                 </div>
               </div>
 
-              <div className="flex flex-col items-center p-4 bg-white/50 dark:bg-white/10 rounded-lg">
-                <Eye className="h-8 w-8 mb-2 text-gray-500" />
-                <div className="text-sm text-muted-foreground">Visibility</div>
-                <div className="text-xl font-semibold">
+              <div className="flex flex-col items-center p-3 sm:p-4 bg-white/50 dark:bg-white/10 rounded-lg">
+                <Eye className="h-6 w-6 sm:h-8 sm:w-8 mb-1 sm:mb-2 text-gray-500" />
+                <div className="text-xs sm:text-sm text-muted-foreground text-center">Visibility</div>
+                <div className="text-base sm:text-xl font-semibold">
                   {weatherData.current.visibility / 1000} km
                 </div>
               </div>
             </div>
 
             {/* Agricultural Weather Indices */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Agricultural Indices</h3>
+            <div className="space-y-3 sm:space-y-4">
+              <h3 className="font-semibold text-base sm:text-lg">Agricultural Indices</h3>
               {agriculturalIndices && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-white/50 dark:bg-white/10 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-5 w-5 text-blue-500" />
-                      <span className="text-sm">Frost Risk</span>
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="flex items-center justify-between p-2 sm:p-3 bg-white/50 dark:bg-white/10 rounded-lg gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm truncate">Frost Risk</span>
                     </div>
                     <Badge
                       variant={
@@ -372,15 +372,16 @@ export function EnhancedWeatherDashboard({
                           ? "destructive"
                           : "secondary"
                       }
+                      className="text-xs flex-shrink-0"
                     >
                       {agriculturalIndices.frostRisk}
                     </Badge>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-white/50 dark:bg-white/10 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Droplets className="h-5 w-5 text-orange-500" />
-                      <span className="text-sm">Drought Risk</span>
+                  <div className="flex items-center justify-between p-2 sm:p-3 bg-white/50 dark:bg-white/10 rounded-lg gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <Droplets className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm truncate">Drought Risk</span>
                     </div>
                     <Badge
                       variant={
@@ -388,15 +389,16 @@ export function EnhancedWeatherDashboard({
                           ? "destructive"
                           : "secondary"
                       }
+                      className="text-xs flex-shrink-0"
                     >
                       {agriculturalIndices.droughtRisk}
                     </Badge>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-white/50 dark:bg-white/10 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Leaf className="h-5 w-5 text-green-500" />
-                      <span className="text-sm">Pest Pressure</span>
+                  <div className="flex items-center justify-between p-2 sm:p-3 bg-white/50 dark:bg-white/10 rounded-lg gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <Leaf className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm truncate">Pest Pressure</span>
                     </div>
                     <Badge
                       variant={
@@ -404,15 +406,16 @@ export function EnhancedWeatherDashboard({
                           ? "destructive"
                           : "secondary"
                       }
+                      className="text-xs flex-shrink-0"
                     >
                       {agriculturalIndices.pestPressure}
                     </Badge>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-white/50 dark:bg-white/10 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Umbrella className="h-5 w-5 text-blue-500" />
-                      <span className="text-sm">Irrigation Need</span>
+                  <div className="flex items-center justify-between p-2 sm:p-3 bg-white/50 dark:bg-white/10 rounded-lg gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <Umbrella className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm truncate">Irrigation Need</span>
                     </div>
                     <Badge
                       variant={
@@ -420,6 +423,7 @@ export function EnhancedWeatherDashboard({
                           ? "destructive"
                           : "secondary"
                       }
+                      className="text-xs flex-shrink-0"
                     >
                       {agriculturalIndices.irrigationNeed}
                     </Badge>
@@ -432,44 +436,44 @@ export function EnhancedWeatherDashboard({
       </Card>
 
       {/* Detailed Weather Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* UV Index */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Zap className="h-4 w-4" />
+          <CardHeader className="pb-2 mobile-p-4">
+            <CardTitle className="text-xs sm:text-sm flex items-center gap-2">
+              <Zap className="h-3 w-3 sm:h-4 sm:w-4" />
               UV Index
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">
+          <CardContent className="mobile-p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold mb-2">
               {weatherData.current.uv}
             </div>
             {uvRisk && (
-              <Badge className={`${uvRisk.bg} ${uvRisk.color} border-0`}>
+              <Badge className={`${uvRisk.bg} ${uvRisk.color} border-0 text-xs`}>
                 {uvRisk.level}
               </Badge>
             )}
             <Progress
               value={(weatherData.current.uv / 11) * 100}
-              className="mt-2"
+              className="mt-2 h-1.5 sm:h-2"
             />
           </CardContent>
         </Card>
 
         {/* Pressure */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Gauge className="h-4 w-4" />
+          <CardHeader className="pb-2 mobile-p-4">
+            <CardTitle className="text-xs sm:text-sm flex items-center gap-2">
+              <Gauge className="h-3 w-3 sm:h-4 sm:w-4" />
               Pressure
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">
+          <CardContent className="mobile-p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold mb-2">
               {weatherData.current.pressure} hPa
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               {weatherData.current.pressure > 1013 ? "High" : "Low"} pressure
             </div>
           </CardContent>
@@ -477,35 +481,35 @@ export function EnhancedWeatherDashboard({
 
         {/* Cloud Cover */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Cloud className="h-4 w-4" />
+          <CardHeader className="pb-2 mobile-p-4">
+            <CardTitle className="text-xs sm:text-sm flex items-center gap-2">
+              <Cloud className="h-3 w-3 sm:h-4 sm:w-4" />
               Cloud Cover
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">
+          <CardContent className="mobile-p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold mb-2">
               {weatherData.current.cloudCover}%
             </div>
-            <Progress value={weatherData.current.cloudCover} className="mt-2" />
+            <Progress value={weatherData.current.cloudCover} className="mt-2 h-1.5 sm:h-2" />
           </CardContent>
         </Card>
 
         {/* Wind Category */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Wind className="h-4 w-4" />
+          <CardHeader className="pb-2 mobile-p-4">
+            <CardTitle className="text-xs sm:text-sm flex items-center gap-2">
+              <Wind className="h-3 w-3 sm:h-4 sm:w-4" />
               Wind Category
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">
+          <CardContent className="mobile-p-4 pt-0">
+            <div className="text-xl sm:text-2xl font-bold mb-2">
               {weatherData.current.windSpeed} km/h
             </div>
             {windCategory && (
               <Badge
-                className={`${windCategory.bg} ${windCategory.color} border-0`}
+                className={`${windCategory.bg} ${windCategory.color} border-0 text-xs`}
               >
                 {windCategory.category}
               </Badge>
@@ -517,27 +521,27 @@ export function EnhancedWeatherDashboard({
       {/* Weather Alerts */}
       {weatherData.alerts && weatherData.alerts.length > 0 && (
         <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
-          <CardHeader>
-            <CardTitle className="text-red-800 dark:text-red-200 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
+          <CardHeader className="mobile-p-4">
+            <CardTitle className="text-red-800 dark:text-red-200 flex items-center gap-2 text-base sm:text-lg">
+              <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />
               Weather Alerts
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-32">
+          <CardContent className="mobile-p-4">
+            <ScrollArea className="h-32 -mx-4 px-4 sm:mx-0 sm:px-0">
               {weatherData.alerts.map((alert, index) => (
                 <div
                   key={index}
-                  className="mb-4 p-3 bg-white/50 dark:bg-white/10 rounded-lg"
+                  className="mb-3 sm:mb-4 p-2 sm:p-3 bg-white/50 dark:bg-white/10 rounded-lg"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="destructive">{alert.severity}</Badge>
-                    <span className="text-sm text-muted-foreground">
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    <Badge variant="destructive" className="text-xs">{alert.severity}</Badge>
+                    <span className="text-xs sm:text-sm text-muted-foreground">
                       {new Date(alert.start * 1000).toLocaleDateString()}
                     </span>
                   </div>
-                  <h4 className="font-semibold mb-1">{alert.event}</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <h4 className="font-semibold mb-1 text-sm sm:text-base">{alert.event}</h4>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     {alert.description}
                   </p>
                 </div>
@@ -549,36 +553,36 @@ export function EnhancedWeatherDashboard({
 
       {/* 5-Day Forecast */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+        <CardHeader className="mobile-p-4">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
             5-Day Forecast
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <CardContent className="mobile-p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {weatherData.forecast.slice(0, 5).map((day, index) => (
               <div
                 key={index}
-                className="flex flex-col items-center p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                className="flex flex-col items-center p-3 sm:p-4 border rounded-lg hover:bg-muted/50 transition-colors"
               >
-                <div className="font-medium mb-2 text-center">
+                <div className="font-medium mb-2 text-center text-sm sm:text-base">
                   {day.dayOfWeek}
                   <br />
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-xs sm:text-sm text-muted-foreground">
                     {day.date}
                   </span>
                 </div>
-                <div className="text-3xl mb-3">
+                <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">
                   {getWeatherIcon(day.condition)}
                 </div>
-                <div className="text-lg font-semibold">
+                <div className="text-base sm:text-lg font-semibold">
                   {formatTemperature(day.temp.max)}
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-xs sm:text-sm text-muted-foreground">
                   {formatTemperature(day.temp.min)}
                 </div>
-                <div className="mt-2 text-sm text-center">
+                <div className="mt-2 text-xs sm:text-sm text-center line-clamp-2">
                   {day.description}
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground flex items-center gap-1">
