@@ -429,28 +429,28 @@ export function setupAuth(app: Express) {
 
       // Send verification email in background (non-blocking)
       const sendVerificationEmailAsync = async () => {
-        try {
-          const verificationToken =
-            await AuthService.generateEmailVerificationToken(user.id);
+      try {
+        const verificationToken =
+          await AuthService.generateEmailVerificationToken(user.id);
 
-          // Determine frontend URL for verification link
-          const isDevelopment = process.env.NODE_ENV !== "production";
-          let frontendUrl;
+        // Determine frontend URL for verification link
+        const isDevelopment = process.env.NODE_ENV !== "production";
+        let frontendUrl;
 
-          if (isDevelopment) {
-            const protocol = req.secure ? "https" : "http";
-            const host = req.get("host") || "localhost:3001";
-            frontendUrl =
-              host.includes("localhost") || host.includes("127.0.0.1")
-                ? "http://localhost:3001"
-                : `${protocol}://${host}`;
-          } else {
-            frontendUrl =
-              process.env.FRONTEND_URL ||
-              "https://greenuppplatform-production.up.railway.app";
-          }
+        if (isDevelopment) {
+          const protocol = req.secure ? "https" : "http";
+          const host = req.get("host") || "localhost:3001";
+          frontendUrl =
+            host.includes("localhost") || host.includes("127.0.0.1")
+              ? "http://localhost:3001"
+              : `${protocol}://${host}`;
+        } else {
+          frontendUrl =
+            process.env.FRONTEND_URL ||
+            "https://greenuppplatform-production.up.railway.app";
+        }
 
-          const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
+        const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
           
           // Set a timeout for email sending
           await Promise.race([
@@ -461,8 +461,8 @@ export function setupAuth(app: Express) {
           ]);
           
           logger.info(`Verification email sent to ${user.email}`);
-        } catch (emailError) {
-          logger.error("Failed to send verification email:", emailError);
+      } catch (emailError) {
+        logger.error("Failed to send verification email:", emailError);
           // Email failure doesn't affect registration - user is already created
         }
       };
