@@ -77,14 +77,25 @@ export async function getHyperlocalWeather(
       const geoData = await geocodeLocation(query.location);
 
       // Try to find nearest Zambian location to these coordinates
-      zambianLocation = findNearestLocation(geoData.lat, geoData.lon);
+      const nearestResult = findNearestLocation(geoData.lat, geoData.lon);
 
-      if (zambianLocation) {
+      if (nearestResult) {
+        zambianLocation = nearestResult.location;
+        const distance = nearestResult.distance;
+        
         logger.info(
-          `Found nearest Zambian location: ${zambianLocation.name}, ${zambianLocation.city}`
+          `Found nearest Zambian location: ${zambianLocation.name}, ${zambianLocation.city} (${distance.toFixed(2)}km away)`
         );
         source = "zambian_database";
-        precision = "approximate";
+        
+        // Set precision based on distance
+        if (distance < 0.5) {
+          precision = zambianLocation.type === "compound" || zambianLocation.type === "neighborhood" ? "neighborhood" : "city";
+        } else if (distance < 2) {
+          precision = "city";
+        } else {
+          precision = "approximate";
+        }
       }
 
       const weatherData = await getWeatherData(query.location);
@@ -109,17 +120,36 @@ export async function getHyperlocalWeather(
     }
   }
 
-  // Strategy 2: Use coordinates directly
+  // Strategy 2: Use coordinates directly (for GPS auto-detect)
   if (query.lat !== undefined && query.lon !== undefined) {
     // Find nearest Zambian location to these coordinates
-    zambianLocation = findNearestLocation(query.lat, query.lon);
+    const nearestResult = findNearestLocation(query.lat, query.lon);
 
-    if (zambianLocation) {
+    if (nearestResult) {
+      zambianLocation = nearestResult.location;
+      const distance = nearestResult.distance;
+      
       logger.info(
-        `Found nearest Zambian location to coordinates: ${zambianLocation.name}, ${zambianLocation.city}`
+        `Found nearest Zambian location to GPS coordinates: ${zambianLocation.name}, ${zambianLocation.city} (${distance.toFixed(2)}km away)`
       );
       source = "zambian_database";
-      precision = "neighborhood";
+      
+      // Set precision based on distance from detected GPS to database location
+      if (distance < 0.5) {
+        // Within 500m - very precise
+        precision = zambianLocation.type === "compound" || zambianLocation.type === "neighborhood" 
+          ? "neighborhood" 
+          : "city";
+        logger.info(`🎯 High precision match - ${distance.toFixed(2)}km away`);
+      } else if (distance < 2) {
+        // Within 2km - city level
+        precision = "city";
+        logger.info(`📍 City-level match - ${distance.toFixed(2)}km away`);
+      } else {
+        // More than 2km - approximate
+        precision = "approximate";
+        logger.info(`📌 Approximate match - ${distance.toFixed(2)}km away`);
+      }
     } else {
       // Fallback: reverse geocode with OpenWeather
       try {
@@ -133,6 +163,7 @@ export async function getHyperlocalWeather(
         };
         source = "openweather_geocode";
         precision = "city";
+        logger.info(`Using OpenWeather reverse geocode: ${geoData.name}`);
       } catch (error) {
         logger.error("Failed to reverse geocode coordinates", error);
         throw new Error("Unable to find weather data for coordinates");

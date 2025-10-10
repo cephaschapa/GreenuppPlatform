@@ -300,14 +300,17 @@ export default function WeatherPage() {
       const position = await new Promise<GeolocationPosition>(
         (resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 60000, // 1 minute cache
+            enableHighAccuracy: true, // Request highest accuracy
+            timeout: 15000, // Increased timeout for better accuracy
+            maximumAge: 0, // Don't use cached position - get fresh GPS data
           });
         }
       );
 
-      const { latitude, longitude } = position.coords;
+      const { latitude, longitude, accuracy } = position.coords;
+      
+      // Log accuracy for debugging
+      console.log(`📍 GPS Position: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`);
 
       // Store the coordinates
       setDetectedCoordinates({ lat: latitude, lon: longitude });

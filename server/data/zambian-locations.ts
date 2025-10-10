@@ -635,11 +635,12 @@ export function getLocationsByProvince(province: string): ZambianLocation[] {
 
 /**
  * Find nearest location to given coordinates
+ * Returns location with distance information
  */
 export function findNearestLocation(
   lat: number,
   lon: number
-): ZambianLocation | null {
+): { location: ZambianLocation; distance: number } | null {
   if (zambianLocations.length === 0) return null;
 
   let nearest = zambianLocations[0];
@@ -664,7 +665,10 @@ export function findNearestLocation(
     }
   }
 
-  return nearest;
+  return {
+    location: nearest,
+    distance: minDistance, // Distance in km
+  };
 }
 
 /**
