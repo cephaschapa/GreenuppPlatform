@@ -1107,14 +1107,14 @@ export default function WeatherPage() {
 
           <TabsContent value="climate">
             <Card>
-              <CardHeader>
-                <CardTitle>Climate Analysis</CardTitle>
-                <CardDescription>
+              <CardHeader className="mobile-p-4">
+                <CardTitle className="mobile-text-lg">Climate Analysis</CardTitle>
+                <CardDescription className="mobile-text-sm">
                   Climate data and seasonal patterns for{" "}
                   {activeLocation || "your location"}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="mobile-p-4">
                 {!activeLocation ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <p>No location selected.</p>
@@ -1403,66 +1403,69 @@ export default function WeatherPage() {
 
                           {/* Monthly Climate Data */}
                           <Card>
-                            <CardHeader>
-                              <CardTitle className="text-lg">
+                            <CardHeader className="mobile-p-4">
+                              <CardTitle className="text-lg mobile-text-lg">
                                 Monthly Climate Averages
                               </CardTitle>
-                              <CardDescription>
+                              <CardDescription className="mobile-text-sm">
                                 Temperature, precipitation, and growing degree
                                 days by month
                               </CardDescription>
                             </CardHeader>
-                            <CardContent>
-                              <div className="overflow-x-auto">
-                                <table className="w-full min-w-[640px] table-auto">
-                                  <thead>
-                                    <tr className="border-b">
-                                      <th className="text-left px-4 py-2 font-medium">
-                                        Month
-                                      </th>
-                                      <th className="text-center px-4 py-2 font-medium">
-                                        Avg. Temp
-                                      </th>
-                                      <th className="text-center px-4 py-2 font-medium">
-                                        Precipitation
-                                      </th>
-                                      <th className="text-center px-4 py-2 font-medium">
-                                        Growing Degree Days
-                                      </th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {climateData.monthlyAverages.map(
-                                      (month, index) => (
-                                        <tr
-                                          key={index}
-                                          className="border-b last:border-0 hover:bg-muted/50"
-                                        >
-                                          <td className="px-4 py-2">
-                                            {month.month}
-                                          </td>
-                                          <td className="px-4 py-2 text-center">
-                                            {formatTemperature(
-                                              month.averageTemp
-                                            )}
-                                          </td>
-                                          <td className="px-4 py-2 text-center">
-                                            {month.averagePrecipitation.toFixed(
-                                              1
-                                            )}{" "}
-                                            mm
-                                          </td>
-                                          <td className="px-4 py-2 text-center">
-                                            {month.growingDegreeDays.toFixed(0)}
-                                          </td>
-                                        </tr>
-                                      )
-                                    )}
-                                  </tbody>
-                                </table>
-                              </div>
+                            <CardContent className="mobile-p-4">
+                              <ScrollArea className="w-full">
+                                <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                                  <table className="w-full min-w-[640px] table-auto">
+                                    <thead>
+                                      <tr className="border-b">
+                                        <th className="text-left px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
+                                          Month
+                                        </th>
+                                        <th className="text-center px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
+                                          Avg. Temp
+                                        </th>
+                                        <th className="text-center px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
+                                          Precip.
+                                        </th>
+                                        <th className="text-center px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
+                                          <span className="hidden sm:inline">Growing Degree Days</span>
+                                          <span className="sm:hidden">GDD</span>
+                                        </th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {climateData.monthlyAverages.map(
+                                        (month, index) => (
+                                          <tr
+                                            key={index}
+                                            className="border-b last:border-0 hover:bg-muted/50"
+                                          >
+                                            <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">
+                                              {month.month}
+                                            </td>
+                                            <td className="px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">
+                                              {formatTemperature(
+                                                month.averageTemp
+                                              )}
+                                            </td>
+                                            <td className="px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">
+                                              {month.averagePrecipitation.toFixed(
+                                                1
+                                              )}{" "}
+                                              mm
+                                            </td>
+                                            <td className="px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">
+                                              {month.growingDegreeDays.toFixed(0)}
+                                            </td>
+                                          </tr>
+                                        )
+                                      )}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </ScrollArea>
                             </CardContent>
-                            <CardFooter className="bg-muted/30 text-sm text-muted-foreground">
+                            <CardFooter className="bg-muted/30 text-xs sm:text-sm text-muted-foreground mobile-p-4">
                               <div>
                                 Growing Degree Days (GDD) indicate heat
                                 accumulation for crop growth (base 10°C).
@@ -1480,14 +1483,14 @@ export default function WeatherPage() {
 
           <TabsContent value="recommendations">
             <Card>
-              <CardHeader>
-                <CardTitle>Crop Recommendations</CardTitle>
-                <CardDescription>
+              <CardHeader className="mobile-p-4">
+                <CardTitle className="mobile-text-lg">Crop Recommendations</CardTitle>
+                <CardDescription className="mobile-text-sm">
                   Crops that are suitable for the climate in{" "}
                   {activeLocation || "your location"}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="mobile-p-4">
                 {!activeLocation ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <p>No location selected.</p>
@@ -1527,45 +1530,45 @@ export default function WeatherPage() {
                             />
                           </div>
 
-                          <h3 className="text-lg font-medium">
+                          <h3 className="text-lg font-medium mobile-text-lg mb-4">
                             AI-Generated Crop Recommendations
                           </h3>
-                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                             {cropRecommendations
                               .slice(0, 6)
                               .map((crop, index) => (
                                 <div
                                   key={index}
-                                  className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
+                                  className="border rounded-lg p-3 sm:p-4 hover:bg-muted/50 transition-colors"
                                 >
-                                  <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                      <h3 className="font-semibold text-lg">
+                                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0 mb-3 sm:mb-4">
+                                    <div className="flex-1 min-w-0">
+                                      <h3 className="font-semibold text-base sm:text-lg truncate">
                                         {crop.cropName}
                                       </h3>
-                                      <p className="text-sm text-muted-foreground">
+                                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
                                         Variety: {crop.variety}
                                       </p>
                                     </div>
                                     <HoverCard>
                                       <HoverCardTrigger asChild>
-                                        <div className="flex items-center gap-1 bg-primary/10 py-1 px-2 rounded">
-                                          <BarChart4 className="h-4 w-4" />
-                                          <span className="font-medium">
+                                        <div className="flex items-center gap-1 bg-primary/10 py-1 px-2 rounded flex-shrink-0 w-fit">
+                                          <BarChart4 className="h-3 w-3 sm:h-4 sm:w-4" />
+                                          <span className="font-medium text-xs sm:text-sm">
                                             {crop.suitabilityScore}/100
                                           </span>
                                         </div>
                                       </HoverCardTrigger>
-                                      <HoverCardContent className="w-80">
-                                        <div className="font-medium mb-1">
+                                      <HoverCardContent className="w-72 sm:w-80">
+                                        <div className="font-medium mb-1 text-sm sm:text-base">
                                           Suitability Score Explained
                                         </div>
-                                        <p className="text-sm text-muted-foreground mb-2">
+                                        <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                                           This score represents how well the
                                           crop is suited to your local climate
                                           and soil conditions:
                                         </p>
-                                        <ul className="text-sm space-y-1">
+                                        <ul className="text-xs sm:text-sm space-y-1">
                                           <li>• 80-100: Excellent match</li>
                                           <li>• 60-79: Good match</li>
                                           <li>• 40-59: Fair match</li>
@@ -1575,33 +1578,33 @@ export default function WeatherPage() {
                                     </HoverCard>
                                   </div>
 
-                                  <div className="grid grid-cols-2 gap-4 mb-4">
-                                    <div className="bg-primary/5 p-3 rounded">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mb-3 sm:mb-4">
+                                    <div className="bg-primary/5 p-2 sm:p-3 rounded">
                                       <div className="text-xs text-muted-foreground">
                                         Planting Window
                                       </div>
-                                      <div className="font-medium">
+                                      <div className="font-medium text-xs sm:text-sm">
                                         {crop.optimalPlantingWindow.start} -{" "}
                                         {crop.optimalPlantingWindow.end}
                                       </div>
                                     </div>
 
-                                    <div className="bg-primary/5 p-3 rounded">
+                                    <div className="bg-primary/5 p-2 sm:p-3 rounded">
                                       <div className="text-xs text-muted-foreground">
                                         Expected Yield
                                       </div>
-                                      <div className="font-medium">
+                                      <div className="font-medium text-xs sm:text-sm">
                                         {crop.expectedYield.toFixed(1)}{" "}
                                         {crop.yieldUnit}
                                       </div>
                                     </div>
                                   </div>
 
-                                  <div className="text-sm">
+                                  <div className="text-xs sm:text-sm">
                                     <div className="font-medium mb-1">
                                       Notes:
                                     </div>
-                                    <ul className="list-disc list-inside text-muted-foreground">
+                                    <ul className="list-disc list-inside text-muted-foreground space-y-1">
                                       {crop.comments.map((comment, i) => (
                                         <li key={i}>{comment}</li>
                                       ))}
@@ -1647,34 +1650,34 @@ export default function WeatherPage() {
               {/* API Weather Alerts */}
               {weatherData?.alerts && weatherData.alerts.length > 0 && (
                 <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
-                  <CardHeader>
-                    <CardTitle className="text-red-800 dark:text-red-200 flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5" />
+                  <CardHeader className="mobile-p-4">
+                    <CardTitle className="text-red-800 dark:text-red-200 flex items-center gap-2 mobile-text-lg">
+                      <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />
                       Official Weather Alerts
                     </CardTitle>
-                    <CardDescription className="text-red-700 dark:text-red-300">
+                    <CardDescription className="text-red-700 dark:text-red-300 mobile-text-sm">
                       Severe weather alerts from meteorological services
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-64">
+                  <CardContent className="mobile-p-4">
+                    <ScrollArea className="h-64 -mx-4 px-4 sm:mx-0 sm:px-0">
                       {weatherData.alerts.map((alert, index) => (
                         <div
                           key={index}
-                          className="mb-4 p-4 bg-white/50 dark:bg-white/10 rounded-lg"
+                          className="mb-3 sm:mb-4 p-3 sm:p-4 bg-white/50 dark:bg-white/10 rounded-lg"
                         >
-                          <div className="flex items-center justify-between mb-2">
-                            <Badge variant="destructive">
+                          <div className="flex items-center justify-between mb-2 gap-2">
+                            <Badge variant="destructive" className="text-xs">
                               {alert.severity}
                             </Badge>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-xs sm:text-sm text-muted-foreground">
                               {new Date(
                                 alert.start * 1000
                               ).toLocaleDateString()}
                             </span>
                           </div>
-                          <h4 className="font-semibold mb-1">{alert.event}</h4>
-                          <p className="text-sm text-muted-foreground mb-2">
+                          <h4 className="font-semibold mb-1 text-sm sm:text-base">{alert.event}</h4>
+                          <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                             {alert.description}
                           </p>
                           <div className="text-xs text-muted-foreground">
@@ -1690,20 +1693,20 @@ export default function WeatherPage() {
 
               {/* Alert History and Statistics */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <History className="h-5 w-5" />
+                <CardHeader className="mobile-p-4">
+                  <CardTitle className="flex items-center gap-2 mobile-text-lg">
+                    <History className="h-4 w-4 sm:h-5 sm:w-5" />
                     Alert History
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="mobile-text-sm">
                     Track your weather alert activity and patterns
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="mobile-p-4">
                   <div className="text-center py-8 text-muted-foreground">
-                    <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Alert history and statistics coming soon</p>
-                    <p className="text-sm">
+                    <AlertTriangle className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-sm sm:text-base">Alert history and statistics coming soon</p>
+                    <p className="text-xs sm:text-sm">
                       Track alert triggers and response times
                     </p>
                   </div>
@@ -1714,14 +1717,14 @@ export default function WeatherPage() {
 
           <TabsContent value="historical">
             <Card>
-              <CardHeader>
-                <CardTitle>Historical Weather Data</CardTitle>
-                <CardDescription>
+              <CardHeader className="mobile-p-4">
+                <CardTitle className="mobile-text-lg">Historical Weather Data</CardTitle>
+                <CardDescription className="mobile-text-sm">
                   View historical weather patterns for{" "}
                   {activeLocation || "your location"}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="mobile-p-4">
                 {!activeLocation ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <p>No location selected.</p>
@@ -1764,61 +1767,66 @@ export default function WeatherPage() {
 
                     {historicalData && (
                       <div className="mt-6">
-                        <h3 className="text-lg font-medium mb-3">
+                        <h3 className="text-base sm:text-lg font-medium mb-3">
                           Weather History for {historicalData.location}
                         </h3>
 
-                        <div className="overflow-x-auto">
-                          <table className="w-full min-w-[640px] table-auto">
-                            <thead>
-                              <tr className="border-b">
-                                <th className="text-left px-4 py-2 font-medium">
-                                  Date
-                                </th>
-                                <th className="text-center px-4 py-2 font-medium">
-                                  Avg. Temp
-                                </th>
-                                <th className="text-center px-4 py-2 font-medium">
-                                  Min Temp
-                                </th>
-                                <th className="text-center px-4 py-2 font-medium">
-                                  Max Temp
-                                </th>
-                                <th className="text-center px-4 py-2 font-medium">
-                                  Humidity
-                                </th>
-                                <th className="text-center px-4 py-2 font-medium">
-                                  Precipitation
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {historicalData.dates.map((day, index) => (
-                                <tr
-                                  key={index}
-                                  className="border-b last:border-0 hover:bg-muted/50"
-                                >
-                                  <td className="px-4 py-2">{day.date}</td>
-                                  <td className="px-4 py-2 text-center">
-                                    {formatTemperature(day.averageTemp)}
-                                  </td>
-                                  <td className="px-4 py-2 text-center">
-                                    {formatTemperature(day.minTemp)}
-                                  </td>
-                                  <td className="px-4 py-2 text-center">
-                                    {formatTemperature(day.maxTemp)}
-                                  </td>
-                                  <td className="px-4 py-2 text-center">
-                                    {day.humidity.toFixed(0)}%
-                                  </td>
-                                  <td className="px-4 py-2 text-center">
-                                    {day.precipitation.toFixed(1)} mm
-                                  </td>
+                        <ScrollArea className="w-full">
+                          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                            <table className="w-full min-w-[640px] table-auto">
+                              <thead>
+                                <tr className="border-b">
+                                  <th className="text-left px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
+                                    Date
+                                  </th>
+                                  <th className="text-center px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
+                                    <span className="hidden sm:inline">Avg. Temp</span>
+                                    <span className="sm:hidden">Avg</span>
+                                  </th>
+                                  <th className="text-center px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
+                                    Min
+                                  </th>
+                                  <th className="text-center px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
+                                    Max
+                                  </th>
+                                  <th className="text-center px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
+                                    <span className="hidden sm:inline">Humidity</span>
+                                    <span className="sm:hidden">Hum.</span>
+                                  </th>
+                                  <th className="text-center px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
+                                    <span className="hidden sm:inline">Precipitation</span>
+                                    <span className="sm:hidden">Precip.</span>
+                                  </th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
+                              </thead>
+                              <tbody>
+                                {historicalData.dates.map((day, index) => (
+                                  <tr
+                                    key={index}
+                                    className="border-b last:border-0 hover:bg-muted/50"
+                                  >
+                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{day.date}</td>
+                                    <td className="px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">
+                                      {formatTemperature(day.averageTemp)}
+                                    </td>
+                                    <td className="px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">
+                                      {formatTemperature(day.minTemp)}
+                                    </td>
+                                    <td className="px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">
+                                      {formatTemperature(day.maxTemp)}
+                                    </td>
+                                    <td className="px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">
+                                      {day.humidity.toFixed(0)}%
+                                    </td>
+                                    <td className="px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">
+                                      {day.precipitation.toFixed(1)} mm
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </ScrollArea>
                       </div>
                     )}
                   </div>
