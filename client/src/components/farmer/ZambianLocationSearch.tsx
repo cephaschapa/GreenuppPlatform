@@ -170,16 +170,16 @@ export function ZambianLocationSearch({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="flex-1 justify-start"
+            className="flex-1 justify-start min-w-0"
           >
             {selectedLocation ? (
-              <div className="flex items-center gap-2 flex-1">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
                 <MapPin className="h-4 w-4 shrink-0" />
-                <span className="truncate">{selectedLocation.fullName}</span>
+                <span className="truncate flex-1">{selectedLocation.fullName}</span>
                 <Badge
                   variant="secondary"
                   className={cn(
-                    "text-xs",
+                    "text-xs shrink-0",
                     getLocationTypeColor(selectedLocation.type)
                   )}
                 >
@@ -187,14 +187,14 @@ export function ZambianLocationSearch({
                 </Badge>
               </div>
             ) : (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Search className="h-4 w-4" />
-                <span>{placeholder}</span>
+              <div className="flex items-center gap-2 text-muted-foreground min-w-0">
+                <Search className="h-4 w-4 shrink-0" />
+                <span className="truncate">{placeholder}</span>
               </div>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0" align="start">
+        <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[400px] p-0" align="start">
           <Command shouldFilter={false}>
             <CommandInput
               placeholder="Type to search..."
@@ -231,17 +231,17 @@ export function ZambianLocationSearch({
                       onSelect={() => handleLocationSelect(location)}
                       className="flex items-center gap-2 cursor-pointer"
                     >
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <div className="flex-1">
-                        <div className="font-medium">{location.name}</div>
-                        <div className="text-xs text-muted-foreground">
+                      <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{location.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">
                           {location.city}, {location.province}
                         </div>
                       </div>
                       <Badge
                         variant="secondary"
                         className={cn(
-                          "text-xs",
+                          "text-xs shrink-0",
                           getLocationTypeColor(location.type)
                         )}
                       >

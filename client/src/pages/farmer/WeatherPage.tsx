@@ -892,56 +892,56 @@ export default function WeatherPage() {
             <div className="grid gap-6">
               {/* Location selector */}
               <Card>
-                <CardHeader className="pb-3 mobile-p-4">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mobile-spacing">
-                    <div>
-                      <CardTitle className="text-xl mobile-text-lg">
+                <CardHeader className="pb-3 p-3 sm:p-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-base sm:text-xl">
                         Weather Location
                       </CardTitle>
-                      <CardDescription className="mobile-text-sm">
+                      <CardDescription className="text-xs sm:text-sm break-words">
                         Your location is automatically detected, or search for any Zambian neighborhood
                       </CardDescription>
                     </div>
                     {activeLocation && weatherData && (
-                      <div className="flex items-center gap-2 mobile-weather">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         {getWeatherIcon(weatherData.current.condition)}
-                        <div className="text-xl sm:text-2xl font-semibold mobile-text-lg">
+                        <div className="text-lg sm:text-2xl font-semibold">
                           {formatTemperature(weatherData.current.temp)}
                         </div>
                       </div>
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="mobile-p-4">
+                <CardContent className="p-3 sm:p-6 pt-0">
                   {isLoading ? (
                     <div className="flex justify-center py-4 mobile-loading">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
                       <span className="ml-2 mobile-text-sm">Loading...</span>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       {/* Current Location Display */}
                       {isDetectingLocation ? (
-                        <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border border-dashed">
-                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                          <div>
-                            <p className="font-medium text-sm">Detecting your location...</p>
-                            <p className="text-xs text-muted-foreground">Finding nearest Zambian neighborhood</p>
+                        <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-muted/50 rounded-lg border border-dashed">
+                          <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-primary flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="font-medium text-xs sm:text-sm">Detecting your location...</p>
+                            <p className="text-xs text-muted-foreground break-words">Finding nearest Zambian neighborhood</p>
                           </div>
                         </div>
                       ) : activeLocation ? (
-                        <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg border">
-                          <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                        <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 bg-muted/50 rounded-lg border">
+                          <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-primary mt-0.5 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-medium text-sm">
+                              <span className="font-medium text-xs sm:text-sm break-words">
                                 {extractCityName(activeLocation)}
                               </span>
                               {weatherPrecision && (
                                 <Badge
                                   variant="secondary"
                                   className={cn(
-                                    "text-xs",
+                                    "text-xs flex-shrink-0",
                                     weatherPrecision === "neighborhood" &&
                                       "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
                                     weatherPrecision === "city" &&
@@ -957,13 +957,13 @@ export default function WeatherPage() {
                               )}
                             </div>
                             {detectedLocationData?.province && (
-                              <p className="text-xs text-muted-foreground mt-1">
+                              <p className="text-xs text-muted-foreground mt-1 break-words">
                                 {detectedLocationData.type && `${detectedLocationData.type} in `}
                                 {detectedLocationData.city}, {detectedLocationData.province}
                               </p>
                             )}
                             {detectedCoordinates && (
-                              <p className="text-xs text-muted-foreground/70 mt-1">
+                              <p className="text-xs text-muted-foreground/70 mt-1 break-all">
                                 {detectedCoordinates.lat.toFixed(4)}, {detectedCoordinates.lon.toFixed(4)}
                               </p>
                             )}
@@ -978,7 +978,7 @@ export default function WeatherPage() {
                                 onClick={saveLocation}
                                 size="sm"
                                 variant="outline"
-                                className="flex-shrink-0"
+                                className="flex-shrink-0 text-xs sm:text-sm"
                               >
                                 Save
                               </Button>
@@ -987,8 +987,8 @@ export default function WeatherPage() {
                       ) : null}
 
                       {/* Zambian Location Search with Autocomplete */}
-                      <div className="mb-4">
-                        <label className="text-sm font-medium mb-2 block mobile-text-sm">
+                      <div className="space-y-2">
+                        <label className="text-xs sm:text-sm font-medium block">
                           Search Zambian Neighborhoods & Cities:
                         </label>
                         <ZambianLocationSearch
@@ -1014,10 +1014,10 @@ export default function WeatherPage() {
                           onGPSDetect={(lat, lon) => {
                             setDetectedCoordinates({ lat, lon });
                           }}
-                          placeholder="Search Chalala, Kalingalinga, or any Zambian location..."
+                          placeholder="Search Chalala, Kalingalinga..."
                           showGPSDetect={true}
                         />
-                        <p className="text-xs text-muted-foreground mt-2">
+                        <p className="text-xs text-muted-foreground break-words">
                           🎯 Search for your specific compound or neighborhood for precise weather
                         </p>
                       </div>
