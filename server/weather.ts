@@ -419,8 +419,32 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
     }
 
     // If not in cache, fetch from API
-    // First, geocode the location
-    const geoData = await geocodeLocation(location);
+    // Check if location is in "lat,lon" format
+    let geoData: GeoLocation;
+    const coordsMatch = location.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
+    
+    if (coordsMatch) {
+      // Location is already in coordinate format (e.g., "-15.3856,28.3189")
+      const lat = parseFloat(coordsMatch[1]);
+      const lon = parseFloat(coordsMatch[2]);
+      
+      // Try to reverse geocode to get a friendly name
+      try {
+        geoData = await reverseGeocode(lat, lon);
+      } catch (error) {
+        // If reverse geocoding fails, use coordinates as name
+        geoData = {
+          lat,
+          lon,
+          name: "Unknown Location",
+          country: "ZM",
+          geoPath: `${lat}, ${lon}`,
+        };
+      }
+    } else {
+      // Location is a place name, geocode it
+      geoData = await geocodeLocation(location);
+    }
 
     // Check if we need to use the API key
     if (!OPENWEATHER_API_KEY) {
