@@ -402,12 +402,15 @@ export default function WeatherPage() {
     }
   };
 
-  // Auto-detect location on page load if no location is set
+  // Auto-detect location on page load ONLY if no location is set
+  // This should run only once on mount to avoid interfering with manual selections
   useEffect(() => {
+    // Only run if we haven't attempted auto-detect yet
+    if (hasAttemptedAutoDetect) return;
+    
     if (
       !activeLocation &&
       !isLoading &&
-      !hasAttemptedAutoDetect &&
       navigator.geolocation
     ) {
       setHasAttemptedAutoDetect(true);
@@ -434,7 +437,7 @@ export default function WeatherPage() {
           // console.log("Permissions API not supported");
         });
     }
-  }, [activeLocation, isLoading, hasAttemptedAutoDetect]);
+  }, [isLoading, hasAttemptedAutoDetect]); // Removed activeLocation from dependencies to prevent re-triggering on manual selections
 
   // Save active location to localStorage whenever it changes
   useEffect(() => {
@@ -446,27 +449,19 @@ export default function WeatherPage() {
     }
   }, [activeLocation]);
 
-  // Validate and set active location when preferences load
+  // Set initial location from preferences ONLY when preferences first load
+  // Don't override manual selections - only set if there's no active location
   useEffect(() => {
-    if (preferences?.locations && preferences.locations.length > 0) {
-      // If we have a saved location, check if it's still in user's preferences
-      if (activeLocation && preferences.locations.includes(activeLocation)) {
-        // Saved location is still valid, keep it
-        // console.log("Using saved active location:", activeLocation);
-      } else if (
-        !activeLocation ||
-        !preferences.locations.includes(activeLocation)
-      ) {
-        // Either no active location or saved location is no longer in preferences
-        // Set the first location as active
-        // console.log(
-        //   "Setting active location from preferences:",
-        //   preferences.locations[0]
-        // );
-        setActiveLocation(preferences.locations[0]);
-      }
+    // Only set from preferences if there's no active location yet
+    if (!activeLocation && preferences?.locations && preferences.locations.length > 0) {
+      // Set the first saved location as active
+      // console.log(
+      //   "Setting initial active location from preferences:",
+      //   preferences.locations[0]
+      // );
+      setActiveLocation(preferences.locations[0]);
     }
-  }, [preferences, activeLocation]);
+  }, [preferences]); // Removed activeLocation from dependencies to avoid overriding manual selections
 
   // Fetch weather for the active location
   useEffect(() => {
