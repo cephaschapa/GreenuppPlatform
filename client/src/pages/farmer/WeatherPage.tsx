@@ -818,73 +818,75 @@ export default function WeatherPage() {
       title="Weather Services"
       description="Monitor weather conditions and set up your preferences"
     >
-      <div className="gap-8 overflow-x-auto scrollbar-hide">
+      <div className="gap-8">
         <Tabs defaultValue="current" className="w-full">
-          <TabsList className="mb-4 flex w-full mobile-tabs" role="tabslist">
+          <div className="mb-4 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="inline-flex w-auto min-w-full sm:w-full sm:grid sm:grid-cols-6 gap-1" role="tabslist">
             <TabsTrigger
               value="current"
-              className="flex items-center gap-1.5 mobile-tab"
+              className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
               role="tab"
             >
-              <Cloud className="h-4 w-4 mobile-icon" />
+              <Cloud className="h-4 w-4 shrink-0" />
               <span className="hidden sm:inline">Current Weather</span>
               <span className="sm:hidden">Current</span>
             </TabsTrigger>
             <TabsTrigger
               value="forecast"
-              className="flex items-center gap-1.5 mobile-tab"
+              className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
               role="tab"
             >
-              <Calendar className="h-4 w-4 mobile-icon" />
+              <Calendar className="h-4 w-4 shrink-0" />
               <span className="hidden sm:inline">Forecast</span>
               <span className="sm:hidden">Forecast</span>
             </TabsTrigger>
             <TabsTrigger
               value="climate"
-              className="flex items-center gap-1.5 mobile-tab"
+              className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
               role="tab"
             >
-              <BarChart4 className="h-4 w-4 mobile-icon" />
+              <BarChart4 className="h-4 w-4 shrink-0" />
               <span className="hidden sm:inline">Climate Analysis</span>
               <span className="sm:hidden">Climate</span>
             </TabsTrigger>
             <TabsTrigger
               value="recommendations"
-              className="flex items-center gap-1.5 mobile-tab"
+              className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
               role="tab"
             >
-              <Sprout className="h-4 w-4 mobile-icon" />
+              <Sprout className="h-4 w-4 shrink-0" />
               <span className="hidden sm:inline">Crop Recommendations</span>
               <span className="sm:hidden">Crops</span>
             </TabsTrigger>
             <TabsTrigger
               value="alerts"
-              className="flex items-center gap-1.5 mobile-tab"
+              className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
               role="tab"
             >
-              <AlertTriangle className="h-4 w-4 mobile-icon" />
+              <AlertTriangle className="h-4 w-4 shrink-0" />
               <span className="hidden sm:inline">Weather Alerts</span>
               <span className="sm:hidden">Alerts</span>
             </TabsTrigger>
             <TabsTrigger
               value="historical"
-              className="flex items-center gap-1.5 mobile-tab"
+              className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
               role="tab"
             >
-              <RefreshCw className="h-4 w-4 mobile-icon" />
+              <RefreshCw className="h-4 w-4 shrink-0" />
               <span className="hidden sm:inline">Historical Data</span>
               <span className="sm:hidden">History</span>
             </TabsTrigger>
             <TabsTrigger
               value="preferences"
-              className="flex items-center gap-1.5 mobile-tab"
+              className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
               role="tab"
             >
-              <Settings className="h-4 w-4 mobile-icon" />
+              <Settings className="h-4 w-4 shrink-0" />
               <span className="hidden sm:inline">Preferences</span>
               <span className="sm:hidden">Settings</span>
             </TabsTrigger>
           </TabsList>
+          </div>
 
           <TabsContent value="current">
             <div className="grid gap-6">
