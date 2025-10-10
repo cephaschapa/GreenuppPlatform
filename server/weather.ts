@@ -6,6 +6,7 @@ import { cropYieldPredictions } from "@shared/schema";
 // We'll use OpenWeatherMap API as it provides both current, forecast and historical data
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 const OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/3.0";
+const OPENWEATHER_BASE_URL_FREE = "https://api.openweathermap.org/data/2.5"; // Free tier API
 const OPENWEATHER_GEO_URL = "https://api.openweathermap.org/geo/1.0";
 
 // Cache for weather data to minimize API calls
@@ -304,6 +305,108 @@ export async function geocodeLocation(location: string): Promise<GeoLocation> {
 }
 
 /**
+ * Get weather data using FREE tier OpenWeather API (current + 5-day forecast)
+ * This is a fallback when One Call API 3.0 is not available
+ */
+async function getWeatherDataFreeTier(lat: number, lon: number, locationName: string): Promise<WeatherData> {
+  // Fetch current weather
+  const currentResponse = await axios.get(`${OPENWEATHER_BASE_URL_FREE}/weather`, {
+    params: {
+      lat,
+      lon,
+      units: "metric",
+      appid: OPENWEATHER_API_KEY,
+    },
+  });
+
+  // Fetch 5-day forecast (3-hour intervals)
+  const forecastResponse = await axios.get(`${OPENWEATHER_BASE_URL_FREE}/forecast`, {
+    params: {
+      lat,
+      lon,
+      units: "metric",
+      appid: OPENWEATHER_API_KEY,
+    },
+  });
+
+  const current = currentResponse.data;
+  const forecastData = forecastResponse.data;
+
+  // Group forecast by day
+  const dailyForecasts: { [key: string]: any[] } = {};
+  
+  forecastData.list.forEach((item: any) => {
+    const date = new Date(item.dt * 1000).toLocaleDateString();
+    if (!dailyForecasts[date]) {
+      dailyForecasts[date] = [];
+    }
+    dailyForecasts[date].push(item);
+  });
+
+  // Process daily forecasts
+  const forecast = Object.entries(dailyForecasts).slice(0, 7).map(([date, items]) => {
+    const temps = items.map((item: any) => item.main.temp);
+    const minTemp = Math.min(...temps);
+    const maxTemp = Math.max(...temps);
+    const avgTemp = temps.reduce((sum: number, t: number) => sum + t, 0) / temps.length;
+
+    const avgHumidity = items.reduce((sum: number, item: any) => sum + item.main.humidity, 0) / items.length;
+    const avgWindSpeed = items.reduce((sum: number, item: any) => sum + item.wind.speed, 0) / items.length;
+    
+    // Get most common weather condition
+    const conditions = items.map((item: any) => item.weather[0].main);
+    const mostCommonCondition = conditions.sort((a: string, b: string) =>
+      conditions.filter((c: string) => c === a).length - conditions.filter((c: string) => c === b).length
+    ).pop();
+
+    const firstItem = items[0];
+    
+    return {
+      date: date,
+      dayOfWeek: new Date(firstItem.dt * 1000).toLocaleDateString("en-US", { weekday: "short" }),
+      temp: {
+        day: avgTemp,
+        min: minTemp,
+        max: maxTemp,
+      },
+      humidity: avgHumidity,
+      windSpeed: avgWindSpeed,
+      condition: mostCommonCondition || firstItem.weather[0].main,
+      description: firstItem.weather[0].description,
+      icon: firstItem.weather[0].icon,
+      precipitation: (firstItem.pop || 0) * 100,
+      sunrise: current.sys.sunrise,
+      sunset: current.sys.sunset,
+    };
+  });
+
+  const weatherData: WeatherData = {
+    location: locationName,
+    coordinates: {
+      lat,
+      lon,
+    },
+    current: {
+      temp: current.main.temp,
+      feelsLike: current.main.feels_like,
+      humidity: current.main.humidity,
+      windSpeed: current.wind.speed,
+      condition: current.weather[0].main,
+      description: current.weather[0].description,
+      icon: current.weather[0].icon,
+      cloudCover: current.clouds.all,
+      uv: 0, // Not available in free tier
+      pressure: current.main.pressure,
+      visibility: current.visibility,
+      timestamp: current.dt,
+    },
+    forecast,
+  };
+
+  return weatherData;
+}
+
+/**
  * Get current weather and forecast for a location
  */
 export async function getWeatherData(location: string): Promise<WeatherData> {
@@ -324,71 +427,87 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
       throw new Error("OpenWeather API key not configured");
     }
 
-    // Fetch weather data using One Call API for current, forecast and alerts
-    const response = await axios.get(`${OPENWEATHER_BASE_URL}/onecall`, {
-      params: {
-        lat: geoData.lat,
-        lon: geoData.lon,
-        units: "metric",
-        exclude: "minutely,hourly",
-        appid: OPENWEATHER_API_KEY,
-      },
-    });
+    let weatherData: WeatherData;
 
-    // Format the data into our structure
-    const data = response.data;
-    const weatherData: WeatherData = {
-      location: `${geoData.name}, ${geoData.country}`,
-      coordinates: {
-        lat: geoData.lat,
-        lon: geoData.lon,
-      },
-      current: {
-        temp: data.current.temp,
-        feelsLike: data.current.feels_like,
-        humidity: data.current.humidity,
-        windSpeed: data.current.wind_speed,
-        condition: data.current.weather[0].main,
-        description: data.current.weather[0].description,
-        icon: data.current.weather[0].icon,
-        cloudCover: data.current.clouds,
-        uv: data.current.uvi,
-        pressure: data.current.pressure,
-        visibility: data.current.visibility,
-        timestamp: data.current.dt,
-      },
-      forecast: data.daily.map((day: any) => {
-        const date = new Date(day.dt * 1000);
-        return {
-          date: date.toLocaleDateString(),
-          dayOfWeek: date.toLocaleDateString("en-US", { weekday: "short" }),
-          temp: {
-            day: day.temp.day,
-            min: day.temp.min,
-            max: day.temp.max,
-          },
-          humidity: day.humidity,
-          windSpeed: day.wind_speed,
-          condition: day.weather[0].main,
-          description: day.weather[0].description,
-          icon: day.weather[0].icon,
-          precipitation: day.pop * 100, // Probability of precipitation as percentage
-          sunrise: day.sunrise,
-          sunset: day.sunset,
-        };
-      }),
-    };
+    // Try One Call API 3.0 first (paid tier)
+    try {
+      const response = await axios.get(`${OPENWEATHER_BASE_URL}/onecall`, {
+        params: {
+          lat: geoData.lat,
+          lon: geoData.lon,
+          units: "metric",
+          exclude: "minutely,hourly",
+          appid: OPENWEATHER_API_KEY,
+        },
+      });
 
-    // Add alerts if present
-    if (data.alerts) {
-      weatherData.alerts = data.alerts.map((alert: any) => ({
-        senderName: alert.sender_name,
-        event: alert.event,
-        start: alert.start,
-        end: alert.end,
-        description: alert.description,
-        severity: alert.tags?.[0] || "Info",
-      }));
+      // Format the data into our structure
+      const data = response.data;
+      weatherData = {
+        location: `${geoData.name}, ${geoData.country}`,
+        coordinates: {
+          lat: geoData.lat,
+          lon: geoData.lon,
+        },
+        current: {
+          temp: data.current.temp,
+          feelsLike: data.current.feels_like,
+          humidity: data.current.humidity,
+          windSpeed: data.current.wind_speed,
+          condition: data.current.weather[0].main,
+          description: data.current.weather[0].description,
+          icon: data.current.weather[0].icon,
+          cloudCover: data.current.clouds,
+          uv: data.current.uvi,
+          pressure: data.current.pressure,
+          visibility: data.current.visibility,
+          timestamp: data.current.dt,
+        },
+        forecast: data.daily.map((day: any) => {
+          const date = new Date(day.dt * 1000);
+          return {
+            date: date.toLocaleDateString(),
+            dayOfWeek: date.toLocaleDateString("en-US", { weekday: "short" }),
+            temp: {
+              day: day.temp.day,
+              min: day.temp.min,
+              max: day.temp.max,
+            },
+            humidity: day.humidity,
+            windSpeed: day.wind_speed,
+            condition: day.weather[0].main,
+            description: day.weather[0].description,
+            icon: day.weather[0].icon,
+            precipitation: day.pop * 100, // Probability of precipitation as percentage
+            sunrise: day.sunrise,
+            sunset: day.sunset,
+          };
+        }),
+      };
+
+      // Add alerts if present
+      if (data.alerts) {
+        weatherData.alerts = data.alerts.map((alert: any) => ({
+          senderName: alert.sender_name,
+          event: alert.event,
+          start: alert.start,
+          end: alert.end,
+          description: alert.description,
+          severity: alert.tags?.[0] || "Info",
+        }));
+      }
+    } catch (onecallError: any) {
+      // If One Call API fails (401 = subscription required), fallback to free tier
+      if (onecallError.response?.status === 401 || onecallError.response?.status === 403) {
+        console.log("One Call API not available, using free tier API");
+        weatherData = await getWeatherDataFreeTier(
+          geoData.lat,
+          geoData.lon,
+          `${geoData.name}, ${geoData.country}`
+        );
+      } else {
+        throw onecallError;
+      }
     }
 
     // Save to cache
@@ -406,9 +525,9 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
       console.error("API response error:", error.response.data);
 
       // Handle API key error specifically
-      if (error.response.status === 401) {
+      if (error.response.status === 401 && !error.response.config.url.includes('/forecast')) {
         throw new Error(
-          "Weather data unavailable - API key issue. The One Call API may require a paid subscription. Please contact support."
+          "Weather data unavailable - API key issue. Please check your OpenWeather API key."
         );
       }
     }
