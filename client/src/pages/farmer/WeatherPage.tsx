@@ -897,7 +897,7 @@ export default function WeatherPage() {
                         Weather Location
                       </CardTitle>
                       <CardDescription className="mobile-text-sm">
-                        Select a location or auto-detect your current position
+                        Your location is automatically detected, or search for any Zambian neighborhood
                       </CardDescription>
                     </div>
                     {activeLocation && weatherData && (
@@ -917,86 +917,72 @@ export default function WeatherPage() {
                       <span className="ml-2 mobile-text-sm">Loading...</span>
                     </div>
                   ) : (
-                    <div className="mobile-spacing">
-                      {/* Auto-detect button */}
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <Button
-                          onClick={detectCurrentLocation}
-                          disabled={isDetectingLocation}
-                          className="flex-1 sm:flex-none mobile-btn-compact"
-                          variant="outline"
-                        >
-                          {isDetectingLocation ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin mobile-icon" />
-                              Detecting Location...
-                            </>
-                          ) : (
-                            <>
-                              <Navigation className="mr-2 h-4 w-4 mobile-icon" />
-                              Auto-Detect My Location
-                            </>
-                          )}
-                        </Button>
-
-                        {activeLocation && (
-                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-sm text-muted-foreground mobile-status">
-                            <MapPin className="h-4 w-4 mobile-icon" />
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-2">
-                                <span className="mobile-text-sm">
-                                  Current: {extractCityName(activeLocation)}
-                                </span>
-                                {weatherPrecision && (
-                                  <Badge
-                                    variant="secondary"
-                                    className={cn(
-                                      "text-xs",
-                                      weatherPrecision === "neighborhood" &&
-                                        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-                                      weatherPrecision === "city" &&
-                                        "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-                                      weatherPrecision === "approximate" &&
-                                        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                                    )}
-                                  >
-                                    {weatherPrecision === "neighborhood" && "🎯 Precise"}
-                                    {weatherPrecision === "city" && "📍 City-level"}
-                                    {weatherPrecision === "approximate" && "📌 Approximate"}
-                                  </Badge>
-                                )}
-                              </div>
-                              {detectedLocationData?.geoPath && (
-                                <span className="text-xs opacity-75 mobile-text-xs">
-                                  {detectedLocationData.geoPath}
-                                </span>
+                    <div className="space-y-4">
+                      {/* Current Location Display */}
+                      {isDetectingLocation ? (
+                        <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border border-dashed">
+                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                          <div>
+                            <p className="font-medium text-sm">Detecting your location...</p>
+                            <p className="text-xs text-muted-foreground">Finding nearest Zambian neighborhood</p>
+                          </div>
+                        </div>
+                      ) : activeLocation ? (
+                        <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg border">
+                          <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-sm">
+                                {extractCityName(activeLocation)}
+                              </span>
+                              {weatherPrecision && (
+                                <Badge
+                                  variant="secondary"
+                                  className={cn(
+                                    "text-xs",
+                                    weatherPrecision === "neighborhood" &&
+                                      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+                                    weatherPrecision === "city" &&
+                                      "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                                    weatherPrecision === "approximate" &&
+                                      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                  )}
+                                >
+                                  {weatherPrecision === "neighborhood" && "🎯 Precise"}
+                                  {weatherPrecision === "city" && "📍 City-level"}
+                                  {weatherPrecision === "approximate" && "📌 Approximate"}
+                                </Badge>
                               )}
                             </div>
-                            {detectedCoordinates && (
-                              <span className="text-xs opacity-75 mobile-text-xs">
-                                ({detectedCoordinates.lat.toFixed(4)},{" "}
-                                {detectedCoordinates.lon.toFixed(4)})
-                              </span>
+                            {detectedLocationData?.province && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {detectedLocationData.type && `${detectedLocationData.type} in `}
+                                {detectedLocationData.city}, {detectedLocationData.province}
+                              </p>
                             )}
-                            {/* Save Location button - only show if location is detected but not saved */}
-                            {detectedCoordinates &&
-                              activeLocation &&
-                              preferences?.locations &&
-                              !preferences.locations.includes(
-                                extractCityName(activeLocation)
-                              ) && (
-                                <Button
-                                  onClick={saveLocation}
-                                  size="sm"
-                                  variant="outline"
-                                  className="ml-2 h-6 px-2 text-xs mobile-btn-compact"
-                                >
-                                  Save Location
-                                </Button>
-                              )}
+                            {detectedCoordinates && (
+                              <p className="text-xs text-muted-foreground/70 mt-1">
+                                {detectedCoordinates.lat.toFixed(4)}, {detectedCoordinates.lon.toFixed(4)}
+                              </p>
+                            )}
                           </div>
-                        )}
-                      </div>
+                          {detectedCoordinates &&
+                            activeLocation &&
+                            preferences?.locations &&
+                            !preferences.locations.includes(
+                              extractCityName(activeLocation)
+                            ) && (
+                              <Button
+                                onClick={saveLocation}
+                                size="sm"
+                                variant="outline"
+                                className="flex-shrink-0"
+                              >
+                                Save
+                              </Button>
+                            )}
+                        </div>
+                      ) : null}
 
                       {/* Zambian Location Search with Autocomplete */}
                       <div className="mb-4">
@@ -1033,62 +1019,6 @@ export default function WeatherPage() {
                           🎯 Search for your specific compound or neighborhood for precise weather
                         </p>
                       </div>
-
-                      {/* Location dropdown */}
-                      {preferences?.locations &&
-                        preferences.locations.length > 0 && (
-                          <div className="relative">
-                            <label className="text-sm font-medium mb-2 block mobile-text-sm">
-                              Or select from saved locations:
-                            </label>
-                            <select
-                              className="w-full px-3 py-2 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 mobile-dropdown"
-                              value={activeLocation || ""}
-                              onChange={(e) => {
-                                const newLocation = e.target.value;
-                                if (newLocation) {
-                                  // Reset all data when changing location
-                                  setWeatherData(null);
-                                  setClimateData(null);
-                                  setCropRecommendations(null);
-                                  setHistoricalData(null);
-                                  setActiveLocation(newLocation);
-                                  // Clear detected coordinates and location data when switching to saved location
-                                  setDetectedCoordinates(null);
-                                  setDetectedLocationData(null);
-                                }
-                              }}
-                            >
-                              <option value="" disabled>
-                                Select a saved location
-                              </option>
-                              {preferences.locations.map((location) => {
-                                const cityName = extractCityName(location);
-                                return (
-                                  <option key={cityName} value={cityName}>
-                                    {cityName}
-                                  </option>
-                                );
-                              })}
-                            </select>
-                            <MapPin className="absolute right-3 top-8 h-4 w-4 text-muted-foreground pointer-events-none mobile-icon" />
-                          </div>
-                        )}
-
-                      {/* No locations message */}
-                      {(!preferences?.locations ||
-                        preferences.locations.length === 0) && (
-                        <div className="text-center py-6 text-muted-foreground border rounded-lg bg-muted/30 mobile-p-4">
-                          <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50 mobile-icon" />
-                          <p className="font-medium mb-1 mobile-text-lg">
-                            No saved locations
-                          </p>
-                          <p className="text-sm mobile-text-sm">
-                            Use auto-detect or go to Preferences to add
-                            locations
-                          </p>
-                        </div>
-                      )}
                     </div>
                   )}
                 </CardContent>
