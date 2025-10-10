@@ -571,10 +571,68 @@ export default function WeatherPage() {
   };
 
   // Refresh weather data
-  const handleRefreshWeather = () => {
-    if (activeLocation) {
+  const handleRefreshWeather = async () => {
+    if (!activeLocation) return;
+
+    setLoadingWeather(true);
+    setWeatherData(null);
+    
+    try {
+      // Try hyperlocal API first for Zambian locations
+      let response = await fetch(
+        `/api/hyperlocal-weather?location=${encodeURIComponent(activeLocation)}`
+      );
+
+      let data;
+      let useHyperlocal = false;
+
+      if (response.ok) {
+        data = await response.json();
+        if (data.success) {
+          // Hyperlocal API successful
+          useHyperlocal = true;
+          setWeatherData(data.weather);
+          setWeatherPrecision(data.meta?.precision || null);
+          setWeatherSource(data.meta?.source || null);
+
+          toast({
+            title: "🔄 Weather Updated",
+            description: `Latest data for ${activeLocation}`,
+            duration: 2000,
+          });
+        }
+      }
+
+      // Fallback to regular weather API if hyperlocal failed
+      if (!useHyperlocal) {
+        response = await fetch(
+          `/api/weather?location=${encodeURIComponent(activeLocation)}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch weather data");
+        }
+
+        data = await response.json();
+        setWeatherData(data);
+        setWeatherPrecision(null);
+        setWeatherSource(null);
+        
+        toast({
+          title: "🔄 Weather Updated",
+          description: `Latest data for ${activeLocation}`,
+          duration: 2000,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "❌ Refresh Failed",
+        description: error.message || "Unable to fetch latest weather data",
+        variant: "destructive",
+      });
       setWeatherData(null);
-      setActiveLocation(activeLocation); // This will trigger the useEffect to refetch
+    } finally {
+      setLoadingWeather(false);
     }
   };
 
