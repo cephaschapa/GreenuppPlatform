@@ -57,6 +57,7 @@ import { DateRange } from "react-day-picker";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { format, subMonths } from "date-fns";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface WeatherData {
   location: string;
@@ -282,7 +283,7 @@ export default function WeatherPage() {
     }
   };
 
-  // Auto-detect user's current location
+  // Auto-detect user's current location using hyperlocal weather system
   const detectCurrentLocation = async () => {
     if (!navigator.geolocation) {
       toast({
@@ -311,9 +312,9 @@ export default function WeatherPage() {
       // Store the coordinates
       setDetectedCoordinates({ lat: latitude, lon: longitude });
 
-      // Use our server's reverse geocoding endpoint
+      // Use our hyperlocal weather API to find nearest Zambian location
       const response = await fetch(
-        `/api/weather/reverse-geocode?lat=${latitude}&lon=${longitude}`,
+        `/api/hyperlocal-weather?lat=${latitude}&lon=${longitude}`,
         {
           method: "GET",
           credentials: "include",
@@ -326,15 +327,20 @@ export default function WeatherPage() {
 
       const data = await response.json();
 
-      if (data && data.name) {
-        const fullLocationName = data.name;
-        const locationName = extractCityName(fullLocationName);
+      if (data.success && data.location) {
+        const locationData = data.location;
+        // Use full location name with city
+        const locationName = `${locationData.name}, ${locationData.city}`;
 
         // Store the full location data for display
-        setDetectedLocationData(data);
+        setDetectedLocationData(locationData);
 
         // Set as active location immediately
         setActiveLocation(locationName);
+
+        // Store precision and source
+        setWeatherPrecision(data.meta?.precision || null);
+        setWeatherSource(data.meta?.source || null);
 
         // Reset all data when changing location
         setWeatherData(null);
@@ -342,10 +348,25 @@ export default function WeatherPage() {
         setCropRecommendations(null);
         setHistoricalData(null);
 
+        // Show enhanced toast with location details
+        const precisionEmoji = 
+          data.meta?.precision === "neighborhood" ? "🎯" :
+          data.meta?.precision === "city" ? "📍" : "📌";
+
         toast({
-          title: "Location detected!",
-          description: `Weather data for ${locationName} is now loading`,
+          title: `${precisionEmoji} Location Detected!`,
+          description: `${locationData.name} (${locationData.type}) in ${locationData.city}, ${locationData.province}`,
+          duration: 5000,
         });
+
+        // Show precision info if neighborhood-level
+        if (data.meta?.precision === "neighborhood") {
+          toast({
+            title: "🎯 Precise Location Found",
+            description: "Using neighborhood-level weather data from Zambian database",
+            duration: 4000,
+          });
+        }
 
         // Note: Users can now save the location using the "Save Location" button
         // that appears next to the location display
@@ -922,9 +943,29 @@ export default function WeatherPage() {
                           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-sm text-muted-foreground mobile-status">
                             <MapPin className="h-4 w-4 mobile-icon" />
                             <div className="flex flex-col">
-                              <span className="mobile-text-sm">
-                                Current: {extractCityName(activeLocation)}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="mobile-text-sm">
+                                  Current: {extractCityName(activeLocation)}
+                                </span>
+                                {weatherPrecision && (
+                                  <Badge
+                                    variant="secondary"
+                                    className={cn(
+                                      "text-xs",
+                                      weatherPrecision === "neighborhood" &&
+                                        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+                                      weatherPrecision === "city" &&
+                                        "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+                                      weatherPrecision === "approximate" &&
+                                        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                    )}
+                                  >
+                                    {weatherPrecision === "neighborhood" && "🎯 Precise"}
+                                    {weatherPrecision === "city" && "📍 City-level"}
+                                    {weatherPrecision === "approximate" && "📌 Approximate"}
+                                  </Badge>
+                                )}
+                              </div>
                               {detectedLocationData?.geoPath && (
                                 <span className="text-xs opacity-75 mobile-text-xs">
                                   {detectedLocationData.geoPath}
