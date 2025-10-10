@@ -7,6 +7,7 @@ import {
   findZambianLocation,
   findNearestLocation,
   getLocationsByCity,
+  zambianLocations,
   type ZambianLocation,
 } from "../data/zambian-locations.js";
 import { getWeatherData, geocodeLocation, reverseGeocode } from "../weather.js";
@@ -265,8 +266,7 @@ export function searchZambianLocations(
 
   const results: Array<{ location: ZambianLocation; score: number }> = [];
 
-  for (const location of require("../data/zambian-locations.js")
-    .zambianLocations) {
+  for (const location of zambianLocations) {
     const locationName = location.name.toLowerCase();
     const cityName = location.city.toLowerCase();
     const fullName = `${locationName}, ${cityName}`;

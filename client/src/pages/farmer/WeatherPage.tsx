@@ -5,6 +5,7 @@ import { EnhancedWeatherDashboard } from "@/components/farmer/EnhancedWeatherDas
 import { WeatherAlertSystem } from "@/components/farmer/WeatherAlertSystem";
 import { useWeatherPreferences } from "@/hooks/use-weather-preferences";
 import RegionalSeedRecommendations from "@/components/RegionalSeedRecommendations";
+import { ZambianLocationSearch } from "@/components/farmer/ZambianLocationSearch";
 // import { WeatherPreferences as WeatherPreferencesType } from "@shared/schema";
 import {
   Card,
@@ -177,6 +178,8 @@ export default function WeatherPage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [weatherPrecision, setWeatherPrecision] = useState<"neighborhood" | "city" | "approximate" | null>(null);
+  const [weatherSource, setWeatherSource] = useState<"zambian_database" | "openweather_geocode" | "coordinates" | null>(null);
 
   const { preferences, isLoading } = useWeatherPreferences();
   const { toast } = useToast();
@@ -455,31 +458,64 @@ export default function WeatherPage() {
     const fetchWeather = async () => {
       setLoadingWeather(true);
       try {
-        const response = await fetch(
-          `/api/weather?location=${encodeURIComponent(activeLocation)}`
+        // Try hyperlocal API first for Zambian locations
+        let response = await fetch(
+          `/api/hyperlocal-weather?location=${encodeURIComponent(activeLocation)}`
         );
 
-        // Handle different response statuses
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
+        let data;
+        let useHyperlocal = false;
 
-          // Check for specific API key issues
-          if (
-            response.status === 500 &&
-            errorData.message?.includes("API key")
-          ) {
-            throw new Error(
-              "API key issue - Weather service temporarily unavailable"
-            );
-          } else if (response.status === 401) {
-            throw new Error("Authentication required to access weather data");
-          } else {
-            throw new Error("Failed to fetch weather data");
+        if (response.ok) {
+          data = await response.json();
+          if (data.success) {
+            // Hyperlocal API successful
+            useHyperlocal = true;
+            setWeatherData(data.weather);
+            setWeatherPrecision(data.meta?.precision || null);
+            setWeatherSource(data.meta?.source || null);
+
+            // Show precision indicator
+            if (data.meta?.precision === "neighborhood") {
+              toast({
+                title: `📍 Precise Weather for ${data.location.name}`,
+                description: `Neighborhood-level weather data from our Zambian database`,
+                duration: 3000,
+              });
+            }
           }
         }
 
-        const data = await response.json();
-        setWeatherData(data);
+        // Fallback to regular weather API if hyperlocal failed
+        if (!useHyperlocal) {
+          response = await fetch(
+            `/api/weather?location=${encodeURIComponent(activeLocation)}`
+          );
+
+          // Handle different response statuses
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+
+            // Check for specific API key issues
+            if (
+              response.status === 500 &&
+              errorData.message?.includes("API key")
+            ) {
+              throw new Error(
+                "API key issue - Weather service temporarily unavailable"
+              );
+            } else if (response.status === 401) {
+              throw new Error("Authentication required to access weather data");
+            } else {
+              throw new Error("Failed to fetch weather data");
+            }
+          }
+
+          data = await response.json();
+          setWeatherData(data);
+          setWeatherPrecision(null);
+          setWeatherSource(null);
+        }
       } catch (error: any) {
         // console.error("Error fetching weather:", error);
 
@@ -921,72 +957,40 @@ export default function WeatherPage() {
                         )}
                       </div>
 
-                      {/* Location search bar */}
+                      {/* Zambian Location Search with Autocomplete */}
                       <div className="mb-4">
-                        <Input
-                          placeholder="Search for a city or location..."
-                          value={searchQuery}
-                          onChange={(e) => {
-                            setSearchQuery(e.target.value);
-                            if (e.target.value.length > 2) {
-                              searchLocations(e.target.value);
-                            } else {
-                              setSearchResults([]);
-                            }
+                        <label className="text-sm font-medium mb-2 block mobile-text-sm">
+                          Search Zambian Neighborhoods & Cities:
+                        </label>
+                        <ZambianLocationSearch
+                          onLocationSelect={(location) => {
+                            // Set the location name as active
+                            const locationName = `${location.name}, ${location.city}`;
+                            setActiveLocation(locationName);
+                            
+                            // Store coordinates for potential saving
+                            setDetectedCoordinates(location.coordinates);
+                            
+                            // Reset weather data
+                            setWeatherData(null);
+                            setClimateData(null);
+                            setCropRecommendations(null);
+                            setHistoricalData(null);
+
+                            toast({
+                              title: `📍 ${location.name} Selected`,
+                              description: `${location.type} in ${location.city}, ${location.province}`,
+                            });
                           }}
-                          className="w-full mobile-input-group"
+                          onGPSDetect={(lat, lon) => {
+                            setDetectedCoordinates({ lat, lon });
+                          }}
+                          placeholder="Search Chalala, Kalingalinga, or any Zambian location..."
+                          showGPSDetect={true}
                         />
-                        {isSearching && (
-                          <div className="text-xs text-muted-foreground mt-1 mobile-text-xs">
-                            Searching...
-                          </div>
-                        )}
-                        {searchError && (
-                          <div className="text-xs text-destructive mt-1 mobile-text-xs">
-                            {searchError}
-                          </div>
-                        )}
-                        {searchResults.length > 0 && (
-                          <div className="border rounded-md bg-background mt-2 max-h-48 overflow-y-auto shadow-lg z-10 mobile-search-results">
-                            {searchResults.map((result, idx) => {
-                              const cityName = extractCityName(
-                                result.name || result.display_name || ""
-                              );
-                              const displayName =
-                                result.geoPath ||
-                                result.display_name ||
-                                result.name ||
-                                "";
-                              return (
-                                <div
-                                  key={idx}
-                                  className="flex items-center justify-between px-3 py-2 hover:bg-muted cursor-pointer mobile-p-2"
-                                >
-                                  <div className="flex flex-col flex-1 min-w-0">
-                                    <span className="font-medium mobile-text-sm truncate">
-                                      {cityName}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground mobile-text-xs truncate">
-                                      {displayName}
-                                    </span>
-                                  </div>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() =>
-                                      addSearchedLocation(
-                                        result.name || result.display_name || ""
-                                      )
-                                    }
-                                    className="ml-2 flex-shrink-0 mobile-btn-compact"
-                                  >
-                                    Add
-                                  </Button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
+                        <p className="text-xs text-muted-foreground mt-2">
+                          🎯 Search for your specific compound or neighborhood for precise weather
+                        </p>
                       </div>
 
                       {/* Location dropdown */}
