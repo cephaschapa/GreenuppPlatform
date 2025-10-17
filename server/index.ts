@@ -10,6 +10,7 @@ import morgan from "morgan";
 import { stream } from "./lib/logger";
 import { initializeFirebase } from "./services/firebase.js";
 import { setupSecurityMiddleware } from "./middleware/security.js";
+import { uploadsDir } from "./services/uploadService.js";
 
 // Fix for __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -29,8 +30,9 @@ app.use(morgan("combined", { stream }));
 // Add our custom request logging
 app.use(logApiRequest);
 
-// Serve uploaded files from the uploads directory
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+// Serve uploaded files from the same directory used by uploadService
+logger.info(`Serving uploads from: ${uploadsDir}`);
+app.use("/uploads", express.static(uploadsDir));
 
 // Middleware to check if we're on app subdomain and redirect to auth if not authenticated
 // This only applies to non-API routes and allows /auth and static assets

@@ -13,35 +13,42 @@ const __dirname = path.dirname(__filename);
 // Determine uploads directory based on environment
 let uploadsDir: string;
 
-if (process.env.NODE_ENV === "production") {
-  // In production, use a temporary directory that we have write access to
-  uploadsDir = path.join(os.tmpdir(), "greenupp-uploads");
+if (process.env.UPLOADS_DIR) {
+  // Use environment variable if set (recommended for production)
+  uploadsDir = process.env.UPLOADS_DIR;
+  console.log(`Using uploads directory from UPLOADS_DIR env var: ${uploadsDir}`);
+} else if (process.env.NODE_ENV === "production") {
+  // In production, use /var/data/greenupp-uploads for persistence
+  // Railway/Docker should mount a volume here
+  uploadsDir = "/var/data/greenupp-uploads";
+  console.log(`Production: Using persistent uploads directory: ${uploadsDir}`);
 } else {
   // In development, use the project uploads directory
   uploadsDir = path.join(__dirname, "../..", "uploads");
+  console.log(`Development: Using project uploads directory: ${uploadsDir}`);
 }
 
-// Create uploads directory if it doesn't exist (only in development)
-if (process.env.NODE_ENV !== "production") {
+// Create uploads directory if it doesn't exist
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log(`Created uploads directory: ${uploadsDir}`);
+  }
+} catch (error) {
+  console.error("Could not create uploads directory:", error);
+  // Fallback to temp directory (WARNING: files will be lost on restart!)
+  uploadsDir = path.join(os.tmpdir(), "greenupp-uploads");
+  console.warn(`FALLBACK: Using temporary directory (files will be lost on restart!): ${uploadsDir}`);
   try {
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
-  } catch (error) {
-    console.warn("Could not create uploads directory:", error);
-    // Fallback to temp directory
-    uploadsDir = path.join(os.tmpdir(), "greenupp-uploads");
-    try {
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
-    } catch (fallbackError) {
-      console.error(
-        "Could not create fallback uploads directory:",
-        fallbackError
-      );
-      throw new Error("No writable directory available for uploads");
-    }
+  } catch (fallbackError) {
+    console.error(
+      "Could not create fallback uploads directory:",
+      fallbackError
+    );
+    throw new Error("No writable directory available for uploads");
   }
 }
 
@@ -99,6 +106,9 @@ export function extractHashtags(content: string): string[] {
   // Remove # and return hashtags
   return matches.map((match) => match.substring(1));
 }
+
+// Export uploads directory for use in server/index.ts
+export { uploadsDir };
 
 // Function to process file upload and return public URL
 export function getFileUrl(filename: string): string {
