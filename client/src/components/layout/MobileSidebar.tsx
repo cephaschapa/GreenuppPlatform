@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -91,28 +91,35 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
           active: location === "/dashboard/tasks",
         },
         {
-          title: "Orders",
-          href: "/dashboard/orders",
-          icon: <ShoppingCart className="h-5 w-5" />,
-          active: location === "/dashboard/orders",
-        },
-        {
-          title: "Inventory",
-          href: "/dashboard/inventory",
-          icon: <Grid className="h-5 w-5" />,
-          active: location === "/dashboard/inventory",
+          title: "Marketplace Manager",
+          icon: <ShoppingBag className="h-5 w-5" />,
+          expandable: true,
+          children: [
+            {
+              title: "Orders",
+              href: "/dashboard/orders",
+              icon: <ShoppingCart className="h-5 w-5" />,
+              active: location === "/dashboard/orders",
+            },
+            {
+              title: "Inventory",
+              href: "/dashboard/inventory",
+              icon: <Grid className="h-5 w-5" />,
+              active: location === "/dashboard/inventory",
+            },
+            {
+              title: "Dealer Directory",
+              href: "/dashboard/dealers",
+              icon: <ShoppingBag className="h-5 w-5" />,
+              active: location === "/dashboard/dealers",
+            },
+          ],
         },
         {
           title: "Expert Directory",
           href: "/dashboard/experts",
           icon: <Users className="h-5 w-5" />,
           active: location === "/dashboard/experts",
-        },
-        {
-          title: "Dealer Directory",
-          href: "/dashboard/dealers",
-          icon: <ShoppingBag className="h-5 w-5" />,
-          active: location === "/dashboard/dealers",
         },
         {
           title: "Predictions",
@@ -154,22 +161,29 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
     } else if (user?.role === UserRole.BUYER) {
       return [
         {
-          title: "Orders",
-          href: "/dashboard/orders",
-          icon: <ShoppingCart className="h-5 w-5" />,
-          active: location === "/dashboard/orders",
+          title: "Marketplace Manager",
+          icon: <ShoppingBag className="h-5 w-5" />,
+          expandable: true,
+          children: [
+            {
+              title: "Orders",
+              href: "/dashboard/orders",
+              icon: <ShoppingCart className="h-5 w-5" />,
+              active: location === "/dashboard/orders",
+            },
+            {
+              title: "Dealer Directory",
+              href: "/dashboard/dealers",
+              icon: <ShoppingBag className="h-5 w-5" />,
+              active: location === "/dashboard/dealers",
+            },
+          ],
         },
         {
           title: "Expert Directory",
           href: "/dashboard/experts",
           icon: <Users className="h-5 w-5" />,
           active: location === "/dashboard/experts",
-        },
-        {
-          title: "Dealer Directory",
-          href: "/dashboard/dealers",
-          icon: <ShoppingBag className="h-5 w-5" />,
-          active: location === "/dashboard/dealers",
         },
         {
           title: "AI Farming Assistant",
@@ -224,28 +238,35 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
           active: location === "/dashboard/tasks",
         },
         {
-          title: "Orders",
-          href: "/dashboard/orders",
-          icon: <ShoppingCart className="h-5 w-5" />,
-          active: location === "/dashboard/orders",
-        },
-        {
-          title: "Inventory",
-          href: "/dashboard/inventory",
-          icon: <Grid className="h-5 w-5" />,
-          active: location === "/dashboard/inventory",
+          title: "Marketplace Manager",
+          icon: <ShoppingBag className="h-5 w-5" />,
+          expandable: true,
+          children: [
+            {
+              title: "Orders",
+              href: "/dashboard/orders",
+              icon: <ShoppingCart className="h-5 w-5" />,
+              active: location === "/dashboard/orders",
+            },
+            {
+              title: "Inventory",
+              href: "/dashboard/inventory",
+              icon: <Grid className="h-5 w-5" />,
+              active: location === "/dashboard/inventory",
+            },
+            {
+              title: "Dealer Directory",
+              href: "/dashboard/dealers",
+              icon: <ShoppingBag className="h-5 w-5" />,
+              active: location === "/dashboard/dealers",
+            },
+          ],
         },
         {
           title: "Expert Directory",
           href: "/dashboard/experts",
           icon: <Users className="h-5 w-5" />,
           active: location === "/dashboard/experts",
-        },
-        {
-          title: "Dealer Directory",
-          href: "/dashboard/dealers",
-          icon: <ShoppingBag className="h-5 w-5" />,
-          active: location === "/dashboard/dealers",
         },
         {
           title: "Predictions",
@@ -289,6 +310,22 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
 
   const navItems = getNavItems();
 
+  // Auto-expand Marketplace Manager if any of its children are active
+  useEffect(() => {
+    navItems.forEach((item: any) => {
+      if (item.expandable && item.children) {
+        const hasActiveChild = item.children.some((child: any) => child.active);
+        if (hasActiveChild && !expandedItems.has(item.title)) {
+          setExpandedItems((prev) => {
+            const newSet = new Set(prev);
+            newSet.add(item.title);
+            return newSet;
+          });
+        }
+      }
+    });
+  }, [location]);
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-80 p-0">
@@ -321,28 +358,88 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
           </div>
         </SheetHeader>
 
-        <ScrollArea className="flex-1 py-4 overflow-y-auto">
+        <ScrollArea className="flex-1 py-4 overflow-y-auto h-full">
           <nav className="space-y-1 px-4">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors",
-                  item.active
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                )}
-                onClick={() => onOpenChange(false)}
-              >
-                {item.icon}
-                <span className="font-medium">{item.title}</span>
-              </Link>
-            ))}
+            {navItems.map((item: any) => {
+              // Handle expandable items
+              if (item.expandable && item.children) {
+                const isExpanded = expandedItems.has(item.title);
+                const hasActiveChild = item.children.some(
+                  (child: any) => child.active
+                );
+
+                return (
+                  <div key={item.title} className="space-y-1">
+                    {/* Parent item - clickable to expand/collapse */}
+                    <button
+                      onClick={() => toggleExpanded(item.title)}
+                      className={cn(
+                        "flex items-center justify-between w-full gap-3 px-3 py-3 rounded-lg transition-colors min-h-[44px] touch-manipulation",
+                        hasActiveChild
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        {item.icon}
+                        <span className="font-medium">{item.title}</span>
+                      </div>
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </button>
+
+                    {/* Submenu items */}
+                    {isExpanded && (
+                      <div className="ml-4 space-y-1 border-l-2 border-border pl-2">
+                        {item.children.map((child: any) => (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            className={cn(
+                              "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors min-h-[44px] touch-manipulation",
+                              child.active
+                                ? "bg-primary/10 text-primary"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                            )}
+                            onClick={() => onOpenChange(false)}
+                          >
+                            {child.icon}
+                            <span className="font-medium text-sm">
+                              {child.title}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // Regular items
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors min-h-[44px] touch-manipulation",
+                    item.active
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                  onClick={() => onOpenChange(false)}
+                >
+                  {item.icon}
+                  <span className="font-medium">{item.title}</span>
+                </Link>
+              );
+            })}
           </nav>
         </ScrollArea>
 
-        <div className="p-4 border-t">
+        <div className="p-4 border-t absolute bottom-0 left-0 right-0">
           <Button
             variant="outline"
             size="sm"
