@@ -192,6 +192,40 @@ AI-generated treatment plans include:
 - Treatment plans are generated from analyses
 - Treatment steps belong to treatment plans
 
+## 🖼️ Image Storage & CDN
+
+GreenUpp features a production-ready image storage system with automatic Cloudinary CDN integration:
+
+- **Cloudinary Integration**: Automatic CDN delivery when configured (recommended)
+- **Local Storage Fallback**: Works without Cloudinary in development
+- **Auto-Optimization**: WebP conversion, quality optimization, format detection
+- **On-the-Fly Transformations**: Generate thumbnails and crops without extra storage
+- **Organized Folders**: marketplace/, social/, profiles/, crops/
+- **Free Tier**: 25GB storage and bandwidth (perfect for MVP)
+
+### Quick Setup
+
+**Development (No setup needed)**:
+
+- Images stored in `uploads/` directory
+- Served from `/uploads/` path
+
+**Production (5-minute setup)**:
+
+1. Create free Cloudinary account
+2. Add 3 environment variables to Railway
+3. Images automatically use CDN ✅
+
+See [CLOUDINARY_QUICK_START.md](./CLOUDINARY_QUICK_START.md) for step-by-step instructions!
+
+### Image Storage Documentation
+
+- **[Quick Start](./CLOUDINARY_QUICK_START.md)** - 5-minute Cloudinary setup
+- **[Deployment Checklist](./DEPLOY_IMAGE_FIX_CHECKLIST.md)** - Step-by-step deployment
+- **[Full Setup Guide](./CLOUDINARY_SETUP.md)** - Complete Cloudinary documentation
+- **[Production Guide](./PRODUCTION_IMAGE_STORAGE_GUIDE.md)** - All storage options
+- **[Railway Fix](./RAILWAY_IMAGE_FIX.md)** - Railway-specific instructions
+
 ## 🔒 Security Features
 
 - **Session-based Authentication**: Secure user sessions with Redis
