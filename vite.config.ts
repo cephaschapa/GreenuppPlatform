@@ -34,7 +34,7 @@ export default defineConfig(({ command, mode }) => ({
       output: {
         manualChunks: {
           // Vendor chunks
-          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "react-vendor": ["react", "react-dom", "wouter"],
           "radix-vendor": [
             "@radix-ui/react-dialog",
             "@radix-ui/react-dropdown-menu",
@@ -60,7 +60,7 @@ export default defineConfig(({ command, mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ["react", "react-dom", "react-router-dom"],
+    include: ["react", "react-dom", "wouter"],
   },
   server: {
     port: 3000,
