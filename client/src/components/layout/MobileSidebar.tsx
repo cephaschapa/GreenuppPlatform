@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
@@ -50,10 +51,45 @@ interface MobileSidebarProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Helper function to format large numbers
+const formatCount = (count: number): string => {
+  if (count >= 1000000) {
+    return (count / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+  }
+  if (count >= 1000) {
+    return (count / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+  }
+  return count.toString();
+};
+
 export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  // Fetch social profile data for follower/following counts
+  const { data: socialProfile } = useQuery({
+    queryKey: ["/api/social/profile", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      try {
+        const response = await fetch(`/api/social/profile/${user.id}`);
+        if (!response.ok) {
+          // Profile might not exist yet, return defaults
+          if (response.status === 404) {
+            return { followerCount: 0, followingCount: 0 };
+          }
+          throw new Error("Failed to fetch social profile");
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Error fetching social profile:", error);
+        return { followerCount: 0, followingCount: 0 };
+      }
+    },
+    enabled: !!user?.id,
+    staleTime: 60000, // Cache for 1 minute
+  });
 
   // Toggle expanded state for items with submenus
   const toggleExpanded = (itemTitle: string) => {
@@ -344,15 +380,27 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
               <SheetDescription className="text-left text-sm text-muted-foreground truncate">
                 @{user?.username}
               </SheetDescription>
-              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <span className="font-medium text-foreground">0</span>
-                  <span>Following</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="font-medium text-foreground">0</span>
-                  <span>Followers</span>
-                </div>
+              <div className="flex items-center gap-4 mt-2 text-xs">
+                <Link
+                  href={`/dashboard/social`}
+                  className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
+                  onClick={() => onOpenChange(false)}
+                >
+                  <span className="font-semibold text-foreground">
+                    {formatCount(socialProfile?.followingCount ?? 0)}
+                  </span>
+                  <span className="text-muted-foreground">Following</span>
+                </Link>
+                <Link
+                  href={`/dashboard/social`}
+                  className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
+                  onClick={() => onOpenChange(false)}
+                >
+                  <span className="font-semibold text-foreground">
+                    {formatCount(socialProfile?.followerCount ?? 0)}
+                  </span>
+                  <span className="text-muted-foreground">Followers</span>
+                </Link>
               </div>
             </div>
           </div>
