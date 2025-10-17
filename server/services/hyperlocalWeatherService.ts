@@ -82,15 +82,21 @@ export async function getHyperlocalWeather(
       if (nearestResult) {
         zambianLocation = nearestResult.location;
         const distance = nearestResult.distance;
-        
+
         logger.info(
-          `Found nearest Zambian location: ${zambianLocation.name}, ${zambianLocation.city} (${distance.toFixed(2)}km away)`
+          `Found nearest Zambian location: ${zambianLocation.name}, ${
+            zambianLocation.city
+          } (${distance.toFixed(2)}km away)`
         );
         source = "zambian_database";
-        
+
         // Set precision based on distance
         if (distance < 0.5) {
-          precision = zambianLocation.type === "compound" || zambianLocation.type === "neighborhood" ? "neighborhood" : "city";
+          precision =
+            zambianLocation.type === "compound" ||
+            zambianLocation.type === "neighborhood"
+              ? "neighborhood"
+              : "city";
         } else if (distance < 2) {
           precision = "city";
         } else {
@@ -128,18 +134,22 @@ export async function getHyperlocalWeather(
     if (nearestResult) {
       zambianLocation = nearestResult.location;
       const distance = nearestResult.distance;
-      
+
       logger.info(
-        `Found nearest Zambian location to GPS coordinates: ${zambianLocation.name}, ${zambianLocation.city} (${distance.toFixed(2)}km away)`
+        `Found nearest Zambian location to GPS coordinates: ${
+          zambianLocation.name
+        }, ${zambianLocation.city} (${distance.toFixed(2)}km away)`
       );
       source = "zambian_database";
-      
+
       // Set precision based on distance from detected GPS to database location
       if (distance < 0.5) {
         // Within 500m - very precise
-        precision = zambianLocation.type === "compound" || zambianLocation.type === "neighborhood" 
-          ? "neighborhood" 
-          : "city";
+        precision =
+          zambianLocation.type === "compound" ||
+          zambianLocation.type === "neighborhood"
+            ? "neighborhood"
+            : "city";
         logger.info(`🎯 High precision match - ${distance.toFixed(2)}km away`);
       } else if (distance < 2) {
         // Within 2km - city level

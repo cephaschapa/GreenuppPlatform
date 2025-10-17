@@ -1,9 +1,20 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { visualizer } from "rollup-plugin-visualizer";
 
 export default defineConfig(({ command, mode }) => ({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // Add bundle visualizer in analyze mode
+    mode === "analyze" &&
+      visualizer({
+        filename: "./dist/stats.html",
+        open: true,
+        gzipSize: true,
+        brotliSize: true,
+      }),
+  ].filter(Boolean),
   define: {
     "process.env.NODE_ENV": JSON.stringify(mode),
   },
@@ -19,6 +30,37 @@ export default defineConfig(({ command, mode }) => ({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "radix-vendor": [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-select",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-toast",
+          ],
+          "form-vendor": ["react-hook-form", "zod"],
+          "chart-vendor": ["recharts"],
+          "date-vendor": ["date-fns"],
+          "map-vendor": ["leaflet", "react-leaflet"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+    cssCodeSplit: true,
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: mode === "production",
+        drop_debugger: true,
+      },
+    },
+  },
+  optimizeDeps: {
+    include: ["react", "react-dom", "react-router-dom"],
   },
   server: {
     port: 3000,
