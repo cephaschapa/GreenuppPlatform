@@ -18,6 +18,7 @@ import { setupSettingsRoutes } from "./settings-mvc.js";
 import { setupLocationRoutes } from "./location-mvc.js";
 import { setupGeocodingRoutes } from "./geocoding-mvc.js";
 import { setupTreatmentRoutes } from "./treatment-mvc.js";
+import locationDetectionRoutes from "./location-detection.js";
 import adminRoutes from "./admin.js";
 import adminAuthRoutes from "./admin-auth.js";
 import pushNotificationRoutes from "./push-notifications.js";
@@ -80,6 +81,9 @@ export function registerMvcRoutes(app: Express): void {
 
   // Geocoding routes
   setupGeocodingRoutes(app);
+
+  // Location detection routes (accurate global location detection)
+  app.use("/api/location", locationDetectionRoutes);
 
   // Treatment plan routes
   setupTreatmentRoutes(app);

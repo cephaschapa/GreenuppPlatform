@@ -533,6 +533,9 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
   );
 }
 
+import { NetworkStatus } from "./components/mobile/NetworkStatus";
+import { InstallPrompt } from "./components/mobile/InstallPrompt";
+
 function App() {
   // Check if we're on the app subdomain
   const isAppSubdomain =
@@ -552,9 +555,11 @@ function App() {
                   <HelmetProvider>
                     <Router isAppSubdomain={isAppSubdomain} />
                     <Toaster />
-                    {/* PWA Components */}
-                    {/* <InstallPWA /> */}
-                    <OfflineIndicator />
+                    {/* Mobile PWA Components */}
+                    <NetworkStatus />
+                    <InstallPrompt />
+                    {/* Legacy offline indicator - can be removed */}
+                    {/* <OfflineIndicator /> */}
                     {/* Push Notifications Debug*/}
                     {/* <PushNotificationDebug /> */}
                   </HelmetProvider>

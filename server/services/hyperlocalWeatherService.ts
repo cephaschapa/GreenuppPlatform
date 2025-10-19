@@ -128,7 +128,7 @@ export async function getHyperlocalWeather(
 
   // Strategy 2: Use coordinates directly (for GPS auto-detect)
   if (query.lat !== undefined && query.lon !== undefined) {
-    // Find nearest Zambian location to these coordinates
+    // Find nearest Zambian location to these coordinates (within 200km radius)
     const nearestResult = findNearestLocation(query.lat, query.lon);
 
     if (nearestResult) {
@@ -161,7 +161,10 @@ export async function getHyperlocalWeather(
         logger.info(`📌 Approximate match - ${distance.toFixed(2)}km away`);
       }
     } else {
-      // Fallback: reverse geocode with OpenWeather
+      // No Zambian location within 200km - use OpenWeather for actual location
+      logger.info(
+        `No Zambian location found within 200km of coordinates (${query.lat}, ${query.lon}). Using OpenWeather geocoding for actual location.`
+      );
       try {
         const geoData = await reverseGeocode(query.lat, query.lon);
         zambianLocation = {
@@ -173,7 +176,11 @@ export async function getHyperlocalWeather(
         };
         source = "openweather_geocode";
         precision = "city";
-        logger.info(`Using OpenWeather reverse geocode: ${geoData.name}`);
+        logger.info(
+          `Using OpenWeather reverse geocode: ${geoData.name}, ${
+            geoData.state || "Unknown"
+          }, ${geoData.country}`
+        );
       } catch (error) {
         logger.error("Failed to reverse geocode coordinates", error);
         throw new Error("Unable to find weather data for coordinates");

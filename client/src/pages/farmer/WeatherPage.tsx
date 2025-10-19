@@ -5,7 +5,7 @@ import { EnhancedWeatherDashboard } from "@/components/farmer/EnhancedWeatherDas
 import { WeatherAlertSystem } from "@/components/farmer/WeatherAlertSystem";
 import { useWeatherPreferences } from "@/hooks/use-weather-preferences";
 import RegionalSeedRecommendations from "@/components/RegionalSeedRecommendations";
-import { ZambianLocationSearch } from "@/components/farmer/ZambianLocationSearch";
+import { GlobalLocationSearch } from "@/components/farmer/GlobalLocationSearch";
 // import { WeatherPreferences as WeatherPreferencesType } from "@shared/schema";
 import {
   Card,
@@ -150,11 +150,7 @@ interface HistoricalWeatherData {
 export default function WeatherPage() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
-  const [activeLocation, setActiveLocation] = useState<string | null>(() => {
-    // Try to get the last active location from localStorage
-    const savedLocation = localStorage.getItem("weatherActiveLocation");
-    return savedLocation || null;
-  });
+  const [activeLocation, setActiveLocation] = useState<string | null>(null);
   const [climateData, setClimateData] = useState<ClimateData | null>(null);
   const [loadingClimate, setLoadingClimate] = useState(false);
   const [cropRecommendations, setCropRecommendations] = useState<
@@ -169,7 +165,7 @@ export default function WeatherPage() {
     to: new Date(),
   });
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
-  const [hasAttemptedAutoDetect, setHasAttemptedAutoDetect] = useState(false);
+  const [hasTriedAutoDetect, setHasTriedAutoDetect] = useState(false);
   const [detectedCoordinates, setDetectedCoordinates] = useState<{
     lat: number;
     lon: number;
@@ -179,8 +175,12 @@ export default function WeatherPage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [weatherPrecision, setWeatherPrecision] = useState<"neighborhood" | "city" | "approximate" | null>(null);
-  const [weatherSource, setWeatherSource] = useState<"zambian_database" | "openweather_geocode" | "coordinates" | null>(null);
+  const [weatherPrecision, setWeatherPrecision] = useState<
+    "neighborhood" | "city" | "approximate" | null
+  >(null);
+  const [weatherSource, setWeatherSource] = useState<
+    "zambian_database" | "openweather_geocode" | "coordinates" | null
+  >(null);
 
   const { preferences, isLoading } = useWeatherPreferences();
   const { toast } = useToast();
@@ -308,38 +308,47 @@ export default function WeatherPage() {
       );
 
       const { latitude, longitude, accuracy } = position.coords;
-      
+
       // Log accuracy for debugging
-      console.log(`📍 GPS Position: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`);
+      console.log(
+        `📍 GPS Position: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`
+      );
 
       // Store the coordinates
       setDetectedCoordinates({ lat: latitude, lon: longitude });
 
-      // Use our hyperlocal weather API to find nearest Zambian location
-      const response = await fetch(
-        `/api/hyperlocal-weather?lat=${latitude}&lon=${longitude}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
+      // Use our new accurate location detection service
+      const response = await fetch(`/api/location/detect`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ lat: latitude, lon: longitude }),
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch location data");
+        throw new Error("Failed to detect location");
       }
 
       const data = await response.json();
 
       if (data.success && data.location) {
         const locationData = data.location;
-        // Use full location name with city
-        const locationName = `${locationData.name}, ${locationData.city}`;
 
         // Store the full location data for display
-        setDetectedLocationData(locationData);
+        setDetectedLocationData({
+          name: locationData.name,
+          city: locationData.city,
+          state: locationData.state,
+          country: locationData.country,
+          type: data.meta?.zambianDetails?.type || "city",
+          province: locationData.state,
+        });
 
-        // Set as active location immediately
-        setActiveLocation(locationName);
+        // Use coordinates format for activeLocation to ensure weather API works globally
+        // The weather API handles "lat,lon" format better than complex location names
+        setActiveLocation(`${latitude},${longitude}`);
 
         // Store precision and source
         setWeatherPrecision(data.meta?.precision || null);
@@ -352,21 +361,31 @@ export default function WeatherPage() {
         setHistoricalData(null);
 
         // Show enhanced toast with location details
-        const precisionEmoji = 
-          data.meta?.precision === "neighborhood" ? "🎯" :
-          data.meta?.precision === "city" ? "📍" : "📌";
+        const precisionEmoji =
+          data.meta?.precision === "neighborhood"
+            ? "🎯"
+            : data.meta?.precision === "city"
+            ? "📍"
+            : "📌";
+
+        const locationDescription = data.meta?.isZambian
+          ? `${locationData.name} in ${locationData.city}, ${locationData.state}`
+          : `${locationData.name}, ${
+              locationData.state || locationData.country
+            }`;
 
         toast({
           title: `${precisionEmoji} Location Detected!`,
-          description: `${locationData.name} (${locationData.type}) in ${locationData.city}, ${locationData.province}`,
+          description: locationDescription,
           duration: 5000,
         });
 
-        // Show precision info if neighborhood-level
-        if (data.meta?.precision === "neighborhood") {
+        // Show precision info if neighborhood-level for Zambian locations
+        if (data.meta?.isZambian && data.meta?.precision === "neighborhood") {
           toast({
             title: "🎯 Precise Location Found",
-            description: "Using neighborhood-level weather data from Zambian database",
+            description:
+              "Using neighborhood-level weather data from Zambian database",
             duration: 4000,
           });
         }
@@ -392,79 +411,43 @@ export default function WeatherPage() {
         errorMessage = "Location request timed out. Please try again.";
       }
 
-      // Only show error toast if this was a manual detection attempt
-      if (hasAttemptedAutoDetect) {
-        toast({
-          title: "Location detection failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
+      // Show error toast for manual detection attempts
+      toast({
+        title: "Location detection failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsDetectingLocation(false);
     }
   };
 
-  // Auto-detect location on page load ONLY if no location is set
-  // This should run only once on mount to avoid interfering with manual selections
+  // Set initial location from user's saved preferences OR auto-detect
   useEffect(() => {
-    // Only run if we haven't attempted auto-detect yet
-    if (hasAttemptedAutoDetect) return;
-    
-    if (
-      !activeLocation &&
-      !isLoading &&
-      navigator.geolocation
-    ) {
-      setHasAttemptedAutoDetect(true);
-      // console.log("Attempting to auto-detect location...");
+    // Skip if already tried auto-detect
+    if (hasTriedAutoDetect || isLoading) return;
 
-      // Check if we have permission to access location
-      navigator.permissions
-        ?.query({ name: "geolocation" })
-        .then((permissionStatus) => {
-          if (permissionStatus.state === "granted") {
-            // User has already granted permission, auto-detect
-            // console.log("Location permission granted, detecting location...");
-            detectCurrentLocation();
-          } else {
-            // console.log(
-            //   "Location permission not granted:",
-            //   permissionStatus.state
-            // );
-          }
-          // If permission is 'denied' or 'prompt', don't auto-detect to avoid annoying the user
-        })
-        .catch(() => {
-          // Permissions API not supported, don't auto-detect
-          // console.log("Permissions API not supported");
-        });
-    }
-  }, [isLoading, hasAttemptedAutoDetect]); // Removed activeLocation from dependencies to prevent re-triggering on manual selections
-
-  // Save active location to localStorage whenever it changes
-  useEffect(() => {
-    if (activeLocation) {
-      localStorage.setItem("weatherActiveLocation", activeLocation);
-    } else {
-      // Clear localStorage if no active location
-      localStorage.removeItem("weatherActiveLocation");
-    }
-  }, [activeLocation]);
-
-  // Set initial location from preferences ONLY when preferences first load
-  // Don't override manual selections - only set if there's no active location
-  useEffect(() => {
-    // Only set from preferences if there's no active location yet
-    if (!activeLocation && preferences?.locations && preferences.locations.length > 0) {
-      // Set the first saved location as active
-      // console.log(
-      //   "Setting initial active location from preferences:",
-      //   preferences.locations[0]
-      // );
+    // Priority 1: Use saved preferences if available
+    if (preferences?.locations && preferences.locations.length > 0) {
+      console.log(
+        "Setting active location from user preferences:",
+        preferences.locations[0]
+      );
       setActiveLocation(preferences.locations[0]);
+      setHasTriedAutoDetect(true);
+      return;
     }
-  }, [preferences]); // Removed activeLocation from dependencies to avoid overriding manual selections
+
+    // Priority 2: Auto-detect location if no preferences
+    if (!activeLocation && navigator.geolocation) {
+      console.log("Auto-detecting location on page load...");
+      setHasTriedAutoDetect(true);
+
+      // Attempt auto-detection immediately
+      // This will prompt for permission on first load, but auto-detect silently after that
+      detectCurrentLocation();
+    }
+  }, [preferences, isLoading, hasTriedAutoDetect, activeLocation]); // Dependencies ensure this runs when preferences load
 
   // Fetch weather for the active location
   useEffect(() => {
@@ -479,7 +462,9 @@ export default function WeatherPage() {
       try {
         // Try hyperlocal API first for Zambian locations
         let response = await fetch(
-          `/api/hyperlocal-weather?location=${encodeURIComponent(activeLocation)}`
+          `/api/hyperlocal-weather?location=${encodeURIComponent(
+            activeLocation
+          )}`
         );
 
         let data;
@@ -574,7 +559,7 @@ export default function WeatherPage() {
 
     setLoadingWeather(true);
     setWeatherData(null);
-    
+
     try {
       // Try hyperlocal API first for Zambian locations
       let response = await fetch(
@@ -615,7 +600,7 @@ export default function WeatherPage() {
         setWeatherData(data);
         setWeatherPrecision(null);
         setWeatherSource(null);
-        
+
         toast({
           title: "🔄 Weather Updated",
           description: `Latest data for ${activeLocation}`,
@@ -877,71 +862,74 @@ export default function WeatherPage() {
       <div className="gap-8">
         <Tabs defaultValue="current" className="w-full">
           <div className="mb-4 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="inline-flex w-auto min-w-full sm:w-full sm:grid sm:grid-cols-6 gap-1" role="tabslist">
-            <TabsTrigger
-              value="current"
-              className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
-              role="tab"
+            <TabsList
+              className="inline-flex w-auto min-w-full sm:w-full sm:grid sm:grid-cols-6 gap-1"
+              role="tabslist"
             >
-              <Cloud className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">Current Weather</span>
-              <span className="sm:hidden">Current</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="forecast"
-              className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
-              role="tab"
-            >
-              <Calendar className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">Forecast</span>
-              <span className="sm:hidden">Forecast</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="climate"
-              className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
-              role="tab"
-            >
-              <BarChart4 className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">Climate Analysis</span>
-              <span className="sm:hidden">Climate</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="recommendations"
-              className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
-              role="tab"
-            >
-              <Sprout className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">Crop Recommendations</span>
-              <span className="sm:hidden">Crops</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="alerts"
-              className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
-              role="tab"
-            >
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">Weather Alerts</span>
-              <span className="sm:hidden">Alerts</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="historical"
-              className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
-              role="tab"
-            >
-              <RefreshCw className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">Historical Data</span>
-              <span className="sm:hidden">History</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="preferences"
-              className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
-              role="tab"
-            >
-              <Settings className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">Preferences</span>
-              <span className="sm:hidden">Settings</span>
-            </TabsTrigger>
-          </TabsList>
+              <TabsTrigger
+                value="current"
+                className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
+                role="tab"
+              >
+                <Cloud className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Current Weather</span>
+                <span className="sm:hidden">Current</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="forecast"
+                className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
+                role="tab"
+              >
+                <Calendar className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Forecast</span>
+                <span className="sm:hidden">Forecast</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="climate"
+                className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
+                role="tab"
+              >
+                <BarChart4 className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Climate Analysis</span>
+                <span className="sm:hidden">Climate</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="recommendations"
+                className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
+                role="tab"
+              >
+                <Sprout className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Crop Recommendations</span>
+                <span className="sm:hidden">Crops</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="alerts"
+                className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
+                role="tab"
+              >
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Weather Alerts</span>
+                <span className="sm:hidden">Alerts</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="historical"
+                className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
+                role="tab"
+              >
+                <RefreshCw className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Historical Data</span>
+                <span className="sm:hidden">History</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="preferences"
+                className="flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-sm"
+                role="tab"
+              >
+                <Settings className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Preferences</span>
+                <span className="sm:hidden">Settings</span>
+              </TabsTrigger>
+            </TabsList>
           </div>
 
           <TabsContent value="current">
@@ -955,7 +943,8 @@ export default function WeatherPage() {
                         Weather Location
                       </CardTitle>
                       <CardDescription className="text-xs sm:text-sm break-words">
-                        Your location is automatically detected, or search for any Zambian neighborhood
+                        Your location is automatically detected worldwide, or
+                        search for specific areas
                       </CardDescription>
                     </div>
                     {activeLocation && weatherData && (
@@ -981,8 +970,12 @@ export default function WeatherPage() {
                         <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-muted/50 rounded-lg border border-dashed">
                           <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-primary flex-shrink-0" />
                           <div className="min-w-0">
-                            <p className="font-medium text-xs sm:text-sm">Detecting your location...</p>
-                            <p className="text-xs text-muted-foreground break-words">Finding nearest Zambian neighborhood</p>
+                            <p className="font-medium text-xs sm:text-sm">
+                              Detecting your location...
+                            </p>
+                            <p className="text-xs text-muted-foreground break-words">
+                              Finding nearest Zambian neighborhood
+                            </p>
                           </div>
                         </div>
                       ) : activeLocation ? (
@@ -991,7 +984,9 @@ export default function WeatherPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-medium text-xs sm:text-sm break-words">
-                                {extractCityName(activeLocation)}
+                                {detectedLocationData?.name ||
+                                  detectedLocationData?.city ||
+                                  extractCityName(activeLocation)}
                               </span>
                               {weatherPrecision && (
                                 <Badge
@@ -1006,21 +1001,32 @@ export default function WeatherPage() {
                                       "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                                   )}
                                 >
-                                  {weatherPrecision === "neighborhood" && "🎯 Precise"}
-                                  {weatherPrecision === "city" && "📍 City-level"}
-                                  {weatherPrecision === "approximate" && "📌 Approximate"}
+                                  {weatherPrecision === "neighborhood" &&
+                                    "🎯 Precise"}
+                                  {weatherPrecision === "city" &&
+                                    "📍 City-level"}
+                                  {weatherPrecision === "approximate" &&
+                                    "📌 Approximate"}
                                 </Badge>
                               )}
                             </div>
-                            {detectedLocationData?.province && (
+                            {detectedLocationData && (
                               <p className="text-xs text-muted-foreground mt-1 break-words">
-                                {detectedLocationData.type && `${detectedLocationData.type} in `}
-                                {detectedLocationData.city}, {detectedLocationData.province}
+                                {detectedLocationData.type &&
+                                  `${detectedLocationData.type} in `}
+                                {detectedLocationData.city}
+                                {detectedLocationData.state &&
+                                  detectedLocationData.state !==
+                                    detectedLocationData.city &&
+                                  `, ${detectedLocationData.state}`}
+                                {detectedLocationData.country &&
+                                  `, ${detectedLocationData.country}`}
                               </p>
                             )}
                             {detectedCoordinates && (
                               <p className="text-xs text-muted-foreground/70 mt-1 break-all">
-                                {detectedCoordinates.lat.toFixed(4)}, {detectedCoordinates.lon.toFixed(4)}
+                                {detectedCoordinates.lat.toFixed(4)},{" "}
+                                {detectedCoordinates.lon.toFixed(4)}
                               </p>
                             )}
                           </div>
@@ -1040,41 +1046,100 @@ export default function WeatherPage() {
                               </Button>
                             )}
                         </div>
-                      ) : null}
+                      ) : (
+                        <div className="flex flex-col items-center gap-4 p-6 sm:p-8 bg-muted/50 rounded-lg border border-dashed">
+                          <Navigation className="h-12 w-12 text-muted-foreground" />
+                          <div className="text-center space-y-2">
+                            <h3 className="font-medium text-sm sm:text-base">
+                              No Location Detected
+                            </h3>
+                            <p className="text-xs sm:text-sm text-muted-foreground max-w-sm">
+                              Detect your current location to get accurate
+                              weather data for your area
+                            </p>
+                          </div>
+                          <Button
+                            onClick={detectCurrentLocation}
+                            size="lg"
+                            className="gap-2"
+                            disabled={isDetectingLocation}
+                          >
+                            {isDetectingLocation ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Detecting...
+                              </>
+                            ) : (
+                              <>
+                                <Navigation className="h-4 w-4" />
+                                Detect My Location
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      )}
 
-                      {/* Zambian Location Search with Autocomplete */}
+                      {/* Global Location Search with Autocomplete */}
                       <div className="space-y-2">
                         <label className="text-xs sm:text-sm font-medium block">
-                          Search Zambian Neighborhoods & Cities:
+                          Search Any Location Worldwide:
                         </label>
-                        <ZambianLocationSearch
+                        <GlobalLocationSearch
                           onLocationSelect={(location) => {
-                            // Set the location name as active
-                            const locationName = `${location.name}, ${location.city}`;
-                            setActiveLocation(locationName);
-                            
-                            // Store coordinates for potential saving
+                            // Store location data for display
+                            setDetectedLocationData({
+                              name: location.name,
+                              city: location.city,
+                              state: location.state,
+                              country: location.country,
+                              type: location.type || "city",
+                              province: location.state,
+                            });
+
+                            // Store coordinates for weather fetching and saving
                             setDetectedCoordinates(location.coordinates);
-                            
+
+                            // Use coordinates format for reliable weather API
+                            setActiveLocation(
+                              `${location.coordinates.lat},${location.coordinates.lon}`
+                            );
+
+                            // Set precision based on source
+                            if (location.source === "zambian_database") {
+                              setWeatherPrecision(
+                                location.type === "compound" ||
+                                  location.type === "neighborhood"
+                                  ? "neighborhood"
+                                  : "city"
+                              );
+                              setWeatherSource("zambian_database");
+                            } else {
+                              setWeatherPrecision("city");
+                              setWeatherSource("openweather_geocode");
+                            }
+
                             // Reset weather data
                             setWeatherData(null);
                             setClimateData(null);
                             setCropRecommendations(null);
                             setHistoricalData(null);
 
+                            const locationDesc =
+                              location.source === "zambian_database"
+                                ? `${location.type} in ${location.city}, ${location.province}`
+                                : location.formatted;
+
                             toast({
                               title: `📍 ${location.name} Selected`,
-                              description: `${location.type} in ${location.city}, ${location.province}`,
+                              description: locationDesc,
                             });
                           }}
-                          onGPSDetect={(lat, lon) => {
-                            setDetectedCoordinates({ lat, lon });
-                          }}
-                          placeholder="Search Chalala, Kalingalinga..."
-                          showGPSDetect={true}
+                          placeholder="Search Cape Town, Lusaka, Nairobi..."
+                          showGPSDetect={false}
                         />
                         <p className="text-xs text-muted-foreground break-words">
-                          🎯 Search for your specific compound or neighborhood for precise weather
+                          🌍 Search for any city worldwide, or get precise
+                          results for Zambian neighborhoods
                         </p>
                       </div>
                     </div>
@@ -1164,7 +1229,9 @@ export default function WeatherPage() {
           <TabsContent value="climate">
             <Card>
               <CardHeader className="mobile-p-4">
-                <CardTitle className="mobile-text-lg">Climate Analysis</CardTitle>
+                <CardTitle className="mobile-text-lg">
+                  Climate Analysis
+                </CardTitle>
                 <CardDescription className="mobile-text-sm">
                   Climate data and seasonal patterns for{" "}
                   {activeLocation || "your location"}
@@ -1484,7 +1551,9 @@ export default function WeatherPage() {
                                           Precip.
                                         </th>
                                         <th className="text-center px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
-                                          <span className="hidden sm:inline">Growing Degree Days</span>
+                                          <span className="hidden sm:inline">
+                                            Growing Degree Days
+                                          </span>
                                           <span className="sm:hidden">GDD</span>
                                         </th>
                                       </tr>
@@ -1511,7 +1580,9 @@ export default function WeatherPage() {
                                               mm
                                             </td>
                                             <td className="px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">
-                                              {month.growingDegreeDays.toFixed(0)}
+                                              {month.growingDegreeDays.toFixed(
+                                                0
+                                              )}
                                             </td>
                                           </tr>
                                         )
@@ -1540,7 +1611,9 @@ export default function WeatherPage() {
           <TabsContent value="recommendations">
             <Card>
               <CardHeader className="mobile-p-4">
-                <CardTitle className="mobile-text-lg">Crop Recommendations</CardTitle>
+                <CardTitle className="mobile-text-lg">
+                  Crop Recommendations
+                </CardTitle>
                 <CardDescription className="mobile-text-sm">
                   Crops that are suitable for the climate in{" "}
                   {activeLocation || "your location"}
@@ -1732,7 +1805,9 @@ export default function WeatherPage() {
                               ).toLocaleDateString()}
                             </span>
                           </div>
-                          <h4 className="font-semibold mb-1 text-sm sm:text-base">{alert.event}</h4>
+                          <h4 className="font-semibold mb-1 text-sm sm:text-base">
+                            {alert.event}
+                          </h4>
                           <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                             {alert.description}
                           </p>
@@ -1761,7 +1836,9 @@ export default function WeatherPage() {
                 <CardContent className="mobile-p-4">
                   <div className="text-center py-8 text-muted-foreground">
                     <AlertTriangle className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 opacity-50" />
-                    <p className="text-sm sm:text-base">Alert history and statistics coming soon</p>
+                    <p className="text-sm sm:text-base">
+                      Alert history and statistics coming soon
+                    </p>
                     <p className="text-xs sm:text-sm">
                       Track alert triggers and response times
                     </p>
@@ -1774,7 +1851,9 @@ export default function WeatherPage() {
           <TabsContent value="historical">
             <Card>
               <CardHeader className="mobile-p-4">
-                <CardTitle className="mobile-text-lg">Historical Weather Data</CardTitle>
+                <CardTitle className="mobile-text-lg">
+                  Historical Weather Data
+                </CardTitle>
                 <CardDescription className="mobile-text-sm">
                   View historical weather patterns for{" "}
                   {activeLocation || "your location"}
@@ -1836,7 +1915,9 @@ export default function WeatherPage() {
                                     Date
                                   </th>
                                   <th className="text-center px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
-                                    <span className="hidden sm:inline">Avg. Temp</span>
+                                    <span className="hidden sm:inline">
+                                      Avg. Temp
+                                    </span>
                                     <span className="sm:hidden">Avg</span>
                                   </th>
                                   <th className="text-center px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
@@ -1846,11 +1927,15 @@ export default function WeatherPage() {
                                     Max
                                   </th>
                                   <th className="text-center px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
-                                    <span className="hidden sm:inline">Humidity</span>
+                                    <span className="hidden sm:inline">
+                                      Humidity
+                                    </span>
                                     <span className="sm:hidden">Hum.</span>
                                   </th>
                                   <th className="text-center px-2 sm:px-4 py-2 font-medium text-xs sm:text-sm">
-                                    <span className="hidden sm:inline">Precipitation</span>
+                                    <span className="hidden sm:inline">
+                                      Precipitation
+                                    </span>
                                     <span className="sm:hidden">Precip.</span>
                                   </th>
                                 </tr>
@@ -1861,7 +1946,9 @@ export default function WeatherPage() {
                                     key={index}
                                     className="border-b last:border-0 hover:bg-muted/50"
                                   >
-                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">{day.date}</td>
+                                    <td className="px-2 sm:px-4 py-2 text-xs sm:text-sm">
+                                      {day.date}
+                                    </td>
                                     <td className="px-2 sm:px-4 py-2 text-center text-xs sm:text-sm">
                                       {formatTemperature(day.averageTemp)}
                                     </td>
