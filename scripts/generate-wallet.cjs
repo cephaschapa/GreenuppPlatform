@@ -28,4 +28,3 @@ console.log("⚠️  WARNING:");
 console.log("   - NEVER share your private key or seed phrase");
 console.log("   - NEVER commit .env to git");
 console.log("   - Keep seed phrase backed up offline\n");
-

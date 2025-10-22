@@ -11,14 +11,14 @@ WORKDIR /app
 COPY package.json package-lock.json* .npmrc ./
 
 # Install ALL dependencies (including devDependencies) for build
-RUN npm ci --include=dev
+RUN npm ci --include=dev --legacy-peer-deps
 
 # Install production dependencies only
 FROM base AS deps-prod
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json* .npmrc ./
-RUN npm ci --only=production
+RUN npm ci --only=production --legacy-peer-deps
 
 # Rebuild the source code only when needed
 FROM base AS builder
