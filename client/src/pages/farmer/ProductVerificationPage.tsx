@@ -58,6 +58,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { QRCodeScanner } from "@/components/QRCodeScanner";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { CropDetailsDialog } from "@/components/farmer/CropDetailsDialog";
+import { ProductVerificationGuide } from "@/components/farmer/ProductVerificationGuide";
 
 interface Crop {
   id: number;
@@ -197,12 +198,12 @@ export default function ProductVerificationPage() {
     handleVerification(data);
   };
 
-  // Verification mutation
+  // Verification mutation (uses internal authenticated endpoint)
   const verificationMutation = useMutation({
     mutationFn: async (batchId: string) => {
       const response = await apiRequest(
         "GET",
-        `/api/product-verification/verify/${batchId}`
+        `/api/product-verification/internal/verify/${batchId}`
       );
       return await response.json();
     },
@@ -322,6 +323,9 @@ export default function ProductVerificationPage() {
             Scan QR Code
           </Button>
         </div>
+
+        {/* Workflow Guide */}
+        <ProductVerificationGuide />
 
         {/* Search and Filter Section */}
         <Card>

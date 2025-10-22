@@ -1,7 +1,14 @@
 import axios from "axios";
-import { InsertCropYieldPrediction } from "@shared/schema";
+import {
+  InsertCropYieldPrediction,
+  cropVarieties,
+  CropVariety,
+} from "@shared/schema";
 import { db } from "./db";
 import { cropYieldPredictions } from "@shared/schema";
+import { getElevation } from "./services/elevationService";
+import { getSoilData } from "./services/soilDataService";
+import { eq } from "drizzle-orm";
 
 // We'll use OpenWeatherMap API as it provides both current, forecast and historical data
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
@@ -120,80 +127,21 @@ interface CropRecommendation {
 }
 
 // Helper function to check if a location is likely coastal
-function checkIfCoastal(lat: number, lon: number): boolean {
-  // Major coastlines approximation
-  // Pacific coastlines
-  if (
-    (lon < -115 && lon > -130 && lat > 30 && lat < 50) || // North American West Coast
-    (lon < -70 && lon > -85 && lat < -10 && lat > -40)
-  ) {
-    // South American West Coast
-    return true;
-  }
-  // Atlantic coastlines
-  if (
-    (lon > -85 && lon < -65 && lat > 25 && lat < 45) || // North American East Coast
-    (lon > -55 && lon < -35 && lat < 5 && lat > -35)
-  ) {
-    // South American East Coast
-    return true;
-  }
-  // European coastlines
-  if (lon > -10 && lon < 30 && lat > 35 && lat < 60) {
-    return true;
-  }
-  // Asian coastlines
-  if (lon > 100 && lon < 145 && lat > 20 && lat < 45) {
-    return true;
-  }
-  // Australian coastlines
-  if (lon > 115 && lon < 155 && lat < -10 && lat > -40) {
+// Using distance-based approach instead of hardcoded ranges
+function checkIfCoastal(lat: number, lon: number, elevation: number): boolean {
+  // If elevation is very low (<50m) and not in known inland areas, likely coastal
+  if (elevation < 50) {
+    // Exclude known low-lying inland areas (approximate)
+    // Amazon Basin
+    if (lon > -80 && lon < -45 && lat > -10 && lat < 5) return false;
+    // Congo Basin
+    if (lon > 10 && lon < 30 && lat > -5 && lat < 5) return false;
+    // Ganges Plain
+    if (lon > 75 && lon < 90 && lat > 20 && lat < 30) return false;
+
     return true;
   }
   return false;
-}
-
-// Helper function to estimate elevation based on location
-function estimateElevation(lat: number, lon: number): number {
-  // Major mountain ranges approximation
-  // Rockies
-  if (lon > -125 && lon < -105 && lat > 30 && lat < 55) {
-    return 2000 + Math.random() * 1000;
-  }
-  // Andes
-  if (lon > -80 && lon < -65 && lat < 10 && lat > -55) {
-    return 3000 + Math.random() * 1500;
-  }
-  // Alps
-  if (lon > 5 && lon < 16 && lat > 43 && lat < 48) {
-    return 2000 + Math.random() * 1000;
-  }
-  // Himalayas
-  if (lon > 70 && lon < 95 && lat > 25 && lat < 40) {
-    return 4000 + Math.random() * 2000;
-  }
-  // Ethiopian Highlands
-  if (lon > 35 && lon < 40 && lat > 5 && lat < 15) {
-    return 2000 + Math.random() * 1000;
-  }
-  return 200 + Math.random() * 300; // Default low elevation
-}
-
-// Helper function to check if a location is in a volcanic region
-function isInVolcanicRegion(lat: number, lon: number): boolean {
-  // Pacific Ring of Fire
-  if (
-    (lon > 120 && lon < 180 && lat > -10 && lat < 50) || // Western Pacific
-    (lon < -110 && lon > -180 && lat > 0 && lat < 60)
-  ) {
-    // Eastern Pacific
-    return Math.random() > 0.7; // 30% chance in these regions
-  }
-  // East African Rift
-  if (lon > 30 && lon < 40 && lat > -10 && lat < 15) {
-    return Math.random() > 0.7;
-  }
-  return Math.random() > 0.95; // 5% chance elsewhere
 }
 
 /**
@@ -308,33 +256,43 @@ export async function geocodeLocation(location: string): Promise<GeoLocation> {
  * Get weather data using FREE tier OpenWeather API (current + 5-day forecast)
  * This is a fallback when One Call API 3.0 is not available
  */
-async function getWeatherDataFreeTier(lat: number, lon: number, locationName: string): Promise<WeatherData> {
+async function getWeatherDataFreeTier(
+  lat: number,
+  lon: number,
+  locationName: string
+): Promise<WeatherData> {
   // Fetch current weather
-  const currentResponse = await axios.get(`${OPENWEATHER_BASE_URL_FREE}/weather`, {
-    params: {
-      lat,
-      lon,
-      units: "metric",
-      appid: OPENWEATHER_API_KEY,
-    },
-  });
+  const currentResponse = await axios.get(
+    `${OPENWEATHER_BASE_URL_FREE}/weather`,
+    {
+      params: {
+        lat,
+        lon,
+        units: "metric",
+        appid: OPENWEATHER_API_KEY,
+      },
+    }
+  );
 
   // Fetch 5-day forecast (3-hour intervals)
-  const forecastResponse = await axios.get(`${OPENWEATHER_BASE_URL_FREE}/forecast`, {
-    params: {
-      lat,
-      lon,
-      units: "metric",
-      appid: OPENWEATHER_API_KEY,
-    },
-  });
+  const forecastResponse = await axios.get(
+    `${OPENWEATHER_BASE_URL_FREE}/forecast`,
+    {
+      params: {
+        lat,
+        lon,
+        units: "metric",
+        appid: OPENWEATHER_API_KEY,
+      },
+    }
+  );
 
   const current = currentResponse.data;
   const forecastData = forecastResponse.data;
 
   // Group forecast by day
   const dailyForecasts: { [key: string]: any[] } = {};
-  
+
   forecastData.list.forEach((item: any) => {
     const date = new Date(item.dt * 1000).toLocaleDateString();
     if (!dailyForecasts[date]) {
@@ -344,41 +302,54 @@ async function getWeatherDataFreeTier(lat: number, lon: number, locationName: st
   });
 
   // Process daily forecasts
-  const forecast = Object.entries(dailyForecasts).slice(0, 7).map(([date, items]) => {
-    const temps = items.map((item: any) => item.main.temp);
-    const minTemp = Math.min(...temps);
-    const maxTemp = Math.max(...temps);
-    const avgTemp = temps.reduce((sum: number, t: number) => sum + t, 0) / temps.length;
+  const forecast = Object.entries(dailyForecasts)
+    .slice(0, 7)
+    .map(([date, items]) => {
+      const temps = items.map((item: any) => item.main.temp);
+      const minTemp = Math.min(...temps);
+      const maxTemp = Math.max(...temps);
+      const avgTemp =
+        temps.reduce((sum: number, t: number) => sum + t, 0) / temps.length;
 
-    const avgHumidity = items.reduce((sum: number, item: any) => sum + item.main.humidity, 0) / items.length;
-    const avgWindSpeed = items.reduce((sum: number, item: any) => sum + item.wind.speed, 0) / items.length;
-    
-    // Get most common weather condition
-    const conditions = items.map((item: any) => item.weather[0].main);
-    const mostCommonCondition = conditions.sort((a: string, b: string) =>
-      conditions.filter((c: string) => c === a).length - conditions.filter((c: string) => c === b).length
-    ).pop();
+      const avgHumidity =
+        items.reduce((sum: number, item: any) => sum + item.main.humidity, 0) /
+        items.length;
+      const avgWindSpeed =
+        items.reduce((sum: number, item: any) => sum + item.wind.speed, 0) /
+        items.length;
 
-    const firstItem = items[0];
-    
-    return {
-      date: date,
-      dayOfWeek: new Date(firstItem.dt * 1000).toLocaleDateString("en-US", { weekday: "short" }),
-      temp: {
-        day: avgTemp,
-        min: minTemp,
-        max: maxTemp,
-      },
-      humidity: avgHumidity,
-      windSpeed: avgWindSpeed,
-      condition: mostCommonCondition || firstItem.weather[0].main,
-      description: firstItem.weather[0].description,
-      icon: firstItem.weather[0].icon,
-      precipitation: (firstItem.pop || 0) * 100,
-      sunrise: current.sys.sunrise,
-      sunset: current.sys.sunset,
-    };
-  });
+      // Get most common weather condition
+      const conditions = items.map((item: any) => item.weather[0].main);
+      const mostCommonCondition = conditions
+        .sort(
+          (a: string, b: string) =>
+            conditions.filter((c: string) => c === a).length -
+            conditions.filter((c: string) => c === b).length
+        )
+        .pop();
+
+      const firstItem = items[0];
+
+      return {
+        date: date,
+        dayOfWeek: new Date(firstItem.dt * 1000).toLocaleDateString("en-US", {
+          weekday: "short",
+        }),
+        temp: {
+          day: avgTemp,
+          min: minTemp,
+          max: maxTemp,
+        },
+        humidity: avgHumidity,
+        windSpeed: avgWindSpeed,
+        condition: mostCommonCondition || firstItem.weather[0].main,
+        description: firstItem.weather[0].description,
+        icon: firstItem.weather[0].icon,
+        precipitation: (firstItem.pop || 0) * 100,
+        sunrise: current.sys.sunrise,
+        sunset: current.sys.sunset,
+      };
+    });
 
   const weatherData: WeatherData = {
     location: locationName,
@@ -415,19 +386,19 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
     const cacheKey = `weather:${location}`;
     const cached = weatherCache[cacheKey];
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      return cached.data;
+      return cached.data as unknown as WeatherData;
     }
 
     // If not in cache, fetch from API
     // Check if location is in "lat,lon" format
     let geoData: GeoLocation;
     const coordsMatch = location.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
-    
+
     if (coordsMatch) {
       // Location is already in coordinate format (e.g., "-15.3856,28.3189")
       const lat = parseFloat(coordsMatch[1]);
       const lon = parseFloat(coordsMatch[2]);
-      
+
       // Try to reverse geocode to get a friendly name
       try {
         geoData = await reverseGeocode(lat, lon);
@@ -522,7 +493,10 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
       }
     } catch (onecallError: any) {
       // If One Call API fails (401 = subscription required), fallback to free tier
-      if (onecallError.response?.status === 401 || onecallError.response?.status === 403) {
+      if (
+        onecallError.response?.status === 401 ||
+        onecallError.response?.status === 403
+      ) {
         console.log("One Call API not available, using free tier API");
         weatherData = await getWeatherDataFreeTier(
           geoData.lat,
@@ -549,7 +523,10 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
       console.error("API response error:", error.response.data);
 
       // Handle API key error specifically
-      if (error.response.status === 401 && !error.response.config.url.includes('/forecast')) {
+      if (
+        error.response.status === 401 &&
+        !error.response.config.url.includes("/forecast")
+      ) {
         throw new Error(
           "Weather data unavailable - API key issue. Please check your OpenWeather API key."
         );
@@ -569,8 +546,32 @@ export async function getHistoricalWeatherData(
   endDate: Date
 ): Promise<HistoricalWeatherData> {
   try {
-    // First, geocode the location
-    const geoData = await geocodeLocation(location);
+    // Check if location is in "lat,lon" format
+    let geoData: GeoLocation;
+    const coordsMatch = location.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
+
+    if (coordsMatch) {
+      // Location is already in coordinate format
+      const lat = parseFloat(coordsMatch[1]);
+      const lon = parseFloat(coordsMatch[2]);
+
+      // Try to reverse geocode to get a friendly name
+      try {
+        geoData = await reverseGeocode(lat, lon);
+      } catch (error) {
+        // If reverse geocoding fails, use coordinates as name
+        geoData = {
+          lat,
+          lon,
+          name: "Unknown Location",
+          country: "Unknown",
+          geoPath: `${lat}, ${lon}`,
+        };
+      }
+    } else {
+      // Location is a place name, geocode it
+      geoData = await geocodeLocation(location);
+    }
 
     // Check if we need to use the API key
     if (!OPENWEATHER_API_KEY) {
@@ -694,8 +695,32 @@ export async function getHistoricalWeatherData(
  */
 export async function getClimateData(location: string): Promise<ClimateData> {
   try {
-    // First, geocode the location
-    const geoData = await geocodeLocation(location);
+    // Check if location is in "lat,lon" format
+    let geoData: GeoLocation;
+    const coordsMatch = location.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
+
+    if (coordsMatch) {
+      // Location is already in coordinate format
+      const lat = parseFloat(coordsMatch[1]);
+      const lon = parseFloat(coordsMatch[2]);
+
+      // Try to reverse geocode to get a friendly name
+      try {
+        geoData = await reverseGeocode(lat, lon);
+      } catch (error) {
+        // If reverse geocoding fails, use coordinates as name
+        geoData = {
+          lat,
+          lon,
+          name: "Unknown Location",
+          country: "Unknown",
+          geoPath: `${lat}, ${lon}`,
+        };
+      }
+    } else {
+      // Location is a place name, geocode it
+      geoData = await geocodeLocation(location);
+    }
 
     // Define months array for reference
     const months = [
@@ -803,102 +828,72 @@ export async function getClimateData(location: string): Promise<ClimateData> {
       Math.max(...monthlyData.map((m) => m.averageTemp)) -
       Math.min(...monthlyData.map((m) => m.averageTemp));
 
-    // Use latitude and longitude to help determine regional soil characteristics
+    // Use real elevation and soil data instead of estimates
     const lat = geoData.lat;
     const lon = geoData.lon;
-    const isCoastalLocation = checkIfCoastal(lat, lon); // Coastal areas tend to have different soils
-    const elevation = estimateElevation(lat, lon); // Higher elevations have different soil development
 
-    // Regions with specific soil types
-    // Desert regions - typically sandy soils
-    const isDesert =
-      (totalPrecipitation < 250 && averageTemp > 18) ||
-      (lat > 15 &&
-        lat < 35 &&
-        ((lon > -120 && lon < -100) || (lon > 0 && lon < 60)));
+    // Get real elevation data
+    let elevation = 300; // Default fallback
+    try {
+      const elevationData = await getElevation(lat, lon);
+      elevation = elevationData.elevation;
+    } catch (error) {
+      console.error("Error fetching elevation data:", error);
+    }
 
-    // Tropical regions - typically clay-rich, highly weathered soils
-    const isTropical = Math.abs(lat) < 15 && totalPrecipitation > 1000;
+    const isCoastalLocation = checkIfCoastal(lat, lon, elevation);
 
-    // Boreal/cold regions - typically podzolic soils
-    const isBoreal = (lat > 50 || lat < -50) && averageTemp < 5;
-
-    // Volcanic regions - typically andisols
-    const isVolcanic = isInVolcanicRegion(lat, lon);
-
-    // Determine soil type based on all these factors
+    // Get real soil data from SoilGrids API
     let soilType = "Loam"; // Default
-    let soilPH = 6.5; // Default - neutral
+    let soilPH = 6.5; // Default
+    let soilMoisture = 50; // Default
 
-    if (isDesert) {
-      soilType = "Sandy";
-      soilPH = 8.0; // Alkaline due to low rainfall and salt accumulation
-    } else if (isTropical) {
-      soilType = "Clay";
-      soilPH = 5.2; // Acidic due to high rainfall and leaching
-    } else if (isBoreal) {
-      soilType = "Peat";
-      soilPH = 4.5; // Very acidic
-    } else if (isVolcanic) {
-      soilType = "Volcanic Ash";
-      soilPH = 6.0; // Slightly acidic
-    } else if (isCoastalLocation) {
-      soilType = "Sandy Loam";
-      soilPH = 6.8; // Near neutral
-    } else if (elevation > 1500) {
-      soilType = "Rocky Loam";
-      soilPH = 6.0; // Slightly acidic
+    try {
+      const soilData = await getSoilData(lat, lon);
+      soilType = soilData.soilType;
+      soilPH = soilData.ph;
+
+      // Calculate moisture based on soil texture and recent climate
+      const recentMonths = monthlyData.slice(
+        Math.max(0, monthlyData.length - 3)
+      );
+      const recentPrecipitation =
+        recentMonths.reduce((sum, m) => sum + m.averagePrecipitation, 0) / 3;
+      const recentTemp =
+        recentMonths.reduce((sum, m) => sum + m.averageTemp, 0) / 3;
+
+      // Base moisture on actual soil texture
+      let moistureBase = 30 + (recentPrecipitation / 200) * 50;
+
+      // Clay soils retain more water
+      if (soilData.claycontent > 35) {
+        moistureBase += 15;
+      }
+      // Sandy soils drain quickly
+      else if (soilData.sandcontent > 60) {
+        moistureBase -= 15;
+      }
+
+      // Adjust for temperature (higher temps = more evaporation)
+      moistureBase -= (recentTemp - 15) * 0.8;
+
+      // Ensure moisture stays in reasonable range
+      soilMoisture = Math.min(85, Math.max(25, moistureBase));
+    } catch (error) {
+      console.error("Error fetching soil data:", error);
+      // Use fallback moisture calculation
+      const recentMonths = monthlyData.slice(
+        Math.max(0, monthlyData.length - 3)
+      );
+      const recentPrecipitation =
+        recentMonths.reduce((sum, m) => sum + m.averagePrecipitation, 0) / 3;
+      const recentTemp =
+        recentMonths.reduce((sum, m) => sum + m.averageTemp, 0) / 3;
+
+      let moistureBase = 30 + (recentPrecipitation / 200) * 50;
+      moistureBase -= (recentTemp - 15) * 0.8;
+      soilMoisture = Math.min(85, Math.max(25, moistureBase));
     }
-    // Secondary factors if no primary geographic factor matched
-    else if (totalPrecipitation > 1200) {
-      soilType = "Clay Loam";
-      soilPH = 5.8; // More acidic due to leaching
-    } else if (totalPrecipitation < 500) {
-      soilType = "Sandy Loam";
-      soilPH = 7.3; // More alkaline
-    } else if (averageTemp < 8) {
-      soilType = "Silt Loam";
-      soilPH = 5.8; // Slightly acidic
-    } else if (temperatureVariation > 20) {
-      soilType = "Loam";
-      soilPH = 6.2; // Slightly acidic
-    } else {
-      // Moderate climate with moderate precipitation
-      soilType = "Silt Loam";
-      soilPH = 6.4; // Near neutral
-    }
-
-    // Add some small random variation to make soil data more realistic and varied
-    soilPH += Math.random() * 0.4 - 0.2; // Add ±0.2 variation
-
-    // Estimate soil moisture based on recent precipitation and temperature patterns
-    const recentMonths = monthlyData.slice(Math.max(0, monthlyData.length - 3));
-    const recentPrecipitation =
-      recentMonths.reduce((sum, m) => sum + m.averagePrecipitation, 0) / 3;
-    const recentTemp =
-      recentMonths.reduce((sum, m) => sum + m.averageTemp, 0) / 3;
-
-    // More sophisticated moisture model that considers temperature (which affects evaporation)
-    // and soil type (which affects water retention)
-    let moistureBase = 30 + (recentPrecipitation / 200) * 50;
-
-    // Clay soils retain more water
-    if (soilType.includes("Clay")) {
-      moistureBase += 15;
-    }
-    // Sandy soils drain quickly
-    else if (soilType.includes("Sandy")) {
-      moistureBase -= 15;
-    }
-
-    // Adjust for temperature (higher temps = more evaporation)
-    moistureBase -= (recentTemp - 15) * 0.8;
-
-    // Ensure moisture stays in reasonable range with some randomness
-    const soilMoisture = Math.min(
-      85,
-      Math.max(25, moistureBase + Math.random() * 5 - 2.5)
-    );
 
     return {
       location: `${geoData.name}, ${geoData.country}`,
@@ -1008,120 +1003,11 @@ export async function getCropRecommendations(
       growingSeasonLength: isTropical ? 365 : isTemperate ? 180 : 120,
     };
 
-    // Simple crop database with climate requirements
-    // In a real application, this would be in a database
-    const cropDatabase = [
-      {
-        name: "Maize (Corn)",
-        varieties: ["Hybrid", "Sweet Corn", "Popcorn"],
-        tempRange: { min: 18, opt: 24, max: 32 },
-        growingDays: { min: 60, max: 100 },
-        waterRequirement: "Medium", // mm per growing season
-        soilTypes: ["Loam", "Sandy Loam"],
-        soilPH: { min: 5.8, max: 7.0 },
-        seasonality: ["Spring", "Summer"],
-      },
-      {
-        name: "Wheat",
-        varieties: ["Winter Wheat", "Spring Wheat", "Durum"],
-        tempRange: { min: 3, opt: 15, max: 30 },
-        growingDays: { min: 100, max: 130 },
-        waterRequirement: "Low",
-        soilTypes: ["Clay Loam", "Silt Loam", "Loam"],
-        soilPH: { min: 6.0, max: 7.5 },
-        seasonality: ["Fall", "Spring"],
-      },
-      {
-        name: "Rice",
-        varieties: ["Long Grain", "Medium Grain", "Short Grain"],
-        tempRange: { min: 20, opt: 30, max: 35 },
-        growingDays: { min: 90, max: 150 },
-        waterRequirement: "High",
-        soilTypes: ["Clay", "Clay Loam"],
-        soilPH: { min: 5.5, max: 6.5 },
-        seasonality: ["Spring", "Summer"],
-      },
-      {
-        name: "Potato",
-        varieties: ["Russet", "Red", "White", "Yellow"],
-        tempRange: { min: 10, opt: 18, max: 25 },
-        growingDays: { min: 70, max: 120 },
-        waterRequirement: "Medium",
-        soilTypes: ["Sandy Loam", "Loam"],
-        soilPH: { min: 5.0, max: 6.5 },
-        seasonality: ["Spring", "Fall"],
-      },
-      {
-        name: "Soybean",
-        varieties: ["Early Maturity", "Mid Maturity", "Late Maturity"],
-        tempRange: { min: 15, opt: 25, max: 30 },
-        growingDays: { min: 80, max: 120 },
-        waterRequirement: "Medium",
-        soilTypes: ["Loam", "Clay Loam", "Silt Loam"],
-        soilPH: { min: 6.0, max: 7.0 },
-        seasonality: ["Spring", "Summer"],
-      },
-      {
-        name: "Tomato",
-        varieties: ["Cherry", "Roma", "Beefsteak"],
-        tempRange: { min: 16, opt: 25, max: 30 },
-        growingDays: { min: 60, max: 100 },
-        waterRequirement: "Medium",
-        soilTypes: ["Loam", "Sandy Loam"],
-        soilPH: { min: 6.0, max: 6.8 },
-        seasonality: ["Spring", "Summer"],
-      },
-      {
-        name: "Lettuce",
-        varieties: ["Romaine", "Iceberg", "Butterhead", "Loose Leaf"],
-        tempRange: { min: 7, opt: 16, max: 24 },
-        growingDays: { min: 30, max: 70 },
-        waterRequirement: "Medium",
-        soilTypes: ["Loam", "Sandy Loam"],
-        soilPH: { min: 6.0, max: 7.0 },
-        seasonality: ["Spring", "Fall"],
-      },
-      {
-        name: "Cotton",
-        varieties: ["Upland", "Pima"],
-        tempRange: { min: 18, opt: 28, max: 35 },
-        growingDays: { min: 150, max: 180 },
-        waterRequirement: "Medium",
-        soilTypes: ["Loam", "Sandy Loam", "Clay Loam"],
-        soilPH: { min: 5.8, max: 8.0 },
-        seasonality: ["Spring", "Summer"],
-      },
-      {
-        name: "Sunflower",
-        varieties: ["Oil", "Confectionery"],
-        tempRange: { min: 8, opt: 23, max: 32 },
-        growingDays: { min: 70, max: 100 },
-        waterRequirement: "Low",
-        soilTypes: ["Loam", "Sandy Loam", "Clay Loam"],
-        soilPH: { min: 6.0, max: 7.5 },
-        seasonality: ["Spring", "Summer"],
-      },
-      {
-        name: "Barley",
-        varieties: ["Spring", "Winter", "Two-row", "Six-row"],
-        tempRange: { min: 5, opt: 15, max: 25 },
-        growingDays: { min: 60, max: 100 },
-        waterRequirement: "Low",
-        soilTypes: ["Loam", "Clay Loam", "Silt Loam"],
-        soilPH: { min: 6.0, max: 8.0 },
-        seasonality: ["Fall", "Spring"],
-      },
-      {
-        name: "Coffee",
-        varieties: ["Arabica", "Robusta"],
-        tempRange: { min: 15, opt: 20, max: 25 },
-        growingDays: { min: 365, max: 365 },
-        waterRequirement: "Medium",
-        soilTypes: ["Loam", "Clay Loam"],
-        soilPH: { min: 5.0, max: 6.0 },
-        seasonality: ["Perennial"],
-      },
-    ];
+    // Fetch crop varieties from database
+    const cropVarietiesFromDb = await db
+      .select()
+      .from(cropVarieties)
+      .where(eq(cropVarieties.isActive, true));
 
     // Calculate average temperature and precipitation
     const avgTemp =
@@ -1141,128 +1027,130 @@ export async function getCropRecommendations(
       .filter((month) => month.averageTemp > 10)
       .map((month) => month.month);
 
-    // Calculate suitability score for each crop
-    const recommendations: CropRecommendation[] = cropDatabase.map((crop) => {
-      // Temperature suitability (0-40)
-      const tempSuitability =
-        avgTemp < crop.tempRange.min
-          ? 0
-          : avgTemp > crop.tempRange.max
-          ? 0
-          : avgTemp === crop.tempRange.opt
-          ? 40
-          : 40 -
-            (Math.abs(avgTemp - crop.tempRange.opt) /
-              (crop.tempRange.max - crop.tempRange.min)) *
-              40;
+    // Calculate suitability score for each crop from database
+    const recommendations: CropRecommendation[] = cropVarietiesFromDb.map(
+      (crop) => {
+        // Convert string values to numbers
+        const tempMin = parseFloat(crop.tempMin as unknown as string);
+        const tempOpt = parseFloat(crop.tempOptimal as unknown as string);
+        const tempMax = parseFloat(crop.tempMax as unknown as string);
+        const soilPhMin = parseFloat(crop.soilPhMin as unknown as string);
+        const soilPhMax = parseFloat(crop.soilPhMax as unknown as string);
 
-      // Growing season suitability (0-30)
-      const seasonSuitability =
-        climateData.growingSeasonLength < crop.growingDays.min
-          ? 0
-          : 30 *
-            Math.min(1, climateData.growingSeasonLength / crop.growingDays.max);
+        // Temperature suitability (0-40)
+        const tempSuitability =
+          avgTemp < tempMin
+            ? 0
+            : avgTemp > tempMax
+            ? 0
+            : avgTemp === tempOpt
+            ? 40
+            : 40 - (Math.abs(avgTemp - tempOpt) / (tempMax - tempMin)) * 40;
 
-      // Soil suitability (0-20)
-      const soilTypeSuitability = crop.soilTypes.includes(
-        climateData.soilConditions.type
-      )
-        ? 20
-        : 10;
+        // Growing season suitability (0-30)
+        const seasonSuitability =
+          climateData.growingSeasonLength < crop.growingDaysMin
+            ? 0
+            : 30 *
+              Math.min(
+                1,
+                climateData.growingSeasonLength / crop.growingDaysMax
+              );
 
-      // Soil pH suitability (0-10)
-      const phSuitability =
-        climateData.soilConditions.ph < crop.soilPH.min
-          ? 0
-          : climateData.soilConditions.ph > crop.soilPH.max
-          ? 0
+        // Soil suitability (0-20)
+        const soilTypeSuitability = crop.soilTypes.includes(
+          climateData.soilConditions.type
+        )
+          ? 20
           : 10;
 
-      // Total suitability score (0-100)
-      const suitabilityScore = Math.round(
-        tempSuitability +
-          seasonSuitability +
-          soilTypeSuitability +
-          phSuitability
-      );
+        // Soil pH suitability (0-10)
+        const phSuitability =
+          climateData.soilConditions.ph < soilPhMin
+            ? 0
+            : climateData.soilConditions.ph > soilPhMax
+            ? 0
+            : 10;
 
-      // Choose appropriate variety based on climate
-      let bestVariety = crop.varieties[0];
-      if (crop.name === "Wheat") {
-        bestVariety = avgTemp < 5 ? "Winter Wheat" : "Spring Wheat";
-      } else if (crop.name === "Soybean") {
-        bestVariety =
-          climateData.growingSeasonLength < 100
-            ? "Early Maturity"
-            : "Mid Maturity";
-      }
-
-      // Determine optimal planting window
-      const seasonToMonthMap: Record<string, string[]> = {
-        Spring: ["March", "April", "May"],
-        Summer: ["June", "July", "August"],
-        Fall: ["September", "October", "November"],
-        Winter: ["December", "January", "February"],
-        Perennial: ["January"], // Just a placeholder for perennial crops
-      };
-
-      const plantingMonths = crop.seasonality
-        .flatMap((season) => {
-          return (
-            seasonToMonthMap[season as keyof typeof seasonToMonthMap] || []
-          );
-        })
-        .filter((month) => suitablePlantingMonths.includes(month));
-
-      const startMonth = plantingMonths[0] || "March";
-      const endMonth = plantingMonths[plantingMonths.length - 1] || "May";
-
-      // Comments based on suitability
-      const comments = [];
-      if (suitabilityScore >= 80) {
-        comments.push("Excellent crop choice for this climate.");
-      } else if (suitabilityScore >= 60) {
-        comments.push("Good potential with proper management.");
-      } else if (suitabilityScore >= 40) {
-        comments.push("Moderate potential, may require additional inputs.");
-      } else {
-        comments.push(
-          "Challenging crop for this climate, consider alternatives."
+        // Total suitability score (0-100)
+        const suitabilityScore = Math.round(
+          tempSuitability +
+            seasonSuitability +
+            soilTypeSuitability +
+            phSuitability
         );
+
+        // Determine optimal planting window
+        const seasonToMonthMap: Record<string, string[]> = {
+          Spring: ["March", "April", "May"],
+          Summer: ["June", "July", "August"],
+          Fall: ["September", "October", "November"],
+          Winter: ["December", "January", "February"],
+          Perennial: ["January"], // Just a placeholder for perennial crops
+        };
+
+        const plantingMonths = crop.plantingSeasons
+          .flatMap((season) => {
+            return (
+              seasonToMonthMap[season as keyof typeof seasonToMonthMap] || []
+            );
+          })
+          .filter((month) => suitablePlantingMonths.includes(month));
+
+        const startMonth = plantingMonths[0] || "March";
+        const endMonth = plantingMonths[plantingMonths.length - 1] || "May";
+
+        // Comments based on suitability
+        const comments = [];
+        if (suitabilityScore >= 80) {
+          comments.push("Excellent crop choice for this climate.");
+        } else if (suitabilityScore >= 60) {
+          comments.push("Good potential with proper management.");
+        } else if (suitabilityScore >= 40) {
+          comments.push("Moderate potential, may require additional inputs.");
+        } else {
+          comments.push(
+            "Challenging crop for this climate, consider alternatives."
+          );
+        }
+
+        if (avgTemp < tempMin) {
+          comments.push("Climate may be too cool for optimal growth.");
+        } else if (avgTemp > tempMax) {
+          comments.push("Climate may be too warm for optimal growth.");
+        }
+
+        if (climateData.growingSeasonLength < crop.growingDaysMin) {
+          comments.push("Growing season may be too short.");
+        }
+
+        // Use expected yield from database if available
+        const expectedYieldMin = crop.expectedYieldMin
+          ? parseFloat(crop.expectedYieldMin as unknown as string)
+          : 0;
+        const expectedYieldMax = crop.expectedYieldMax
+          ? parseFloat(crop.expectedYieldMax as unknown as string)
+          : 0;
+        const expectedYield =
+          expectedYieldMin > 0
+            ? expectedYieldMin +
+              (expectedYieldMax - expectedYieldMin) * (suitabilityScore / 100)
+            : suitabilityScore / 20;
+
+        return {
+          cropName: crop.name,
+          variety: crop.variety,
+          suitabilityScore,
+          optimalPlantingWindow: {
+            start: startMonth,
+            end: endMonth,
+          },
+          expectedYield,
+          yieldUnit: "tons/hectare",
+          comments,
+        };
       }
-
-      if (avgTemp < crop.tempRange.min) {
-        comments.push("Climate may be too cool for optimal growth.");
-      } else if (avgTemp > crop.tempRange.max) {
-        comments.push("Climate may be too warm for optimal growth.");
-      }
-
-      if (climateData.growingSeasonLength < crop.growingDays.min) {
-        comments.push("Growing season may be too short.");
-      }
-
-      // const expectedYield =
-      //   suitabilityScore >= 80
-      //     ? "High"
-      //     : suitabilityScore >= 60
-      //     ? "Above Average"
-      //     : suitabilityScore >= 40
-      //     ? "Average"
-      //     : "Below Average";
-
-      return {
-        cropName: crop.name,
-        variety: bestVariety,
-        suitabilityScore,
-        optimalPlantingWindow: {
-          start: startMonth,
-          end: endMonth,
-        },
-        expectedYield: suitabilityScore / 20, // Scaled yield estimate (0-5)
-        yieldUnit: "tons/hectare",
-        comments,
-      };
-    });
+    );
 
     // Sort by suitability score (highest first)
     return recommendations.sort(

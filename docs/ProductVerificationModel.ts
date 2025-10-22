@@ -4,15 +4,45 @@ import {
   cropTraceEvents,
   marketplaceListings,
   fields,
+  users,
+  farmerProfiles,
 } from "@shared/schema";
 import { eq, isNotNull } from "drizzle-orm";
-import type { Crop, MarketplaceListing, Field } from "@shared/schema";
+import type {
+  Crop,
+  MarketplaceListing,
+  Field,
+  User,
+  FarmerProfile,
+} from "@shared/schema";
+import { scanTrackingService } from "../server/services/scanTrackingService.js";
+import { blockchainService } from "../server/services/blockchainService.js";
+import { logger } from "../server/lib/logger.js";
 
 export interface VerificationResult {
   crop: Crop;
   blockchainHistory: any[];
   verificationResults: any[];
   allVerified: boolean;
+  blockchainStatus: "simulated" | "live";
+  disclaimer: string;
+  farmer?: {
+    name: string;
+    farmName?: string;
+    farmLocation?: string;
+    bio?: string;
+    mainCrops?: string[];
+    establishedYear?: number;
+  };
+  field?: Field;
+  analytics?: {
+    totalScans: number;
+    firstScan?: Date;
+    lastScan?: Date;
+    scansLast7Days: number;
+    scansLast30Days: number;
+    uniqueLocations: number;
+  };
 }
 
 export interface ScannableProducts {
@@ -164,11 +194,89 @@ export class ProductVerificationModel {
 
     const allVerified = verificationResults.every((result) => result.passed);
 
+    // Get farmer profile information
+    let farmerInfo;
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, crop.userId))
+        .limit(1);
+
+      if (user) {
+        const [farmerProfile] = await db
+          .select()
+          .from(farmerProfiles)
+          .where(eq(farmerProfiles.userId, user.id))
+          .limit(1);
+
+        farmerInfo = {
+          name:
+            user.firstName && user.lastName
+              ? `${user.firstName} ${user.lastName}`
+              : user.username,
+          farmName: farmerProfile?.farmName,
+          farmLocation: farmerProfile?.farmLocation,
+          bio: farmerProfile?.bio,
+          mainCrops: farmerProfile?.mainCrops,
+          establishedYear: farmerProfile?.establishedYear,
+        };
+      }
+    } catch (error) {
+      logger.error("Failed to fetch farmer profile", error);
+    }
+
+    // Get field information
+    let fieldInfo;
+    if (crop.fieldId) {
+      try {
+        const [field] = await db
+          .select()
+          .from(fields)
+          .where(eq(fields.id, crop.fieldId))
+          .limit(1);
+        fieldInfo = field;
+      } catch (error) {
+        logger.error("Failed to fetch field information", error);
+      }
+    }
+
+    // Get scan analytics if available
+    let analytics;
+    try {
+      const scanData = await scanTrackingService.getCropScanAnalytics(crop.id);
+      analytics = {
+        totalScans: scanData.totalScans,
+        firstScan: scanData.firstScan,
+        lastScan: scanData.lastScan,
+        scansLast7Days: scanData.scansLast7Days,
+        scansLast30Days: scanData.scansLast30Days,
+        uniqueLocations: scanData.uniqueLocations,
+      };
+    } catch (error) {
+      // Analytics failed, but don't block verification
+      logger.error("Failed to fetch scan analytics", error);
+    }
+
+    // Check if blockchain is actually enabled
+    const isBlockchainEnabled = blockchainService.isEnabled();
+    const blockchainStatus: "live" | "simulated" = isBlockchainEnabled
+      ? "live"
+      : "simulated";
+    const disclaimer = isBlockchainEnabled
+      ? "All transactions are recorded on Polygon blockchain for permanent, tamper-proof traceability."
+      : "Traceability data is stored securely in our database. Enable blockchain for immutable records.";
+
     return {
       crop,
       blockchainHistory,
       verificationResults,
       allVerified,
+      blockchainStatus,
+      disclaimer,
+      farmer: farmerInfo,
+      field: fieldInfo,
+      analytics,
     };
   }
 }

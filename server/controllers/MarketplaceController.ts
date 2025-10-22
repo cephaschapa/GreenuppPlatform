@@ -255,21 +255,47 @@ export class MarketplaceController {
 
       console.log("Validated listing data:", listingData);
 
+      // Helper function to validate and clean dates
+      const cleanDate = (date: any) => {
+        if (!date) return undefined;
+        if (date instanceof Date) {
+          return isNaN(date.getTime()) ? undefined : date;
+        }
+        const parsed = new Date(date);
+        return isNaN(parsed.getTime()) ? undefined : parsed;
+      };
+
+      // Helper function to validate and clean numbers
+      const cleanNumber = (num: any) => {
+        if (num === null || num === undefined || num === "") return undefined;
+        const parsed = typeof num === "number" ? num : parseFloat(num);
+        return isNaN(parsed) ? undefined : parsed;
+      };
+
       // Convert null values to undefined for the model
       const modelData = {
         ...listingData,
         condition: listingData.condition || undefined,
         description: listingData.description || undefined,
-        quantity: listingData.quantity
-          ? parseFloat(listingData.quantity.toString())
-          : undefined,
+        price: cleanNumber(listingData.price),
+        quantity: cleanNumber(listingData.quantity),
         quantityUnit: listingData.quantityUnit || undefined,
         locationId: listingData.locationId || undefined,
         contactPhone: listingData.contactPhone || undefined,
         deliveryAvailable: listingData.deliveryAvailable ?? false,
         isNegotiable: listingData.isNegotiable ?? false,
         isFeatured: listingData.isFeatured ?? false,
-        expiresAt: listingData.expiresAt || undefined,
+        expiresAt: cleanDate(listingData.expiresAt),
+        harvestDate: cleanDate(listingData.harvestDate),
+        expiryDate: cleanDate(listingData.expiryDate),
+        farmEstablishedYear: cleanNumber(listingData.farmEstablishedYear),
+        carbonFootprint: cleanNumber(listingData.carbonFootprint),
+        waterUsage: cleanNumber(listingData.waterUsage),
+        trustScore: cleanNumber(listingData.trustScore),
+        averageRating: cleanNumber(listingData.averageRating),
+        sustainabilityScore: cleanNumber(listingData.sustainabilityScore),
+        sellerRating: cleanNumber(listingData.sellerRating),
+        qualityScore: cleanNumber(listingData.qualityScore),
         status: listingData.status || "active",
         images: listingData.images || undefined,
         tags: listingData.tags || undefined,
@@ -283,6 +309,54 @@ export class MarketplaceController {
       console.log("Model data:", modelData);
 
       const newListing = await this.model.createListing(modelData);
+
+      // If sourceCropId is provided, automatically link traceability data
+      if (modelData.sourceCropId) {
+        try {
+          const { db } = await import("../db.js");
+          const { crops } = await import("@shared/schema");
+          const { eq } = await import("drizzle-orm");
+
+          const [sourceCrop] = await db
+            .select()
+            .from(crops)
+            .where(eq(crops.id, modelData.sourceCropId))
+            .limit(1);
+
+          if (
+            sourceCrop &&
+            sourceCrop.batchId &&
+            sourceCrop.traceabilityQrCode
+          ) {
+            // Update the listing with traceability info from the crop
+            const { marketplaceListings } = await import("@shared/schema");
+            await db
+              .update(marketplaceListings)
+              .set({
+                traceabilityBatchId: sourceCrop.batchId,
+                traceabilityQrCode: sourceCrop.traceabilityQrCode,
+                blockchainVerified: !!sourceCrop.blockchainTxId,
+              })
+              .where(eq(marketplaceListings.id, newListing.id));
+
+            // Fetch updated listing to return
+            const [updatedListing] = await db
+              .select()
+              .from(marketplaceListings)
+              .where(eq(marketplaceListings.id, newListing.id))
+              .limit(1);
+
+            logger.info(
+              `Marketplace listing ${newListing.id} linked to crop ${sourceCrop.id} with batch ${sourceCrop.batchId}`
+            );
+
+            return res.status(201).json(updatedListing || newListing);
+          }
+        } catch (linkError) {
+          logger.warn("Failed to auto-link traceability data:", linkError);
+          // Continue anyway, listing was created successfully
+        }
+      }
 
       logger.info(
         `New marketplace listing created: ${newListing.id} by user ${req.user.id}`
@@ -346,21 +420,46 @@ export class MarketplaceController {
         .partial()
         .parse(parsedData);
 
+      // Helper function to validate and clean dates
+      const cleanDate = (date: any) => {
+        if (!date) return undefined;
+        if (date instanceof Date) {
+          return isNaN(date.getTime()) ? undefined : date;
+        }
+        const parsed = new Date(date);
+        return isNaN(parsed.getTime()) ? undefined : parsed;
+      };
+
+      // Helper function to validate and clean numbers
+      const cleanNumber = (num: any) => {
+        if (num === null || num === undefined || num === "") return undefined;
+        const parsed = typeof num === "number" ? num : parseFloat(num);
+        return isNaN(parsed) ? undefined : parsed;
+      };
+
       // Convert null values to undefined for the model
       const modelData = {
         ...listingData,
         condition: listingData.condition || undefined,
         description: listingData.description || undefined,
-        quantity: listingData.quantity
-          ? parseFloat(listingData.quantity.toString())
-          : undefined,
+        price: cleanNumber(listingData.price),
+        quantity: cleanNumber(listingData.quantity),
+        farmEstablishedYear: cleanNumber(listingData.farmEstablishedYear),
+        carbonFootprint: cleanNumber(listingData.carbonFootprint),
+        waterUsage: cleanNumber(listingData.waterUsage),
+        trustScore: cleanNumber(listingData.trustScore),
+        averageRating: cleanNumber(listingData.averageRating),
+        sustainabilityScore: cleanNumber(listingData.sustainabilityScore),
+        sellerRating: cleanNumber(listingData.sellerRating),
         quantityUnit: listingData.quantityUnit || undefined,
         locationId: listingData.locationId || undefined,
         contactPhone: listingData.contactPhone || undefined,
         deliveryAvailable: listingData.deliveryAvailable ?? undefined,
         isNegotiable: listingData.isNegotiable ?? undefined,
         isFeatured: listingData.isFeatured ?? undefined,
-        expiresAt: listingData.expiresAt || undefined,
+        expiresAt: cleanDate(listingData.expiresAt),
+        harvestDate: cleanDate(listingData.harvestDate),
+        expiryDate: cleanDate(listingData.expiryDate),
         status: listingData.status || undefined,
         images: listingData.images || undefined,
         tags: listingData.tags || undefined,

@@ -222,6 +222,15 @@ export const zambianLocations: ZambianLocation[] = [
     description: "Mixed residential area",
   },
   {
+    name: "Meanwood Ndeke",
+    city: "Lusaka",
+    province: "Lusaka",
+    type: "compound",
+    coordinates: { lat: -15.3915, lon: 28.3202 },
+    description: "Residential compound in Meanwood area",
+    aliases: ["Ndeke"],
+  },
+  {
     name: "Northmead",
     city: "Lusaka",
     province: "Lusaka",

@@ -1,4 +1,4 @@
-import { hyperledgerService } from "./hyperledger";
+import { blockchainService } from "./blockchainService.js";
 import { qrCodeService } from "./qrcode";
 import { db } from "../db";
 import { crops, cropTraceEvents, marketplaceListings } from "@shared/schema";
@@ -29,11 +29,15 @@ export class CropTraceService {
     const batchId = `${location}-${date}-${serial}`;
 
     // Record the crop on the blockchain
-    const { txId, txHash } = await hyperledgerService.createCropBatch(
+    const blockchainResult = await blockchainService.registerCrop(
       cropId,
       batchId,
       cropData
     );
+    const { txId, txHash } = {
+      txId: blockchainResult.txId,
+      txHash: blockchainResult.txHash,
+    };
 
     // Generate QR code for traceability
     const qrCode = await qrCodeService.generateCropTraceQRCode(cropId, batchId);
@@ -81,12 +85,16 @@ export class CropTraceService {
     }
 
     // Record the event on the blockchain
-    const { txId, txHash } = await hyperledgerService.recordCropEvent(
-      cropId,
+    const blockchainResult = await blockchainService.recordCropEvent(
+      crop.batchId!,
       eventType,
       eventData,
-      userId
+      eventData.location
     );
+    const { txId, txHash } = {
+      txId: blockchainResult.txId,
+      txHash: blockchainResult.txHash,
+    };
 
     // Record the event in the database
     const [eventRecord] = await db
@@ -155,11 +163,16 @@ export class CropTraceService {
     }
 
     // Record the link on the blockchain
-    const { txId, txHash } = await hyperledgerService.linkListingToCrop(
-      listingId,
-      cropId,
-      crop.batchId
+    const blockchainResult = await blockchainService.recordCropEvent(
+      crop.batchId!,
+      "marketplace_listed",
+      { listingId, cropId },
+      ""
     );
+    const { txId, txHash } = {
+      txId: blockchainResult.txId,
+      txHash: blockchainResult.txHash,
+    };
 
     // Generate QR code for the marketplace listing
     const qrCode = await qrCodeService.generateMarketplaceQRCode(
@@ -227,10 +240,7 @@ export class CropTraceService {
     // Get the blockchain history if available
     let blockchainHistory = [];
     if (crop.batchId) {
-      blockchainHistory = await hyperledgerService.getCropHistory(
-        cropId,
-        crop.batchId
-      );
+      blockchainHistory = await blockchainService.getCropHistory(crop.batchId);
     }
 
     return {
@@ -257,10 +267,7 @@ export class CropTraceService {
     }
 
     // Get the blockchain history
-    const blockchainHistory = await hyperledgerService.getCropHistory(
-      crop.id,
-      batchId
-    );
+    const blockchainHistory = await blockchainService.getCropHistory(batchId);
 
     // Get all events from the database for verification
     const events = await db
@@ -272,8 +279,7 @@ export class CropTraceService {
     // Verify blockchain transaction IDs
     const verificationPromises = events.map(async (event) => {
       if (event.blockchainTxId && event.blockchainTxHash) {
-        const isVerified = await hyperledgerService.verifyTransaction(
-          event.blockchainTxId,
+        const isVerified = await blockchainService.verifyTransaction(
           event.blockchainTxHash
         );
         return {

@@ -128,6 +128,14 @@ export async function getHyperlocalWeather(
 
   // Strategy 2: Use coordinates directly (for GPS auto-detect)
   if (query.lat !== undefined && query.lon !== undefined) {
+    // Round coordinates to 6 decimal places (~11cm precision, prevents API issues)
+    const roundedLat = Math.round(query.lat * 1000000) / 1000000;
+    const roundedLon = Math.round(query.lon * 1000000) / 1000000;
+
+    logger.info(
+      `Hyperlocal weather requested for coordinates: ${roundedLat}, ${roundedLon}`
+    );
+
     // Find nearest Zambian location to these coordinates (within 200km radius)
     const nearestResult = findNearestLocation(query.lat, query.lon);
 
@@ -163,10 +171,10 @@ export async function getHyperlocalWeather(
     } else {
       // No Zambian location within 200km - use OpenWeather for actual location
       logger.info(
-        `No Zambian location found within 200km of coordinates (${query.lat}, ${query.lon}). Using OpenWeather geocoding for actual location.`
+        `No Zambian location found within 200km of coordinates (${roundedLat}, ${roundedLon}). Using OpenWeather geocoding for actual location.`
       );
       try {
-        const geoData = await reverseGeocode(query.lat, query.lon);
+        const geoData = await reverseGeocode(roundedLat, roundedLon);
         zambianLocation = {
           name: geoData.name,
           city: geoData.name,
@@ -187,15 +195,26 @@ export async function getHyperlocalWeather(
       }
     }
 
-    // Get weather using the coordinates
-    const weatherData = await getWeatherData(`${query.lat},${query.lon}`);
+    // Get weather using the rounded coordinates
+    try {
+      logger.info(`Fetching weather data for: ${roundedLat},${roundedLon}`);
+      const weatherData = await getWeatherData(`${roundedLat},${roundedLon}`);
 
-    return {
-      location: zambianLocation,
-      weather: weatherData,
-      source,
-      precision,
-    };
+      return {
+        location: zambianLocation,
+        weather: weatherData,
+        source,
+        precision,
+      };
+    } catch (error: any) {
+      logger.error(
+        `Failed to get weather data for coordinates ${roundedLat},${roundedLon}:`,
+        error
+      );
+      throw new Error(
+        `Unable to find weather data for location: ${roundedLat},${roundedLon}`
+      );
+    }
   }
 
   // Strategy 3: List all locations in a city

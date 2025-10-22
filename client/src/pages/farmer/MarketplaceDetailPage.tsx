@@ -17,6 +17,12 @@ import {
   Ruler,
   ShoppingCart,
   Plus,
+  QrCode,
+  Download,
+  ShieldCheck,
+  BarChart3,
+  Link as LinkIcon,
+  Eye,
 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { formatDistanceToNow } from "date-fns";
@@ -137,6 +143,24 @@ export default function MarketplaceDetailPage() {
     },
   });
 
+  // Fetch scan analytics if this listing has traceability
+  const { data: scanAnalytics } = useQuery({
+    queryKey: [
+      "/api/product-verification/batch-analytics",
+      listing?.traceabilityBatchId,
+    ],
+    queryFn: async () => {
+      if (!listing?.traceabilityBatchId) return null;
+      const response = await fetch(
+        `/api/product-verification/batch-analytics/${listing.traceabilityBatchId}`,
+        { credentials: "include" }
+      );
+      if (!response.ok) return null;
+      return await response.json();
+    },
+    enabled: !!listing?.traceabilityBatchId,
+  });
+
   // Fetch location data if the listing has a locationId
   const { data: locationData, isLoading: isLoadingLocation } = useQuery({
     queryKey: ["/api/locations", listing?.locationId],
@@ -252,6 +276,31 @@ export default function MarketplaceDetailPage() {
       });
     } finally {
       setIsAddingToCart(false);
+    }
+  };
+
+  const downloadQRCode = (qrCodeData: string, filename: string) => {
+    const link = document.createElement("a");
+    link.href = qrCodeData;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "QR Code downloaded",
+      description: "QR code saved to your downloads folder",
+    });
+  };
+
+  const copyVerificationLink = () => {
+    if (listing?.traceabilityBatchId) {
+      const url = `${window.location.origin}/trace?batch=${listing.traceabilityBatchId}`;
+      navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copied",
+        description: "Verification link copied to clipboard",
+      });
     }
   };
 
@@ -468,15 +517,6 @@ export default function MarketplaceDetailPage() {
                   </div>
                 </div>
 
-                <div>
-                  <p>
-                    Blockchain Trace ID:{" "}
-                    {listing.traceabilityBatchId
-                      ? listing.traceabilityBatchId
-                      : "NA"}
-                  </p>
-                </div>
-
                 <div className="flex flex-col gap-2 text-sm text-muted-foreground mb-4">
                   {isValidDate && (
                     <div className="flex items-center">
@@ -559,6 +599,171 @@ export default function MarketplaceDetailPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Blockchain & Traceability Section */}
+                {listing.traceabilityBatchId && (
+                  <>
+                    <Separator className="my-4" />
+
+                    <div className="space-y-4">
+                      <h2 className="text-lg font-semibold flex items-center gap-2">
+                        <ShieldCheck className="h-5 w-5 text-green-600" />
+                        Blockchain Traceability
+                      </h2>
+
+                      {/* Blockchain Info Card */}
+                      <Card className="bg-green-50 border-green-200">
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-1 flex-1">
+                              <p className="text-sm font-medium">Batch ID</p>
+                              <p className="text-xs font-mono text-muted-foreground break-all">
+                                {listing.traceabilityBatchId}
+                              </p>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className="bg-green-600 text-white border-green-700"
+                            >
+                              {listing.blockchainVerified
+                                ? "Verified"
+                                : "Pending"}
+                            </Badge>
+                          </div>
+
+                          {listing.blockchainVerified && (
+                            <div className="flex items-center gap-2 text-xs text-green-700">
+                              <ShieldCheck className="h-4 w-4" />
+                              <span>
+                                Product verified on Polygon blockchain
+                              </span>
+                            </div>
+                          )}
+
+                          {/* QR Code Section */}
+                          {listing.traceabilityQrCode && (
+                            <div className="border-t border-green-200 pt-3 mt-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <QrCode className="h-4 w-4" />
+                                  <span className="text-sm font-medium">
+                                    QR Code
+                                  </span>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      downloadQRCode(
+                                        listing.traceabilityQrCode!,
+                                        `${listing.title}-qr.png`
+                                      )
+                                    }
+                                  >
+                                    <Download className="h-3 w-3 mr-1" />
+                                    Download
+                                  </Button>
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button variant="outline" size="sm">
+                                        <Eye className="h-3 w-3 mr-1" />
+                                        View
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                      <DialogHeader>
+                                        <DialogTitle>
+                                          Product QR Code
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                          Scan this QR code to verify product
+                                          authenticity
+                                        </DialogDescription>
+                                      </DialogHeader>
+                                      <div className="flex flex-col items-center space-y-4">
+                                        <div className="border rounded-md p-4 bg-white">
+                                          <img
+                                            src={listing.traceabilityQrCode}
+                                            alt="QR Code"
+                                            className="h-64 w-64 object-contain"
+                                          />
+                                        </div>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={copyVerificationLink}
+                                        >
+                                          <LinkIcon className="h-3 w-3 mr-2" />
+                                          Copy Verification Link
+                                        </Button>
+                                      </div>
+                                    </DialogContent>
+                                  </Dialog>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Scan Analytics */}
+                          {scanAnalytics && scanAnalytics.totalScans > 0 && (
+                            <div className="border-t border-green-200 pt-3 mt-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <BarChart3 className="h-4 w-4" />
+                                <span className="text-sm font-medium">
+                                  Scan Analytics
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-white p-2 rounded border border-green-200">
+                                  <p className="text-xs text-muted-foreground">
+                                    Total Scans
+                                  </p>
+                                  <p className="text-lg font-bold text-green-700">
+                                    {scanAnalytics.totalScans}
+                                  </p>
+                                </div>
+                                <div className="bg-white p-2 rounded border border-green-200">
+                                  <p className="text-xs text-muted-foreground">
+                                    Unique Locations
+                                  </p>
+                                  <p className="text-lg font-bold text-green-700">
+                                    {scanAnalytics.uniqueLocations}
+                                  </p>
+                                </div>
+                                <div className="bg-white p-2 rounded border border-green-200">
+                                  <p className="text-xs text-muted-foreground">
+                                    Last 7 Days
+                                  </p>
+                                  <p className="text-lg font-bold text-green-700">
+                                    {scanAnalytics.scansLast7Days}
+                                  </p>
+                                </div>
+                                <div className="bg-white p-2 rounded border border-green-200">
+                                  <p className="text-xs text-muted-foreground">
+                                    Last 30 Days
+                                  </p>
+                                  <p className="text-lg font-bold text-green-700">
+                                    {scanAnalytics.scansLast30Days}
+                                  </p>
+                                </div>
+                              </div>
+                              {scanAnalytics.lastScan && (
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Last scanned:{" "}
+                                  {formatDistanceToNow(
+                                    new Date(scanAnalytics.lastScan),
+                                    { addSuffix: true }
+                                  )}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </>
+                )}
 
                 {/* Trust & Transparency Details */}
                 <TrustBadges listing={listing} />

@@ -11,6 +11,7 @@ import {
   decimal,
   varchar,
   json,
+  real,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -212,6 +213,9 @@ export const crops = pgTable("crops", {
   certificationId: text("certification_id"), // Reference to certification if any
   blockchainTxId: text("blockchain_tx_id"), // Blockchain transaction ID
   traceabilityQrCode: text("traceability_qr_code"), // QR code for public tracking
+  qrScanCount: integer("qr_scan_count").default(0), // Total QR code scans
+  lastScannedAt: timestamp("last_scanned_at"), // Last scan timestamp
+  firstScannedAt: timestamp("first_scanned_at"), // First scan timestamp
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -299,6 +303,37 @@ export const cropYieldPredictions = pgTable("crop_yield_predictions", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Crop varieties reference database
+export const cropVarieties = pgTable("crop_varieties", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(), // e.g., "Maize (Corn)", "Wheat"
+  variety: text("variety").notNull(), // e.g., "Hybrid", "Winter Wheat"
+  // Temperature requirements (°C)
+  tempMin: decimal("temp_min", { precision: 5, scale: 2 }).notNull(),
+  tempOptimal: decimal("temp_optimal", { precision: 5, scale: 2 }).notNull(),
+  tempMax: decimal("temp_max", { precision: 5, scale: 2 }).notNull(),
+  // Growing period (days)
+  growingDaysMin: integer("growing_days_min").notNull(),
+  growingDaysMax: integer("growing_days_max").notNull(),
+  // Water requirements
+  waterRequirement: text("water_requirement").notNull(), // 'Low', 'Medium', 'High'
+  // Soil preferences
+  soilTypes: text("soil_types").array().notNull(),
+  soilPhMin: decimal("soil_ph_min", { precision: 3, scale: 1 }).notNull(),
+  soilPhMax: decimal("soil_ph_max", { precision: 3, scale: 1 }).notNull(),
+  // Seasonality
+  plantingSeasons: text("planting_seasons").array().notNull(),
+  // Additional metadata
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  region: text("region"), // e.g., "Global", "Tropical", "Temperate", "Zambia"
+  // Yield information
+  expectedYieldMin: decimal("expected_yield_min", { precision: 8, scale: 2 }),
+  expectedYieldMax: decimal("expected_yield_max", { precision: 8, scale: 2 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Create schemas for new tables
 export const insertWeatherPreferencesSchema = createInsertSchema(
   weatherPreferences
@@ -322,6 +357,12 @@ export const insertCropYieldPredictionSchema = createInsertSchema(
   updatedAt: true,
 });
 
+export const insertCropVarietySchema = createInsertSchema(cropVarieties).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertField = z.infer<typeof insertFieldSchema>;
 export type Field = typeof fields.$inferSelect;
 export type InsertCrop = z.infer<typeof insertCropSchema>;
@@ -340,6 +381,8 @@ export type InsertCropYieldPrediction = z.infer<
   typeof insertCropYieldPredictionSchema
 >;
 export type CropYieldPrediction = typeof cropYieldPredictions.$inferSelect;
+export type InsertCropVariety = z.infer<typeof insertCropVarietySchema>;
+export type CropVariety = typeof cropVarieties.$inferSelect;
 
 // Note: CropTrace events table is defined below in the marketplace section
 
@@ -829,54 +872,219 @@ export const insertMarketplaceListingSchema = createInsertSchema(
     sellerVerified: z
       .union([z.boolean(), z.string().transform((val) => val === "true")])
       .optional(),
-    // Handle numeric fields
+    // Handle numeric fields - with NaN validation
     farmEstablishedYear: z
-      .union([z.number(), z.string().transform((val) => parseInt(val, 10))])
-      .optional(),
+      .union([
+        z.number(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null")
+            return undefined;
+          const num = parseInt(val, 10);
+          return isNaN(num) ? undefined : num;
+        }),
+      ])
+      .optional()
+      .nullable(),
     sellerReviewCount: z
-      .union([z.number(), z.string().transform((val) => parseInt(val, 10))])
-      .optional(),
-    // Handle decimal fields
+      .union([
+        z.number(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null")
+            return undefined;
+          const num = parseInt(val, 10);
+          return isNaN(num) ? undefined : num;
+        }),
+      ])
+      .optional()
+      .nullable(),
+    // Handle decimal fields - with NaN validation
     qualityScore: z
-      .union([z.number(), z.string().transform((val) => parseFloat(val))])
-      .optional(),
+      .union([
+        z.number(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null")
+            return undefined;
+          const num = parseFloat(val);
+          return isNaN(num) ? undefined : num;
+        }),
+      ])
+      .optional()
+      .nullable(),
     sustainabilityScore: z
-      .union([z.number(), z.string().transform((val) => parseFloat(val))])
-      .optional(),
+      .union([
+        z.number(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null")
+            return undefined;
+          const num = parseFloat(val);
+          return isNaN(num) ? undefined : num;
+        }),
+      ])
+      .optional()
+      .nullable(),
     carbonFootprint: z
-      .union([z.number(), z.string().transform((val) => parseFloat(val))])
-      .optional(),
+      .union([
+        z.number(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null")
+            return undefined;
+          const num = parseFloat(val);
+          return isNaN(num) ? undefined : num;
+        }),
+      ])
+      .optional()
+      .nullable(),
     waterUsage: z
-      .union([z.number(), z.string().transform((val) => parseFloat(val))])
-      .optional(),
+      .union([
+        z.number(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null")
+            return undefined;
+          const num = parseFloat(val);
+          return isNaN(num) ? undefined : num;
+        }),
+      ])
+      .optional()
+      .nullable(),
     sellerRating: z
-      .union([z.number(), z.string().transform((val) => parseFloat(val))])
-      .optional(),
+      .union([
+        z.number(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null")
+            return undefined;
+          const num = parseFloat(val);
+          return isNaN(num) ? undefined : num;
+        }),
+      ])
+      .optional()
+      .nullable(),
     trustScore: z
-      .union([z.number(), z.string().transform((val) => parseFloat(val))])
+      .union([
+        z.number(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null")
+            return undefined;
+          const num = parseFloat(val);
+          return isNaN(num) ? undefined : num;
+        }),
+      ])
+      .optional()
+      .nullable(),
+    // Also handle price and quantity with NaN validation
+    price: z
+      .union([
+        z.number(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null")
+            return undefined;
+          const num = parseFloat(val);
+          return isNaN(num) ? undefined : num;
+        }),
+      ])
       .optional(),
-    // Handle date fields
+    quantity: z
+      .union([
+        z.number(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null")
+            return undefined;
+          const num = parseFloat(val);
+          return isNaN(num) ? undefined : num;
+        }),
+      ])
+      .optional(),
+    // Handle date fields - with proper validation to avoid Invalid Date
     harvestDate: z
-      .union([z.date(), z.string().transform((val) => new Date(val))])
-      .optional(),
+      .union([
+        z.date(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null") {
+            return undefined;
+          }
+          const date = new Date(val);
+          return isNaN(date.getTime()) ? undefined : date;
+        }),
+      ])
+      .optional()
+      .nullable(),
     expiryDate: z
-      .union([z.date(), z.string().transform((val) => new Date(val))])
-      .optional(),
+      .union([
+        z.date(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null") {
+            return undefined;
+          }
+          const date = new Date(val);
+          return isNaN(date.getTime()) ? undefined : date;
+        }),
+      ])
+      .optional()
+      .nullable(),
     blockchainVerifiedAt: z
-      .union([z.date(), z.string().transform((val) => new Date(val))])
-      .optional(),
+      .union([
+        z.date(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null") {
+            return undefined;
+          }
+          const date = new Date(val);
+          return isNaN(date.getTime()) ? undefined : date;
+        }),
+      ])
+      .optional()
+      .nullable(),
     greenuppVerifiedAt: z
-      .union([z.date(), z.string().transform((val) => new Date(val))])
-      .optional(),
+      .union([
+        z.date(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null") {
+            return undefined;
+          }
+          const date = new Date(val);
+          return isNaN(date.getTime()) ? undefined : date;
+        }),
+      ])
+      .optional()
+      .nullable(),
     qualityTestDate: z
-      .union([z.date(), z.string().transform((val) => new Date(val))])
-      .optional(),
+      .union([
+        z.date(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null") {
+            return undefined;
+          }
+          const date = new Date(val);
+          return isNaN(date.getTime()) ? undefined : date;
+        }),
+      ])
+      .optional()
+      .nullable(),
     farmAuditDate: z
-      .union([z.date(), z.string().transform((val) => new Date(val))])
-      .optional(),
+      .union([
+        z.date(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null") {
+            return undefined;
+          }
+          const date = new Date(val);
+          return isNaN(date.getTime()) ? undefined : date;
+        }),
+      ])
+      .optional()
+      .nullable(),
     sellerVerifiedAt: z
-      .union([z.date(), z.string().transform((val) => new Date(val))])
-      .optional(),
+      .union([
+        z.date(),
+        z.string().transform((val) => {
+          if (!val || val === "" || val === "undefined" || val === "null") {
+            return undefined;
+          }
+          const date = new Date(val);
+          return isNaN(date.getTime()) ? undefined : date;
+        }),
+      ])
+      .optional()
+      .nullable(),
   });
 
 export const insertMarketplaceReviewSchema = createInsertSchema(
@@ -936,6 +1144,29 @@ export type MarketplaceMessage = typeof marketplaceMessages.$inferSelect;
 // CropTrace types
 export type InsertCropTraceEvent = z.infer<typeof insertCropTraceEventSchema>;
 export type CropTraceEvent = typeof cropTraceEvents.$inferSelect;
+
+// QR Scan Events table for analytics
+export const qrScanEvents = pgTable("qr_scan_events", {
+  id: serial("id").primaryKey(),
+  batchId: text("batch_id").notNull(),
+  cropId: integer("crop_id").references(() => crops.id, {
+    onDelete: "cascade",
+  }),
+  scannedAt: timestamp("scanned_at").notNull().defaultNow(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  locationLat: real("location_lat"),
+  locationLon: real("location_lon"),
+  locationCity: text("location_city"),
+  locationCountry: text("location_country"),
+  referrer: text("referrer"),
+  scanSource: text("scan_source").default("web"), // 'web', 'mobile', 'app'
+  verificationResult: boolean("verification_result").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type QRScanEvent = typeof qrScanEvents.$inferSelect;
+export type InsertQRScanEvent = typeof qrScanEvents.$inferInsert;
 
 // Cart schemas
 export const carts = pgTable("carts", {

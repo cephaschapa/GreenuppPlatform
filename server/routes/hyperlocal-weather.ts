@@ -27,13 +27,27 @@ router.use(isAuthenticated);
  */
 router.get("/", async (req: Request, res: Response) => {
   try {
-    const { location, lat, lon, city } = req.query;
+    let { location, lat, lon, city } = req.query;
 
     if (!location && (!lat || !lon) && !city) {
       return res.status(400).json({
         message:
           "Please provide either location name, coordinates (lat & lon), or city",
       });
+    }
+
+    // Check if location parameter contains coordinates (format: "lat,lon")
+    if (location && typeof location === "string") {
+      const coordsMatch = location.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
+      if (coordsMatch) {
+        // Location is actually coordinates - parse them
+        lat = coordsMatch[1];
+        lon = coordsMatch[2];
+        location = undefined; // Clear location so it uses coordinates
+        logger.info(
+          `Detected coordinates in location parameter: ${lat}, ${lon}`
+        );
+      }
     }
 
     const query = {
@@ -157,7 +171,10 @@ router.get("/city/:cityName", async (req: Request, res: Response) => {
       })),
     });
   } catch (error) {
-    logger.error(`Error fetching locations for city ${req.params.cityName}:`, error);
+    logger.error(
+      `Error fetching locations for city ${req.params.cityName}:`,
+      error
+    );
     res.status(500).json({
       success: false,
       message: "Failed to retrieve city locations",
@@ -200,7 +217,10 @@ router.get("/city/:cityName/weather", async (req: Request, res: Response) => {
       })),
     });
   } catch (error) {
-    logger.error(`Error fetching weather for city ${req.params.cityName}:`, error);
+    logger.error(
+      `Error fetching weather for city ${req.params.cityName}:`,
+      error
+    );
     res.status(500).json({
       success: false,
       message: "Failed to retrieve city weather",
@@ -245,7 +265,10 @@ router.get("/province/:provinceName", async (req: Request, res: Response) => {
       })),
     });
   } catch (error) {
-    logger.error(`Error fetching locations for province ${req.params.provinceName}:`, error);
+    logger.error(
+      `Error fetching locations for province ${req.params.provinceName}:`,
+      error
+    );
     res.status(500).json({
       success: false,
       message: "Failed to retrieve province locations",
@@ -255,4 +278,3 @@ router.get("/province/:provinceName", async (req: Request, res: Response) => {
 });
 
 export default router;
-

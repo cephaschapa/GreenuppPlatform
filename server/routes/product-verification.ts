@@ -47,4 +47,43 @@ router.get(
   ProductVerificationController.getCropTraceabilityHistory
 );
 
+// Get scan analytics for a crop
+router.get(
+  "/crops/:cropId/scan-analytics",
+  isAuthenticated,
+  hasRole("farmer"),
+  ProductVerificationController.getCropScanAnalytics
+);
+
+// Get user's top scanned products
+router.get(
+  "/top-scanned",
+  isAuthenticated,
+  hasRole("farmer"),
+  ProductVerificationController.getTopScannedProducts
+);
+
+// Get farmer trust score
+router.get(
+  "/trust-score",
+  isAuthenticated,
+  hasRole("farmer"),
+  ProductVerificationController.getFarmerTrustScore
+);
+
+// Get product trust score
+router.get(
+  "/crops/:cropId/trust-score",
+  isAuthenticated,
+  hasRole("farmer"),
+  ProductVerificationController.getProductTrustScore
+);
+
+// Get scan analytics by batch ID (for marketplace listings)
+router.get(
+  "/batch-analytics/:batchId",
+  isAuthenticated,
+  ProductVerificationController.getBatchScanAnalytics
+);
+
 export default router;
