@@ -146,7 +146,7 @@ export function FarmerDashboard() {
     },
     enabled: !!farmerProfile,
   });
-
+  console.log("Testt");
   // Function to fetch weather data
   const fetchWeatherData = async () => {
     if (!farmerProfile?.farmLocation) return;

@@ -66,6 +66,7 @@ import DealerDirectoryPage from "@/pages/farmer/DealerDirectoryPage";
 import OrdersPage from "./pages/farmer/OrdersPage";
 import InventoryPage from "./pages/farmer/InventoryPage";
 import ProductVerificationPage from "./pages/farmer/ProductVerificationPage";
+import DashboardOverview from "@/pages/farmer/DashboardOverview";
 // import { PushNotificationDebug } from "./components/PushNotificationDebug"; // Currently unused
 import { useLocation } from "wouter";
 
@@ -73,10 +74,13 @@ import { useLocation } from "wouter";
 function FarmerRouter({ userId }: { userId: string }) {
   return (
     <Switch>
-      <ProtectedRoute path={`/farmer/${userId}`} component={DashboardPage} />
+      <ProtectedRoute
+        path={`/farmer/${userId}`}
+        component={DashboardOverview}
+      />
       <ProtectedRoute
         path={`/farmer/${userId}/dashboard`}
-        component={DashboardPage}
+        component={DashboardOverview}
       />
       <ProtectedRoute
         path={`/farmer/${userId}/fields`}
@@ -541,6 +545,7 @@ function App() {
   const isAppSubdomain =
     typeof window !== "undefined" &&
     window.location.hostname.startsWith("app.");
+  console.log("Test");
 
   return (
     <ThemeProvider defaultTheme="system">

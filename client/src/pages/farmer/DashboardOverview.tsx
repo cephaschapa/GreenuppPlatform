@@ -55,6 +55,7 @@ export default function DashboardOverview() {
         }
       },
     });
+  console.log("Test");
 
   console.log("farmerProfile", farmerProfile);
 
