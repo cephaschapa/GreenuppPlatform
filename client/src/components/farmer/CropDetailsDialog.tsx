@@ -42,6 +42,10 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { CropActivityLog } from "@/components/farmer/CropActivityLog";
+import { QuickObservationDialog } from "@/components/farmer/QuickObservationDialog";
+import { differenceInDays } from "date-fns";
+import { Progress } from "@/components/ui/progress";
 
 interface Crop {
   id: number;
@@ -88,6 +92,7 @@ export function CropDetailsDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
+  const [isQuickObservationOpen, setIsQuickObservationOpen] = useState(false);
 
   // Fetch crop trace events
   const { data: traceEvents = [], isLoading: isLoadingEvents } = useQuery<
@@ -254,10 +259,11 @@ export function CropDetailsDialog({
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="stages">Stages & Milestones</TabsTrigger>
-            <TabsTrigger value="blockchain">Blockchain Data</TabsTrigger>
+            <TabsTrigger value="progress">Progress</TabsTrigger>
+            <TabsTrigger value="stages">Stages</TabsTrigger>
+            <TabsTrigger value="blockchain">Blockchain</TabsTrigger>
             <TabsTrigger value="qr">QR Code</TabsTrigger>
           </TabsList>
 
@@ -381,6 +387,104 @@ export function CropDetailsDialog({
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="progress" className="space-y-4">
+            {/* Crop Progress Indicators */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <BarChart3 className="h-5 w-5" />
+                  Growth Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Days Since Planting */}
+                {crop.plantingDate && (
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium">
+                        Days Since Planting
+                      </span>
+                      <Badge variant="secondary">
+                        {differenceInDays(
+                          new Date(),
+                          new Date(crop.plantingDate)
+                        )}{" "}
+                        days
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Planted on{" "}
+                      {new Date(crop.plantingDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+
+                {/* Days Until Harvest */}
+                {crop.expectedHarvestDate && (
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium">
+                        Days Until Harvest
+                      </span>
+                      <Badge
+                        variant="secondary"
+                        className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                      >
+                        {Math.max(
+                          0,
+                          differenceInDays(
+                            new Date(crop.expectedHarvestDate),
+                            new Date()
+                          )
+                        )}{" "}
+                        days
+                      </Badge>
+                    </div>
+                    {crop.plantingDate && (
+                      <div className="mt-2">
+                        <Progress
+                          value={
+                            (differenceInDays(
+                              new Date(),
+                              new Date(crop.plantingDate)
+                            ) /
+                              differenceInDays(
+                                new Date(crop.expectedHarvestDate),
+                                new Date(crop.plantingDate)
+                              )) *
+                            100
+                          }
+                          className="h-2"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Expected harvest:{" "}
+                          {new Date(
+                            crop.expectedHarvestDate
+                          ).toLocaleDateString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Quick Actions */}
+                <div className="pt-4 border-t">
+                  <Button
+                    onClick={() => setIsQuickObservationOpen(true)}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    <Camera className="mr-2 h-4 w-4" />
+                    Log Observation
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Activity Timeline */}
+            <CropActivityLog cropId={crop.id} limit={10} />
           </TabsContent>
 
           <TabsContent value="stages" className="space-y-4">
@@ -913,6 +1017,15 @@ export function CropDetailsDialog({
           </TabsContent>
         </Tabs>
       </DialogContent>
+
+      {/* Quick Observation Dialog */}
+      {crop && (
+        <QuickObservationDialog
+          isOpen={isQuickObservationOpen}
+          onOpenChange={setIsQuickObservationOpen}
+          preselectedCropId={crop.id}
+        />
+      )}
     </Dialog>
   );
 }

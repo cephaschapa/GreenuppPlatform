@@ -235,6 +235,90 @@ export const cropActivities = pgTable("crop_activities", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Crop observations table for daily monitoring
+export const cropObservations = pgTable("crop_observations", {
+  id: serial("id").primaryKey(),
+  cropId: integer("crop_id")
+    .notNull()
+    .references(() => crops.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  fieldId: integer("field_id").references(() => fields.id),
+  observationDate: timestamp("observation_date").notNull().defaultNow(),
+  observationType: text("observation_type").notNull(),
+  notes: text("notes"),
+  healthStatus: text("health_status"),
+  healthScore: integer("health_score"),
+  heightCm: decimal("height_cm", { precision: 10, scale: 2 }),
+  leafCount: integer("leaf_count"),
+  fruitCount: integer("fruit_count"),
+  pestDetected: boolean("pest_detected").default(false),
+  pestType: text("pest_type"),
+  pestSeverity: text("pest_severity"),
+  diseaseDetected: boolean("disease_detected").default(false),
+  diseaseType: text("disease_type"),
+  diseaseSeverity: text("disease_severity"),
+  actionTaken: text("action_taken"),
+  waterAmountLiters: decimal("water_amount_liters", {
+    precision: 10,
+    scale: 2,
+  }),
+  fertilizerApplied: boolean("fertilizer_applied").default(false),
+  fertilizerType: text("fertilizer_type"),
+  fertilizerAmount: text("fertilizer_amount"),
+  photos: text("photos").array(),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  temperature: decimal("temperature", { precision: 5, scale: 2 }),
+  weatherCondition: text("weather_condition"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Field visits table
+export const fieldVisits = pgTable("field_visits", {
+  id: serial("id").primaryKey(),
+  fieldId: integer("field_id")
+    .notNull()
+    .references(() => fields.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  visitDate: timestamp("visit_date").notNull().defaultNow(),
+  durationMinutes: integer("duration_minutes"),
+  purpose: text("purpose"),
+  notes: text("notes"),
+  overallCondition: text("overall_condition"),
+  issuesFound: text("issues_found").array(),
+  actionsTaken: text("actions_taken").array(),
+  temperature: decimal("temperature", { precision: 5, scale: 2 }),
+  weatherCondition: text("weather_condition"),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  photos: text("photos").array(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Crop growth stages for smart notifications
+export const cropGrowthStages = pgTable("crop_growth_stages", {
+  id: serial("id").primaryKey(),
+  cropName: text("crop_name").notNull(),
+  stageName: text("stage_name").notNull(),
+  stageOrder: integer("stage_order").notNull(),
+  daysFromPlantingMin: integer("days_from_planting_min").notNull(),
+  daysFromPlantingMax: integer("days_from_planting_max").notNull(),
+  description: text("description"),
+  visualIndicators: text("visual_indicators").array(),
+  careActions: text("care_actions").array(),
+  commonIssues: text("common_issues").array(),
+  shouldNotify: boolean("should_notify").default(true),
+  notificationMessage: text("notification_message"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // Create schemas for crop management
 export const insertFieldSchema = createInsertSchema(fields).omit({
   id: true,

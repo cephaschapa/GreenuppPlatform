@@ -23,6 +23,7 @@ import { registerMvcRoutes } from "./routes/index-mvc.js";
 import { setupAuth } from "./auth";
 import authRoutes from "./routes/auth-routes.js";
 import hyperlocalWeatherRoutes from "./routes/hyperlocal-weather.js";
+import cropObservationsRoutes from "./routes/crop-observations.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to handle subdomain routing
@@ -56,6 +57,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up hyperlocal weather routes (neighborhood-level precision for Zambian locations)
   app.use("/api/hyperlocal-weather", hyperlocalWeatherRoutes);
+
+  // Set up crop observations and field visits routes
+  app.use("/api/crop-observations", cropObservationsRoutes);
 
   // Set up seller routes
   app.use("/api/marketplace/sellers", sellerRoutes);

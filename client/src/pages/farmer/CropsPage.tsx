@@ -48,8 +48,10 @@ import {
   ShoppingBag,
   X,
   TractorIcon,
+  Camera,
 } from "lucide-react";
 import { CropDetailsDialog } from "@/components/farmer/CropDetailsDialog";
+import { QuickObservationDialog } from "@/components/farmer/QuickObservationDialog";
 import React from "react";
 
 export default function CropsPage() {
@@ -62,6 +64,8 @@ export default function CropsPage() {
   const [selectedCrops, setSelectedCrops] = useState<Set<number>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
   const [isCropDetailsOpen, setIsCropDetailsOpen] = useState(false);
+  const [isQuickObservationOpen, setIsQuickObservationOpen] = useState(false);
+  const [quickObsCropId, setQuickObsCropId] = useState<number | undefined>();
 
   // Fetch fields
   const { data: fields } = useQuery<Field[]>({
@@ -618,6 +622,27 @@ export default function CropsPage() {
           setSelectedCrop(null);
         }}
       />
+
+      {/* Quick Observation Dialog */}
+      <QuickObservationDialog
+        isOpen={isQuickObservationOpen}
+        onOpenChange={setIsQuickObservationOpen}
+        preselectedCropId={quickObsCropId}
+      />
+
+      {/* Floating Action Button - Quick Observation */}
+      {filteredCrops.length > 0 && (
+        <Button
+          onClick={() => {
+            setQuickObsCropId(undefined);
+            setIsQuickObservationOpen(true);
+          }}
+          className="fixed bottom-20 md:bottom-8 right-4 md:right-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow z-50"
+          size="icon"
+        >
+          <Camera className="h-6 w-6" />
+        </Button>
+      )}
     </DashboardLayout>
   );
 }
