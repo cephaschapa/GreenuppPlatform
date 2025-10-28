@@ -41,15 +41,27 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
     !process.env.SMTP_USER ||
     !process.env.SMTP_PASS
   ) {
+    console.warn(
+      "⚠️ SMTP not configured - email will only be logged to console"
+    );
+    console.warn(
+      "📧 To send real emails, configure SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables"
+    );
     logEmailToDev(options);
-    return { success: true };
+    return {
+      success: true,
+      error: "SMTP not configured - email logged to console only",
+    };
   }
+
   try {
+    console.log(`📧 Sending email to ${options.to} via SMTP...`);
     await sendSmtpEmail(options);
+    console.log(`✅ Email sent successfully to ${options.to}`);
     return { success: true };
   } catch (err) {
     const error = err as any;
-    console.error("Failed to send email via SMTP:", error);
+    console.error("❌ Failed to send email via SMTP:", error);
 
     // Return the actual error instead of falling back silently
     return {

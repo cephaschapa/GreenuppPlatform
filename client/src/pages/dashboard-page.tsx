@@ -2,6 +2,7 @@ import { Redirect } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { BuyerDashboard } from "@/components/dashboards/BuyerDashboard";
 import DashboardOverview from "@/pages/farmer/DashboardOverview";
+import { OnboardingGuard } from "@/components/OnboardingGuard";
 import { Loader2 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -19,21 +20,28 @@ export default function DashboardPage() {
     return <Redirect to="/auth" />;
   }
 
-  // Role-based dashboard routing
-  switch (user.role) {
-    case "farmer":
-      return <DashboardOverview />;
-    case "buyer":
-      return <BuyerDashboard />;
-    case "seller":
-    case "supplier":
-      // For now, sellers use the same dashboard as buyers
-      // TODO: Create SellerDashboard component
-      return <BuyerDashboard />;
-    case "admin":
-      return <Redirect to="/admin" />;
-    default:
-      // Fallback for unknown roles
-      return <Redirect to="/auth" />;
-  }
+  // Wrap the dashboard content with OnboardingGuard
+  return (
+    <OnboardingGuard>
+      {(() => {
+        // Role-based dashboard routing
+        switch (user.role) {
+          case "farmer":
+            return <DashboardOverview />;
+          case "buyer":
+            return <BuyerDashboard />;
+          case "seller":
+          case "supplier":
+            // For now, sellers use the same dashboard as buyers
+            // TODO: Create SellerDashboard component
+            return <BuyerDashboard />;
+          case "admin":
+            return <Redirect to="/admin" />;
+          default:
+            // Fallback for unknown roles
+            return <Redirect to="/auth" />;
+        }
+      })()}
+    </OnboardingGuard>
+  );
 }

@@ -74,6 +74,8 @@ import {
   notificationSettings,
   chatRooms,
   chatRoomMembers,
+  onboardingProgress,
+  userPreferences,
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -94,6 +96,18 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
+
+  // Onboarding methods
+  getUserOnboardingProgress(
+    userId: number
+  ): Promise<{ currentStep: number; data: any } | undefined>;
+  saveUserOnboardingProgress(
+    userId: number,
+    progress: { currentStep: number; data: any; updatedAt: Date }
+  ): Promise<void>;
+  clearUserOnboardingProgress(userId: number): Promise<void>;
+  saveUserPreferences(userId: number, preferences: any): Promise<void>;
+  createOrUpdateFarmerProfile(userId: number, profileData: any): Promise<void>;
 
   // Farmer profiles
   getFarmerProfile(userId: number): Promise<FarmerProfile | undefined>;
@@ -466,6 +480,88 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return user;
+  }
+
+  // Onboarding methods implementation
+  async getUserOnboardingProgress(
+    userId: number
+  ): Promise<{ currentStep: number; data: any } | undefined> {
+    const [progress] = await db
+      .select()
+      .from(onboardingProgress)
+      .where(eq(onboardingProgress.userId, userId));
+
+    if (!progress) {
+      return undefined;
+    }
+
+    return {
+      currentStep: progress.currentStep,
+      data: progress.onboardingData || {},
+    };
+  }
+
+  async saveUserOnboardingProgress(
+    userId: number,
+    progress: { currentStep: number; data: any; updatedAt: Date }
+  ): Promise<void> {
+    await db
+      .insert(onboardingProgress)
+      .values({
+        userId,
+        currentStep: progress.currentStep,
+        onboardingData: progress.data,
+        updatedAt: progress.updatedAt,
+      })
+      .onConflictDoUpdate({
+        target: onboardingProgress.userId,
+        set: {
+          currentStep: progress.currentStep,
+          onboardingData: progress.data,
+          updatedAt: progress.updatedAt,
+        },
+      });
+  }
+
+  async clearUserOnboardingProgress(userId: number): Promise<void> {
+    await db
+      .delete(onboardingProgress)
+      .where(eq(onboardingProgress.userId, userId));
+  }
+
+  async saveUserPreferences(userId: number, preferences: any): Promise<void> {
+    await db
+      .insert(userPreferences)
+      .values({
+        userId,
+        preferences,
+      })
+      .onConflictDoUpdate({
+        target: userPreferences.userId,
+        set: {
+          preferences,
+          updatedAt: new Date(),
+        },
+      });
+  }
+
+  async createOrUpdateFarmerProfile(
+    userId: number,
+    profileData: any
+  ): Promise<void> {
+    // Check if profile exists
+    const existingProfile = await this.getFarmerProfile(userId);
+
+    if (existingProfile) {
+      // Update existing profile
+      await this.updateFarmerProfile(userId, profileData);
+    } else {
+      // Create new profile
+      await this.createFarmerProfile({
+        ...profileData,
+        userId,
+      });
+    }
   }
 
   async getFarmerProfile(userId: number): Promise<FarmerProfile | undefined> {

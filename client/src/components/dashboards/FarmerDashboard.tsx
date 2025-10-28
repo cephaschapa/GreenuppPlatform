@@ -189,29 +189,8 @@ export function FarmerDashboard() {
     }
   }, [farmerProfile]);
 
-  // Calculate profile completion percentage
-  const calculateProfileCompletion = () => {
-    if (!farmerProfile || !user) return 0;
-
-    const requiredFields = [
-      farmerProfile.farmName,
-      farmerProfile.farmLocation,
-      farmerProfile.farmSize,
-      farmerProfile.farmType,
-      farmerProfile.contactPhone,
-      farmerProfile.bio,
-      user.firstName,
-      user.lastName,
-      user.email,
-    ];
-
-    const completedFields = requiredFields.filter(
-      (field) => field && field.toString().trim() !== ""
-    ).length;
-    return Math.round((completedFields / requiredFields.length) * 100);
-  };
-
-  const profileCompletion = calculateProfileCompletion();
+  // Profile completion is now handled by the onboarding system
+  // No need for manual profile completion tracking
 
   // Handle missing profile
   if (!profileLoading && !farmerProfile) {
@@ -242,34 +221,7 @@ export function FarmerDashboard() {
     );
   }
 
-  // Handle incomplete profile
-  if (farmerProfile && profileCompletion < 100) {
-    return (
-      <div className="grid grid-cols-1 gap-6">
-        <Card className="bg-secondary/30 border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-xl font-medium text-white font-space">
-              Complete Your Profile ({profileCompletion}%)
-            </CardTitle>
-            <CardDescription className="text-gray-400">
-              Complete your profile to unlock all dashboard features
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-48 flex flex-col items-center justify-center border border-dashed border-primary/40 rounded-md p-6">
-              <p className="text-gray-300 text-center mb-4">
-                Your profile is {profileCompletion}% complete. Complete it to
-                unlock all dashboard features.
-              </p>
-              <Link href="/dashboard/profile">
-                <Button variant="default">Complete Profile</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Profile completion check removed - now handled by onboarding system
 
   // Field management mutations
   const createFieldMutation = useMutation({
@@ -773,7 +725,7 @@ export function FarmerDashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-100 rounded-lg">
-                  <Crop className="h-4 w-4 text-green-600" />
+                  <TractorIcon className="h-4 w-4 text-green-600" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Crops</p>

@@ -42,6 +42,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useRoleNavigation } from "@/hooks/use-role-navigation";
 import { RegistrationSuccessDialog } from "@/components/auth/RegistrationSuccessDialog";
+import { useQuery } from "@tanstack/react-query";
 
 export default function AuthPage() {
   const { user, isLoading } = useAuth();
@@ -49,6 +50,17 @@ export default function AuthPage() {
   const [checked, setChecked] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
   const isAppSubdomain = window.location.hostname.startsWith("app.");
+
+  // Check onboarding status for authenticated users
+  const { data: onboardingStatus } = useQuery({
+    queryKey: ["/api/user/onboarding-status"],
+    queryFn: async () => {
+      const response = await fetch("/api/user/onboarding-status");
+      if (!response.ok) throw new Error("Failed to fetch onboarding status");
+      return await response.json();
+    },
+    enabled: !!user?.id,
+  });
 
   useEffect(() => {
     // Only set checked to true after initial auth check is complete
@@ -74,6 +86,11 @@ export default function AuthPage() {
     // Redirect admin users to /admin
     if (user.role === "admin") {
       return <Redirect to="/admin" />;
+    }
+
+    // Check if user needs onboarding
+    if (onboardingStatus && !onboardingStatus.completed) {
+      return <Redirect to="/onboarding" />;
     }
 
     // Use role-based routing for all user types
@@ -102,7 +119,11 @@ export default function AuthPage() {
             </p>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="register">Register</TabsTrigger>
@@ -113,7 +134,9 @@ export default function AuthPage() {
             </TabsContent>
 
             <TabsContent value="register">
-              <RegisterForm onSuccessfulRegistration={() => setActiveTab("login")} />
+              <RegisterForm
+                onSuccessfulRegistration={() => setActiveTab("login")}
+              />
             </TabsContent>
           </Tabs>
         </div>
@@ -538,7 +561,11 @@ function LoginForm() {
   );
 }
 
-function RegisterForm({ onSuccessfulRegistration }: { onSuccessfulRegistration?: () => void }) {
+function RegisterForm({
+  onSuccessfulRegistration,
+}: {
+  onSuccessfulRegistration?: () => void;
+}) {
   const { registerMutation, refetchUser } = useAuth();
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
@@ -564,20 +591,20 @@ function RegisterForm({ onSuccessfulRegistration }: { onSuccessfulRegistration?:
         // Save registration details for success dialog
         setRegisteredEmail(values.email);
         setRegisteredFirstName(values.firstName || "");
-        
+
         // Show success dialog
         setShowSuccessDialog(true);
-        
+
         // Reset the form
         registerForm.reset();
-        
+
         // console.log("Registration successful, explicitly refetching user data");
         // Force refetch user data after registration to ensure session is properly recognized
         await refetchUser();
       },
     });
   }
-  
+
   const handleSuccessDialogClose = () => {
     setShowSuccessDialog(false);
     // Switch to login tab when dialog closes

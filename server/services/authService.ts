@@ -689,11 +689,17 @@ export class AuthService {
       "This verification link will expire in 24 hours. If you did not create an account, you can safely ignore this email."
     );
 
-    await sendEmail({
+    const result = await sendEmail({
       to: email,
+      from: process.env.SMTP_FROM || "GreenUpp <support@greenupp.earth>",
       subject: "Verify Your Email Address - GreenUpp",
       html,
+      text: `Please verify your email address by visiting: ${verificationUrl}`,
     });
+
+    if (!result.success) {
+      throw new Error(`Failed to send verification email: ${result.error}`);
+    }
   }
 
   // Password reset methods

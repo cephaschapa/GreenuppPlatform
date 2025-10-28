@@ -24,6 +24,9 @@ import { setupAuth } from "./auth";
 import authRoutes from "./routes/auth-routes.js";
 import hyperlocalWeatherRoutes from "./routes/hyperlocal-weather.js";
 import cropObservationsRoutes from "./routes/crop-observations.js";
+import onboardingRoutes from "./routes/onboarding.js";
+import testEmailRoutes from "./routes/test-email.js";
+import testOnboardingRoutes from "./routes/test-onboarding.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to handle subdomain routing
@@ -60,6 +63,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up crop observations and field visits routes
   app.use("/api/crop-observations", cropObservationsRoutes);
+
+  // Set up onboarding routes
+  app.use("/api/user", onboardingRoutes);
+
+  // Set up test email routes (development/testing)
+  app.use("/api", testEmailRoutes);
+
+  // Set up test onboarding routes (development/testing)
+  app.use("/api/test", testOnboardingRoutes);
 
   // Set up seller routes
   app.use("/api/marketplace/sellers", sellerRoutes);

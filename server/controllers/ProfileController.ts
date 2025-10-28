@@ -97,9 +97,41 @@ export class ProfileController {
         throw new AuthorizationError("Only farmers can access farmer profiles");
       }
 
-      const farmerProfile = await this.model.getFarmerProfile(req.user.id);
+      logger.info(`Fetching farmer profile for user ${req.user.id}`);
+      let farmerProfile = await this.model.getFarmerProfile(req.user.id);
+      logger.info(`Farmer profile result:`, farmerProfile);
+
+      // If no profile exists but user has completed onboarding, create a basic profile
       if (!farmerProfile) {
-        throw new NotFoundError("Farmer profile not found");
+        const user = await this.model.getUserProfile(req.user.id);
+        if (user?.onboardingCompleted) {
+          logger.info(
+            `User ${req.user.id} completed onboarding but has no farmer profile. Creating basic profile.`
+          );
+
+          // Create a basic farmer profile for users who completed onboarding
+          const basicProfileData = {
+            farmName: `${user.firstName || user.username}'s Farm`,
+            farmLocation: "Location not specified",
+            farmSize: "Not specified",
+            farmType: "Mixed Farming",
+            bio: "Passionate farmer focused on sustainable agriculture",
+            contactPhone: user.phone || "",
+            mainCrops: [],
+            establishedYear: null,
+          };
+
+          farmerProfile = await this.model.createFarmerProfile(
+            req.user.id,
+            basicProfileData
+          );
+          logger.info(
+            `Created basic farmer profile for user ${req.user.id}:`,
+            farmerProfile
+          );
+        } else {
+          throw new NotFoundError("Farmer profile not found");
+        }
       }
 
       res.json(farmerProfile);

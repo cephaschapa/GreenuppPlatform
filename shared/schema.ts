@@ -46,6 +46,39 @@ export const users = pgTable("users", {
   fcmToken: text("fcm_token"), // Firebase Cloud Messaging token
   fcmTokenUpdatedAt: timestamp("fcm_token_updated_at"), // When the token was last updated
   pushNotificationsEnabled: boolean("push_notifications_enabled").default(true), // User preference
+  // Onboarding fields
+  onboardingCompleted: boolean("onboarding_completed").default(false), // Whether user has completed onboarding
+  onboardingCompletedAt: timestamp("onboarding_completed_at"), // When onboarding was completed
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Onboarding progress table for storing step-by-step progress
+export const onboardingProgress = pgTable("onboarding_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id)
+    .unique(), // One progress record per user
+  currentStep: integer("current_step").notNull().default(1), // Current step in onboarding
+  onboardingData: jsonb("onboarding_data")
+    .$type<Record<string, any>>()
+    .default({}), // Step data storage
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// User preferences table for storing user-specific settings
+export const userPreferences = pgTable("user_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id)
+    .unique(), // One preference record per user
+  preferences: jsonb("preferences")
+    .$type<Record<string, any>>()
+    .notNull()
+    .default({}), // All user preferences
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

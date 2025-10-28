@@ -106,20 +106,34 @@ export default function ProfilePage() {
   const [editMode, setEditMode] = useState(false);
 
   // Fetch farmer profile data
-  const { data: farmerProfile, isLoading: profileLoading } = useQuery({
+  const {
+    data: farmerProfile,
+    isLoading: profileLoading,
+    refetch: refetchProfile,
+  } = useQuery({
     queryKey: ["/api/farmer-profile"],
     queryFn: async () => {
       try {
+        console.log("🔍 Fetching farmer profile...");
         const response = await fetch("/api/farmer-profile");
         if (!response.ok) {
+          console.log(
+            "❌ Failed to fetch farmer profile:",
+            response.status,
+            response.statusText
+          );
           throw new Error("Failed to fetch farmer profile");
         }
-        return await response.json();
+        const data = await response.json();
+        console.log("✅ Farmer profile fetched:", data);
+        return data;
       } catch (error) {
-        // console.error("Error fetching farmer profile:", error);
+        console.error("Error fetching farmer profile:", error);
         return null;
       }
     },
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true, // Refetch when component mounts
   });
 
   // Fetch statistics for the profile
@@ -155,29 +169,36 @@ export default function ProfilePage() {
     },
   });
 
-  // Calculate profile completion percentage
-  const calculateProfileCompletion = () => {
-    if (!farmerProfile || !user) return 0;
+  // Calculate profile enhancement suggestions
+  const getProfileEnhancements = () => {
+    if (!farmerProfile || !user) return { suggestions: [], isComplete: false };
 
-    const requiredFields = [
-      farmerProfile.farmName,
-      farmerProfile.farmLocation,
-      farmerProfile.farmSize,
-      farmerProfile.farmType,
-      farmerProfile.contactPhone,
-      farmerProfile.bio,
-      user.firstName,
-      user.lastName,
-      user.email,
+    const optionalFields = [
+      { field: farmerProfile.establishedYear, label: "Established Year" },
+      { field: farmerProfile.bio, label: "Farm Bio" },
+      { field: farmerProfile.contactPhone, label: "Contact Phone" },
+      { field: farmerProfile.mainCrops?.length, label: "Main Crops" },
     ];
 
-    const completedFields = requiredFields.filter(
-      (field) => field && field.toString().trim() !== ""
-    ).length;
-    return Math.round((completedFields / requiredFields.length) * 100);
+    const missingSuggestions = optionalFields
+      .filter(
+        ({ field }) =>
+          !field || (typeof field === "string" && field.trim() === "")
+      )
+      .map(({ label }) => label);
+
+    return {
+      suggestions: missingSuggestions,
+      isComplete: missingSuggestions.length === 0,
+      completionPercentage: Math.round(
+        ((optionalFields.length - missingSuggestions.length) /
+          optionalFields.length) *
+          100
+      ),
+    };
   };
 
-  const profileCompletion = calculateProfileCompletion();
+  const profileEnhancements = getProfileEnhancements();
 
   // Setup form
   const form = useForm<ProfileFormValues>({
@@ -205,7 +226,7 @@ export default function ProfilePage() {
   // Update the form when data is loaded
   useEffect(() => {
     if (user && farmerProfile) {
-      form.reset({
+      const formData = {
         firstName: user.firstName || "",
         lastName: user.lastName || "",
         email: user.email || "",
@@ -217,7 +238,13 @@ export default function ProfilePage() {
         contactPhone: farmerProfile.contactPhone || "",
         cropsInput: farmerProfile.mainCrops?.join(", ") || "",
         establishedYear: farmerProfile.establishedYear?.toString() || "",
-      });
+      };
+
+      console.log("📝 Populating form with data:", formData);
+      console.log("👤 User data:", user);
+      console.log("🚜 Farmer profile data:", farmerProfile);
+
+      form.reset(formData);
     }
   }, [user, farmerProfile, form]);
 
@@ -313,12 +340,55 @@ export default function ProfilePage() {
         description="View and edit your profile information"
       >
         <div className="flex flex-col items-center justify-center h-64 space-y-4">
-          <p className="text-center text-lg text-gray-500">
-            You haven't created a farmer profile yet.
-          </p>
-          <Button asChild>
-            <a href="/profile-creation">Create Profile</a>
-          </Button>
+          <div className="text-center space-y-2">
+            <p className="text-lg text-gray-500">
+              Your farmer profile is being set up.
+            </p>
+            <p className="text-sm text-gray-400">
+              If you're seeing this, there might be an issue with your profile
+              creation.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button asChild variant="outline">
+              <a href="/profile-creation">Complete Profile Setup</a>
+            </Button>
+            <Button
+              onClick={() => {
+                console.log("🔄 Manual refresh requested");
+                refetchProfile();
+              }}
+              variant="default"
+            >
+              Refresh Profile
+            </Button>
+            <Button
+              onClick={async () => {
+                try {
+                  console.log("🔍 Checking farmer profile status...");
+                  const response = await fetch("/api/test/check-farmer-profile");
+                  const data = await response.json();
+                  console.log("📊 Farmer profile debug data:", data);
+                  toast({
+                    title: "Debug Info",
+                    description: "Check console for detailed farmer profile status",
+                    duration: 3000,
+                  });
+                } catch (error) {
+                  console.error("Error checking farmer profile:", error);
+                  toast({
+                    title: "Debug Error",
+                    description: "Failed to fetch debug info",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              variant="secondary"
+              size="sm"
+            >
+              Debug
+            </Button>
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -329,36 +399,40 @@ export default function ProfilePage() {
       title="Profile"
       description="View and edit your profile information"
     >
-      {/* Profile Completion Indicator */}
-      <div className="mb-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                {profileCompletion === 100 ? (
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                ) : (
-                  <AlertCircle className="h-5 w-5 text-amber-600" />
-                )}
-                <div>
-                  <h3 className="font-medium">Profile Completion</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {profileCompletion === 100
-                      ? "Your profile is complete!"
-                      : "Complete your profile to unlock all features"}
-                  </p>
+      {/* Profile Enhancement Suggestions */}
+      {!profileEnhancements.isComplete && (
+        <div className="mb-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <h3 className="font-medium">Enhance Your Profile</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Consider adding these optional details to showcase your
+                      farm better
+                    </p>
+                  </div>
                 </div>
+                <Badge variant="secondary">
+                  {profileEnhancements.completionPercentage}% Enhanced
+                </Badge>
               </div>
-              <Badge
-                variant={profileCompletion === 100 ? "default" : "secondary"}
-              >
-                {profileCompletion}%
-              </Badge>
-            </div>
-            <Progress value={profileCompletion} className="h-2" />
-          </CardContent>
-        </Card>
-      </div>
+              <Progress
+                value={profileEnhancements.completionPercentage}
+                className="h-2 mb-3"
+              />
+              {profileEnhancements.suggestions.length > 0 && (
+                <div className="text-sm text-muted-foreground">
+                  <span className="font-medium">Suggestions: </span>
+                  {profileEnhancements.suggestions.join(", ")}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Statistics Cards */}
       {stats && (
@@ -436,7 +510,24 @@ export default function ProfilePage() {
                 View and update your farmer profile information
               </CardDescription>
 
-              <div className="absolute right-6 top-4 md:top-6">
+              <div className="absolute right-6 top-4 md:top-6 flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    console.log("🔄 Refreshing profile data...");
+                    refetchProfile();
+                    toast({
+                      title: "Refreshing profile",
+                      description: "Fetching latest profile data...",
+                      duration: 2000,
+                    });
+                  }}
+                  className="gap-2"
+                  title="Refresh profile data"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
                 {!editMode ? (
                   <Button
                     variant="outline"
@@ -559,7 +650,7 @@ export default function ProfilePage() {
                             <Select
                               disabled={!editMode}
                               onValueChange={field.onChange}
-                              value={field.value}
+                              value={field.value || undefined}
                             >
                               <FormControl>
                                 <SelectTrigger>
