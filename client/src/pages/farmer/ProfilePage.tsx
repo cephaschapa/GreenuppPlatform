@@ -366,12 +366,15 @@ export default function ProfilePage() {
               onClick={async () => {
                 try {
                   console.log("🔍 Checking farmer profile status...");
-                  const response = await fetch("/api/test/check-farmer-profile");
+                  const response = await fetch(
+                    "/api/test/check-farmer-profile"
+                  );
                   const data = await response.json();
                   console.log("📊 Farmer profile debug data:", data);
                   toast({
                     title: "Debug Info",
-                    description: "Check console for detailed farmer profile status",
+                    description:
+                      "Check console for detailed farmer profile status",
                     duration: 3000,
                   });
                 } catch (error) {

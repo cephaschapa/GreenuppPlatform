@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
+import { useRoleNavigation } from "@/hooks/use-role-navigation";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
@@ -65,6 +66,7 @@ const formatCount = (count: number): string => {
 export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
+  const { getUrl } = useRoleNavigation();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   // Fetch social profile data for follower/following counts
@@ -183,15 +185,15 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
         },
         {
           title: "Profile",
-          href: "/dashboard/profile",
+          href: getUrl("profile"),
           icon: <User className="h-5 w-5" />,
-          active: location === "/dashboard/profile",
+          active: location === getUrl("profile"),
         },
         {
           title: "Settings",
-          href: "/dashboard/settings",
+          href: getUrl("settings"),
           icon: <Settings className="h-5 w-5" />,
-          active: location === "/dashboard/settings",
+          active: location === getUrl("settings"),
         },
       ];
     } else if (user?.role === UserRole.BUYER) {
@@ -241,15 +243,15 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
         },
         {
           title: "Profile",
-          href: "/dashboard/profile",
+          href: getUrl("profile"),
           icon: <User className="h-5 w-5" />,
-          active: location === "/dashboard/profile",
+          active: location === getUrl("profile"),
         },
         {
           title: "Settings",
-          href: "/dashboard/settings",
+          href: getUrl("settings"),
           icon: <Settings className="h-5 w-5" />,
-          active: location === "/dashboard/settings",
+          active: location === getUrl("settings"),
         },
       ];
     } else {
@@ -330,15 +332,15 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
         },
         {
           title: "Profile",
-          href: "/dashboard/profile",
+          href: getUrl("profile"),
           icon: <User className="h-5 w-5" />,
-          active: location === "/dashboard/profile",
+          active: location === getUrl("profile"),
         },
         {
           title: "Settings",
-          href: "/dashboard/settings",
+          href: getUrl("settings"),
           icon: <Settings className="h-5 w-5" />,
-          active: location === "/dashboard/settings",
+          active: location === getUrl("settings"),
         },
       ];
     }
@@ -382,7 +384,7 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
               </SheetDescription>
               <div className="flex items-center gap-4 mt-2 text-xs">
                 <Link
-                  href={`/dashboard/social`}
+                  href={getUrl("social")}
                   className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
                   onClick={() => onOpenChange(false)}
                 >
@@ -392,7 +394,7 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
                   <span className="text-muted-foreground">Following</span>
                 </Link>
                 <Link
-                  href={`/dashboard/social`}
+                  href={getUrl("social")}
                   className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer"
                   onClick={() => onOpenChange(false)}
                 >

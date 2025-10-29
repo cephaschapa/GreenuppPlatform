@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useRoleNavigation } from "@/hooks/use-role-navigation";
 import {
   LogOut,
   User,
@@ -188,7 +189,7 @@ export function TopNavbar({
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link
-                  href={isAppSubdomain ? "/profile" : "/dashboard/profile"}
+                  href={`/dashboard/profile`}
                   className="cursor-pointer w-full flex items-center gap-2"
                 >
                   <User className="h-4 w-4" />
@@ -197,7 +198,7 @@ export function TopNavbar({
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link
-                  href={isAppSubdomain ? "/settings" : "/dashboard/settings"}
+                  href={`/dashboard/settings`}
                   className="cursor-pointer w-full flex items-center gap-2"
                 >
                   <Settings className="h-4 w-4" />

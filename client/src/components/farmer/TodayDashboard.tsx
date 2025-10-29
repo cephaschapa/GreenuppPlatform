@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
+import { useRoleNavigation } from "@/hooks/use-role-navigation";
 import { Link } from "wouter";
 import {
   Sun,
@@ -75,6 +76,7 @@ interface WeatherData {
 export function TodayDashboard() {
   console.log("🎉 TodayDashboard component is rendering!");
   const { user } = useAuth();
+  const { getUrl } = useRoleNavigation();
 
   // Fetch today's tasks
   const { data: tasks } = useQuery<Task[]>({
@@ -418,7 +420,7 @@ export function TodayDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-            <Link href="/dashboard/fields">
+            <Link href={getUrl("fields")}>
               <Button
                 variant="outline"
                 className="w-full h-auto py-4 flex-col gap-2"
@@ -428,7 +430,7 @@ export function TodayDashboard() {
               </Button>
             </Link>
 
-            <Link href="/dashboard/tasks">
+            <Link href={getUrl("tasks")}>
               <Button
                 variant="outline"
                 className="w-full h-auto py-4 flex-col gap-2"
@@ -438,7 +440,7 @@ export function TodayDashboard() {
               </Button>
             </Link>
 
-            <Link href="/dashboard/weather">
+            <Link href={getUrl("weather")}>
               <Button
                 variant="outline"
                 className="w-full h-auto py-4 flex-col gap-2"
@@ -448,7 +450,7 @@ export function TodayDashboard() {
               </Button>
             </Link>
 
-            <Link href="/dashboard/diagnose">
+            <Link href={getUrl("diagnose")}>
               <Button
                 variant="outline"
                 className="w-full h-auto py-4 flex-col gap-2"

@@ -26,11 +26,13 @@ import {
 import { Link } from "wouter";
 // import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { useRoleNavigation } from "@/hooks/use-role-navigation";
 import { TodayDashboard } from "@/components/farmer/TodayDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function DashboardOverview() {
   const { user } = useAuth();
+  const { getUrl } = useRoleNavigation();
   const [activeTab, setActiveTab] = useState("today");
 
   console.log("🔍 DashboardOverview rendering, activeTab:", activeTab);
@@ -231,7 +233,7 @@ export default function DashboardOverview() {
                     </p>
                   </CardContent>
                   <CardFooter className="pt-0 px-4 pb-3">
-                    <Link href="/dashboard/fields">
+                    <Link href={getUrl("fields")}>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -262,7 +264,7 @@ export default function DashboardOverview() {
                     </p>
                   </CardContent>
                   <CardFooter className="pt-0 px-4 pb-3">
-                    <Link href="/dashboard/fields">
+                    <Link href={getUrl("fields")}>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -293,7 +295,7 @@ export default function DashboardOverview() {
                     </p>
                   </CardContent>
                   <CardFooter className="pt-0 px-4 pb-3">
-                    <Link href="/dashboard/tasks">
+                    <Link href={getUrl("tasks")}>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -339,7 +341,7 @@ export default function DashboardOverview() {
                   </CardContent>
                   <CardFooter className="pt-0 px-4 pb-3">
                     {!farmerProfile?.farmLocation ? (
-                      <Link href="/dashboard/profile">
+                      <Link href={getUrl("profile")}>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -351,7 +353,7 @@ export default function DashboardOverview() {
                         </Button>
                       </Link>
                     ) : (
-                      <Link href="/dashboard/weather">
+                      <Link href={getUrl("weather")}>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -424,7 +426,7 @@ export default function DashboardOverview() {
                     )}
                   </CardContent>
                   <CardFooter className="px-4 pb-4">
-                    <Link href="/dashboard/tasks">
+                    <Link href={getUrl("tasks")}>
                       <Button variant="outline" className="w-full text-sm">
                         View All Tasks
                       </Button>
@@ -489,7 +491,7 @@ export default function DashboardOverview() {
                     )}
                   </CardContent>
                   <CardFooter className="px-4 pb-4">
-                    <Link href="/dashboard/fields">
+                    <Link href={getUrl("fields")}>
                       <Button variant="outline" className="w-full text-sm">
                         Manage Crops
                       </Button>
@@ -520,7 +522,7 @@ export default function DashboardOverview() {
                     </p>
                   </CardContent>
                   <CardFooter className="relative z-10 px-4 pb-4">
-                    <Link href="/dashboard/predictions">
+                    <Link href={getUrl("predictions")}>
                       <Button className="w-full text-sm">
                         Generate Predictions
                       </Button>
@@ -540,7 +542,7 @@ export default function DashboardOverview() {
                   </CardHeader>
                   <CardContent className="px-4 pb-3">
                     <div className="grid grid-cols-2 gap-2 md:gap-3">
-                      <Link href="/dashboard/fields">
+                      <Link href={getUrl("fields")}>
                         <Button
                           variant="outline"
                           className="w-full justify-start gap-2 text-xs md:text-sm h-10 md:h-11"
@@ -549,7 +551,7 @@ export default function DashboardOverview() {
                           Add Field
                         </Button>
                       </Link>
-                      <Link href="/dashboard/tasks">
+                      <Link href={getUrl("tasks")}>
                         <Button
                           variant="outline"
                           className="w-full justify-start gap-2 text-xs md:text-sm h-10 md:h-11"
@@ -558,7 +560,7 @@ export default function DashboardOverview() {
                           New Task
                         </Button>
                       </Link>
-                      <Link href="/dashboard/weather">
+                      <Link href={getUrl("weather")}>
                         <Button
                           variant="outline"
                           className="w-full justify-start gap-2 text-xs md:text-sm h-10 md:h-11"
@@ -567,7 +569,7 @@ export default function DashboardOverview() {
                           Weather
                         </Button>
                       </Link>
-                      <Link href="/dashboard/predictions">
+                      <Link href={getUrl("predictions")}>
                         <Button
                           variant="outline"
                           className="w-full justify-start gap-2 text-xs md:text-sm h-10 md:h-11"
