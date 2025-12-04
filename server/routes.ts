@@ -27,6 +27,8 @@ import cropObservationsRoutes from "./routes/crop-observations.js";
 import onboardingRoutes from "./routes/onboarding.js";
 import testEmailRoutes from "./routes/test-email.js";
 import testOnboardingRoutes from "./routes/test-onboarding.js";
+import merchantAccountRoutes from "./routes/merchant-account.js";
+import ordersRoutes from "./routes/orders.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Middleware to handle subdomain routing
@@ -72,6 +74,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Set up test onboarding routes (development/testing)
   app.use("/api/test", testOnboardingRoutes);
+
+  // Set up merchant account routes
+  app.use("/api/merchant-account", merchantAccountRoutes);
+
+  // Set up orders routes
+  app.use("/api/orders", ordersRoutes);
 
   // Set up seller routes
   app.use("/api/marketplace/sellers", sellerRoutes);

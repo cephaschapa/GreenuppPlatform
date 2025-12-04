@@ -8,6 +8,7 @@ import { WelcomeStep } from "@/components/onboarding/WelcomeStep";
 import { FarmProfileStep } from "@/components/onboarding/farmer/FarmProfileStep";
 import { PreferencesStep } from "@/components/onboarding/farmer/PreferencesStep";
 import { BuyerPreferencesStep } from "@/components/onboarding/buyer/BuyerPreferencesStep";
+import { MerchantSetupStep } from "@/components/onboarding/seller/MerchantSetupStep";
 import { CompletionStep } from "@/components/onboarding/CompletionStep";
 import { apiRequest } from "@/lib/queryClient";
 import { UserRoleType } from "@shared/schema";
@@ -15,6 +16,7 @@ import { UserRoleType } from "@shared/schema";
 interface OnboardingData {
   farmProfile?: any;
   preferences?: any;
+  merchantSetup?: any;
   completed?: boolean;
 }
 
@@ -178,14 +180,22 @@ export default function OnboardingPage() {
   };
 
   const handleStepSubmit = (stepData: any) => {
-    const updatedData = { ...onboardingData };
+    const updatedData: OnboardingData = { ...onboardingData };
 
     switch (currentStep) {
       case 2:
-        updatedData.farmProfile = stepData;
+        if (userRole === "farmer") {
+          updatedData.farmProfile = stepData;
+        } else if (userRole === "supplier") {
+          updatedData.merchantSetup = stepData;
+        } else {
+          updatedData.preferences = stepData;
+        }
         break;
       case 3:
         updatedData.preferences = stepData;
+        break;
+      default:
         break;
     }
 
@@ -195,11 +205,19 @@ export default function OnboardingPage() {
       updatedData,
     });
     setOnboardingData(updatedData);
-    handleNext();
+
+    if (currentStep < totalSteps) {
+      const nextStep = currentStep + 1;
+      setCurrentStep(nextStep);
+      saveProgressMutation.mutate({
+        step: nextStep,
+        data: updatedData,
+      });
+    }
   };
 
   const handleComplete = (finalStepData?: any) => {
-    let dataToSubmit = { ...onboardingData };
+    let dataToSubmit: OnboardingData = { ...onboardingData };
 
     // If final step data is provided, include it
     if (finalStepData) {
@@ -214,6 +232,13 @@ export default function OnboardingPage() {
     }
 
     console.log("🏁 Completing onboarding with final data:", dataToSubmit);
+    // Strip farmer-specific fields if user is not a farmer
+    if (userRole !== "farmer") {
+      delete dataToSubmit.farmProfile;
+    }
+    if (userRole !== "supplier") {
+      delete dataToSubmit.merchantSetup;
+    }
     completeOnboardingMutation.mutate(dataToSubmit);
   };
 
@@ -270,17 +295,20 @@ export default function OnboardingPage() {
               isLoading={completeOnboardingMutation.isPending}
             />
           );
+        } else if (userRole === "supplier") {
+          return (
+            <MerchantSetupStep
+              onSubmit={handleStepSubmit}
+              initialData={onboardingData.merchantSetup}
+              isLoading={saveProgressMutation.isPending}
+            />
+          );
         }
-        // For suppliers, use general preferences - this is also their final step
+        // Fallback for other roles
         return (
           <PreferencesStep
             onSubmit={(stepData) => {
-              // For suppliers, this is the final step - complete onboarding
               const updatedData = { ...onboardingData, preferences: stepData };
-              console.log("🎯 Final supplier step data:", {
-                stepData,
-                updatedData,
-              });
               setOnboardingData(updatedData);
               completeOnboardingMutation.mutate(updatedData);
             }}
@@ -310,8 +338,28 @@ export default function OnboardingPage() {
               isLoading={completeOnboardingMutation.isPending}
             />
           );
+        } else if (userRole === "supplier") {
+          return (
+            <PreferencesStep
+              onSubmit={(stepData) => {
+                // For sellers, this is the final step - complete onboarding with merchant setup
+                const updatedData = {
+                  ...onboardingData,
+                  preferences: stepData,
+                };
+                console.log("🎯 Final seller step data:", {
+                  stepData,
+                  updatedData,
+                });
+                setOnboardingData(updatedData);
+                completeOnboardingMutation.mutate(updatedData);
+              }}
+              initialData={onboardingData.preferences}
+              isLoading={completeOnboardingMutation.isPending}
+            />
+          );
         }
-        // For non-farmers, this is completion
+        // For other roles, this is completion
         return (
           <CompletionStep
             userRole={userRole}
@@ -341,9 +389,13 @@ export default function OnboardingPage() {
       case 1:
         return "Welcome to GreenUpp";
       case 2:
-        return userRole === "farmer" ? "Farm Profile" : "Preferences";
+        if (userRole === "farmer") return "Farm Profile";
+        if (userRole === "supplier") return "Merchant Setup";
+        return "Preferences";
       case 3:
-        return userRole === "farmer" ? "Preferences" : "You're All Set!";
+        if (userRole === "farmer") return "Preferences";
+        if (userRole === "supplier") return "Preferences";
+        return "You're All Set!";
       case 4:
         return "You're All Set!";
       default:
@@ -356,13 +408,15 @@ export default function OnboardingPage() {
       case 1:
         return "Let's get you started on your journey";
       case 2:
-        return userRole === "farmer"
-          ? "Tell us about your farming operation"
-          : "Customize your experience";
+        if (userRole === "farmer")
+          return "Tell us about your farming operation";
+        if (userRole === "supplier")
+          return "Set up your merchant account for selling";
+        return "Customize your experience";
       case 3:
-        return userRole === "farmer"
-          ? "Customize your experience"
-          : "Ready to explore GreenUpp";
+        if (userRole === "farmer") return "Customize your experience";
+        if (userRole === "supplier") return "Customize your selling experience";
+        return "Ready to explore GreenUpp";
       case 4:
         return "Ready to explore GreenUpp";
       default:
@@ -376,7 +430,7 @@ export default function OnboardingPage() {
       totalSteps={totalSteps}
       title={getStepTitle()}
       subtitle={getStepSubtitle()}
-      onNext={currentStep === 1 ? undefined : handleNext}
+      onNext={undefined}
       onPrevious={currentStep > 1 ? handlePrevious : undefined}
       showSkip={currentStep > 1 && currentStep < totalSteps}
       onSkip={() => setCurrentStep(totalSteps)}

@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 const buyerPreferencesSchema = z.object({
   preferredCategories: z
@@ -402,8 +403,11 @@ export function BuyerPreferencesStep({
             </CardContent>
           </Card>
 
-          {/* Hidden submit button */}
-          <button type="submit" className="hidden" disabled={isLoading} />
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Saving..." : "Save & Continue"}
+            </Button>
+          </div>
         </form>
       </Form>
     </div>

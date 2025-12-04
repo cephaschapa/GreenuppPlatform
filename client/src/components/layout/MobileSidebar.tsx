@@ -31,6 +31,7 @@ import {
   MessageSquare,
   BarChart3,
   SquareDashedBottom,
+  Building,
 } from "lucide-react";
 import greenuppLogo from "@/assets/greenupp-full-logo.png";
 import { cn } from "@/lib/utils";
@@ -184,6 +185,12 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
           active: location === "/trace",
         },
         {
+          title: "Merchant Account",
+          href: getUrl("merchant-account"),
+          icon: <Building className="h-5 w-5" />,
+          active: location === getUrl("merchant-account"),
+        },
+        {
           title: "Profile",
           href: getUrl("profile"),
           icon: <User className="h-5 w-5" />,
@@ -329,6 +336,12 @@ export function MobileSidebar({ isOpen, onOpenChange }: MobileSidebarProps) {
           href: "/trace",
           icon: <ShieldCheck className="h-5 w-5" />,
           active: location === "/trace",
+        },
+        {
+          title: "Merchant Account",
+          href: getUrl("merchant-account"),
+          icon: <Building className="h-5 w-5" />,
+          active: location === getUrl("merchant-account"),
         },
         {
           title: "Profile",

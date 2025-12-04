@@ -67,6 +67,7 @@ import OrdersPage from "./pages/farmer/OrdersPage";
 import InventoryPage from "./pages/farmer/InventoryPage";
 import ProductVerificationPage from "./pages/farmer/ProductVerificationPage";
 import DashboardOverview from "@/pages/farmer/DashboardOverview";
+import MerchantAccountPage from "@/pages/farmer/MerchantAccountPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 import { OnboardingGuard } from "@/components/OnboardingGuard";
 // import { PushNotificationDebug } from "./components/PushNotificationDebug"; // Currently unused
@@ -186,6 +187,10 @@ function FarmerRouter({ userId }: { userId: string }) {
           component={ProfilePage}
         />
         <ProtectedRoute
+          path={`/farmer/${userId}/merchant-account`}
+          component={MerchantAccountPage}
+        />
+        <ProtectedRoute
           path={`/farmer/${userId}/settings`}
           component={SettingsPage}
         />
@@ -291,11 +296,39 @@ function SellerRouter({ userId }: { userId: string }) {
           component={MarketplacePage}
         />
         <ProtectedRoute
+          path={`/seller/${userId}/products/cart`}
+          component={CartPage}
+        />
+        <ProtectedRoute
+          path={`/seller/${userId}/products/checkout`}
+          component={CheckoutPage}
+        />
+        <ProtectedRoute
           path={`/seller/${userId}/products/new`}
           component={CreateListingPage}
         />
         <ProtectedRoute
           path={`/seller/${userId}/products/:id`}
+          component={MarketplaceDetailPage}
+        />
+        <ProtectedRoute
+          path={`/seller/${userId}/marketplace`}
+          component={MarketplacePage}
+        />
+        <ProtectedRoute
+          path={`/seller/${userId}/marketplace/cart`}
+          component={CartPage}
+        />
+        <ProtectedRoute
+          path={`/seller/${userId}/marketplace/checkout`}
+          component={CheckoutPage}
+        />
+        <ProtectedRoute
+          path={`/seller/${userId}/marketplace/new`}
+          component={CreateListingPage}
+        />
+        <ProtectedRoute
+          path={`/seller/${userId}/marketplace/:id`}
           component={MarketplaceDetailPage}
         />
         <ProtectedRoute
@@ -333,6 +366,10 @@ function SellerRouter({ userId }: { userId: string }) {
         <ProtectedRoute
           path={`/seller/${userId}/assistant`}
           component={FarmingAssistantPage}
+        />
+        <ProtectedRoute
+          path={`/seller/${userId}/merchant-account`}
+          component={MerchantAccountPage}
         />
         <ProtectedRoute
           path={`/seller/${userId}/profile`}

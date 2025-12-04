@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MapPin, Ruler, Leaf } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const farmProfileSchema = z.object({
   farmName: z.string().min(2, "Farm name must be at least 2 characters"),
@@ -261,8 +262,11 @@ export function FarmProfileStep({
             )}
           />
 
-          {/* Hidden submit button - form submission handled by parent */}
-          <button type="submit" className="hidden" disabled={isLoading} />
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Saving..." : "Save & Continue"}
+            </Button>
+          </div>
         </form>
       </Form>
     </div>

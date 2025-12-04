@@ -1630,6 +1630,12 @@ export const insertInventorySchema = createInsertSchema(inventory).omit({
 export type InsertInventory = z.infer<typeof insertInventorySchema>;
 export type Inventory = typeof inventory.$inferSelect;
 
+// Merchant Account types
+export type MerchantAccount = typeof merchantAccounts.$inferSelect;
+export type InsertMerchantAccount = typeof merchantAccounts.$inferInsert;
+export type Payout = typeof payouts.$inferSelect;
+export type InsertPayout = typeof payouts.$inferInsert;
+
 // Delivery Management
 export const deliveries = pgTable("deliveries", {
   id: serial("id").primaryKey(),
@@ -1659,6 +1665,68 @@ export const deliveryStatusHistory = pgTable("delivery_status_history", {
   status: text("status").notNull(),
   location: text("location"),
   notes: text("notes"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Merchant Account Management
+export const merchantAccounts = pgTable("merchant_accounts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("pending"), // pending, approved, rejected, suspended
+  businessName: text("business_name").notNull(),
+  businessType: text("business_type").notNull(), // individual, business, cooperative
+  businessRegistrationNumber: text("business_registration_number"),
+  taxId: text("tax_id"),
+  contactPhone: text("contact_phone").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  businessAddress: text("business_address").notNull(),
+  bankName: text("bank_name").notNull(),
+  accountNumber: text("account_number").notNull(),
+  accountHolderName: text("account_holder_name").notNull(),
+  branchCode: text("branch_code"),
+  mobileMoneyProvider: text("mobile_money_provider"), // mtn, airtel, zamtel
+  mobileMoneyNumber: text("mobile_money_number"),
+  nationalIdNumber: text("national_id_number").notNull(),
+  verificationStatus: text("verification_status").notNull().default("pending"), // pending, verified, rejected
+  verificationNotes: text("verification_notes"),
+  monthlyEarnings: decimal("monthly_earnings", {
+    precision: 10,
+    scale: 2,
+  }).default("0"),
+  totalEarnings: decimal("total_earnings", { precision: 10, scale: 2 }).default(
+    "0"
+  ),
+  pendingPayouts: decimal("pending_payouts", {
+    precision: 10,
+    scale: 2,
+  }).default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  approvedAt: timestamp("approved_at"),
+  approvedBy: integer("approved_by").references(() => users.id),
+});
+
+// Payout Management
+export const payouts = pgTable("payouts", {
+  id: serial("id").primaryKey(),
+  merchantAccountId: integer("merchant_account_id")
+    .notNull()
+    .references(() => merchantAccounts.id, { onDelete: "cascade" }),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").notNull().default("ZMW"),
+  method: text("method").notNull(), // bank_transfer, mobile_money
+  status: text("status").notNull().default("pending"), // pending, processing, completed, failed
+  transactionId: text("transaction_id"),
+  processingFee: decimal("processing_fee", { precision: 10, scale: 2 }).default(
+    "0"
+  ),
+  netAmount: decimal("net_amount", { precision: 10, scale: 2 }).notNull(),
+  scheduledDate: timestamp("scheduled_date"),
+  processedDate: timestamp("processed_date"),
+  failureReason: text("failure_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 

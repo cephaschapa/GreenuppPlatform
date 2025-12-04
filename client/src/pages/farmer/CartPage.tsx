@@ -32,6 +32,8 @@ import { formatCurrency } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { useRoleNavigation } from "@/hooks/use-role-navigation";
 
 export default function CartPage() {
   const {
@@ -46,6 +48,7 @@ export default function CartPage() {
   } = useCart();
   const { toast } = useToast();
   const [processing, setProcessing] = useState(false);
+  const { getUrl } = useRoleNavigation();
 
   const handleUpdateQuantity = (
     itemId: number,
@@ -74,7 +77,7 @@ export default function CartPage() {
       // Start checkout process and redirect to checkout page
       await startCheckout();
       // Use Link navigation instead of window.location to avoid full page reload
-      setLocation("/dashboard/marketplace/checkout");
+      setLocation(getUrl("marketplace/checkout"));
     } catch (error) {
       console.error("Checkout error:", error);
       toast({
@@ -90,18 +93,51 @@ export default function CartPage() {
 
   if (isLoading) {
     return (
-      <div className="container py-10 flex flex-col items-center justify-center min-h-[60vh] w-full mx-auto">
-        <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
-        <p className="mt-4 text-muted-foreground">Loading your cart...</p>
-      </div>
+      <DashboardLayout title="Shopping Cart" description="Review your cart items">
+        <div className="container py-10 flex flex-col items-center justify-center min-h-[60vh] w-full mx-auto">
+          <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+          <p className="mt-4 text-muted-foreground">Loading your cart...</p>
+        </div>
+      </DashboardLayout>
     );
   }
 
   if (!cart || cart.items.length === 0) {
     return (
+      <DashboardLayout title="Shopping Cart" description="Your cart is empty">
+        <div className="container py-10 space-y-6 w-full mx-auto">
+          <div className="flex items-center gap-2">
+            <Link href={getUrl("marketplace")}>
+              <a className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <ChevronLeft className="h-4 w-4" />
+                Back to Marketplace
+              </a>
+            </Link>
+          </div>
+
+          <Card className="border-dashed border-2">
+            <CardContent className="pt-10 pb-10 flex flex-col items-center justify-center">
+              <ShoppingBag className="h-16 w-16 text-muted-foreground/30 mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
+              <p className="text-muted-foreground mb-6 text-center max-w-md">
+                Looks like you haven't added any items to your cart yet. Explore
+                our marketplace to find agricultural products and services.
+              </p>
+              <Link href={getUrl("marketplace")}>
+                <Button>Browse Marketplace</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout title="Shopping Cart" description={`${itemCount} item${itemCount !== 1 ? 's' : ''} in your cart`}>
       <div className="container py-10 space-y-6 w-full mx-auto">
         <div className="flex items-center gap-2">
-          <Link href="/dashboard/marketplace">
+          <Link href={getUrl("marketplace")}>
             <a className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
               <ChevronLeft className="h-4 w-4" />
               Back to Marketplace
@@ -109,48 +145,20 @@ export default function CartPage() {
           </Link>
         </div>
 
-        <Card className="border-dashed border-2">
-          <CardContent className="pt-10 pb-10 flex flex-col items-center justify-center">
-            <ShoppingBag className="h-16 w-16 text-muted-foreground/30 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
-            <p className="text-muted-foreground mb-6 text-center max-w-md">
-              Looks like you haven't added any items to your cart yet. Explore
-              our marketplace to find agricultural products and services.
-            </p>
-            <Link href="/dashboard/marketplace">
-              <Button>Browse Marketplace</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="container py-10 space-y-6 w-full mx-auto">
-      <div className="flex items-center gap-2">
-        <Link href="/dashboard/marketplace">
-          <a className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ChevronLeft className="h-4 w-4" />
-            Back to Marketplace
-          </a>
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl flex items-center justify-between">
-                <span>Shopping Cart</span>
-                <span className="text-muted-foreground text-sm font-normal">
-                  ({itemCount} {itemCount === 1 ? "item" : "items"})
-                </span>
-              </CardTitle>
-              <CardDescription>
-                Review your items before checkout
-              </CardDescription>
-            </CardHeader>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2">
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl flex items-center justify-between">
+                  <span>Shopping Cart</span>
+                  <span className="text-muted-foreground text-sm font-normal">
+                    ({itemCount} {itemCount === 1 ? "item" : "items"})
+                  </span>
+                </CardTitle>
+                <CardDescription>
+                  Review your items before checkout
+                </CardDescription>
+              </CardHeader>
 
             <CardContent>
               <Table>
@@ -244,14 +252,14 @@ export default function CartPage() {
               >
                 Clear Cart
               </Button>
-              <Link href="/dashboard/marketplace">
+              <Link href={getUrl("marketplace")}>
                 <Button variant="secondary" size="sm">
                   Continue Shopping
                 </Button>
               </Link>
             </CardFooter>
           </Card>
-        </div>
+          </div>
 
         <div>
           <Card>
@@ -303,7 +311,8 @@ export default function CartPage() {
             </CardFooter>
           </Card>
         </div>
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

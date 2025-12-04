@@ -171,6 +171,23 @@ router.post("/complete-onboarding", async (req, res) => {
       await storage.saveUserPreferences(req.user.id, validatedData.preferences);
     }
 
+    // Create merchant account for suppliers
+    if (req.user.role === "supplier" && validatedData.merchantSetup) {
+      try {
+        logger.info("🏪 Creating merchant account for seller:", req.user.id);
+        await storage.createMerchantAccount({
+          userId: req.user.id,
+          ...validatedData.merchantSetup,
+          status: "pending",
+          verificationStatus: "pending",
+        });
+        logger.info("✅ Merchant account created successfully");
+      } catch (merchantError) {
+        logger.error("❌ Error creating merchant account:", merchantError);
+        throw merchantError;
+      }
+    }
+
     // Mark onboarding as completed
     await storage.updateUser(req.user.id, {
       onboardingCompleted: true,

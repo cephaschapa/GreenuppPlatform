@@ -76,6 +76,8 @@ import {
   chatRoomMembers,
   onboardingProgress,
   userPreferences,
+  merchantAccounts,
+  payouts,
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -108,6 +110,14 @@ export interface IStorage {
   clearUserOnboardingProgress(userId: number): Promise<void>;
   saveUserPreferences(userId: number, preferences: any): Promise<void>;
   createOrUpdateFarmerProfile(userId: number, profileData: any): Promise<void>;
+
+  // Merchant Account Management
+  getMerchantAccount(userId: number): Promise<any>;
+  createMerchantAccount(data: any): Promise<any>;
+  updateMerchantAccount(userId: number, data: any): Promise<any>;
+  getMerchantEarnings(userId: number): Promise<any>;
+  getMerchantPayouts(userId: number): Promise<any>;
+  requestPayout(userId: number, amount: number): Promise<any>;
 
   // Farmer profiles
   getFarmerProfile(userId: number): Promise<FarmerProfile | undefined>;
@@ -2430,6 +2440,93 @@ export class DatabaseStorage implements IStorage {
     });
 
     return this.getDeliveryById(deliveryId);
+  }
+
+  // Merchant Account Management Methods
+  async getMerchantAccount(userId: number) {
+    const [account] = await db
+      .select()
+      .from(merchantAccounts)
+      .where(eq(merchantAccounts.userId, userId));
+    return account;
+  }
+
+  async createMerchantAccount(data: any) {
+    const [account] = await db
+      .insert(merchantAccounts)
+      .values(data)
+      .returning();
+    return account;
+  }
+
+  async updateMerchantAccount(userId: number, data: any) {
+    const [account] = await db
+      .update(merchantAccounts)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(merchantAccounts.userId, userId))
+      .returning();
+    return account;
+  }
+
+  async getMerchantEarnings(userId: number) {
+    const account = await this.getMerchantAccount(userId);
+    if (!account) return null;
+
+    return {
+      monthlyEarnings: parseFloat(account.monthlyEarnings || "0"),
+      totalEarnings: parseFloat(account.totalEarnings || "0"),
+      pendingPayouts: parseFloat(account.pendingPayouts || "0"),
+    };
+  }
+
+  async getMerchantPayouts(userId: number) {
+    const account = await this.getMerchantAccount(userId);
+    if (!account) return [];
+
+    const payoutHistory = await db
+      .select()
+      .from(payouts)
+      .where(eq(payouts.merchantAccountId, account.id))
+      .orderBy(desc(payouts.createdAt));
+
+    return payoutHistory;
+  }
+
+  async requestPayout(userId: number, amount: number) {
+    const account = await this.getMerchantAccount(userId);
+    if (!account) throw new Error("Merchant account not found");
+
+    const availableAmount = parseFloat(account.pendingPayouts || "0");
+    if (amount > availableAmount) {
+      throw new Error("Insufficient funds for payout");
+    }
+
+    // Calculate processing fee (2% + K2)
+    const processingFee = amount * 0.02 + 2;
+    const netAmount = amount - processingFee;
+
+    const [payout] = await db
+      .insert(payouts)
+      .values({
+        merchantAccountId: account.id,
+        amount: amount.toString(),
+        processingFee: processingFee.toString(),
+        netAmount: netAmount.toString(),
+        method: account.mobileMoneyProvider ? "mobile_money" : "bank_transfer",
+        scheduledDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+      })
+      .returning();
+
+    // Update merchant account pending payouts
+    await db
+      .update(merchantAccounts)
+      .set({
+        pendingPayouts: (availableAmount - amount).toString(),
+        updatedAt: new Date(),
+      })
+      .where(eq(merchantAccounts.id, account.id));
+
+    return payout;
   }
 }
 
