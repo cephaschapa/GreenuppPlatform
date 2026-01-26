@@ -44,6 +44,7 @@ import {
   Moon,
   Sun,
   Monitor,
+  Info,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
@@ -485,6 +486,12 @@ export default function SettingsPage() {
             className="px-2 text-xs sm:text-sm line-clamp-1"
           >
             Privacy
+          </TabsTrigger>
+          <TabsTrigger
+            value="about"
+            className="px-2 text-xs sm:text-sm line-clamp-1"
+          >
+            About
           </TabsTrigger>
         </TabsList>
 
