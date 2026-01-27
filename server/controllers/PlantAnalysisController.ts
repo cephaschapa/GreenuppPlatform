@@ -272,10 +272,17 @@ export class PlantAnalysisController {
     if (!imageData)
       return res.status(400).json({ message: "Image data is required" });
     try {
-      // Compress image before storing to reduce database size
-      logger.info('Compressing image before storage...');
-      const compressedImageData = await compressImageForStorage(String(imageData));
-      logger.info('Image compression completed');
+      // Compress image before storing to reduce database size (optional - works without sharp)
+      let imageToStore = String(imageData);
+      try {
+        logger.info('Compressing image before storage...');
+        const compressedImageData = await compressImageForStorage(String(imageData));
+        imageToStore = compressedImageData;
+        logger.info('Image compression completed');
+      } catch (compressionError) {
+        logger.warn('Image compression failed, storing original image:', compressionError);
+        // Continue with original image if compression fails
+      }
       
       const analysisResult = await analyzePlantImage(
         String(imageData), // Use original for analysis (better quality)
@@ -283,7 +290,7 @@ export class PlantAnalysisController {
         notes
       );
       const plantAnalysisData = createPlantAnalysis(
-        compressedImageData, // Store compressed version
+        imageToStore, // Store compressed version (or original if compression failed)
         analysisResult,
         userId,
         plantType,

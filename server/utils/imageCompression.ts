@@ -1,10 +1,18 @@
 /**
  * Image Compression Utility
  * Compresses base64-encoded images to reduce storage size
+ * Note: Requires 'sharp' package. Falls back to no compression if not available.
  */
 
-import sharp from 'sharp';
 import { logger } from '../utils/logger.js';
+
+// Try to import sharp, but make it optional
+let sharp: any = null;
+try {
+  sharp = require('sharp');
+} catch (error) {
+  logger.warn('sharp package not found. Image compression will be disabled.');
+}
 
 export interface CompressionOptions {
   maxWidth?: number;
@@ -44,6 +52,13 @@ export async function compressImage(
   imageData: string,
   options: CompressionOptions = {}
 ): Promise<string> {
+  // If sharp is not available, return original image
+  if (!sharp) {
+    logger.warn('Image compression skipped: sharp package not available');
+    const base64Data = extractBase64FromDataUrl(imageData);
+    return base64Data;
+  }
+
   try {
     const opts = { ...DEFAULT_OPTIONS, ...options };
     const base64Data = extractBase64FromDataUrl(imageData);
