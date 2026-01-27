@@ -9,6 +9,7 @@ import { logger } from "../utils/logger.js";
 import { db } from "../db.js";
 import { farmerProfiles, users } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { compressImageForStorage } from "../utils/imageCompression.js";
 
 /**
  * Get user's location for pest reporting
@@ -39,8 +40,74 @@ export class PlantAnalysisController {
   static async list(req: Request, res: Response) {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: "Not authenticated" });
-    const analyses = await PlantAnalysisModel.getAllByUser(userId);
-    res.json(analyses);
+    
+    // Check if client wants to exclude images to reduce payload size
+    const excludeImages = req.query.excludeImages === 'true' || req.query.excludeImages === true;
+    
+    // Parse pagination parameters
+    const limit = req.query.limit ? Math.min(parseInt(req.query.limit as string) || 50, 100) : 50; // Max 100 per page
+    const offset = req.query.offset ? parseInt(req.query.offset as string) || 0 : 0;
+    const includePagination = req.query.includePagination === 'true' || req.query.includePagination === true;
+    
+    logger.info(`Fetching plant analyses for user ${userId}, excludeImages: ${excludeImages}, limit: ${limit}, offset: ${offset}`);
+    
+    const pagination = { limit, offset };
+    const analyses = await PlantAnalysisModel.getAllByUser(userId, excludeImages, pagination);
+    
+    // Transform the flat database structure to match frontend expectations
+    const transformedAnalyses = analyses.map((analysis) => {
+      // Parse stored data into the nested structure expected by frontend
+      const analysisResult = {
+        disease: analysis.diseaseDetected ? {
+          name: analysis.diseaseDetected,
+          confidence: analysis.diseaseProbability ? parseFloat(analysis.diseaseProbability.toString()) : 0,
+          description: analysis.diseaseDescription || '',
+        } : null,
+        health: {
+          status: analysis.healthStatus as 'healthy' | 'minor issues' | 'moderate issues' | 'severe issues',
+          score: analysis.healthScore,
+        },
+        nutrients: {
+          deficiencies: analysis.nutrientDeficiencies ? analysis.nutrientDeficiencies.split(',').map(s => s.trim()).filter(Boolean) : [],
+          excess: analysis.nutrientExcess ? analysis.nutrientExcess.split(',').map(s => s.trim()).filter(Boolean) : [],
+        },
+        recommendations: analysis.recommendations ? analysis.recommendations.split('\n').filter(Boolean) : [],
+        additionalObservations: analysis.additionalObservations ? analysis.additionalObservations.split('\n').filter(Boolean) : [],
+      };
+
+      return {
+        id: analysis.id,
+        userId: analysis.userId,
+        imageData: excludeImages ? undefined : analysis.imageData, // Only include if not excluded
+        plantType: analysis.plantType,
+        fieldId: analysis.fieldId,
+        cropId: analysis.cropId,
+        notes: analysis.notes,
+        location: undefined, // Not stored in DB currently
+        coordinates: undefined, // Not stored in DB currently
+        analysisResult,
+        createdAt: analysis.createdAt,
+        updatedAt: analysis.updatedAt,
+      };
+    });
+    
+    logger.info(`Returning ${transformedAnalyses.length} analyses (excludeImages: ${excludeImages})`);
+    
+    // If pagination metadata is requested, include it
+    if (includePagination) {
+      const total = await PlantAnalysisModel.countByUser(userId);
+      res.json({
+        data: transformedAnalyses,
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + transformedAnalyses.length < total,
+        },
+      });
+    } else {
+      res.json(transformedAnalyses);
+    }
   }
 
   static async get(req: Request, res: Response) {
@@ -54,7 +121,42 @@ export class PlantAnalysisController {
       return res.status(404).json({ message: "Analysis not found" });
     if (analysis.userId !== userId)
       return res.status(403).json({ message: "Forbidden" });
-    res.json(analysis);
+    
+    // Transform the flat database structure to match frontend expectations
+    const analysisResult = {
+      disease: analysis.diseaseDetected ? {
+        name: analysis.diseaseDetected,
+        confidence: analysis.diseaseProbability ? parseFloat(analysis.diseaseProbability.toString()) : 0,
+        description: analysis.diseaseDescription || '',
+      } : null,
+      health: {
+        status: analysis.healthStatus as 'healthy' | 'minor issues' | 'moderate issues' | 'severe issues',
+        score: analysis.healthScore,
+      },
+      nutrients: {
+        deficiencies: analysis.nutrientDeficiencies ? analysis.nutrientDeficiencies.split(',').map(s => s.trim()).filter(Boolean) : [],
+        excess: analysis.nutrientExcess ? analysis.nutrientExcess.split(',').map(s => s.trim()).filter(Boolean) : [],
+      },
+      recommendations: analysis.recommendations ? analysis.recommendations.split('\n').filter(Boolean) : [],
+      additionalObservations: analysis.additionalObservations ? analysis.additionalObservations.split('\n').filter(Boolean) : [],
+    };
+
+    const transformedAnalysis = {
+      id: analysis.id,
+      userId: analysis.userId,
+      imageData: analysis.imageData, // Always include for individual requests
+      plantType: analysis.plantType,
+      fieldId: analysis.fieldId,
+      cropId: analysis.cropId,
+      notes: analysis.notes,
+      location: undefined, // Not stored in DB currently
+      coordinates: undefined, // Not stored in DB currently
+      analysisResult,
+      createdAt: analysis.createdAt,
+      updatedAt: analysis.updatedAt,
+    };
+    
+    res.json(transformedAnalysis);
   }
 
   static async byField(req: Request, res: Response) {
@@ -64,8 +166,46 @@ export class PlantAnalysisController {
     if (isNaN(fieldId))
       return res.status(400).json({ message: "Invalid field ID" });
     // TODO: check field ownership
-    const analyses = await PlantAnalysisModel.getByField(fieldId);
-    res.json(analyses);
+    const excludeImages = req.query.excludeImages === 'true' || req.query.excludeImages === true;
+    const analyses = await PlantAnalysisModel.getByField(fieldId, excludeImages);
+    
+    // Transform to match frontend expectations
+    const transformedAnalyses = analyses.map((analysis) => {
+      const analysisResult = {
+        disease: analysis.diseaseDetected ? {
+          name: analysis.diseaseDetected,
+          confidence: analysis.diseaseProbability ? parseFloat(analysis.diseaseProbability.toString()) : 0,
+          description: analysis.diseaseDescription || '',
+        } : null,
+        health: {
+          status: analysis.healthStatus as 'healthy' | 'minor issues' | 'moderate issues' | 'severe issues',
+          score: analysis.healthScore,
+        },
+        nutrients: {
+          deficiencies: analysis.nutrientDeficiencies ? analysis.nutrientDeficiencies.split(',').map(s => s.trim()).filter(Boolean) : [],
+          excess: analysis.nutrientExcess ? analysis.nutrientExcess.split(',').map(s => s.trim()).filter(Boolean) : [],
+        },
+        recommendations: analysis.recommendations ? analysis.recommendations.split('\n').filter(Boolean) : [],
+        additionalObservations: analysis.additionalObservations ? analysis.additionalObservations.split('\n').filter(Boolean) : [],
+      };
+
+      return {
+        id: analysis.id,
+        userId: analysis.userId,
+        imageData: excludeImages ? undefined : (analysis as any).imageData,
+        plantType: analysis.plantType,
+        fieldId: analysis.fieldId,
+        cropId: analysis.cropId,
+        notes: analysis.notes,
+        location: undefined,
+        coordinates: undefined,
+        analysisResult,
+        createdAt: analysis.createdAt,
+        updatedAt: analysis.updatedAt,
+      };
+    });
+    
+    res.json(transformedAnalyses);
   }
 
   static async byCrop(req: Request, res: Response) {
@@ -75,8 +215,46 @@ export class PlantAnalysisController {
     if (isNaN(cropId))
       return res.status(400).json({ message: "Invalid crop ID" });
     // TODO: check crop ownership
-    const analyses = await PlantAnalysisModel.getByCrop(cropId);
-    res.json(analyses);
+    const excludeImages = req.query.excludeImages === 'true' || req.query.excludeImages === true;
+    const analyses = await PlantAnalysisModel.getByCrop(cropId, excludeImages);
+    
+    // Transform to match frontend expectations
+    const transformedAnalyses = analyses.map((analysis) => {
+      const analysisResult = {
+        disease: analysis.diseaseDetected ? {
+          name: analysis.diseaseDetected,
+          confidence: analysis.diseaseProbability ? parseFloat(analysis.diseaseProbability.toString()) : 0,
+          description: analysis.diseaseDescription || '',
+        } : null,
+        health: {
+          status: analysis.healthStatus as 'healthy' | 'minor issues' | 'moderate issues' | 'severe issues',
+          score: analysis.healthScore,
+        },
+        nutrients: {
+          deficiencies: analysis.nutrientDeficiencies ? analysis.nutrientDeficiencies.split(',').map(s => s.trim()).filter(Boolean) : [],
+          excess: analysis.nutrientExcess ? analysis.nutrientExcess.split(',').map(s => s.trim()).filter(Boolean) : [],
+        },
+        recommendations: analysis.recommendations ? analysis.recommendations.split('\n').filter(Boolean) : [],
+        additionalObservations: analysis.additionalObservations ? analysis.additionalObservations.split('\n').filter(Boolean) : [],
+      };
+
+      return {
+        id: analysis.id,
+        userId: analysis.userId,
+        imageData: excludeImages ? undefined : (analysis as any).imageData,
+        plantType: analysis.plantType,
+        fieldId: analysis.fieldId,
+        cropId: analysis.cropId,
+        notes: analysis.notes,
+        location: undefined,
+        coordinates: undefined,
+        analysisResult,
+        createdAt: analysis.createdAt,
+        updatedAt: analysis.updatedAt,
+      };
+    });
+    
+    res.json(transformedAnalyses);
   }
 
   static async create(req: Request, res: Response) {
@@ -94,13 +272,18 @@ export class PlantAnalysisController {
     if (!imageData)
       return res.status(400).json({ message: "Image data is required" });
     try {
+      // Compress image before storing to reduce database size
+      logger.info('Compressing image before storage...');
+      const compressedImageData = await compressImageForStorage(String(imageData));
+      logger.info('Image compression completed');
+      
       const analysisResult = await analyzePlantImage(
-        String(imageData),
+        String(imageData), // Use original for analysis (better quality)
         plantType,
         notes
       );
       const plantAnalysisData = createPlantAnalysis(
-        String(imageData),
+        compressedImageData, // Store compressed version
         analysisResult,
         userId,
         plantType,
