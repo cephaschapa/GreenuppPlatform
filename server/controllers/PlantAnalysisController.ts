@@ -78,14 +78,25 @@ export class PlantAnalysisController {
       return {
         id: analysis.id,
         userId: analysis.userId,
-        imageData: excludeImages ? undefined : analysis.imageData, // Only include if not excluded
+        imageData: excludeImages ? undefined : analysis.imageData,
         plantType: analysis.plantType,
         fieldId: analysis.fieldId,
         cropId: analysis.cropId,
         notes: analysis.notes,
-        location: undefined, // Not stored in DB currently
-        coordinates: undefined, // Not stored in DB currently
+        location: undefined,
+        coordinates: undefined,
         analysisResult,
+        // Flat fields for list UI (analysis history)
+        analysisDate: analysis.analysisDate,
+        diseaseDetected: analysis.diseaseDetected,
+        diseaseProbability: analysis.diseaseProbability,
+        diseaseDescription: analysis.diseaseDescription,
+        healthStatus: analysis.healthStatus,
+        healthScore: analysis.healthScore,
+        nutrientDeficiencies: analysis.nutrientDeficiencies,
+        nutrientExcess: analysis.nutrientExcess,
+        recommendations: analysis.recommendations,
+        additionalObservations: analysis.additionalObservations,
         createdAt: analysis.createdAt,
         updatedAt: analysis.updatedAt,
       };
@@ -268,6 +279,7 @@ export class PlantAnalysisController {
       notes,
       location,
       coordinates,
+      createPestReport: requestPestReport,
     } = req.body;
     if (!imageData)
       return res.status(400).json({ message: "Image data is required" });
@@ -301,59 +313,43 @@ export class PlantAnalysisController {
       insertPlantAnalysisSchema.parse(plantAnalysisData);
       const saved = await PlantAnalysisModel.create(plantAnalysisData);
 
-      // ✨ NEW: Integrate pest/disease reporting system
-      try {
-        logger.info("🔬 Starting pest reporting integration for analysis:", {
-          plantAnalysisId: saved.id,
-          userId,
-          hasDisease: !!analysisResult.disease,
-          diseaseName: analysisResult.disease?.name,
-          confidence: analysisResult.disease?.confidence,
-        });
-
-        // Get user's location for pest reporting
-        const userLocation = location || (await getUserLocation(userId));
-        logger.info("📍 User location for pest reporting:", userLocation);
-
-        if (userLocation) {
-          // Import pest alert service
-          const { createPestReportFromAnalysis } = await import(
-            "../services/pest-alert-service.js"
-          );
-
-          // Create enhanced analysis result with additional data
-          const enhancedAnalysisResult = {
-            ...analysisResult,
-            cropType: plantType,
-            images: [imageData],
-            notes,
-            coordinates,
-            userId,
-            plantAnalysisId: saved.id,
-          };
-
-          logger.info("🚀 Calling createPestReportFromAnalysis...");
-
-          // Create pest report if threats detected
-          await createPestReportFromAnalysis(
-            saved.id,
-            enhancedAnalysisResult,
-            userId,
-            userLocation
-          );
-
-          logger.info("✅ Pest reporting integration completed");
-        } else {
-          logger.warn("⚠️ No user location found, skipping pest reporting");
+      // Pest/disease reporting: only run when explicitly requested (reduces API/DB load after diagnosis)
+      const runPestReport = requestPestReport === true || requestPestReport === "true";
+      if (runPestReport) {
+        try {
+          logger.info("🔬 Starting pest reporting integration for analysis:", saved.id);
+          const userLocation = location || (await getUserLocation(userId));
+          if (userLocation) {
+            const { createPestReportFromAnalysis } = await import(
+              "../services/pest-alert-service.js"
+            );
+            const enhancedAnalysisResult = {
+              ...analysisResult,
+              cropType: plantType,
+              images: [imageData],
+              notes,
+              coordinates,
+              userId,
+              plantAnalysisId: saved.id,
+            };
+            await createPestReportFromAnalysis(
+              saved.id,
+              enhancedAnalysisResult,
+              userId,
+              userLocation
+            );
+            logger.info("✅ Pest reporting integration completed");
+          } else {
+            logger.warn("⚠️ No user location found, skipping pest reporting");
+          }
+        } catch (pestError) {
+          logger.error("❌ Error creating pest report from analysis:", pestError);
         }
-      } catch (pestError) {
-        // Log pest reporting error but don't fail the analysis
-        logger.error("❌ Error creating pest report from analysis:", pestError);
       }
 
       res.status(201).json({
         ...saved,
-        pestReportingEnabled: true, // Indicate that pest monitoring is active
+        pestReportingEnabled: !!runPestReport,
       });
     } catch (error: unknown) {
       logger.error("Error creating plant analysis:", error);

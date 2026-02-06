@@ -1,4 +1,4 @@
-import { useState, useRef, ChangeEvent } from "react";
+import { useState, useRef, useEffect, ChangeEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -43,7 +43,61 @@ import {
 } from "lucide-react";
 import { PlantAnalysis } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { CollapsibleTreatmentPlan } from "@/components/farmer/CollapsibleTreatmentPlan";
+
+/** Lazy-loads analysis image when the card scrolls into view. */
+function LazyAnalysisImage({
+  analysisId,
+  imageData: initialImageData,
+}: {
+  analysisId: number;
+  imageData?: string | null;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(false);
+
+  const { data: analysis } = useQuery({
+    queryKey: ["/api/plant-analyses", analysisId],
+    queryFn: async () => {
+      const response = await apiRequest("GET", `/api/plant-analyses/${analysisId}`);
+      return response.json();
+    },
+    enabled: isInView && !initialImageData,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) setIsInView(true);
+      },
+      { rootMargin: "100px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const imageData = initialImageData ?? analysis?.imageData;
+
+  return (
+    <div ref={containerRef} className="w-full h-48 flex items-center justify-center min-h-[12rem] bg-muted/30 rounded-md overflow-hidden">
+      {imageData ? (
+        <img
+          src={`data:image/jpeg;base64,${imageData}`}
+          alt="Plant"
+          className="w-full h-48 object-cover rounded-md"
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-full h-48 flex flex-col items-center justify-center gap-2 text-muted-foreground rounded-md border border-dashed">
+          <Sprout className="h-10 w-10" />
+          <span className="text-xs">Plant analysis</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const PlantDiagnosisPage = () => {
   const [activeTab, setActiveTab] = useState("upload");
@@ -60,14 +114,28 @@ const PlantDiagnosisPage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch plant analyses
-  const { data: analyses = [], isLoading: isLoadingAnalyses } = useQuery({
-    queryKey: ["/api/plant-analyses"],
+  const PAGE_SIZE = 5;
+  const [historyPage, setHistoryPage] = useState(0);
+
+  // Fetch plant analyses only when History tab is active (faster initial load)
+  const { data: analysesResponse, isLoading: isLoadingAnalyses } = useQuery({
+    queryKey: ["/api/plant-analyses", historyPage],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/plant-analyses");
+      const response = await apiRequest(
+        "GET",
+        `/api/plant-analyses?limit=${PAGE_SIZE}&offset=${historyPage * PAGE_SIZE}&includePagination=true&excludeImages=true`
+      );
       return response.json();
     },
+    enabled: activeTab === "history",
+    staleTime: 30_000, // Cache 30s so switching tabs doesn't refetch
   });
+
+  const analyses = analysesResponse?.data ?? [];
+  const pagination = analysesResponse?.pagination;
+  const totalCount = pagination?.total ?? 0;
+  const hasMore = pagination?.hasMore ?? false;
+  const hasPrev = historyPage > 0;
 
   // Fetch fields for dropdown
   const { data: fields = [] } = useQuery({
@@ -100,6 +168,7 @@ const PlantDiagnosisPage = () => {
           description: "Your plant has been analyzed successfully.",
         });
         queryClient.invalidateQueries({ queryKey: ["/api/plant-analyses"] });
+        setHistoryPage(0);
         handleReset();
         setActiveTab("history");
       },
@@ -583,14 +652,27 @@ const PlantDiagnosisPage = () => {
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      {analyses.map((analysis: PlantAnalysis) => (
+                      {analyses.length === 0 && historyPage > 0 ? (
+                        <div className="text-center py-6">
+                          <p className="text-sm text-muted-foreground">
+                            No analyses on this page.
+                          </p>
+                          <Button
+                            variant="outline"
+                            className="mt-2"
+                            onClick={() => setHistoryPage(0)}
+                          >
+                            Go to first page
+                          </Button>
+                        </div>
+                      ) : (
+                      analyses.map((analysis: PlantAnalysis) => (
                         <Card key={analysis.id} className="overflow-hidden">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="p-4 h-full flex items-center">
-                              <img
-                                src={`data:image/jpeg;base64,${analysis.imageData}`}
-                                alt="Plant"
-                                className="w-full h-48 object-cover rounded-md"
+                              <LazyAnalysisImage
+                                analysisId={analysis.id}
+                                imageData={analysis.imageData}
                               />
                             </div>
                             <div className="p-4 md:col-span-2">
@@ -672,25 +754,52 @@ const PlantDiagnosisPage = () => {
                                     <p className="text-sm font-medium">
                                       Recommendations:
                                     </p>
-                                    <p className="text-sm mt-1">
+                                    <p className="text-sm mt-1 whitespace-pre-line">
                                       {analysis.recommendations}
                                     </p>
                                   </div>
                                 )}
                               </div>
 
-                              {/* Collapsible Treatment Plan */}
-                              <CollapsibleTreatmentPlan
-                                analysisId={analysis.id}
-                                diseaseDetected={
-                                  analysis.diseaseDetected || undefined
-                                }
-                                plantType={analysis.plantType || undefined}
-                              />
+                              {analysis.diseaseProbability && (
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Confidence: {analysis.diseaseProbability}%
+                                </p>
+                              )}
                             </div>
                           </div>
                         </Card>
-                      ))}
+                      )))}
+
+                      {/* Pagination */}
+                      {(hasPrev || hasMore || totalCount > 0) && (
+                        <div className="flex items-center justify-between gap-4 pt-4 border-t">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={!hasPrev}
+                            onClick={() => setHistoryPage((p) => Math.max(0, p - 1))}
+                          >
+                            Previous
+                          </Button>
+                          <span className="text-sm text-muted-foreground">
+                            {totalCount > 0
+                              ? `Showing ${historyPage * PAGE_SIZE + 1}–${Math.min(
+                                  historyPage * PAGE_SIZE + analyses.length,
+                                  totalCount
+                                )} of ${totalCount}`
+                              : "No analyses yet"}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={!hasMore}
+                            onClick={() => setHistoryPage((p) => p + 1)}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
