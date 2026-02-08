@@ -611,6 +611,9 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
       geoData = await geocodeLocation(location);
     }
 
+    // Log resolved coords so we can verify correct location (e.g. device vs farm)
+    console.log("weather location resolved", { lat: geoData.lat, lon: geoData.lon, name: geoData.name, requested: location.slice(0, 60) });
+
     let weatherData: WeatherData;
 
     // Primary: Tomorrow.io (better accuracy)

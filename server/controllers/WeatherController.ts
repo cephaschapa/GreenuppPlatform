@@ -3,6 +3,7 @@ import { WeatherModel } from "../models/WeatherModel.js";
 import { insertWeatherPreferencesSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { logger } from "../lib/logger.js";
 
 export class WeatherController {
   static async getWeather(req: Request, res: Response) {
@@ -13,7 +14,10 @@ export class WeatherController {
           .status(400)
           .json({ message: "Location parameter is required" });
       }
-      const data = await WeatherModel.getWeatherData(location as string);
+      const locStr = String(location);
+      const isCoords = /^-?\d+\.?\d*,\s*-?\d+\.?\d*$/.test(locStr.trim());
+      logger.info("GET /api/weather", { location: isCoords ? "lat,lon" : locStr.slice(0, 80), isCoords });
+      const data = await WeatherModel.getWeatherData(locStr);
       res.json(data);
     } catch (error) {
       res.status(500).json({
