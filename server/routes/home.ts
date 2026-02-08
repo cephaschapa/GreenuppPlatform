@@ -114,6 +114,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     const lngParam = req.query.lng != null ? parseFloat(String(req.query.lng)) : NaN;
     if (Number.isFinite(latParam) && Number.isFinite(lngParam)) {
       try {
+        logger.info("GET /api/home: fetching weather at current location", { lat: latParam, lng: lngParam });
         const currentWeatherData = await getWeatherData(`${latParam},${lngParam}`);
         const cur = currentWeatherData.current;
         const day0 = currentWeatherData.forecast?.[0];

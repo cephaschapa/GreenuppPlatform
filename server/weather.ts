@@ -288,14 +288,65 @@ function tomorrowWeatherCodeToCondition(code: number): string {
 }
 
 /**
+ * Fetch current conditions from Tomorrow.io realtime (so "current" is actually current, not a daily bucket).
+ */
+async function getTomorrowRealtime(lat: number, lon: number): Promise<{
+  temp: number;
+  feelsLike: number;
+  humidity: number;
+  windSpeed: number;
+  condition: string;
+  weatherCode: number;
+  cloudCover?: number;
+  uv?: number;
+  pressure?: number;
+  visibility?: number;
+} | null> {
+  if (!TOMORROW_IO_API_KEY) return null;
+  const locationParam = `${lat},${lon}`;
+  try {
+    const response = await axios.get(`${TOMORROW_IO_BASE_URL}/realtime`, {
+      params: {
+        location: locationParam,
+        apikey: TOMORROW_IO_API_KEY,
+        units: "metric",
+      },
+      timeout: 10000,
+    });
+    const data = response.data?.data ?? response.data;
+    const v = data?.values ?? data;
+    if (!v || typeof v.temperature !== "number") return null;
+    return {
+      temp: v.temperature,
+      feelsLike: v.temperatureApparent ?? v.temperature,
+      humidity: v.humidity ?? 60,
+      windSpeed: v.windSpeed ?? 0,
+      condition: tomorrowWeatherCodeToCondition(v.weatherCode ?? 1101),
+      weatherCode: v.weatherCode ?? 1101,
+      cloudCover: v.cloudCover,
+      uv: v.uvIndex ?? v.uv,
+      pressure: v.pressureSurfaceLevel,
+      visibility: v.visibility != null ? v.visibility * 1000 : undefined,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
  * Fetch weather from Tomorrow.io (primary – better accuracy).
- * Returns our WeatherData shape; throws on failure so caller can fall back to OpenWeather.
+ * Uses realtime for current conditions and forecast for daily; throws on failure so caller can fall back to OpenWeather.
  */
 async function getWeatherDataTomorrow(geoData: GeoLocation): Promise<WeatherData> {
   if (!TOMORROW_IO_API_KEY) throw new Error("Tomorrow.io API key not configured");
   const locationParam = `${geoData.lat},${geoData.lon}`;
-  const url = `${TOMORROW_IO_BASE_URL}/forecast`;
-  const response = await axios.get(url, {
+  const locationName = `${geoData.name}, ${geoData.country}`;
+
+  // 1) Get real current conditions from realtime endpoint (not first daily bucket)
+  const realtime = await getTomorrowRealtime(geoData.lat, geoData.lon);
+
+  // 2) Get daily forecast
+  const forecastResponse = await axios.get(`${TOMORROW_IO_BASE_URL}/forecast`, {
     params: {
       location: locationParam,
       apikey: TOMORROW_IO_API_KEY,
@@ -305,16 +356,16 @@ async function getWeatherDataTomorrow(geoData: GeoLocation): Promise<WeatherData
     timeout: 15000,
   });
 
-  const data = response.data;
-  const locationName = `${geoData.name}, ${geoData.country}`;
+  const data = forecastResponse.data?.data ?? forecastResponse.data;
 
-  // v4 forecast can return timelines.daily or data.daily or intervals
-  let daily: Array<{ time: string; values: Record<string, number> }> = [];
+  // v4 can return timelines.daily, timelines[0].intervals, or data.daily
+  let daily: Array<{ time: string; startTime?: string; values: Record<string, number> }> = [];
   if (data?.timelines?.daily) {
     daily = data.timelines.daily;
-  } else if (data?.timelines?.[0]?.intervals) {
+  } else if (Array.isArray(data?.timelines) && data.timelines[0]?.intervals) {
     daily = data.timelines[0].intervals.map((i: any) => ({
       time: i.startTime ?? i.time,
+      startTime: i.startTime,
       values: i.values ?? i,
     }));
   } else if (Array.isArray(data?.daily)) {
@@ -324,11 +375,41 @@ async function getWeatherDataTomorrow(geoData: GeoLocation): Promise<WeatherData
 
   const first = daily[0];
   const v = first.values || (first as any);
-  const temp = v.temperature ?? v.temperatureMax ?? v.temperatureMin ?? 20;
-  const tempMin = v.temperatureMin ?? temp - 2;
-  const tempMax = v.temperatureMax ?? temp + 2;
-  const weatherCode = v.weatherCode ?? 1101;
-  const condition = tomorrowWeatherCodeToCondition(weatherCode);
+
+  // Prefer realtime for "current"; otherwise use first day's values
+  const current = realtime
+    ? {
+        temp: realtime.temp,
+        feelsLike: realtime.feelsLike,
+        humidity: realtime.humidity,
+        windSpeed: realtime.windSpeed,
+        condition: realtime.condition,
+        description: realtime.condition,
+        icon: "",
+        cloudCover: realtime.cloudCover ?? 0,
+        uv: realtime.uv ?? 0,
+        pressure: realtime.pressure ?? 1013,
+        visibility: realtime.visibility ?? 10000,
+        timestamp: Math.floor(Date.now() / 1000),
+        sunrise: undefined,
+        sunset: undefined,
+      }
+    : {
+        temp: v.temperature ?? v.temperatureMax ?? v.temperatureMin ?? 20,
+        feelsLike: v.temperatureApparent ?? v.temperature ?? 20,
+        humidity: v.humidity ?? 60,
+        windSpeed: v.windSpeed ?? 0,
+        condition: tomorrowWeatherCodeToCondition(v.weatherCode ?? 1101),
+        description: tomorrowWeatherCodeToCondition(v.weatherCode ?? 1101),
+        icon: "",
+        cloudCover: v.cloudCover ?? 0,
+        uv: v.uvIndex ?? 0,
+        pressure: v.pressureSurfaceLevel ?? 1013,
+        visibility: (v.visibility ?? 10) * 1000,
+        timestamp: Math.floor(new Date(first.time || first.startTime).getTime() / 1000),
+        sunrise: v.sunriseTime,
+        sunset: v.sunsetTime,
+      };
 
   const forecast = daily.slice(0, 14).map((day: any) => {
     const vals = day.values ?? day;
@@ -354,23 +435,6 @@ async function getWeatherDataTomorrow(geoData: GeoLocation): Promise<WeatherData
       sunset: 0,
     };
   });
-
-  const current = {
-    temp,
-    feelsLike: v.temperatureApparent ?? temp,
-    humidity: v.humidity ?? 60,
-    windSpeed: v.windSpeed ?? 0,
-    condition,
-    description: condition,
-    icon: "",
-    cloudCover: v.cloudCover ?? 0,
-    uv: v.uvIndex ?? 0,
-    pressure: v.pressureSurfaceLevel ?? 1013,
-    visibility: (v.visibility ?? 10) * 1000,
-    timestamp: Math.floor(new Date(first.time || first.startTime).getTime() / 1000),
-    sunrise: v.sunriseTime,
-    sunset: v.sunsetTime,
-  };
 
   return {
     location: locationName,
