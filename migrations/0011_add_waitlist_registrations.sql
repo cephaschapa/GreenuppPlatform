@@ -1,7 +1,7 @@
 -- Migration: Add waitlist registrations table for testing program
 -- Created: 2024-01-24
 
-CREATE TABLE "waitlist_registrations" (
+CREATE TABLE IF NOT EXISTS "waitlist_registrations" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"first_name" text NOT NULL,
 	"last_name" text NOT NULL,
@@ -24,10 +24,10 @@ CREATE TABLE "waitlist_registrations" (
 );
 
 -- Create indexes for better query performance
-CREATE INDEX "idx_waitlist_email" ON "waitlist_registrations" ("email");
-CREATE INDEX "idx_waitlist_status" ON "waitlist_registrations" ("status");
-CREATE INDEX "idx_waitlist_user_type" ON "waitlist_registrations" ("user_type");
-CREATE INDEX "idx_waitlist_registration_date" ON "waitlist_registrations" ("registration_date");
+CREATE INDEX IF NOT EXISTS "idx_waitlist_email" ON "waitlist_registrations" ("email");
+CREATE INDEX IF NOT EXISTS "idx_waitlist_status" ON "waitlist_registrations" ("status");
+CREATE INDEX IF NOT EXISTS "idx_waitlist_user_type" ON "waitlist_registrations" ("user_type");
+CREATE INDEX IF NOT EXISTS "idx_waitlist_registration_date" ON "waitlist_registrations" ("registration_date");
 
 -- Add comments for documentation
 COMMENT ON TABLE "waitlist_registrations" IS 'Testing program waitlist registrations';

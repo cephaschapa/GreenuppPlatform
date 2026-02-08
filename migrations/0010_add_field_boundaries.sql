@@ -1,8 +1,8 @@
 -- Add field boundary columns to fields table
-ALTER TABLE "fields" ADD COLUMN "boundary" jsonb;
-ALTER TABLE "fields" ADD COLUMN "calculated_area" numeric(12, 2);
-ALTER TABLE "fields" ADD COLUMN "center_lat" numeric(10, 7);
-ALTER TABLE "fields" ADD COLUMN "center_lng" numeric(10, 7);
+DO $$ BEGIN ALTER TABLE "fields" ADD COLUMN "boundary" jsonb; EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "fields" ADD COLUMN "calculated_area" numeric(12, 2); EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "fields" ADD COLUMN "center_lat" numeric(10, 7); EXCEPTION WHEN duplicate_column THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "fields" ADD COLUMN "center_lng" numeric(10, 7); EXCEPTION WHEN duplicate_column THEN NULL; END $$;
 
 -- Add indexes for better performance
 CREATE INDEX IF NOT EXISTS "fields_boundary_idx" ON "fields" USING GIN ("boundary");

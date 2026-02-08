@@ -1,4 +1,4 @@
-CREATE TABLE "pest_disease_types" (
+CREATE TABLE IF NOT EXISTS "pest_disease_types" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"scientific_name" text,
@@ -19,7 +19,7 @@ CREATE TABLE "pest_disease_types" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "pest_outbreaks" (
+CREATE TABLE IF NOT EXISTS "pest_outbreaks" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"pest_disease_id" integer NOT NULL,
 	"location_area" text NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE "pest_outbreaks" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "pest_reports" (
+CREATE TABLE IF NOT EXISTS "pest_reports" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"plant_analysis_id" integer,
@@ -59,7 +59,7 @@ CREATE TABLE "pest_reports" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "risk_assessments" (
+CREATE TABLE IF NOT EXISTS "risk_assessments" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"pest_disease_id" integer NOT NULL,
 	"location" text NOT NULL,
@@ -70,8 +70,8 @@ CREATE TABLE "risk_assessments" (
 	"assessment_date" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "pest_outbreaks" ADD CONSTRAINT "pest_outbreaks_pest_disease_id_pest_disease_types_id_fk" FOREIGN KEY ("pest_disease_id") REFERENCES "public"."pest_disease_types"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "pest_reports" ADD CONSTRAINT "pest_reports_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "pest_reports" ADD CONSTRAINT "pest_reports_plant_analysis_id_plant_analyses_id_fk" FOREIGN KEY ("plant_analysis_id") REFERENCES "public"."plant_analyses"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "pest_reports" ADD CONSTRAINT "pest_reports_pest_disease_id_pest_disease_types_id_fk" FOREIGN KEY ("pest_disease_id") REFERENCES "public"."pest_disease_types"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "risk_assessments" ADD CONSTRAINT "risk_assessments_pest_disease_id_pest_disease_types_id_fk" FOREIGN KEY ("pest_disease_id") REFERENCES "public"."pest_disease_types"("id") ON DELETE no action ON UPDATE no action;
+DO $$ BEGIN ALTER TABLE "pest_outbreaks" ADD CONSTRAINT "pest_outbreaks_pest_disease_id_pest_disease_types_id_fk" FOREIGN KEY ("pest_disease_id") REFERENCES "public"."pest_disease_types"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "pest_reports" ADD CONSTRAINT "pest_reports_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "pest_reports" ADD CONSTRAINT "pest_reports_plant_analysis_id_plant_analyses_id_fk" FOREIGN KEY ("plant_analysis_id") REFERENCES "public"."plant_analyses"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "pest_reports" ADD CONSTRAINT "pest_reports_pest_disease_id_pest_disease_types_id_fk" FOREIGN KEY ("pest_disease_id") REFERENCES "public"."pest_disease_types"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "risk_assessments" ADD CONSTRAINT "risk_assessments_pest_disease_id_pest_disease_types_id_fk" FOREIGN KEY ("pest_disease_id") REFERENCES "public"."pest_disease_types"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;

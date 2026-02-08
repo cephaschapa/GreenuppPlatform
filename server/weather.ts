@@ -57,6 +57,8 @@ interface WeatherData {
     pressure: number;
     visibility: number;
     timestamp: number;
+    sunrise?: number;
+    sunset?: number;
   };
   forecast: Array<{
     date: string;
@@ -370,6 +372,8 @@ async function getWeatherDataFreeTier(
       pressure: current.main.pressure,
       visibility: current.visibility,
       timestamp: current.dt,
+      sunrise: current.sys?.sunrise,
+      sunset: current.sys?.sunset,
     },
     forecast,
   };
@@ -457,6 +461,8 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
           pressure: data.current.pressure,
           visibility: data.current.visibility,
           timestamp: data.current.dt,
+          sunrise: data.current.sunrise,
+          sunset: data.current.sunset,
         },
         forecast: data.daily.map((day: any) => {
           const date = new Date(day.dt * 1000);

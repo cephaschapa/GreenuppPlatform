@@ -1,1 +1,1 @@
-ALTER TABLE "notification_settings" ADD COLUMN "sms_enabled" boolean DEFAULT false;
+DO $$ BEGIN ALTER TABLE "notification_settings" ADD COLUMN "sms_enabled" boolean DEFAULT false; EXCEPTION WHEN duplicate_column THEN NULL; END $$;

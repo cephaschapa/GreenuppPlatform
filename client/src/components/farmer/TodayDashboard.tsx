@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Card,
@@ -10,6 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoleNavigation } from "@/hooks/use-role-navigation";
 import { Link } from "wouter";
@@ -29,9 +36,39 @@ import {
   ChevronRight,
   Sprout,
   Calendar,
+  Sparkles,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { differenceInDays, format, formatDistanceToNow } from "date-fns";
+
+interface HomeDecision {
+  id: number;
+  title: string;
+  summary: string;
+  priority: string;
+  whyText: string;
+  decisionType: string;
+  status: string;
+  expiresAt: string;
+}
+
+interface HomeWeather {
+  snapshotId: number;
+  source: string;
+  locationName: string;
+  currentTemp: number;
+  condition: string;
+  precipitationToday: number;
+  windSpeed: number;
+  uv: number;
+}
+
+interface HomeResponse {
+  locationLabel: string;
+  weather: HomeWeather | null;
+  decisions: HomeDecision[];
+}
 
 interface Crop {
   id: number;
@@ -73,10 +110,40 @@ interface WeatherData {
   }>;
 }
 
+function decisionTypeToHref(decisionType: string, getUrl: (path: string) => string): string {
+  if (decisionType === "task_due") return getUrl("tasks");
+  if (decisionType === "scout_pests") return getUrl("fields");
+  if (["delay_spray", "avoid_spray_today", "check_drainage", "plan_spray_window", "no_spray_wind", "protect_cold", "dry_window", "limit_midday"].includes(decisionType)) return getUrl("weather");
+  return getUrl("dashboard");
+}
+
 export function TodayDashboard() {
   console.log("🎉 TodayDashboard component is rendering!");
   const { user } = useAuth();
   const { getUrl } = useRoleNavigation();
+  const [dismissedDecisionIds, setDismissedDecisionIds] = useState<Set<number>>(new Set());
+
+  // Home API: weather + decisions (try first)
+  const { data: homeData } = useQuery<HomeResponse>({
+    queryKey: ["/api/home"],
+    queryFn: async () => {
+      const response = await fetch("/api/home", { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch home");
+      return await response.json();
+    },
+    enabled: !!user?.id,
+  });
+
+  const decisionsToShow = homeData?.decisions?.filter((d) => !dismissedDecisionIds.has(d.id)) ?? [];
+  const shownSentRef = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    decisionsToShow.forEach((d) => {
+      if (shownSentRef.current.has(d.id)) return;
+      shownSentRef.current.add(d.id);
+      fetch(`/api/decisions/${d.id}/shown`, { method: "POST", credentials: "include" }).catch(() => {});
+    });
+  }, [decisionsToShow]);
 
   // Fetch today's tasks
   const { data: tasks } = useQuery<Task[]>({
@@ -90,7 +157,7 @@ export function TodayDashboard() {
     enabled: !!user?.id,
   });
 
-  // Fetch weather
+  // Fetch weather (fallback when home API has no weather)
   const { data: farmerProfile } = useQuery({
     queryKey: ["/api/farmer-profile"],
     enabled: !!user?.id,
@@ -108,8 +175,11 @@ export function TodayDashboard() {
       if (!response.ok) throw new Error("Failed to fetch weather");
       return await response.json();
     },
-    enabled: !!farmerProfile?.farmLocation,
+    enabled: !!farmerProfile?.farmLocation && !homeData?.weather,
   });
+
+  const displayWeather = homeData?.weather ?? weatherData;
+  const displayLocation = homeData?.locationLabel ?? farmerProfile?.farmLocation;
 
   // Filter today's tasks
   const todaysTasks =
@@ -181,16 +251,29 @@ export function TodayDashboard() {
                 {format(new Date(), "EEEE, MMMM d, yyyy")}
               </p>
             </div>
-            {weatherData && (
+            {displayWeather && (
               <div className="flex items-center gap-3 bg-white/50 dark:bg-black/20 rounded-lg p-3">
-                {getWeatherIcon(weatherData.current.condition)}
+                {getWeatherIcon(
+                  (displayWeather as WeatherData).current?.condition ??
+                    (displayWeather as HomeWeather).condition
+                )}
                 <div>
                   <div className="text-2xl font-bold">
-                    {Math.round(weatherData.current.temp)}°C
+                    {Math.round(
+                      (displayWeather as WeatherData).current?.temp ??
+                        (displayWeather as HomeWeather).currentTemp
+                    )}
+                    °C
                   </div>
                   <div className="text-xs text-muted-foreground capitalize">
-                    {weatherData.current.description}
+                    {(displayWeather as WeatherData).current?.description ??
+                      (displayWeather as HomeWeather).condition}
                   </div>
+                  {displayLocation && (
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {displayLocation}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -198,8 +281,76 @@ export function TodayDashboard() {
         </CardContent>
       </Card>
 
+      {/* Recommended actions (from GET /api/home) */}
+      {decisionsToShow.length > 0 && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Recommended actions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {decisionsToShow.map((decision) => (
+                <div
+                  key={decision.id}
+                  className={cn(
+                    "flex items-start justify-between gap-2 p-3 rounded-lg border bg-card",
+                    decision.priority === "high" && "border-amber-300 dark:border-amber-700"
+                  )}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant={decision.priority === "high" ? "destructive" : "secondary"} className="text-xs">
+                        {decision.priority}
+                      </Badge>
+                    </div>
+                    <p className="font-medium text-sm">{decision.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{decision.summary}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="text-xs text-primary cursor-default">Why?</span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-sm">{decision.whyText}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <Link href={decisionTypeToHref(decision.decisionType, getUrl)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            fetch(`/api/decisions/${decision.id}/act`, { method: "POST", credentials: "include" }).catch(() => {});
+                          }}
+                        >
+                          Open <ChevronRight className="h-3 w-3 ml-1" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      fetch(`/api/decisions/${decision.id}/ignore`, { method: "POST", credentials: "include" }).catch(() => {});
+                      setDismissedDecisionIds((prev) => new Set(prev).add(decision.id));
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Weather Alert */}
-      {weatherData?.alerts && weatherData.alerts.length > 0 && (
+      {(displayWeather as WeatherData)?.alerts && (displayWeather as WeatherData).alerts?.length > 0 && (
         <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/50">
           <CardHeader className="pb-3">
             <CardTitle className="text-red-800 dark:text-red-200 flex items-center gap-2 text-base">
@@ -208,7 +359,7 @@ export function TodayDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {weatherData.alerts.map((alert, idx) => (
+            {(displayWeather as WeatherData).alerts!.map((alert, idx) => (
               <div key={idx} className="flex items-start gap-2">
                 <Badge variant="destructive" className="text-xs">
                   {alert.severity}
@@ -464,7 +615,7 @@ export function TodayDashboard() {
       </Card>
 
       {/* Weather Forecast Summary */}
-      {weatherData && (
+      {displayWeather && (displayWeather as WeatherData).forecast && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base md:text-lg flex items-center gap-2">
@@ -474,7 +625,7 @@ export function TodayDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
-              {weatherData.forecast?.slice(0, 7).map((day, idx) => (
+              {(displayWeather as WeatherData).forecast?.slice(0, 7).map((day, idx) => (
                 <div
                   key={idx}
                   className="flex flex-col items-center p-2 rounded-lg bg-muted/50 text-center"

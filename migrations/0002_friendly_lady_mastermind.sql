@@ -1,11 +1,11 @@
-CREATE TYPE "public"."chat_message_status" AS ENUM('sent', 'delivered', 'read');--> statement-breakpoint
-CREATE TYPE "public"."chat_room_type" AS ENUM('direct', 'group');--> statement-breakpoint
-CREATE TYPE "public"."listing_status" AS ENUM('active', 'pending', 'sold', 'expired', 'suspended');--> statement-breakpoint
-CREATE TYPE "public"."notification_status" AS ENUM('unread', 'read', 'archived');--> statement-breakpoint
-CREATE TYPE "public"."notification_type" AS ENUM('weather_alert', 'task_reminder', 'market_price_alert', 'system_notification', 'message', 'crop_update');--> statement-breakpoint
-CREATE TYPE "public"."product_category" AS ENUM('seeds', 'fertilizers', 'pesticides', 'equipment', 'tools', 'irrigation', 'livestock', 'feed', 'produce', 'grains', 'fruits', 'vegetables', 'dairy', 'meat', 'services', 'other');--> statement-breakpoint
-CREATE TYPE "public"."product_condition" AS ENUM('new', 'like_new', 'good', 'fair', 'poor');--> statement-breakpoint
-CREATE TABLE "ai_assistant_messages" (
+DO $$ BEGIN CREATE TYPE "public"."chat_message_status" AS ENUM('sent', 'delivered', 'read'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."chat_room_type" AS ENUM('direct', 'group'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."listing_status" AS ENUM('active', 'pending', 'sold', 'expired', 'suspended'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."notification_status" AS ENUM('unread', 'read', 'archived'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."notification_type" AS ENUM('weather_alert', 'task_reminder', 'market_price_alert', 'system_notification', 'message', 'crop_update'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."product_category" AS ENUM('seeds', 'fertilizers', 'pesticides', 'equipment', 'tools', 'irrigation', 'livestock', 'feed', 'produce', 'grains', 'fruits', 'vegetables', 'dairy', 'meat', 'services', 'other'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN CREATE TYPE "public"."product_condition" AS ENUM('new', 'like_new', 'good', 'fair', 'poor'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "ai_assistant_messages" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"role" text NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE "ai_assistant_messages" (
 	"session_id" text NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "cart_items" (
+CREATE TABLE IF NOT EXISTS "cart_items" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"cart_id" integer NOT NULL,
 	"listing_id" integer NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE "cart_items" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "carts" (
+CREATE TABLE IF NOT EXISTS "carts" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE "carts" (
 	"payment_date" timestamp
 );
 --> statement-breakpoint
-CREATE TABLE "chat_messages" (
+CREATE TABLE IF NOT EXISTS "chat_messages" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"room_id" integer NOT NULL,
 	"sender_id" integer NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE "chat_messages" (
 	"is_deleted" boolean DEFAULT false NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "chat_room_members" (
+CREATE TABLE IF NOT EXISTS "chat_room_members" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"room_id" integer NOT NULL,
 	"user_id" integer NOT NULL,
@@ -67,7 +67,7 @@ CREATE TABLE "chat_room_members" (
 	"is_muted" boolean DEFAULT false NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "chat_rooms" (
+CREATE TABLE IF NOT EXISTS "chat_rooms" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" text,
 	"type" "chat_room_type" DEFAULT 'direct' NOT NULL,
@@ -78,7 +78,7 @@ CREATE TABLE "chat_rooms" (
 	"is_active" boolean DEFAULT true NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "crop_trace_events" (
+CREATE TABLE IF NOT EXISTS "crop_trace_events" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"crop_id" integer NOT NULL,
 	"event_type" text NOT NULL,
@@ -96,7 +96,7 @@ CREATE TABLE "crop_trace_events" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "crop_yield_predictions" (
+CREATE TABLE IF NOT EXISTS "crop_yield_predictions" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"crop_id" integer NOT NULL,
 	"predicted_yield" numeric(10, 2),
@@ -108,7 +108,7 @@ CREATE TABLE "crop_yield_predictions" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "farmer_tasks" (
+CREATE TABLE IF NOT EXISTS "farmer_tasks" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"title" text NOT NULL,
@@ -123,7 +123,7 @@ CREATE TABLE "farmer_tasks" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "locations" (
+CREATE TABLE IF NOT EXISTS "locations" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"country" text NOT NULL,
 	"region" text NOT NULL,
@@ -141,14 +141,14 @@ CREATE TABLE "locations" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "marketplace_favorites" (
+CREATE TABLE IF NOT EXISTS "marketplace_favorites" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"listing_id" integer NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "marketplace_listings" (
+CREATE TABLE IF NOT EXISTS "marketplace_listings" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"seller_id" integer NOT NULL,
 	"title" text NOT NULL,
@@ -181,7 +181,7 @@ CREATE TABLE "marketplace_listings" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "marketplace_messages" (
+CREATE TABLE IF NOT EXISTS "marketplace_messages" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"listing_id" integer,
 	"sender_id" integer NOT NULL,
@@ -191,7 +191,7 @@ CREATE TABLE "marketplace_messages" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "marketplace_reviews" (
+CREATE TABLE IF NOT EXISTS "marketplace_reviews" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"listing_id" integer,
 	"seller_id" integer NOT NULL,
@@ -202,7 +202,7 @@ CREATE TABLE "marketplace_reviews" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "notification_settings" (
+CREATE TABLE IF NOT EXISTS "notification_settings" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"email_enabled" boolean DEFAULT true,
@@ -224,7 +224,7 @@ CREATE TABLE "notification_settings" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "notifications" (
+CREATE TABLE IF NOT EXISTS "notifications" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"type" text NOT NULL,
@@ -240,7 +240,7 @@ CREATE TABLE "notifications" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "plant_analyses" (
+CREATE TABLE IF NOT EXISTS "plant_analyses" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"image_data" text NOT NULL,
@@ -263,7 +263,7 @@ CREATE TABLE "plant_analyses" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "treatment_plans" (
+CREATE TABLE IF NOT EXISTS "treatment_plans" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"analysis_id" integer NOT NULL,
@@ -280,7 +280,7 @@ CREATE TABLE "treatment_plans" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "treatment_products" (
+CREATE TABLE IF NOT EXISTS "treatment_products" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
 	"active_ingredient" text,
@@ -301,7 +301,7 @@ CREATE TABLE "treatment_products" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "treatment_progress" (
+CREATE TABLE IF NOT EXISTS "treatment_progress" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"treatment_step_id" integer NOT NULL,
 	"application_date" timestamp DEFAULT now() NOT NULL,
@@ -314,7 +314,7 @@ CREATE TABLE "treatment_progress" (
 	"created_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "treatment_steps" (
+CREATE TABLE IF NOT EXISTS "treatment_steps" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"treatment_plan_id" integer NOT NULL,
 	"step_number" integer NOT NULL,
@@ -337,7 +337,7 @@ CREATE TABLE "treatment_steps" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "weather_preferences" (
+CREATE TABLE IF NOT EXISTS "weather_preferences" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"locations" text[],
@@ -347,48 +347,48 @@ CREATE TABLE "weather_preferences" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "crops" ADD COLUMN "field_size" text;--> statement-breakpoint
-ALTER TABLE "crops" ADD COLUMN "size_unit" text DEFAULT 'hectares';--> statement-breakpoint
-ALTER TABLE "crops" ADD COLUMN "batch_id" text;--> statement-breakpoint
-ALTER TABLE "crops" ADD COLUMN "seed_source" text;--> statement-breakpoint
-ALTER TABLE "crops" ADD COLUMN "seed_variety" text;--> statement-breakpoint
-ALTER TABLE "crops" ADD COLUMN "organic_certified" boolean DEFAULT false;--> statement-breakpoint
-ALTER TABLE "crops" ADD COLUMN "certification_id" text;--> statement-breakpoint
-ALTER TABLE "crops" ADD COLUMN "blockchain_tx_id" text;--> statement-breakpoint
-ALTER TABLE "crops" ADD COLUMN "traceability_qr_code" text;--> statement-breakpoint
-ALTER TABLE "ai_assistant_messages" ADD CONSTRAINT "ai_assistant_messages_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_cart_id_carts_id_fk" FOREIGN KEY ("cart_id") REFERENCES "public"."carts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_listing_id_marketplace_listings_id_fk" FOREIGN KEY ("listing_id") REFERENCES "public"."marketplace_listings"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "carts" ADD CONSTRAINT "carts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_room_id_chat_rooms_id_fk" FOREIGN KEY ("room_id") REFERENCES "public"."chat_rooms"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_sender_id_users_id_fk" FOREIGN KEY ("sender_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "chat_room_members" ADD CONSTRAINT "chat_room_members_room_id_chat_rooms_id_fk" FOREIGN KEY ("room_id") REFERENCES "public"."chat_rooms"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "chat_room_members" ADD CONSTRAINT "chat_room_members_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "chat_rooms" ADD CONSTRAINT "chat_rooms_created_by_id_users_id_fk" FOREIGN KEY ("created_by_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "crop_trace_events" ADD CONSTRAINT "crop_trace_events_crop_id_crops_id_fk" FOREIGN KEY ("crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "crop_trace_events" ADD CONSTRAINT "crop_trace_events_performed_by_users_id_fk" FOREIGN KEY ("performed_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "crop_yield_predictions" ADD CONSTRAINT "crop_yield_predictions_crop_id_crops_id_fk" FOREIGN KEY ("crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "farmer_tasks" ADD CONSTRAINT "farmer_tasks_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "farmer_tasks" ADD CONSTRAINT "farmer_tasks_related_crop_id_crops_id_fk" FOREIGN KEY ("related_crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "farmer_tasks" ADD CONSTRAINT "farmer_tasks_related_field_id_fields_id_fk" FOREIGN KEY ("related_field_id") REFERENCES "public"."fields"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "marketplace_favorites" ADD CONSTRAINT "marketplace_favorites_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "marketplace_favorites" ADD CONSTRAINT "marketplace_favorites_listing_id_marketplace_listings_id_fk" FOREIGN KEY ("listing_id") REFERENCES "public"."marketplace_listings"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "marketplace_listings" ADD CONSTRAINT "marketplace_listings_seller_id_users_id_fk" FOREIGN KEY ("seller_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "marketplace_listings" ADD CONSTRAINT "marketplace_listings_location_id_locations_id_fk" FOREIGN KEY ("location_id") REFERENCES "public"."locations"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "marketplace_listings" ADD CONSTRAINT "marketplace_listings_source_crop_id_crops_id_fk" FOREIGN KEY ("source_crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "marketplace_messages" ADD CONSTRAINT "marketplace_messages_listing_id_marketplace_listings_id_fk" FOREIGN KEY ("listing_id") REFERENCES "public"."marketplace_listings"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "marketplace_messages" ADD CONSTRAINT "marketplace_messages_sender_id_users_id_fk" FOREIGN KEY ("sender_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "marketplace_messages" ADD CONSTRAINT "marketplace_messages_recipient_id_users_id_fk" FOREIGN KEY ("recipient_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "marketplace_reviews" ADD CONSTRAINT "marketplace_reviews_listing_id_marketplace_listings_id_fk" FOREIGN KEY ("listing_id") REFERENCES "public"."marketplace_listings"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "marketplace_reviews" ADD CONSTRAINT "marketplace_reviews_seller_id_users_id_fk" FOREIGN KEY ("seller_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "marketplace_reviews" ADD CONSTRAINT "marketplace_reviews_reviewer_id_users_id_fk" FOREIGN KEY ("reviewer_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "notification_settings" ADD CONSTRAINT "notification_settings_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "plant_analyses" ADD CONSTRAINT "plant_analyses_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "plant_analyses" ADD CONSTRAINT "plant_analyses_field_id_fields_id_fk" FOREIGN KEY ("field_id") REFERENCES "public"."fields"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "plant_analyses" ADD CONSTRAINT "plant_analyses_crop_id_crops_id_fk" FOREIGN KEY ("crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "treatment_plans" ADD CONSTRAINT "treatment_plans_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "treatment_plans" ADD CONSTRAINT "treatment_plans_analysis_id_plant_analyses_id_fk" FOREIGN KEY ("analysis_id") REFERENCES "public"."plant_analyses"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "treatment_progress" ADD CONSTRAINT "treatment_progress_treatment_step_id_treatment_steps_id_fk" FOREIGN KEY ("treatment_step_id") REFERENCES "public"."treatment_steps"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "treatment_steps" ADD CONSTRAINT "treatment_steps_treatment_plan_id_treatment_plans_id_fk" FOREIGN KEY ("treatment_plan_id") REFERENCES "public"."treatment_plans"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "weather_preferences" ADD CONSTRAINT "weather_preferences_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+DO $$ BEGIN ALTER TABLE "crops" ADD COLUMN "field_size" text; EXCEPTION WHEN duplicate_column THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "crops" ADD COLUMN "size_unit" text DEFAULT 'hectares'; EXCEPTION WHEN duplicate_column THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "crops" ADD COLUMN "batch_id" text; EXCEPTION WHEN duplicate_column THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "crops" ADD COLUMN "seed_source" text; EXCEPTION WHEN duplicate_column THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "crops" ADD COLUMN "seed_variety" text; EXCEPTION WHEN duplicate_column THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "crops" ADD COLUMN "organic_certified" boolean DEFAULT false; EXCEPTION WHEN duplicate_column THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "crops" ADD COLUMN "certification_id" text; EXCEPTION WHEN duplicate_column THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "crops" ADD COLUMN "blockchain_tx_id" text; EXCEPTION WHEN duplicate_column THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "crops" ADD COLUMN "traceability_qr_code" text; EXCEPTION WHEN duplicate_column THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "ai_assistant_messages" ADD CONSTRAINT "ai_assistant_messages_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_cart_id_carts_id_fk" FOREIGN KEY ("cart_id") REFERENCES "public"."carts"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_listing_id_marketplace_listings_id_fk" FOREIGN KEY ("listing_id") REFERENCES "public"."marketplace_listings"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "carts" ADD CONSTRAINT "carts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_room_id_chat_rooms_id_fk" FOREIGN KEY ("room_id") REFERENCES "public"."chat_rooms"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_sender_id_users_id_fk" FOREIGN KEY ("sender_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "chat_room_members" ADD CONSTRAINT "chat_room_members_room_id_chat_rooms_id_fk" FOREIGN KEY ("room_id") REFERENCES "public"."chat_rooms"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "chat_room_members" ADD CONSTRAINT "chat_room_members_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "chat_rooms" ADD CONSTRAINT "chat_rooms_created_by_id_users_id_fk" FOREIGN KEY ("created_by_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "crop_trace_events" ADD CONSTRAINT "crop_trace_events_crop_id_crops_id_fk" FOREIGN KEY ("crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "crop_trace_events" ADD CONSTRAINT "crop_trace_events_performed_by_users_id_fk" FOREIGN KEY ("performed_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "crop_yield_predictions" ADD CONSTRAINT "crop_yield_predictions_crop_id_crops_id_fk" FOREIGN KEY ("crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "farmer_tasks" ADD CONSTRAINT "farmer_tasks_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "farmer_tasks" ADD CONSTRAINT "farmer_tasks_related_crop_id_crops_id_fk" FOREIGN KEY ("related_crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "farmer_tasks" ADD CONSTRAINT "farmer_tasks_related_field_id_fields_id_fk" FOREIGN KEY ("related_field_id") REFERENCES "public"."fields"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "marketplace_favorites" ADD CONSTRAINT "marketplace_favorites_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "marketplace_favorites" ADD CONSTRAINT "marketplace_favorites_listing_id_marketplace_listings_id_fk" FOREIGN KEY ("listing_id") REFERENCES "public"."marketplace_listings"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "marketplace_listings" ADD CONSTRAINT "marketplace_listings_seller_id_users_id_fk" FOREIGN KEY ("seller_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "marketplace_listings" ADD CONSTRAINT "marketplace_listings_location_id_locations_id_fk" FOREIGN KEY ("location_id") REFERENCES "public"."locations"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "marketplace_listings" ADD CONSTRAINT "marketplace_listings_source_crop_id_crops_id_fk" FOREIGN KEY ("source_crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "marketplace_messages" ADD CONSTRAINT "marketplace_messages_listing_id_marketplace_listings_id_fk" FOREIGN KEY ("listing_id") REFERENCES "public"."marketplace_listings"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "marketplace_messages" ADD CONSTRAINT "marketplace_messages_sender_id_users_id_fk" FOREIGN KEY ("sender_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "marketplace_messages" ADD CONSTRAINT "marketplace_messages_recipient_id_users_id_fk" FOREIGN KEY ("recipient_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "marketplace_reviews" ADD CONSTRAINT "marketplace_reviews_listing_id_marketplace_listings_id_fk" FOREIGN KEY ("listing_id") REFERENCES "public"."marketplace_listings"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "marketplace_reviews" ADD CONSTRAINT "marketplace_reviews_seller_id_users_id_fk" FOREIGN KEY ("seller_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "marketplace_reviews" ADD CONSTRAINT "marketplace_reviews_reviewer_id_users_id_fk" FOREIGN KEY ("reviewer_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "notification_settings" ADD CONSTRAINT "notification_settings_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "plant_analyses" ADD CONSTRAINT "plant_analyses_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "plant_analyses" ADD CONSTRAINT "plant_analyses_field_id_fields_id_fk" FOREIGN KEY ("field_id") REFERENCES "public"."fields"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "plant_analyses" ADD CONSTRAINT "plant_analyses_crop_id_crops_id_fk" FOREIGN KEY ("crop_id") REFERENCES "public"."crops"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "treatment_plans" ADD CONSTRAINT "treatment_plans_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "treatment_plans" ADD CONSTRAINT "treatment_plans_analysis_id_plant_analyses_id_fk" FOREIGN KEY ("analysis_id") REFERENCES "public"."plant_analyses"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "treatment_progress" ADD CONSTRAINT "treatment_progress_treatment_step_id_treatment_steps_id_fk" FOREIGN KEY ("treatment_step_id") REFERENCES "public"."treatment_steps"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "treatment_steps" ADD CONSTRAINT "treatment_steps_treatment_plan_id_treatment_plans_id_fk" FOREIGN KEY ("treatment_plan_id") REFERENCES "public"."treatment_plans"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;--> statement-breakpoint
+DO $$ BEGIN ALTER TABLE "weather_preferences" ADD CONSTRAINT "weather_preferences_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action; EXCEPTION WHEN duplicate_object THEN NULL; END $$;

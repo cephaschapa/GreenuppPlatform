@@ -19,6 +19,8 @@ import { setupLocationRoutes } from "./location-mvc.js";
 import { setupGeocodingRoutes } from "./geocoding-mvc.js";
 import { setupTreatmentRoutes } from "./treatment-mvc.js";
 import locationDetectionRoutes from "./location-detection.js";
+import homeRoutes from "./home.js";
+import decisionsRoutes from "./decisions.js";
 import blockchainRoutes from "./blockchain.js";
 import adminRoutes from "./admin.js";
 import adminAuthRoutes from "./admin-auth.js";
@@ -85,6 +87,12 @@ export function registerMvcRoutes(app: Express): void {
 
   // Location detection routes (accurate global location detection)
   app.use("/api/location", locationDetectionRoutes);
+
+  // Home: weather + decisions for dashboard
+  app.use("/api/home", homeRoutes);
+
+  // Decision actions (shown, act, ignore)
+  app.use("/api/decisions", decisionsRoutes);
 
   // Blockchain status and transaction routes
   app.use("/api/blockchain", blockchainRoutes);

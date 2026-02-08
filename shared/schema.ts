@@ -84,6 +84,7 @@ export const userPreferences = pgTable("user_preferences", {
 });
 
 // Farmer profiles table (extends user info for farmers)
+// farmLocationId resolved by LocationResolverService; farm_location text kept for UX
 export const farmerProfiles = pgTable("farmer_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")
@@ -91,6 +92,11 @@ export const farmerProfiles = pgTable("farmer_profiles", {
     .references(() => users.id),
   farmName: text("farm_name"),
   farmLocation: text("farm_location"),
+  farmLocationId: integer("farm_location_id"), // FK → locations.id (add in migration)
+  farmLocationSource: text("farm_location_source"), // user_text | zambian_db | openweather_geo | gps_field_inferred
+  farmLocationConfidence: text("farm_location_confidence"), // low | medium | high
+  farmLocationResolvedAt: timestamp("farm_location_resolved_at"),
+  farmLocationLastGeocodeError: text("farm_location_last_geocode_error"),
   farmSize: text("farm_size"),
   farmType: text("farm_type"),
   bio: text("bio"),
@@ -750,6 +756,58 @@ export const locations = pgTable("locations", {
   h3Index10: text("h3_index_10"), // Resolution 10 (~ 0.075km² hexagons)
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Weather snapshots (observation layer) – normalized forecast for reproducibility
+export const weatherSnapshots = pgTable("weather_snapshots", {
+  id: serial("id").primaryKey(),
+  locationId: integer("location_id").references(() => locations.id),
+  userId: integer("user_id").references(() => users.id),
+  locationName: text("location_name").notNull(),
+  lat: decimal("lat", { precision: 10, scale: 7 }).notNull(),
+  lng: decimal("lng", { precision: 10, scale: 7 }).notNull(),
+  source: text("source").notNull(), // openweather_2_5 | openweather_3_0 | zambian_database
+  forecastJson: jsonb("forecast_json").notNull(),
+  forecastFrom: timestamp("forecast_from"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Decisions (decision layer) – daily actionable recommendations
+export const decisions = pgTable("decisions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  scopeType: text("scope_type").notNull(), // field | crop | farm | general
+  fieldId: integer("field_id").references(() => fields.id),
+  cropId: integer("crop_id").references(() => crops.id),
+  decisionType: text("decision_type").notNull(),
+  title: text("title").notNull(),
+  summary: text("summary").notNull(),
+  priority: text("priority").notNull(), // high | medium | low
+  confidenceLevel: text("confidence_level").notNull(), // low | medium | high
+  confidenceScore: decimal("confidence_score", { precision: 5, scale: 2 }),
+  whyText: text("why_text").notNull(),
+  whyPayload: jsonb("why_payload"),
+  triggerType: text("trigger_type").notNull(),
+  triggerRefId: integer("trigger_ref_id"),
+  rulesetVersion: text("ruleset_version").notNull(),
+  status: text("status").notNull().default("generated"),
+  expiresAt: timestamp("expires_at").notNull(),
+  shownAt: timestamp("shown_at"),
+  actedAt: timestamp("acted_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Analytics events (append-only; table name avoids conflict with social "events")
+export const events = pgTable("analytics_events", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  sessionId: text("session_id"),
+  deviceId: text("device_id"),
+  eventName: text("event_name").notNull(),
+  entityType: text("entity_type"),
+  entityId: integer("entity_id"),
+  properties: jsonb("properties"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 // Marketplace listings table
