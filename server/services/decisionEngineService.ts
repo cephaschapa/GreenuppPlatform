@@ -306,6 +306,46 @@ export async function generateAndPersistDecisions(
 }
 
 /**
+ * Create a single decision linked to a plant analysis (diagnosis follow-up).
+ * Called after a new analysis is created so it appears on home as a recommended action.
+ */
+export async function createDiagnosisFollowUpDecision(
+  userId: number,
+  analysisId: number,
+  options: { fieldId?: number | null; cropId?: number | null; diseaseDetected?: string | null }
+): Promise<{ id: number } | null> {
+  const expiresAt = new Date(Date.now() + DEFAULT_EXPIRES_HOURS * 60 * 60 * 1000);
+  const title = options.diseaseDetected
+    ? `Review diagnosis: ${options.diseaseDetected}`
+    : "Review your plant analysis";
+  const summary = "Follow up on your diagnosis and treatment recommendations.";
+  const whyText = "You submitted a plant analysis. Review the results and any treatment steps.";
+  const [inserted] = await db
+    .insert(decisions)
+    .values({
+      userId,
+      scopeType: options.fieldId != null ? "field" : options.cropId != null ? "crop" : "general",
+      fieldId: options.fieldId ?? null,
+      cropId: options.cropId ?? null,
+      decisionType: "inspect",
+      title,
+      summary,
+      priority: "medium",
+      confidenceLevel: "medium",
+      confidenceScore: "0.80",
+      whyText,
+      whyPayload: { analysisId, diseaseDetected: options.diseaseDetected ?? null },
+      triggerType: "diagnosis",
+      triggerRefId: analysisId,
+      rulesetVersion: RULESET_VERSION,
+      status: "generated",
+      expiresAt,
+    })
+    .returning({ id: decisions.id });
+  return inserted ?? null;
+}
+
+/**
  * Get today's non-expired decisions for a user.
  */
 export async function getActiveDecisions(userId: number): Promise<Array<{

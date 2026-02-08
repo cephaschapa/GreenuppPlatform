@@ -313,6 +313,20 @@ export class PlantAnalysisController {
       insertPlantAnalysisSchema.parse(plantAnalysisData);
       const saved = await PlantAnalysisModel.create(plantAnalysisData);
 
+      // Emit a diagnosis follow-up decision so it appears on home (architecture §4.4)
+      try {
+        const { createDiagnosisFollowUpDecision } = await import(
+          "../services/decisionEngineService.js"
+        );
+        await createDiagnosisFollowUpDecision(saved.userId, saved.id, {
+          fieldId: saved.fieldId ?? undefined,
+          cropId: saved.cropId ?? undefined,
+          diseaseDetected: saved.diseaseDetected ?? undefined,
+        });
+      } catch (decisionErr) {
+        logger.warn("Diagnosis follow-up decision creation failed", { analysisId: saved.id, err: decisionErr });
+      }
+
       // Pest/disease reporting: only run when explicitly requested (reduces API/DB load after diagnosis)
       const runPestReport = requestPestReport === true || requestPestReport === "true";
       if (runPestReport) {
