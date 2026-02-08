@@ -40,7 +40,12 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     const farmerProfile = await profileModel.getFarmerProfile(userId);
     const farmLocationText = farmerProfile?.farmLocation ?? null;
 
-    const location = await resolveFarmLocation(userId, farmLocationText);
+    let location: Awaited<ReturnType<typeof resolveFarmLocation>> = null;
+    try {
+      location = await resolveFarmLocation(userId, farmLocationText);
+    } catch (locErr: any) {
+      logger.warn("GET /api/home: resolveFarmLocation failed", { userId, err: locErr?.message });
+    }
     const locationLabel = location?.locationName ?? farmLocationText ?? "Unknown";
 
     let weather: {
@@ -55,8 +60,12 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     } | null = null;
 
     if (location) {
-      const { summary } = await getOrCreateWeatherSnapshot(userId, location);
-      weather = summary;
+      try {
+        const { summary } = await getOrCreateWeatherSnapshot(userId, location);
+        weather = summary;
+      } catch (weatherErr: any) {
+        logger.warn("GET /api/home: getOrCreateWeatherSnapshot failed", { userId, err: weatherErr?.message });
+      }
     }
 
     let decisionsList = await getActiveDecisions(userId);

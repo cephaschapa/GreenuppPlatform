@@ -77,7 +77,8 @@ export async function getOrCreateWeatherSnapshot(
 ): Promise<{ snapshot: WeatherSnapshotRow; summary: WeatherSummary }> {
   const lat = location.latitude ?? "0";
   const lng = location.longitude ?? "0";
-  const locationQuery = location.locationName || `${lat},${lng}`;
+  const hasCoords = lat !== "0" && lng !== "0" && parseFloat(lat) !== 0 && parseFloat(lng) !== 0;
+  const locationQuery = hasCoords ? `${lat},${lng}` : (location.locationName || `${lat},${lng}`);
 
   const existing = await findRecentSnapshot(
     location.id,
