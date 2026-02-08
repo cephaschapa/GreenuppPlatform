@@ -344,8 +344,12 @@ async function getTomorrowRealtime(lat: number, lon: number): Promise<{
 /**
  * Fetch weather from Tomorrow.io (primary – better accuracy).
  * Uses realtime for current conditions and forecast for daily; throws on failure so caller can fall back to OpenWeather.
+ * timezone: optional IANA timezone (e.g. Africa/Lusaka) so forecast dates use the user's "today".
  */
-async function getWeatherDataTomorrow(geoData: GeoLocation): Promise<WeatherData> {
+async function getWeatherDataTomorrow(
+  geoData: GeoLocation,
+  timezone?: string
+): Promise<WeatherData> {
   if (!TOMORROW_IO_API_KEY) throw new Error("Tomorrow.io API key not configured");
   const locationParam = `${geoData.lat},${geoData.lon}`;
   const locationName = `${geoData.name}, ${geoData.country}`;
@@ -422,12 +426,13 @@ async function getWeatherDataTomorrow(geoData: GeoLocation): Promise<WeatherData
   const forecast = daily.slice(0, 14).map((day: any) => {
     const vals = day.values ?? day;
     const date = new Date(day.time || day.startTime);
+    const { dateStr, dayOfWeek } = formatDateInTz(date, timezone);
     const precip = vals.precipitationProbability ?? vals.precipitation ?? 0;
     const precipPct = precip <= 1 ? precip * 100 : precip;
     const dayCondition = tomorrowWeatherCodeToCondition(vals.weatherCode ?? 1101);
     return {
-      date: date.toLocaleDateString(),
-      dayOfWeek: date.toLocaleDateString("en-US", { weekday: "short" }),
+      date: dateStr,
+      dayOfWeek,
       temp: {
         day: vals.temperature ?? vals.temperatureMax ?? 20,
         min: vals.temperatureMin ?? 18,
@@ -496,12 +501,14 @@ async function getWeatherDataTomorrow(geoData: GeoLocation): Promise<WeatherData
 
 /**
  * Get weather data using FREE tier OpenWeather API (current + 5-day forecast)
- * This is a fallback when One Call API 3.0 is not available
+ * This is a fallback when One Call API 3.0 is not available.
+ * timezone: optional IANA timezone so daily grouping and labels use the user's "today".
  */
 async function getWeatherDataFreeTier(
   lat: number,
   lon: number,
-  locationName: string
+  locationName: string,
+  timezone?: string
 ): Promise<WeatherData> {
   // Fetch current weather
   const currentResponse = await axios.get(
@@ -532,21 +539,25 @@ async function getWeatherDataFreeTier(
   const current = currentResponse.data;
   const forecastData = forecastResponse.data;
 
-  // Group forecast by day
+  // Group forecast by day (in user's timezone so "today" is correct)
   const dailyForecasts: { [key: string]: any[] } = {};
+  const tzOpts = timezone ? { timeZone: timezone } : {};
 
   forecastData.list.forEach((item: any) => {
-    const date = new Date(item.dt * 1000).toLocaleDateString();
+    const date = new Date(item.dt * 1000).toLocaleDateString("en-US", tzOpts);
     if (!dailyForecasts[date]) {
       dailyForecasts[date] = [];
     }
     dailyForecasts[date].push(item);
   });
 
+  // Sort by date so order is today, tomorrow, ... then take first 7
+  const sortedEntries = Object.entries(dailyForecasts).sort(
+    (a, b) => (a[1][0]?.dt ?? 0) - (b[1][0]?.dt ?? 0)
+  );
+
   // Process daily forecasts
-  const forecast = Object.entries(dailyForecasts)
-    .slice(0, 7)
-    .map(([date, items]) => {
+  const forecast = sortedEntries.slice(0, 7).map(([date, items]) => {
       const temps = items.map((item: any) => item.main.temp);
       const minTemp = Math.min(...temps);
       const maxTemp = Math.max(...temps);
@@ -571,12 +582,14 @@ async function getWeatherDataFreeTier(
         .pop();
 
       const firstItem = items[0];
+      const dayOfWeek = new Date(firstItem.dt * 1000).toLocaleDateString("en-US", {
+        weekday: "short",
+        ...tzOpts,
+      });
 
       return {
-        date: date,
-        dayOfWeek: new Date(firstItem.dt * 1000).toLocaleDateString("en-US", {
-          weekday: "short",
-        }),
+        date,
+        dayOfWeek,
         temp: {
           day: avgTemp,
           min: minTemp,
@@ -631,13 +644,31 @@ async function getWeatherDataFreeTier(
   return weatherData;
 }
 
+/** Format a Date or timestamp (seconds) in the user's timezone for consistent "today" across 7-day forecast */
+function formatDateInTz(
+  dateOrSeconds: Date | number,
+  timezone?: string
+): { dateStr: string; dayOfWeek: string } {
+  const date = typeof dateOrSeconds === "number" ? new Date(dateOrSeconds * 1000) : dateOrSeconds;
+  const opts = timezone ? { timeZone: timezone } : {};
+  return {
+    dateStr: date.toLocaleDateString("en-US", opts),
+    dayOfWeek: date.toLocaleDateString("en-US", { weekday: "short", ...opts }),
+  };
+}
+
 /**
- * Get current weather and forecast for a location
+ * Get current weather and forecast for a location.
+ * Pass timezone (e.g. "Africa/Lusaka") so the 7-day forecast uses the user's "today" and day boundaries.
  */
-export async function getWeatherData(location: string): Promise<WeatherData> {
+export async function getWeatherData(
+  location: string,
+  options?: { timezone?: string }
+): Promise<WeatherData> {
+  const tz = options?.timezone;
   try {
-    // Check cache first
-    const cacheKey = `weather:${location}`;
+    // Check cache first (include tz in key so dates match user's locale)
+    const cacheKey = `weather:${location}:${tz ?? ""}`;
     const cached = weatherCache[cacheKey];
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
       return cached.data as unknown as WeatherData;
@@ -679,7 +710,7 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
     // Primary: Tomorrow.io (better accuracy)
     if (TOMORROW_IO_API_KEY) {
       try {
-        weatherData = await getWeatherDataTomorrow(geoData);
+        weatherData = await getWeatherDataTomorrow(geoData, tz);
         weatherCache[cacheKey] = { data: weatherData, timestamp: Date.now() };
         return weatherData;
       } catch (tomorrowErr: any) {
@@ -729,10 +760,10 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
           sunset: data.current.sunset,
         },
         forecast: data.daily.map((day: any) => {
-          const date = new Date(day.dt * 1000);
+          const { dateStr, dayOfWeek } = formatDateInTz(day.dt, tz);
           return {
-            date: date.toLocaleDateString(),
-            dayOfWeek: date.toLocaleDateString("en-US", { weekday: "short" }),
+            date: dateStr,
+            dayOfWeek,
             temp: {
               day: day.temp.day,
               min: day.temp.min,
@@ -780,7 +811,8 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
         weatherData = await getWeatherDataFreeTier(
           geoData.lat,
           geoData.lon,
-          `${geoData.name}, ${geoData.country}`
+          `${geoData.name}, ${geoData.country}`,
+          tz
         );
       } else {
         throw onecallError;

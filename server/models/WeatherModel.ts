@@ -4,9 +4,9 @@ import { eq } from "drizzle-orm";
 
 export class WeatherModel {
   // Weather API methods (these would call external APIs or internal services)
-  static async getWeatherData(location: string) {
-    const { getWeatherData } = await import("../weather");
-    return getWeatherData(location);
+  static async getWeatherData(location: string, options?: { timezone?: string }) {
+    const { getWeatherData } = await import("../weather.js");
+    return getWeatherData(location, options);
   }
 
   static async getHistoricalWeatherData(

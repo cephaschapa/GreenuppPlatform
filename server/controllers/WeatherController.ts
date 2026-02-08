@@ -15,9 +15,10 @@ export class WeatherController {
           .json({ message: "Location parameter is required" });
       }
       const locStr = String(location);
+      const tz = typeof req.query.tz === "string" ? req.query.tz : undefined;
       const isCoords = /^-?\d+\.?\d*,\s*-?\d+\.?\d*$/.test(locStr.trim());
-      logger.info("GET /api/weather", { location: isCoords ? "lat,lon" : locStr.slice(0, 80), isCoords });
-      const data = await WeatherModel.getWeatherData(locStr);
+      logger.info("GET /api/weather", { location: isCoords ? "lat,lon" : locStr.slice(0, 80), isCoords, tz: tz ?? "(server)" });
+      const data = await WeatherModel.getWeatherData(locStr, { timezone: tz });
       res.json(data);
     } catch (error) {
       res.status(500).json({
