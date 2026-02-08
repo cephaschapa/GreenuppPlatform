@@ -10,7 +10,10 @@ import { getElevation } from "./services/elevationService";
 import { getSoilData } from "./services/soilDataService";
 import { eq } from "drizzle-orm";
 
-// We'll use OpenWeatherMap API as it provides both current, forecast and historical data
+// Primary: Tomorrow.io (accuracy). Fallback: OpenWeatherMap
+const TOMORROW_IO_API_KEY = process.env.TOMORROW_IO_API_KEY;
+const TOMORROW_IO_BASE_URL = "https://api.tomorrow.io/v4/weather";
+
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 const OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/3.0";
 const OPENWEATHER_BASE_URL_FREE = "https://api.openweathermap.org/data/2.5"; // Free tier API
@@ -254,6 +257,129 @@ export async function geocodeLocation(location: string): Promise<GeoLocation> {
   }
 }
 
+/** Map Tomorrow.io weatherCode (WMO) to our condition string */
+function tomorrowWeatherCodeToCondition(code: number): string {
+  const map: Record<number, string> = {
+    0: "Unknown",
+    1000: "Clear",
+    1001: "Cloudy",
+    1100: "Mostly Clear",
+    1101: "Partly Cloudy",
+    1102: "Mostly Cloudy",
+    2000: "Fog",
+    2100: "Light Fog",
+    4000: "Drizzle",
+    4001: "Rain",
+    4200: "Light Rain",
+    4201: "Heavy Rain",
+    5000: "Snow",
+    5001: "Flurries",
+    5100: "Light Snow",
+    5101: "Heavy Snow",
+    6000: "Freezing Drizzle",
+    6001: "Freezing Rain",
+    6200: "Light Freezing Rain",
+    6201: "Heavy Freezing Rain",
+    7000: "Ice Pellets",
+    7101: "Heavy Ice Pellets",
+    8000: "Thunderstorm",
+  };
+  return map[code] ?? "Partly Cloudy";
+}
+
+/**
+ * Fetch weather from Tomorrow.io (primary – better accuracy).
+ * Returns our WeatherData shape; throws on failure so caller can fall back to OpenWeather.
+ */
+async function getWeatherDataTomorrow(geoData: GeoLocation): Promise<WeatherData> {
+  if (!TOMORROW_IO_API_KEY) throw new Error("Tomorrow.io API key not configured");
+  const locationParam = `${geoData.lat},${geoData.lon}`;
+  const url = `${TOMORROW_IO_BASE_URL}/forecast`;
+  const response = await axios.get(url, {
+    params: {
+      location: locationParam,
+      apikey: TOMORROW_IO_API_KEY,
+      units: "metric",
+      timesteps: "1d",
+    },
+    timeout: 15000,
+  });
+
+  const data = response.data;
+  const locationName = `${geoData.name}, ${geoData.country}`;
+
+  // v4 forecast can return timelines.daily or data.daily or intervals
+  let daily: Array<{ time: string; values: Record<string, number> }> = [];
+  if (data?.timelines?.daily) {
+    daily = data.timelines.daily;
+  } else if (data?.timelines?.[0]?.intervals) {
+    daily = data.timelines[0].intervals.map((i: any) => ({
+      time: i.startTime ?? i.time,
+      values: i.values ?? i,
+    }));
+  } else if (Array.isArray(data?.daily)) {
+    daily = data.daily.map((d: any) => ({ time: d.time, values: d.values ?? d }));
+  }
+  if (daily.length === 0) throw new Error("Tomorrow.io: no daily forecast");
+
+  const first = daily[0];
+  const v = first.values || (first as any);
+  const temp = v.temperature ?? v.temperatureMax ?? v.temperatureMin ?? 20;
+  const tempMin = v.temperatureMin ?? temp - 2;
+  const tempMax = v.temperatureMax ?? temp + 2;
+  const weatherCode = v.weatherCode ?? 1101;
+  const condition = tomorrowWeatherCodeToCondition(weatherCode);
+
+  const forecast = daily.slice(0, 14).map((day: any) => {
+    const vals = day.values ?? day;
+    const date = new Date(day.time || day.startTime);
+    const precip = vals.precipitationProbability ?? vals.precipitation ?? 0;
+    const precipPct = precip <= 1 ? precip * 100 : precip;
+    const dayCondition = tomorrowWeatherCodeToCondition(vals.weatherCode ?? 1101);
+    return {
+      date: date.toLocaleDateString(),
+      dayOfWeek: date.toLocaleDateString("en-US", { weekday: "short" }),
+      temp: {
+        day: vals.temperature ?? vals.temperatureMax ?? 20,
+        min: vals.temperatureMin ?? 18,
+        max: vals.temperatureMax ?? 25,
+      },
+      humidity: vals.humidity ?? 60,
+      windSpeed: vals.windSpeed ?? 0,
+      condition: dayCondition,
+      description: dayCondition,
+      icon: "",
+      precipitation: precipPct,
+      sunrise: 0,
+      sunset: 0,
+    };
+  });
+
+  const current = {
+    temp,
+    feelsLike: v.temperatureApparent ?? temp,
+    humidity: v.humidity ?? 60,
+    windSpeed: v.windSpeed ?? 0,
+    condition,
+    description: condition,
+    icon: "",
+    cloudCover: v.cloudCover ?? 0,
+    uv: v.uvIndex ?? 0,
+    pressure: v.pressureSurfaceLevel ?? 1013,
+    visibility: (v.visibility ?? 10) * 1000,
+    timestamp: Math.floor(new Date(first.time || first.startTime).getTime() / 1000),
+    sunrise: v.sunriseTime,
+    sunset: v.sunsetTime,
+  };
+
+  return {
+    location: locationName,
+    coordinates: { lat: geoData.lat, lon: geoData.lon },
+    current,
+    forecast,
+  };
+}
+
 /**
  * Get weather data using FREE tier OpenWeather API (current + 5-day forecast)
  * This is a fallback when One Call API 3.0 is not available
@@ -421,12 +547,23 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
       geoData = await geocodeLocation(location);
     }
 
-    // Check if we need to use the API key
-    if (!OPENWEATHER_API_KEY) {
-      throw new Error("OpenWeather API key not configured");
+    let weatherData: WeatherData;
+
+    // Primary: Tomorrow.io (better accuracy)
+    if (TOMORROW_IO_API_KEY) {
+      try {
+        weatherData = await getWeatherDataTomorrow(geoData);
+        weatherCache[cacheKey] = { data: weatherData, timestamp: Date.now() };
+        return weatherData;
+      } catch (tomorrowErr: any) {
+        console.warn("Tomorrow.io weather failed, falling back to OpenWeather:", tomorrowErr?.message ?? tomorrowErr);
+      }
     }
 
-    let weatherData: WeatherData;
+    // Fallback: OpenWeather
+    if (!OPENWEATHER_API_KEY) {
+      throw new Error("Weather API key not configured (set TOMORROW_IO_API_KEY or OPENWEATHER_API_KEY)");
+    }
 
     // Try One Call API 3.0 first (paid tier)
     try {
