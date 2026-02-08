@@ -80,6 +80,14 @@ interface WeatherData {
     sunrise: number;
     sunset: number;
   }>;
+  /** Hourly (or 3-hourly) forecast for next 24–48h; intervalMinutes set when step is 3h (e.g. free tier) */
+  hourly?: Array<{
+    time: number;
+    temp: number;
+    condition: string;
+    precipitation?: number;
+    icon?: string;
+  }>;
   alerts?: Array<{
     senderName: string;
     event: string;
@@ -406,7 +414,7 @@ async function getWeatherDataTomorrow(geoData: GeoLocation): Promise<WeatherData
         uv: v.uvIndex ?? 0,
         pressure: v.pressureSurfaceLevel ?? 1013,
         visibility: (v.visibility ?? 10) * 1000,
-        timestamp: Math.floor(new Date(first.time || first.startTime).getTime() / 1000),
+        timestamp: Math.floor(new Date((first.time ?? first.startTime) ?? Date.now()).getTime() / 1000),
         sunrise: v.sunriseTime,
         sunset: v.sunsetTime,
       };
@@ -436,11 +444,53 @@ async function getWeatherDataTomorrow(geoData: GeoLocation): Promise<WeatherData
     };
   });
 
+  // 3) Hourly forecast (next 24h from Tomorrow.io)
+  let hourly: WeatherData["hourly"] = [];
+  try {
+    const hourlyResponse = await axios.get(`${TOMORROW_IO_BASE_URL}/forecast`, {
+      params: {
+        location: locationParam,
+        apikey: TOMORROW_IO_API_KEY,
+        units: "metric",
+        timesteps: "1h",
+      },
+      timeout: 10000,
+    });
+    const hData = hourlyResponse.data?.data ?? hourlyResponse.data;
+    let hourlyIntervals: Array<{ time: string; startTime?: string; values: Record<string, number> }> = [];
+    if (hData?.timelines?.hourly) {
+      hourlyIntervals = hData.timelines.hourly;
+    } else if (Array.isArray(hData?.timelines) && hData.timelines[0]?.intervals) {
+      hourlyIntervals = hData.timelines[0].intervals.map((i: any) => ({
+        time: i.startTime ?? i.time,
+        startTime: i.startTime,
+        values: i.values ?? i,
+      }));
+    }
+    hourly = hourlyIntervals.slice(0, 24).map((h: any) => {
+      const v = h.values ?? h;
+      const timeStr = h.time ?? h.startTime;
+      const t = timeStr ? new Date(timeStr).getTime() / 1000 : Math.floor(Date.now() / 1000);
+      const precip = v.precipitationProbability ?? v.precipitation ?? 0;
+      const precipPct = precip <= 1 ? precip * 100 : precip;
+      return {
+        time: Math.floor(t),
+        temp: v.temperature ?? 20,
+        condition: tomorrowWeatherCodeToCondition(v.weatherCode ?? 1101),
+        precipitation: precipPct,
+        icon: undefined,
+      };
+    });
+  } catch (_) {
+    // hourly optional
+  }
+
   return {
     location: locationName,
     coordinates: { lat: geoData.lat, lon: geoData.lon },
     current,
     forecast,
+    hourly: hourly.length > 0 ? hourly : undefined,
   };
 }
 
@@ -543,6 +593,15 @@ async function getWeatherDataFreeTier(
       };
     });
 
+  // Free tier: 3-hour steps from forecast list → use as "hourly" (next 24h = 8 slots)
+  const hourly: WeatherData["hourly"] = forecastData.list.slice(0, 8).map((item: any) => ({
+    time: item.dt,
+    temp: item.main.temp,
+    condition: item.weather?.[0]?.main ?? "Clear",
+    precipitation: (item.pop ?? 0) * 100,
+    icon: item.weather?.[0]?.icon,
+  }));
+
   const weatherData: WeatherData = {
     location: locationName,
     coordinates: {
@@ -566,6 +625,7 @@ async function getWeatherDataFreeTier(
       sunset: current.sys?.sunset,
     },
     forecast,
+    hourly,
   };
 
   return weatherData;
@@ -639,7 +699,7 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
           lat: geoData.lat,
           lon: geoData.lon,
           units: "metric",
-          exclude: "minutely,hourly",
+          exclude: "minutely",
           appid: OPENWEATHER_API_KEY,
         },
       });
@@ -688,6 +748,15 @@ export async function getWeatherData(location: string): Promise<WeatherData> {
             sunset: day.sunset,
           };
         }),
+        hourly: Array.isArray(data.hourly)
+          ? data.hourly.slice(0, 24).map((h: any) => ({
+              time: h.dt,
+              temp: h.temp,
+              condition: h.weather?.[0]?.main ?? "Clear",
+              precipitation: (h.pop ?? 0) * 100,
+              icon: h.weather?.[0]?.icon,
+            }))
+          : undefined,
       };
 
       // Add alerts if present
