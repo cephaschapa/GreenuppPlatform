@@ -794,6 +794,11 @@ export const decisions = pgTable("decisions", {
   expiresAt: timestamp("expires_at").notNull(),
   shownAt: timestamp("shown_at"),
   actedAt: timestamp("acted_at"),
+  /** Micro feedback: true = helpful, false = not helpful */
+  feedbackHelpful: boolean("feedback_helpful"),
+  /** Optional reason when feedbackHelpful is false */
+  feedbackReason: text("feedback_reason"),
+  feedbackAt: timestamp("feedback_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

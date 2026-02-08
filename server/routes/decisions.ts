@@ -99,4 +99,39 @@ router.post("/:id/ignore", async (req: Request, res: Response): Promise<void> =>
   }
 });
 
+/** POST /api/decisions/:id/feedback — micro feedback: helpful (true) or not helpful (false) + optional reason */
+router.post("/:id/feedback", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = getUserId(req);
+    if (!userId) {
+      res.status(401).json({ message: "Not authenticated" });
+      return;
+    }
+    const decision = await getDecisionForUser(req.params.id, userId);
+    if (!decision) {
+      res.status(404).json({ message: "Decision not found" });
+      return;
+    }
+    const body = req.body as { helpful?: boolean; reason?: string };
+    const helpful = body.helpful === true || body.helpful === false ? body.helpful : undefined;
+    if (helpful === undefined) {
+      res.status(400).json({ message: "Body must include helpful: true or helpful: false" });
+      return;
+    }
+    const reason = typeof body.reason === "string" ? body.reason.trim().slice(0, 500) : null;
+    await db
+      .update(decisions)
+      .set({
+        feedbackHelpful: helpful,
+        feedbackReason: reason ?? null,
+        feedbackAt: new Date(),
+      })
+      .where(eq(decisions.id, decision.id));
+    res.json({ ok: true });
+  } catch (err: any) {
+    logger.error("POST /api/decisions/:id/feedback failed", { err: err?.message });
+    res.status(500).json({ message: "Failed to save feedback" });
+  }
+});
+
 export default router;
