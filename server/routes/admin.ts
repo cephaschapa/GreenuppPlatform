@@ -23,6 +23,7 @@ import {
   farmerTasks,
   carts,
   plantAnalyses,
+  events as analyticsEvents,
 } from "@shared/schema";
 import { eq, desc, count, sql } from "drizzle-orm";
 
@@ -352,6 +353,48 @@ router.patch("/users/:id", async (req, res) => {
   } catch (error) {
     logger.error("Error updating user:", error);
     res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
+/**
+ * GET /api/admin/events
+ * List recent analytics_events (app_opened, decision_shown, etc.) for retention/funnel view.
+ * Query: limit (default 100, max 500), offset (default 0), eventName (optional filter).
+ */
+router.get("/events", async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(String(req.query.limit || "100"), 10) || 100, 500);
+    const offset = parseInt(String(req.query.offset || "0"), 10) || 0;
+    const eventName = typeof req.query.eventName === "string" && req.query.eventName.trim()
+      ? req.query.eventName.trim()
+      : null;
+
+    const whereClause = eventName ? eq(analyticsEvents.eventName, eventName) : undefined;
+
+    let listQuery = db
+      .select()
+      .from(analyticsEvents)
+      .orderBy(desc(analyticsEvents.createdAt))
+      .limit(limit)
+      .offset(offset);
+    if (whereClause) listQuery = listQuery.where(whereClause);
+    const list = await listQuery;
+
+    let countQuery = db.select({ count: count() }).from(analyticsEvents);
+    if (whereClause) countQuery = countQuery.where(whereClause);
+    const [totalRow] = await countQuery;
+
+    res.json({
+      events: list,
+      pagination: {
+        limit,
+        offset,
+        total: totalRow?.count ?? 0,
+      },
+    });
+  } catch (err: any) {
+    logger.error("GET /api/admin/events failed", { err: err?.message ?? err });
+    res.status(500).json({ message: "Failed to list events", error: err?.message ?? "Unknown error" });
   }
 });
 

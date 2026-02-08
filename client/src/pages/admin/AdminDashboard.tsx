@@ -187,11 +187,24 @@ export default function AdminDashboard() {
     },
   });
 
+  const [eventsFilter, setEventsFilter] = useState("");
+  const { data: eventsData, isLoading: eventsLoading } = useQuery({
+    queryKey: ["admin-events", eventsFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams({ limit: "200" });
+      if (eventsFilter.trim()) params.set("eventName", eventsFilter.trim());
+      const response = await apiRequest("GET", `/api/admin/events?${params}`);
+      return response.json();
+    },
+    enabled: activeTab === "events",
+  });
+
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
     queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     queryClient.invalidateQueries({ queryKey: ["admin-analytics"] });
     queryClient.invalidateQueries({ queryKey: ["admin-content"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-events"] });
     toast({
       title: "Dashboard refreshed",
       description: "All data has been updated",
@@ -490,7 +503,7 @@ export default function AdminDashboard() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="user-map">
@@ -504,6 +517,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="pest-outbreaks">
               <Bug className="h-4 w-4 mr-2" />
               Pest Outbreaks
+            </TabsTrigger>
+            <TabsTrigger value="events">
+              <Activity className="h-4 w-4 mr-2" />
+              Events
             </TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
@@ -932,6 +949,73 @@ export default function AdminDashboard() {
           </TabsContent>
 
           {/* Analytics Tab */}
+          <TabsContent value="events" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  App &amp; decision events
+                </CardTitle>
+                <div className="flex items-center gap-2 pt-2">
+                  <Input
+                    placeholder="Filter by event name (e.g. app_open, decision_acted)"
+                    value={eventsFilter}
+                    onChange={(e) => setEventsFilter(e.target.value)}
+                    className="max-w-md"
+                  />
+                  <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-events"] })}>
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {eventsLoading ? (
+                  <div className="flex items-center justify-center h-32">
+                    <RefreshCw className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Time</TableHead>
+                          <TableHead>Event</TableHead>
+                          <TableHead>User ID</TableHead>
+                          <TableHead>Entity</TableHead>
+                          <TableHead className="max-w-[200px]">Properties</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(eventsData?.events ?? []).map((ev: any) => (
+                          <TableRow key={ev.id}>
+                            <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                              {ev.createdAt ? new Date(ev.createdAt).toLocaleString() : "—"}
+                            </TableCell>
+                            <TableCell className="font-medium">{ev.eventName}</TableCell>
+                            <TableCell>{ev.userId ?? "—"}</TableCell>
+                            <TableCell>
+                              {ev.entityType || ev.entityId
+                                ? [ev.entityType, ev.entityId].filter(Boolean).join(" ")
+                                : "—"}
+                            </TableCell>
+                            <TableCell className="text-xs truncate max-w-[200px]" title={ev.properties ? JSON.stringify(ev.properties) : ""}>
+                              {ev.properties ? JSON.stringify(ev.properties) : "—"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {eventsData?.pagination && (
+                      <div className="p-2 text-sm text-muted-foreground">
+                        Showing {eventsData.events?.length ?? 0} of {eventsData.pagination.total}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="analytics" className="space-y-6">
             <Card>
               <CardHeader>

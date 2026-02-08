@@ -69,22 +69,25 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
       }
     }
 
+    const [tasks, fields, allCrops] = await Promise.all([
+      TaskModel.findByUserId(userId),
+      FieldModel.findByUserId(userId),
+      CropModel.findByUserId(userId),
+    ]);
+    const cropsByFieldId = new Map<number, Crop[]>();
+    for (const c of allCrops) {
+      if (c.fieldId != null) {
+        const arr = cropsByFieldId.get(c.fieldId) ?? [];
+        arr.push(c);
+        cropsByFieldId.set(c.fieldId, arr);
+      }
+    }
+
     let decisionsList = await getActiveDecisions(userId);
     if (decisionsList.length === 0) {
       const snapshot = location
         ? (await getLatestSnapshotForUser(userId))
         : null;
-      const tasks = await TaskModel.findByUserId(userId);
-      const fields = await FieldModel.findByUserId(userId);
-      const allCrops = await CropModel.findByUserId(userId);
-      const cropsByFieldId = new Map<number, Crop[]>();
-      for (const c of allCrops) {
-        if (c.fieldId != null) {
-          const arr = cropsByFieldId.get(c.fieldId) ?? [];
-          arr.push(c);
-          cropsByFieldId.set(c.fieldId, arr);
-        }
-      }
       await generateAndPersistDecisions(
         userId,
         snapshot,
@@ -129,11 +132,42 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
       }
     }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(today);
+    todayEnd.setDate(todayEnd.getDate() + 1);
+    const in7Days = new Date(today);
+    in7Days.setDate(in7Days.getDate() + 7);
+
+    let overdue = 0;
+    let dueSoon = 0;
+    for (const t of tasks as Task[]) {
+      if (t.completed) continue;
+      const due = new Date(t.dueDate);
+      if (due < todayEnd) overdue += 1;
+      else if (due <= in7Days) dueSoon += 1;
+    }
+
+    const precipToday = weather?.precipitationToday ?? 0;
+    const weatherRisk = precipToday >= 50;
+    const fieldsPreview = fields.map((f) => {
+      const fieldCrops = cropsByFieldId.get(f.id) ?? [];
+      const first = fieldCrops[0];
+      const cropLabel = first ? (first.name || (first as Crop).variety || "—") : "—";
+      return {
+        fieldId: f.id,
+        crop: cropLabel,
+        status: weatherRisk ? "Weather risk" : "OK",
+      };
+    });
+
     res.json({
       locationLabel,
       weather: weather ?? null,
       weatherAtCurrentLocation: weatherAtCurrentLocation ?? null,
       decisions,
+      fieldsPreview,
+      tasksSummary: { overdue, dueSoon },
     });
   } catch (err: any) {
     logger.error("GET /api/home failed", { err: err?.message ?? err });
