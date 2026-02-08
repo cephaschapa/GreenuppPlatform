@@ -21,6 +21,7 @@ import { setupTreatmentRoutes } from "./treatment-mvc.js";
 import locationDetectionRoutes from "./location-detection.js";
 import homeRoutes from "./home.js";
 import decisionsRoutes from "./decisions.js";
+import eventsRoutes from "./events.js";
 import blockchainRoutes from "./blockchain.js";
 import adminRoutes from "./admin.js";
 import adminAuthRoutes from "./admin-auth.js";
@@ -93,6 +94,9 @@ export function registerMvcRoutes(app: Express): void {
 
   // Decision actions (shown, act, ignore)
   app.use("/api/decisions", decisionsRoutes);
+
+  // Analytics events (batch ingestion for retention/funnel)
+  app.use("/api/events", eventsRoutes);
 
   // Blockchain status and transaction routes
   app.use("/api/blockchain", blockchainRoutes);

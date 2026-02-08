@@ -23,6 +23,7 @@ import type { Task } from "../models/TaskModel.js";
 import type { Field } from "../models/FieldModel.js";
 import type { Crop } from "../models/CropModel.js";
 import { logger } from "../lib/logger.js";
+import { getWeatherData } from "../weather.js";
 
 const router = Router();
 router.use(isAuthenticated);
@@ -105,9 +106,33 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
       expiresAt: d.expiresAt,
     }));
 
+    let weatherAtCurrentLocation: typeof weather = null;
+    const latParam = req.query.lat != null ? parseFloat(String(req.query.lat)) : NaN;
+    const lngParam = req.query.lng != null ? parseFloat(String(req.query.lng)) : NaN;
+    if (Number.isFinite(latParam) && Number.isFinite(lngParam)) {
+      try {
+        const currentWeatherData = await getWeatherData(`${latParam},${lngParam}`);
+        const cur = currentWeatherData.current;
+        const day0 = currentWeatherData.forecast?.[0];
+        weatherAtCurrentLocation = {
+          snapshotId: 0,
+          source: "openweather_current",
+          locationName: currentWeatherData.location ?? "Current location",
+          currentTemp: cur.temp,
+          condition: cur.condition,
+          precipitationToday: day0 ? (typeof day0.precipitation === "number" ? day0.precipitation : 0) : 0,
+          windSpeed: cur.windSpeed,
+          uv: cur.uv ?? 0,
+        };
+      } catch (currErr: any) {
+        logger.warn("GET /api/home: weather at current location failed", { lat: latParam, lng: lngParam, err: currErr?.message });
+      }
+    }
+
     res.json({
       locationLabel,
       weather: weather ?? null,
+      weatherAtCurrentLocation: weatherAtCurrentLocation ?? null,
       decisions,
     });
   } catch (err: any) {
