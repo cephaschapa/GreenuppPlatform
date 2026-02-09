@@ -25,6 +25,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "echo \"No tests specified\" && exit 0",
+    "test:email": "tsx scripts/test-email.ts",
     "test:watch": "echo \"No tests specified\" && exit 0",
     "test:health": "node scripts/test-health-production.js",
     "type-check": "tsc --noEmit",

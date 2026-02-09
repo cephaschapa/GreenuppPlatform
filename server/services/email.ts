@@ -32,20 +32,18 @@ export interface EmailResult {
 }
 
 /**
- * Send an email using SMTP or log to console in development
+ * Send an email using SMTP or log to console when not configured.
+ * SMTP is considered configured when SMTP_USER and SMTP_PASS are set;
+ * SMTP_HOST defaults to smtp.gmail.com if omitted.
  */
 export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
-  // If SMTP is not configured, log the email to console
-  if (
-    !process.env.SMTP_HOST ||
-    !process.env.SMTP_USER ||
-    !process.env.SMTP_PASS
-  ) {
+  const hasCredentials = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+  if (!hasCredentials) {
     console.warn(
       "⚠️ SMTP not configured - email will only be logged to console"
     );
     console.warn(
-      "📧 To send real emails, configure SMTP_HOST, SMTP_USER, and SMTP_PASS environment variables"
+      "📧 To send real emails, set SMTP_USER and SMTP_PASS (and optionally SMTP_HOST=smtp.gmail.com, SMTP_PORT=587)"
     );
     logEmailToDev(options);
     return {

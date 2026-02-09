@@ -54,26 +54,22 @@ router.post("/test-email", async (req, res) => {
   }
 });
 
-// SMTP configuration status endpoint
+// SMTP configuration status endpoint (host/port default to Gmail when unset)
 router.get("/email-config-status", (req, res) => {
-  const smtpConfigured = !!(
-    process.env.SMTP_HOST &&
-    process.env.SMTP_USER &&
-    process.env.SMTP_PASS
-  );
+  const smtpConfigured = !!(process.env.SMTP_USER && process.env.SMTP_PASS);
 
   res.json({
     smtpConfigured,
     config: {
-      host: process.env.SMTP_HOST ? "SET" : "NOT SET",
+      host: process.env.SMTP_HOST || "smtp.gmail.com (default)",
+      port: process.env.SMTP_PORT || "587",
       user: process.env.SMTP_USER ? "SET" : "NOT SET",
       pass: process.env.SMTP_PASS ? "SET" : "NOT SET",
       from: process.env.SMTP_FROM || "NOT SET",
-      port: process.env.SMTP_PORT || "587 (default)",
     },
     message: smtpConfigured
       ? "SMTP is properly configured"
-      : "SMTP configuration is missing - emails will only be logged to console",
+      : "Set SMTP_USER and SMTP_PASS to send email (SMTP_HOST defaults to smtp.gmail.com)",
   });
 });
 
