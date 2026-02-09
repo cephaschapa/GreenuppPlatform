@@ -1,16 +1,22 @@
 import nodemailer from "nodemailer";
 
+// Default to Google SMTP when no host set (use SMTP_USER + SMTP_PASS with Gmail App Password)
+const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+const smtpPort = Number(process.env.SMTP_PORT) || 587;
+const isSecure = smtpPort === 465;
+
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: false, // true for 465, false for other ports
+  host: smtpHost,
+  port: smtpPort,
+  secure: isSecure,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  connectionTimeout: 10000, // 10 seconds
-  greetingTimeout: 10000,   // 10 seconds
-  socketTimeout: 30000,     // 30 seconds
+  ...(smtpHost === "smtp.gmail.com" && smtpPort === 587 && { requireTLS: true }),
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 30000,
 });
 
 export async function sendSmtpEmail({

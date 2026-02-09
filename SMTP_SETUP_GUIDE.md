@@ -1,31 +1,37 @@
 # SMTP Email Configuration Guide
 
-## Gmail SMTP Setup (Recommended)
+The app uses **Google SMTP (Gmail)** by default. If `SMTP_HOST` is not set, it defaults to `smtp.gmail.com` and port `587`.
+
+## Gmail SMTP Setup (Default)
 
 ### Step 1: Enable 2-Factor Authentication
 
-1. Go to your Google Account settings
-2. Enable 2-Factor Authentication if not already enabled
+1. Go to your [Google Account](https://myaccount.google.com) → Security
+2. Enable 2-Step Verification if not already enabled
 
 ### Step 2: Generate App Password
 
-1. Go to Google Account > Security > 2-Step Verification
-2. Scroll down to "App passwords"
-3. Generate a new app password for "Mail"
-4. Copy the 16-character password
+1. Go to Google Account → Security → 2-Step Verification
+2. Scroll to **App passwords**
+3. Generate a new app password for **Mail**
+4. Copy the 16-character password (no spaces)
 
-### Step 3: Add Environment Variables
+### Step 3: Set Environment Variables
 
-Add these to your `.env` file or Railway environment variables:
+In `.env` (or your deployment env):
 
 ```env
-# Gmail SMTP Configuration
+# Optional: defaults to Gmail if omitted
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
+
+# Required
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-16-character-app-password
 SMTP_FROM=GreenUpp <your-email@gmail.com>
 ```
+
+If you only set `SMTP_USER` and `SMTP_PASS`, the server still defaults to `smtp.gmail.com` and port `587`.
 
 ## Alternative SMTP Providers
 
