@@ -53,7 +53,7 @@ export class TreatmentController {
       }
 
       // Get recommended treatment products based on detected disease
-      const recommendedProducts = await this.getTreatmentProducts(
+      const recommendedProducts = await this.fetchTreatmentProducts(
         analysis.diseaseDetected || undefined,
         analysis.plantType || undefined
       );
@@ -810,7 +810,7 @@ export class TreatmentController {
       }
 
       const { disease, plantType } = req.query;
-      const products = await this.getTreatmentProducts(
+      const products = await this.fetchTreatmentProducts(
         disease as string,
         plantType as string
       );
@@ -841,7 +841,7 @@ export class TreatmentController {
     return storage.getField(fieldId);
   }
 
-  private async getTreatmentProducts(
+  private async fetchTreatmentProducts(
     disease?: string,
     plantType?: string
   ): Promise<any[]> {
