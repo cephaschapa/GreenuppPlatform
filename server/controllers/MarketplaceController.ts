@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import fs from "fs";
 import { MarketplaceModel } from "../models/MarketplaceModel";
 import { logger } from "../lib/logger";
 import {
@@ -14,6 +15,49 @@ import {
   insertMarketplaceFavoriteSchema,
   insertMarketplaceMessageSchema,
 } from "@shared/schema";
+import { CloudinaryService } from "../services/cloudinaryService.js";
+
+const MARKETPLACE_IMAGE_FOLDER = "marketplace";
+
+/**
+ * Process uploaded listing images: upload to Cloudinary when configured,
+ * otherwise return local /uploads URLs.
+ */
+async function processListingImages(
+  req: Request
+): Promise<string[]> {
+  if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+    return [];
+  }
+  const baseUrl =
+    process.env.NODE_ENV === "production"
+      ? `${req.protocol}://${req.get("host")}`
+      : `${req.protocol}://${req.get("host")}`;
+  const urls: string[] = [];
+  for (const file of req.files as Express.Multer.File[]) {
+    try {
+      if (CloudinaryService.isConfigured()) {
+        const result = await CloudinaryService.uploadImage(
+          file.path,
+          MARKETPLACE_IMAGE_FOLDER
+        );
+        urls.push(result.url);
+        try {
+          fs.unlinkSync(file.path);
+        } catch {
+          logger.warn("Failed to delete temp file after Cloudinary upload:", file.path);
+        }
+      } else {
+        urls.push(`${baseUrl}/uploads/${file.filename}`);
+      }
+    } catch (err) {
+      logger.error("Error processing listing image:", err);
+      // Fallback to local URL so listing still saves
+      urls.push(`${baseUrl}/uploads/${file.filename}`);
+    }
+  }
+  return urls;
+}
 
 export class MarketplaceController {
   private model: MarketplaceModel;
@@ -218,18 +262,8 @@ export class MarketplaceController {
       if (req.headers["content-type"]?.includes("multipart/form-data")) {
         console.log("Processing FormData...");
 
-        // Handle uploaded files
-        let imageUrls: string[] = [];
-        if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-          imageUrls = req.files.map((file: any) => {
-            // Create URL for the uploaded file
-            const baseUrl =
-              process.env.NODE_ENV === "production"
-                ? `${req.protocol}://${req.get("host")}`
-                : `${req.protocol}://${req.get("host")}`;
-            return `${baseUrl}/uploads/${file.filename}`;
-          });
-        }
+        // Upload images to Cloudinary (or keep local URLs)
+        const imageUrls = await processListingImages(req);
 
         // FormData should already be parsed by multer middleware
         // But let's ensure we have the right structure
@@ -394,22 +428,9 @@ export class MarketplaceController {
       // Handle FormData vs JSON
       let parsedData = req.body;
 
-      // If it's FormData, handle uploaded files
+      // If it's FormData, handle uploaded files (Cloudinary or local)
       if (req.headers["content-type"]?.includes("multipart/form-data")) {
-        // Handle uploaded files
-        let imageUrls: string[] = [];
-        if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-          imageUrls = req.files.map((file: any) => {
-            // Create URL for the uploaded file
-            const baseUrl =
-              process.env.NODE_ENV === "production"
-                ? `${req.protocol}://${req.get("host")}`
-                : `${req.protocol}://${req.get("host")}`;
-            return `${baseUrl}/uploads/${file.filename}`;
-          });
-        }
-
-        // Use uploaded file URLs if provided, otherwise keep existing images
+        const imageUrls = await processListingImages(req);
         parsedData = {
           ...req.body,
           images: imageUrls.length > 0 ? imageUrls : existingListing.images,

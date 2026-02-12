@@ -12,6 +12,19 @@ function isAuthenticated(req: Request, res: Response, next: Function) {
   next();
 }
 
+// Create order from cart payload (request quote – no payment)
+const createOrderSchema = z.object({
+  shippingAddress: z.string().optional(),
+  notes: z.string().optional(),
+  items: z.array(
+    z.object({
+      listingId: z.number().int().positive(),
+      quantity: z.number().int().positive(),
+      unitPrice: z.number().nonnegative(),
+    })
+  ).min(1, "At least one item is required"),
+});
+
 // Update order status schema
 const updateOrderStatusSchema = z.object({
   status: z.enum([
@@ -24,6 +37,67 @@ const updateOrderStatusSchema = z.object({
     "refunded",
   ]),
   notes: z.string().optional(),
+});
+
+// Create order(s) from cart – one order per seller, paymentMethod request_quote
+router.post("/", isAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const parsed = createOrderSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Invalid request",
+        details: parsed.error.flatten().fieldErrors,
+      });
+    }
+    const { shippingAddress, notes, items } = parsed.data;
+
+    // Resolve seller for each item and group items by sellerId
+    const sellerToItems: Map<number, typeof items> = new Map();
+    for (const item of items) {
+      const listing = await storage.getMarketplaceListing(item.listingId);
+      if (!listing) {
+        return res.status(400).json({
+          error: `Listing ${item.listingId} not found`,
+        });
+      }
+      const sellerId = listing.sellerId;
+      const list = sellerToItems.get(sellerId) ?? [];
+      list.push(item);
+      sellerToItems.set(sellerId, list);
+    }
+
+    const created: any[] = [];
+    for (const [, sellerItems] of sellerToItems) {
+      const order = await storage.createOrder({
+        userId,
+        items: sellerItems,
+        shippingAddress,
+        billingAddress: undefined,
+        paymentMethod: "request_quote",
+      });
+      created.push(order);
+      try {
+        await storage.createNotification({
+          userId: order.sellerId,
+          type: "new_order",
+          title: `New order ${order.orderNumber}`,
+          message: `You have a new order request. Contact the buyer to confirm.`,
+          data: { orderId: order.id, orderNumber: order.orderNumber },
+        });
+      } catch (e) {
+        console.error("Failed to notify seller of new order:", e);
+      }
+    }
+
+    return res.status(201).json({
+      message: created.length === 1 ? "Order created" : "Orders created",
+      orders: created,
+    });
+  } catch (error) {
+    console.error("Error creating order:", error);
+    return res.status(500).json({ error: "Failed to create order" });
+  }
 });
 
 // Get orders for user (buyer or seller)

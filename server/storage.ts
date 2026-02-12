@@ -2143,9 +2143,12 @@ export class DatabaseStorage implements IStorage {
 
     await db.insert(orderItemsTable).values(orderItemsData);
 
-    // Update inventory (reserve quantities)
-    for (const item of orderData.items) {
-      await this.reserveInventory(item.listingId, item.quantity);
+    // Update inventory (reserve quantities) only for paid orders
+    const skipReserve = orderData.paymentMethod === "request_quote";
+    if (!skipReserve) {
+      for (const item of orderData.items) {
+        await this.reserveInventory(item.listingId, item.quantity);
+      }
     }
 
     return this.getOrder(order.id);

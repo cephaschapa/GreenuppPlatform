@@ -57,8 +57,70 @@ export function initializeFirebase(): void {
   }
 }
 
+const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+
+function isExpoPushToken(token: string): boolean {
+  return token.startsWith("ExponentPushToken[");
+}
+
+/**
+ * Send push via Expo Push API (for Expo / React Native app tokens)
+ */
+async function sendExpoPush(
+  token: string,
+  title: string,
+  body: string,
+  data?: Record<string, string>
+): Promise<boolean> {
+  try {
+    const res = await fetch(EXPO_PUSH_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "Accept-Encoding": "gzip, deflate",
+      },
+      body: JSON.stringify({
+        to: token,
+        title,
+        body,
+        sound: "default",
+        data: data ? { ...data } : undefined,
+      }),
+    });
+    const json = (await res.json()) as {
+      data?: Array<{ status: string; id?: string; message?: string }>;
+      errors?: Array<{ code: string; message: string }>;
+    };
+    if (!res.ok) {
+      logger.error("Expo push request failed:", res.status, json);
+      return false;
+    }
+    if (json.errors?.length) {
+      logger.error("Expo push errors:", json.errors);
+      return false;
+    }
+    const ticket = json.data?.[0];
+    if (ticket?.status === "ok") {
+      logger.info("✅ Expo push sent successfully");
+      return true;
+    }
+    // Log full ticket so you can see InvalidCredentials, DeviceNotRegistered, etc.
+    logger.warn("Expo push ticket (not ok):", JSON.stringify(ticket));
+    logger.warn("Expo push full response:", JSON.stringify(json));
+    if (ticket?.message) {
+      logger.warn(`Expo push error message: ${ticket.message}`);
+    }
+    return false;
+  } catch (error) {
+    logger.error("Expo push send failed:", error);
+    return false;
+  }
+}
+
 /**
  * Send push notification to a specific user
+ * Supports both FCM tokens and Expo push tokens (ExponentPushToken[...])
  */
 export async function sendPushNotification(
   userId: number,
@@ -67,22 +129,26 @@ export async function sendPushNotification(
   data?: Record<string, string>,
   imageUrl?: string
 ): Promise<boolean> {
-  if (!firebaseApp) {
-    logger.warn("Firebase not initialized. Skipping push notification.");
-    return false;
-  }
-
   try {
-    // Get user's FCM token from database
-    const fcmToken = await getUserFCMToken(userId);
+    const token = await getUserFCMToken(userId);
+    if (!token) {
+      logger.warn(`No push token found for user ${userId}`);
+      return false;
+    }
 
-    if (!fcmToken) {
-      logger.warn(`No FCM token found for user ${userId}`);
+    // Expo push token (from React Native / Expo app)
+    if (isExpoPushToken(token)) {
+      return sendExpoPush(token, title, body, data);
+    }
+
+    // FCM token (web / native)
+    if (!firebaseApp) {
+      logger.warn("Firebase not initialized. Skipping FCM push.");
       return false;
     }
 
     const message: admin.messaging.Message = {
-      token: fcmToken,
+      token,
       notification: {
         title,
         body,
@@ -307,7 +373,7 @@ export async function subscribeUserToTopic(
     const fcmToken = await getUserFCMToken(userId);
 
     if (!fcmToken) {
-      logger.warn(`No FCM token found for user ${userId}`);
+      logger.warn(`No push token found for user ${userId}`);
       return false;
     }
 
@@ -339,7 +405,7 @@ export async function unsubscribeUserFromTopic(
     const fcmToken = await getUserFCMToken(userId);
 
     if (!fcmToken) {
-      logger.warn(`No FCM token found for user ${userId}`);
+      logger.warn(`No push token found for user ${userId}`);
       return false;
     }
 
