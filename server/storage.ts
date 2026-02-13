@@ -464,9 +464,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByPhone(phone: string): Promise<User | undefined> {
-    const normalized = Storage.normalizePhone(phone);
+    const normalized = DatabaseStorage.normalizePhone(phone);
     const all = await db.select().from(users).where(eq(users.role, "farmer"));
-    const found = all.find((u) => u.phone && Storage.normalizePhone(u.phone) === normalized);
+    const found = all.find((u) => u.phone && DatabaseStorage.normalizePhone(u.phone) === normalized);
     return found;
   }
 
