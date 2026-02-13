@@ -261,14 +261,26 @@ router.post("/", isAuthenticated, async (req: Request, res: Response) => {
         .json({ message: "User not authenticated properly" });
     }
 
-    // Define validation schema
+    // Define validation schema (see NOTIFICATION_GUIDE.md taxonomy)
     const validTypes = [
       "weather_alert",
+      "weather_risk",
+      "weather_opportunity",
       "task_reminder",
+      "task_due",
+      "task_overdue",
       "market_price_alert",
       "system_notification",
       "message",
       "crop_update",
+      "diagnosis_ready",
+      "plant_diagnosis_ready",
+      "plant_diagnosis_risk",
+      "farming_insights",
+      "marketplace_recommendation",
+      "product_recommendation",
+      "critical_alert",
+      "weekly_outlook",
     ];
     const createSchema = z.object({
       userId: z.number().optional(), // Optional: if not provided, use current user ID

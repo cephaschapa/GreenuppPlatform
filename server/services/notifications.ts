@@ -5,7 +5,7 @@ import {
   users,
   type Notification,
 } from "@shared/schema";
-import { eq, and, desc, lt, gte, count, or, isNull } from "drizzle-orm";
+import { eq, and, desc, lt, gte, count, or, isNull, inArray } from "drizzle-orm";
 // import { sendEmail } from "./email"; // Currently unused"
 import { sendWebSocketNotification } from "./websocket-notifier";
 import { sendPushNotification } from "./firebase.js";
@@ -15,10 +15,14 @@ import { sendSms } from "./sms";
 // Notification status values
 export type NotificationStatus = "unread" | "read" | "archived";
 
-// Valid notification types
+// Valid notification types (see platform/NOTIFICATION_GUIDE.md)
 export const notificationTypes = [
   "weather_alert",
+  "weather_risk",
+  "weather_opportunity",
   "task_reminder",
+  "task_due",
+  "task_overdue",
   "market_price_alert",
   "message",
   "system_notification",
@@ -29,6 +33,14 @@ export const notificationTypes = [
   "social_mention",
   "social_save",
   "security_alert",
+  "diagnosis_ready",
+  "plant_diagnosis_ready",
+  "plant_diagnosis_risk",
+  "farming_insights",
+  "marketplace_recommendation",
+  "product_recommendation",
+  "critical_alert",
+  "weekly_outlook",
 ] as const;
 
 export type NotificationType = (typeof notificationTypes)[number];
@@ -42,6 +54,13 @@ export interface NotificationOptions {
   actionUrl?: string;
   expiresAt?: Date;
   sendEmail?: boolean;
+  /** For push payload and auditing (guide §6) */
+  priority?: "high" | "medium" | "low";
+  confidence?: "high" | "medium" | "low";
+  decisionId?: number;
+  deepLink?: string;
+  triggerType?: string;
+  triggerRefId?: number;
 }
 
 /**
@@ -56,6 +75,12 @@ export async function createNotification({
   actionUrl,
   expiresAt,
   sendEmail: shouldSendEmail = false,
+  priority,
+  confidence,
+  decisionId,
+  deepLink,
+  triggerType,
+  triggerRefId,
 }: NotificationOptions): Promise<Notification> {
   // First, check if user has enabled this type of notification
   const userSettings = await getUserNotificationSettings(userId);
@@ -72,6 +97,18 @@ export async function createNotification({
     throw new Error(`User has disabled ${type} notifications`);
   }
 
+  // Merge guide payload fields into data for storage and push (§6 NOTIFICATION_GUIDE)
+  const dataWithMeta = {
+    ...data,
+    ...(decisionId != null && { decisionId }),
+    ...(deepLink != null && { deepLink }),
+    ...(triggerType != null && { triggerType }),
+    ...(triggerRefId != null && { triggerRefId }),
+    ...(priority != null && { priority }),
+    ...(confidence != null && { confidence }),
+    ...(expiresAt != null && { expiresAt: expiresAt.toISOString() }),
+  };
+
   // Create the notification
   const [notification] = await db
     .insert(notifications)
@@ -80,7 +117,7 @@ export async function createNotification({
       type,
       title,
       message,
-      data,
+      data: dataWithMeta,
       actionUrl,
       expiresAt,
       sentViaEmail: false,
@@ -93,15 +130,22 @@ export async function createNotification({
   // Send push notification if enabled
   if (userSettings?.pushEnabled) {
     try {
-      // Convert data to Firebase-compatible format (all values must be strings)
+      // Convert data to Firebase-compatible format (all values must be strings) (§6 NOTIFICATION_GUIDE)
       const firebaseData: Record<string, string> = {
         notificationId: notification.id.toString(),
         type,
         actionUrl: actionUrl || "",
+        ...(deepLink != null && { deepLink }),
+        ...(decisionId != null && { decisionId: String(decisionId) }),
+        ...(triggerType != null && { triggerType }),
+        ...(triggerRefId != null && { triggerRefId: String(triggerRefId) }),
+        ...(priority != null && { priority }),
+        ...(confidence != null && { confidence }),
       };
 
       // Convert complex data to strings for Firebase compatibility
-      Object.entries(data).forEach(([key, value]) => {
+      Object.entries(dataWithMeta).forEach(([key, value]) => {
+        if (firebaseData[key] !== undefined) return; // already set above
         if (typeof value === "string") {
           firebaseData[key] = value;
         } else if (typeof value === "number" || typeof value === "boolean") {
@@ -390,6 +434,80 @@ export async function countUnreadNotifications(userId: number) {
   return result[0]?.count || 0;
 }
 
+/** Default timezone for quiet hours and daily cap (NOTIFICATION_TZ env or Africa/Lusaka) */
+const NOTIFICATION_TZ = process.env.NOTIFICATION_TZ ?? "Africa/Lusaka";
+
+/** Hours in Lusaka (UTC+2); rough: (UTC hour + 2) % 24 */
+function getLocalHourLusaka(): number {
+  const d = new Date();
+  const utcHour = d.getUTCHours() + d.getUTCMinutes() / 60;
+  return (utcHour + 2) % 24;
+}
+
+/** §4 NOTIFICATION_GUIDE: quiet hours 20:30–06:00 local */
+export function isWithinQuietHours(): boolean {
+  const hour = getLocalHourLusaka();
+  return hour >= 20.5 || hour < 6;
+}
+
+/** §4: max 2 notifications per user per day (rolling 24h) */
+const MAX_NOTIFICATIONS_PER_DAY = 2;
+/** §4: max 1 high-priority per user per day */
+const MAX_HIGH_PRIORITY_PER_DAY = 1;
+
+const HIGH_PRIORITY_TYPES: NotificationType[] = [
+  "weather_risk",
+  "weather_alert",
+  "task_overdue",
+  "plant_diagnosis_risk",
+  "critical_alert",
+];
+
+/**
+ * §4 NOTIFICATION_GUIDE: throttle check. Returns true if we should send (not over cap, not quiet hours).
+ * Call before createNotification in scheduled jobs.
+ */
+export async function shouldSendNotification(
+  userId: number,
+  type: NotificationType,
+  options?: { priority?: "high" | "medium" | "low"; decisionId?: number; triggerRefId?: number }
+): Promise<{ send: boolean; reason?: string }> {
+  if (isWithinQuietHours()) {
+    return { send: false, reason: "quiet_hours" };
+  }
+
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const [dailyCount] = await db
+    .select({ count: count() })
+    .from(notifications)
+    .where(and(eq(notifications.userId, userId), gte(notifications.createdAt, since)));
+
+  const total = Number(dailyCount?.count ?? 0);
+  if (total >= MAX_NOTIFICATIONS_PER_DAY) {
+    return { send: false, reason: "daily_cap" };
+  }
+
+  const isHigh = (options?.priority === "high") || HIGH_PRIORITY_TYPES.includes(type);
+  if (isHigh) {
+    const [highCount] = await db
+      .select({ count: count() })
+      .from(notifications)
+      .where(
+        and(
+          eq(notifications.userId, userId),
+          gte(notifications.createdAt, since),
+          inArray(notifications.type, HIGH_PRIORITY_TYPES)
+        )
+      );
+    const highTotal = Number(highCount?.count ?? 0);
+    if (highTotal >= MAX_HIGH_PRIORITY_PER_DAY) {
+      return { send: false, reason: "high_priority_cap" };
+    }
+  }
+
+  return { send: true };
+}
+
 /**
  * Helper function to determine if a notification type is enabled for a user
  */
@@ -401,18 +519,23 @@ function isNotificationTypeEnabled(
 
   switch (type) {
     case "weather_alert":
+    case "weather_risk":
+    case "weather_opportunity":
       return settings.weatherAlerts;
     case "task_reminder":
+    case "task_due":
+    case "task_overdue":
       return settings.taskReminders;
     case "market_price_alert":
       return settings.marketPriceAlerts;
     case "message":
       return settings.messageNotifications;
     case "system_notification":
+    case "critical_alert":
+    case "weekly_outlook":
       return settings.systemNotifications;
     case "crop_update":
-      return true; // Default to enabled for crop updates
-    // Social notifications
+      return true;
     case "social_like":
       return settings.socialLikes;
     case "social_comment":
@@ -423,8 +546,15 @@ function isNotificationTypeEnabled(
       return settings.socialMentions;
     case "social_save":
       return settings.socialSaves;
+    case "diagnosis_ready":
+    case "plant_diagnosis_ready":
+    case "plant_diagnosis_risk":
+    case "farming_insights":
+    case "marketplace_recommendation":
+    case "product_recommendation":
+      return true;
     default:
-      return true; // Default to enabled for unknown types
+      return true;
   }
 }
 

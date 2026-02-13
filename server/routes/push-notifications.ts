@@ -26,8 +26,10 @@ function isAuthenticated(req: any, res: any, next: any) {
 router.post("/register", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user?.id;
+    const userEmail = (req.user as any)?.email;
 
     if (!userId) {
+      logger.warn("Push register: no user id (auth failed or session missing)");
       return res.status(401).json({
         success: false,
         message: "User not authenticated properly",
@@ -37,20 +39,25 @@ router.post("/register", isAuthenticated, async (req, res) => {
     const { fcmToken } = req.body;
 
     if (!fcmToken) {
+      logger.warn(`Push register: missing fcmToken in body for user ${userId} (${userEmail || "no email"})`);
       return res.status(400).json({
         success: false,
         message: "FCM token is required",
       });
     }
 
+    logger.info(`Push register: storing token for user ${userId} (${userEmail || "no email"}), token prefix: ${String(fcmToken).substring(0, 24)}...`);
+
     const success = await storeUserFCMToken(userId, fcmToken);
 
     if (success) {
+      logger.info(`Push register: token saved for user ${userId}`);
       res.json({
         success: true,
         message: "FCM token registered successfully",
       });
     } else {
+      logger.error(`Push register: storeUserFCMToken returned false for user ${userId}`);
       res.status(500).json({
         success: false,
         message: "Failed to register FCM token",

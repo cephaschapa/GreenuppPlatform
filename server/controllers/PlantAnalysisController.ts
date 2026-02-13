@@ -313,6 +313,24 @@ export class PlantAnalysisController {
       insertPlantAnalysisSchema.parse(plantAnalysisData);
       const saved = await PlantAnalysisModel.create(plantAnalysisData);
 
+      // Notify user that diagnosis is ready (in-app + push)
+      try {
+        const { createNotification } = await import("../services/notifications.js");
+        const resultSummary = saved.diseaseDetected
+          ? `Possible issue: ${saved.diseaseDetected}. Tap to view details.`
+          : "Your plant looks healthy. Tap to view full report.";
+        await createNotification({
+          userId: saved.userId,
+          type: "diagnosis_ready",
+          title: "Plant diagnosis ready",
+          message: resultSummary,
+          data: { analysisId: saved.id },
+          actionUrl: `/diagnosis/${saved.id}`,
+        });
+      } catch (notifErr) {
+        logger.warn("Diagnosis ready notification failed", { analysisId: saved.id, err: notifErr });
+      }
+
       // Emit a diagnosis follow-up decision so it appears on home (architecture §4.4)
       try {
         const { createDiagnosisFollowUpDecision } = await import(

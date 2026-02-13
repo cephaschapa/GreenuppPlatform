@@ -11,6 +11,7 @@ import { stream } from "./lib/logger";
 import { initializeFirebase } from "./services/firebase.js";
 import { setupSecurityMiddleware } from "./middleware/security.js";
 import { uploadsDir } from "./services/uploadService.js";
+import { startNotificationJobs } from "./services/notificationJobs.js";
 
 // Fix for __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -139,6 +140,7 @@ app.use((req, res, next) => {
     },
     () => {
       logger.info(`Server running on ${host}:${port}`);
+      startNotificationJobs();
     }
   );
 })();
