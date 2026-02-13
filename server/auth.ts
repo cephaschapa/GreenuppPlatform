@@ -168,15 +168,7 @@ export function setupAuth(app: Express) {
           // Clear any failed attempts on successful login
           await AuthService.clearFailedLoginAttempts(user.id);
 
-          // Check if email is verified
-          if (!user.emailVerified) {
-            return done(null, false, {
-              message: "Please verify your email address before logging in",
-              requiresEmailVerification: true,
-              email: user.email,
-            } as any);
-          }
-
+          // Email verification requirement disabled for now – allow login regardless
           return done(null, user as unknown as Express.User);
         } catch (error) {
           return done(error);
@@ -410,66 +402,22 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Username already taken" });
       }
 
-      // Hash password and create new user
+      // Hash password and create new user (verification disabled – treat as verified)
       const hashedPassword = await AuthService.hashPassword(req.body.password);
       const user = await storage.createUser({
         ...req.body,
         password: hashedPassword,
+        emailVerified: true,
       });
 
       // Remove password from response
       const { password, ...userWithoutPassword } = user;
 
-      // Send response immediately - don't wait for email
       res.status(201).json({
-        message:
-          "Registration successful! Please check your email to verify your account before logging in.",
-        requiresEmailVerification: true,
+        message: "Registration successful! You can sign in now.",
+        requiresEmailVerification: false,
         email: user.email,
       });
-
-      // Send verification email in background (non-blocking)
-      const sendVerificationEmailAsync = async () => {
-      try {
-        const verificationToken =
-          await AuthService.generateEmailVerificationToken(user.id);
-
-        // Determine frontend URL for verification link
-        const isDevelopment = process.env.NODE_ENV !== "production";
-        let frontendUrl;
-
-        if (isDevelopment) {
-          const protocol = req.secure ? "https" : "http";
-          const host = req.get("host") || "localhost:3001";
-          frontendUrl =
-            host.includes("localhost") || host.includes("127.0.0.1")
-              ? "http://localhost:3001"
-              : `${protocol}://${host}`;
-        } else {
-          frontendUrl =
-            process.env.FRONTEND_URL ||
-            "https://greenuppplatform-production.up.railway.app";
-        }
-
-        const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
-          
-          // Set a timeout for email sending
-          await Promise.race([
-            AuthService.sendVerificationEmail(user.email, verificationUrl),
-            new Promise((_, reject) => 
-              setTimeout(() => reject(new Error("Email timeout after 15s")), 15000)
-            )
-          ]);
-          
-          logger.info(`Verification email sent to ${user.email}`);
-      } catch (emailError) {
-        logger.error("Failed to send verification email:", emailError);
-          // Email failure doesn't affect registration - user is already created
-        }
-      };
-
-      // Fire and forget - don't await
-      sendVerificationEmailAsync();
     } catch (error) {
       next(error);
     }
