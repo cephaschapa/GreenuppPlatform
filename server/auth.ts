@@ -10,6 +10,7 @@ import { storage } from "./storage.js";
 import { User, UserRoleType } from "@shared/schema";
 import { logger } from "./lib/logger.js";
 import { AuthService } from "./services/authService.js";
+import { verifyFirebaseIdToken } from "./services/firebase.js";
 
 // Add passport session type
 declare module "express-session" {
@@ -533,6 +534,78 @@ export function setupAuth(app: Express) {
         });
       }
     )(req, res, next);
+  });
+
+  // Phone auth: verify Firebase ID token and create session (WhatsApp-style flow)
+  app.post("/api/auth/phone", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { idToken, name } = req.body as { idToken?: string; name?: string };
+      if (!idToken || typeof idToken !== "string") {
+        return res.status(400).json({ message: "idToken is required" });
+      }
+
+      const decoded = await verifyFirebaseIdToken(idToken);
+      if (!decoded?.phone_number) {
+        return res.status(401).json({ message: "Invalid or expired verification code" });
+      }
+
+      const phone = decoded.phone_number;
+      let user = await storage.getUserByPhone(phone);
+
+      if (!user) {
+        const normalized = phone.replace(/\D/g, "").replace(/^0+/, "") || "phone";
+        const email = `phone_${normalized}@greenupp.phone`;
+        const username = `phone_${normalized}_${Date.now().toString(36)}`;
+        const hashedPassword = await AuthService.hashPassword(randomBytes(32).toString("hex"));
+        const firstName = name?.trim()?.split(/\s+/)[0] || "Farmer";
+        const lastName = name?.trim()?.split(/\s+/).slice(1).join(" ") || null;
+        user = await storage.createUser({
+          username,
+          email,
+          password: hashedPassword,
+          phone,
+          firstName,
+          lastName: lastName || undefined,
+          role: "farmer",
+          emailVerified: true,
+        });
+        logger.info(`Phone sign-up: ${phone}`);
+      }
+
+      req.login(user as unknown as Express.User, async (loginErr) => {
+        if (loginErr) {
+          logger.error("Phone login session error:", loginErr);
+          return next(loginErr);
+        }
+
+        const deviceInfo = {
+          deviceType: AuthService.parseUserAgent(req.headers["user-agent"] || "").deviceType,
+          browser: AuthService.parseUserAgent(req.headers["user-agent"] || "").browser,
+          os: AuthService.parseUserAgent(req.headers["user-agent"] || "").os,
+          ipAddress: req.ip || req.socket?.remoteAddress || "unknown",
+          userAgent: req.headers["user-agent"] || "",
+        };
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        await AuthService.createDeviceSession(user.id, req.sessionID!, deviceInfo, expiresAt);
+        await AuthService.logSecurityEvent(
+          user.id,
+          "login_success",
+          "User signed in with phone",
+          deviceInfo.ipAddress,
+          deviceInfo.userAgent
+        );
+
+        const { password: _p, ...userWithoutPassword } = user;
+        res.cookie("greenupp_auth_check", "true", {
+          maxAge: 30 * 24 * 60 * 60 * 1000,
+          httpOnly: false,
+        });
+        res.json(userWithoutPassword);
+      });
+    } catch (error) {
+      logger.error("Phone auth error:", error);
+      next(error);
+    }
   });
 
   // User logout route

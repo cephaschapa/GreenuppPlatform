@@ -95,6 +95,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByPhone(phone: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
@@ -457,11 +458,23 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  /** Normalize phone for lookup (digits only, optional leading +) */
+  private static normalizePhone(phone: string): string {
+    return phone.replace(/\D/g, "").replace(/^0+/, "") || phone;
+  }
+
+  async getUserByPhone(phone: string): Promise<User | undefined> {
+    const normalized = Storage.normalizePhone(phone);
+    const all = await db.select().from(users).where(eq(users.role, "farmer"));
+    const found = all.find((u) => u.phone && Storage.normalizePhone(u.phone) === normalized);
+    return found;
+  }
+
   async getAllUsers(): Promise<User[]> {
     return db.select().from(users);
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: InsertUser & { phone?: string; emailVerified?: boolean }): Promise<User> {
     const [user] = await db
       .insert(users)
       .values({
@@ -470,6 +483,8 @@ export class DatabaseStorage implements IStorage {
         lastName: insertUser.lastName || null,
         profileImage: null,
         role: insertUser.role || "farmer",
+        phone: "phone" in insertUser ? insertUser.phone : undefined,
+        emailVerified: "emailVerified" in insertUser ? insertUser.emailVerified : undefined,
       })
       .returning();
 

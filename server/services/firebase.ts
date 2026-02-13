@@ -59,6 +59,28 @@ export function initializeFirebase(): void {
 
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 
+/**
+ * Verify a Firebase ID token (e.g. from phone sign-in). Returns decoded claims or null.
+ */
+export async function verifyFirebaseIdToken(
+  idToken: string
+): Promise<{ uid: string; phone_number?: string } | null> {
+  if (!firebaseApp) {
+    logger.warn("Firebase not initialized. Cannot verify ID token.");
+    return null;
+  }
+  try {
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    return {
+      uid: decoded.uid,
+      phone_number: decoded.phone_number,
+    };
+  } catch (error) {
+    logger.warn("Firebase ID token verification failed:", error);
+    return null;
+  }
+}
+
 function isExpoPushToken(token: string): boolean {
   return token.startsWith("ExponentPushToken[");
 }
