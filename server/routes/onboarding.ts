@@ -2,10 +2,59 @@ import { Router } from "express";
 import { z } from "zod";
 import { storage } from "../storage.js";
 import { logger } from "../lib/logger.js";
+import { resolveFarmLocation } from "../services/locationResolverService.js";
+import {
+  getOrCreateWeatherSnapshot,
+} from "../services/weatherObservationService.js";
 
 const router = Router();
 
-// Onboarding data schemas
+// Zambian provinces (match zambian-locations and spec)
+const ZAMBIAN_PROVINCES = [
+  "Central",
+  "Copperbelt",
+  "Eastern",
+  "Luapula",
+  "Lusaka",
+  "Muchinga",
+  "Northern",
+  "North-Western",
+  "Southern",
+  "Western",
+] as const;
+
+const onboardingProfileSchema = z.object({
+  province: z.enum(ZAMBIAN_PROVINCES),
+  farmerType: z.enum(["smallholder", "emerging", "commercial"]),
+  yearsFarming: z.number().int().min(0).max(80).optional(),
+  mainGoal: z
+    .enum(["increase_yield", "reduce_costs", "manage_risks", "sell_produce"])
+    .optional(),
+  cooperativeMember: z.boolean().optional(),
+});
+
+const onboardingFarmSchema = z.object({
+  farmName: z.string().min(1).max(100).default("My Farm"),
+  farmLocationText: z.string().min(3).max(200),
+  farmLocationSource: z.enum(["zambian_database", "gps", "manual"]),
+  farmSizeHa: z.number().min(0.01).max(9999.99),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+  irrigationType: z
+    .enum(["rainfed", "borehole", "canal", "drip", "pivot", "none"])
+    .optional(),
+  waterSourceNotes: z.string().max(500).optional(),
+});
+
+const onboardingFieldSchema = z.object({
+  farmId: z.number().int().positive(),
+  fieldName: z.string().min(1).max(80),
+  fieldSizeHa: z.number().min(0.01).max(9999.99),
+  soilType: z.enum(["sandy", "loam", "clay", "unknown"]).optional(),
+  previousCrop: z.string().max(120).optional(),
+});
+
+// Onboarding data schemas (legacy complete-onboarding)
 const farmProfileSchema = z.object({
   farmName: z.string().min(2),
   farmSize: z.string().min(1),
@@ -41,7 +90,7 @@ const buyerPreferencesSchema = z.object({
 });
 
 const onboardingProgressSchema = z.object({
-  step: z.number().min(1).max(4),
+  step: z.number().min(1).max(8), // 0-7 screens + 8 = completed
   data: z.record(z.any()),
 });
 
@@ -50,29 +99,208 @@ const completeOnboardingSchema = z.object({
   preferences: z.union([preferencesSchema, buyerPreferencesSchema]).optional(),
 });
 
-// Get onboarding status
+// Get onboarding status (spec: GET /onboarding/status)
 router.get("/onboarding-status", async (req, res) => {
   try {
     if (!req.user?.id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // Check if user has completed onboarding
     const user = await storage.getUser(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Check for existing onboarding progress
     const progress = await storage.getUserOnboardingProgress(req.user.id);
 
     res.json({
       completed: user.onboardingCompleted || false,
-      step: progress?.currentStep || 1,
-      data: progress?.data || {},
+      step: progress?.currentStep ?? 1,
+      data: progress?.data ?? {},
     });
   } catch (error) {
     logger.error("Error fetching onboarding status:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// POST /onboarding/profile — Screen 2: province, farmerType, optional ask-later fields
+router.post("/onboarding/profile", async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const body = onboardingProfileSchema.parse(req.body);
+    await storage.createOrUpdateFarmerProfile(req.user.id, {
+      province: body.province,
+      farmerType: body.farmerType,
+      yearsFarming: body.yearsFarming ?? null,
+      mainGoal: body.mainGoal ?? null,
+      cooperativeMember: body.cooperativeMember ?? false,
+    });
+
+    const progress = await storage.getUserOnboardingProgress(req.user.id);
+    await storage.saveUserOnboardingProgress(req.user.id, {
+      currentStep: 3, // next: farm
+      data: { ...progress?.data, profile: body },
+      updatedAt: new Date(),
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: "Invalid data", errors: error.errors });
+    }
+    logger.error("Error saving onboarding profile:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// POST /onboarding/farm — Screen 3: farm name, location, size; triggers location resolve + weather
+router.post("/onboarding/farm", async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const body = onboardingFarmSchema.parse(req.body);
+    const farm = await storage.createFarm({
+      userId: req.user.id,
+      farmName: body.farmName,
+      farmLocationText: body.farmLocationText,
+      farmLocationSource: body.farmLocationSource,
+      farmSizeHa: String(body.farmSizeHa),
+      lat: body.lat != null ? String(body.lat) : null,
+      lng: body.lng != null ? String(body.lng) : null,
+      irrigationType: body.irrigationType ?? null,
+      waterSourceNotes: body.waterSourceNotes ?? null,
+    });
+
+    // Sync farmer profile farmLocation so GET /api/home and weather resolution work
+    await storage.createOrUpdateFarmerProfile(req.user.id, {
+      farmLocation: body.farmLocationText,
+      farmLocationSource: body.farmLocationSource,
+      farmName: body.farmName,
+      farmSize: String(body.farmSizeHa),
+    });
+
+    // Resolve location (Zambian DB) and create weather snapshot
+    try {
+      const location = await resolveFarmLocation(req.user.id, body.farmLocationText);
+      if (location) {
+        const { getOrCreateWeatherSnapshot } = await import("../services/weatherObservationService.js");
+        await getOrCreateWeatherSnapshot(req.user.id, location);
+      }
+    } catch (enrichErr: any) {
+      logger.warn("Onboarding farm: enrichment (location/weather) failed", { err: (enrichErr as Error)?.message });
+    }
+
+    const progress = await storage.getUserOnboardingProgress(req.user.id);
+    await storage.saveUserOnboardingProgress(req.user.id, {
+      currentStep: 4,
+      data: { ...progress?.data, farm: { ...body, id: farm.id } },
+      updatedAt: new Date(),
+    });
+
+    res.json({ success: true, farm: { id: farm.id, farmName: farm.farmName } });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: "Invalid data", errors: error.errors });
+    }
+    logger.error("Error saving onboarding farm:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// POST /onboarding/field — Screen 4: at least one field linked to farm
+router.post("/onboarding/field", async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const body = onboardingFieldSchema.parse(req.body);
+    const farm = await storage.getFarm(body.farmId);
+    if (!farm || farm.userId !== req.user.id) {
+      return res.status(400).json({ message: "Farm not found or access denied" });
+    }
+
+    const field = await storage.createField({
+      userId: req.user.id,
+      farmId: body.farmId,
+      name: body.fieldName,
+      size: String(body.fieldSizeHa),
+      sizeUnit: "hectares",
+      soilType: body.soilType ?? null,
+      notes: body.previousCrop ?? null,
+    });
+
+    const progress = await storage.getUserOnboardingProgress(req.user.id);
+    const fieldsList = [...(progress?.data?.fields ?? []), { id: field.id, name: field.name, size: field.size }];
+    await storage.saveUserOnboardingProgress(req.user.id, {
+      currentStep: 5,
+      data: { ...progress?.data, fields: fieldsList },
+      updatedAt: new Date(),
+    });
+
+    res.json({ success: true, field: { id: field.id, name: field.name } });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: "Invalid data", errors: error.errors });
+    }
+    logger.error("Error saving onboarding field:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+const onboardingNotificationsSchema = z.object({
+  notificationsEnabled: z.boolean(),
+  fcmToken: z.string().optional(),
+  weatherAlerts: z.boolean().optional().default(true),
+  taskReminders: z.boolean().optional().default(true),
+  pestDiseaseAlerts: z.boolean().optional().default(true),
+  marketplaceDeals: z.boolean().optional().default(false),
+});
+
+// POST /onboarding/notifications — Screen 6: preferences + FCM token
+router.post("/onboarding/notifications", async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const body = onboardingNotificationsSchema.parse(req.body);
+    await storage.saveUserPreferences(req.user.id, {
+      weatherAlerts: body.weatherAlerts,
+      taskReminders: body.taskReminders,
+      pestDiseaseAlerts: body.pestDiseaseAlerts,
+      marketplaceDeals: body.marketplaceDeals,
+      pushNotifications: body.notificationsEnabled,
+      language: "en",
+      weatherUnits: "metric",
+    });
+
+    if (body.notificationsEnabled && body.fcmToken) {
+      const { storeUserFCMToken } = await import("../services/firebase.js");
+      await storeUserFCMToken(req.user.id, body.fcmToken);
+    } else if (!body.notificationsEnabled) {
+      await storage.updateUser(req.user.id, { pushNotificationsEnabled: false });
+    }
+
+    const progress = await storage.getUserOnboardingProgress(req.user.id);
+    await storage.saveUserOnboardingProgress(req.user.id, {
+      currentStep: 7,
+      data: { ...progress?.data, notifications: body },
+      updatedAt: new Date(),
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: "Invalid data", errors: error.errors });
+    }
+    logger.error("Error saving onboarding notifications:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });

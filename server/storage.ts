@@ -5,6 +5,8 @@ import {
   type User,
   type InsertFarmerProfile,
   type FarmerProfile,
+  type Farm,
+  type InsertFarm,
   type Field,
   type InsertField,
   type Crop,
@@ -42,6 +44,7 @@ import {
   users,
   sessions,
   farmerProfiles,
+  farms,
   fields,
   crops,
   cropActivities,
@@ -133,6 +136,12 @@ export interface IStorage {
   // Contact form
   saveContactInquiry(data: ContactFormData): Promise<ContactInquiry>;
   getContactInquiries(): Promise<ContactInquiry[]>;
+
+  // Farm management (onboarding / multi-farm)
+  getFarms(userId: number): Promise<Farm[]>;
+  getFarm(id: number): Promise<Farm | undefined>;
+  createFarm(farmData: InsertFarm & { userId: number }): Promise<Farm>;
+  updateFarm(id: number, farmData: Partial<Farm>): Promise<Farm | undefined>;
 
   // Field management
   getFields(userId: number): Promise<Field[]>;
@@ -613,6 +622,11 @@ export class DatabaseStorage implements IStorage {
         contactPhone: profileData.contactPhone || null,
         mainCrops: profileData.mainCrops || null,
         establishedYear: profileData.establishedYear || null,
+        province: (profileData as any).province ?? null,
+        farmerType: (profileData as any).farmerType ?? null,
+        yearsFarming: (profileData as any).yearsFarming ?? null,
+        mainGoal: (profileData as any).mainGoal ?? null,
+        cooperativeMember: (profileData as any).cooperativeMember ?? false,
         settings: {},
       })
       .returning();
@@ -656,6 +670,52 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(contactForm);
   }
 
+  // Farm management methods
+  async getFarms(userId: number): Promise<Farm[]> {
+    return db.select().from(farms).where(eq(farms.userId, userId));
+  }
+
+  async getFarm(id: number): Promise<Farm | undefined> {
+    const [farm] = await db.select().from(farms).where(eq(farms.id, id));
+    return farm;
+  }
+
+  async createFarm(
+    farmData: InsertFarm & { userId: number }
+  ): Promise<Farm> {
+    const [farm] = await db
+      .insert(farms)
+      .values({
+        userId: farmData.userId,
+        farmName: farmData.farmName ?? "My Farm",
+        farmLocationText: farmData.farmLocationText,
+        farmLocationSource: farmData.farmLocationSource,
+        farmLocationId: farmData.farmLocationId ?? null,
+        lat: farmData.lat ?? null,
+        lng: farmData.lng ?? null,
+        farmSizeHa: farmData.farmSizeHa,
+        irrigationType: farmData.irrigationType ?? null,
+        waterSourceNotes: farmData.waterSourceNotes ?? null,
+      })
+      .returning();
+    return farm;
+  }
+
+  async updateFarm(
+    id: number,
+    farmData: Partial<Farm>
+  ): Promise<Farm | undefined> {
+    const [farm] = await db
+      .update(farms)
+      .set({
+        ...farmData,
+        updatedAt: new Date(),
+      })
+      .where(eq(farms.id, id))
+      .returning();
+    return farm;
+  }
+
   // Field management methods
   async getFields(userId: number): Promise<Field[]> {
     return db.select().from(fields).where(eq(fields.userId, userId));
@@ -673,6 +733,7 @@ export class DatabaseStorage implements IStorage {
       .insert(fields)
       .values({
         ...fieldData,
+        farmId: fieldData.farmId ?? null,
         location: fieldData.location || null,
         size: fieldData.size || null,
         sizeUnit: fieldData.sizeUnit || "hectares",

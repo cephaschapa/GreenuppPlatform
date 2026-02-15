@@ -106,6 +106,31 @@ export const farmerProfiles = pgTable("farmer_profiles", {
   settings: jsonb("settings").$type<Record<string, any>>(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  // Onboarding (Zambia-first)
+  province: text("province"), // Zambian province
+  farmerType: text("farmer_type"), // smallholder | emerging | commercial
+  yearsFarming: integer("years_farming"),
+  mainGoal: text("main_goal"), // increase_yield | reduce_costs | manage_risks | sell_produce
+  cooperativeMember: boolean("cooperative_member").default(false),
+});
+
+// Farms table (one per farm; supports multi-farm)
+export const farms = pgTable("farms", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  farmName: text("farm_name").notNull().default("My Farm"),
+  farmLocationText: text("farm_location_text").notNull(),
+  farmLocationSource: text("farm_location_source").notNull(), // zambian_database | gps | manual
+  farmLocationId: integer("farm_location_id"), // FK → locations.id (set by location resolver)
+  lat: decimal("lat", { precision: 10, scale: 7 }),
+  lng: decimal("lng", { precision: 10, scale: 7 }),
+  farmSizeHa: decimal("farm_size_ha", { precision: 8, scale: 2 }).notNull(),
+  irrigationType: text("irrigation_type"), // rainfed | borehole | canal | drip | pivot | none
+  waterSourceNotes: text("water_source_notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 // Insert schema for User registration
@@ -154,6 +179,13 @@ export const insertFarmerProfileSchema = createInsertSchema(
   establishedYear: true,
 });
 
+// Schema for farm (onboarding / multi-farm)
+export const insertFarmSchema = createInsertSchema(farms).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Export types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type RegisterUser = z.infer<typeof registerUserSchema>;
@@ -161,6 +193,8 @@ export type LoginUser = z.infer<typeof loginUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertFarmerProfile = z.infer<typeof insertFarmerProfileSchema>;
 export type FarmerProfile = typeof farmerProfiles.$inferSelect;
+export type InsertFarm = z.infer<typeof insertFarmSchema>;
+export type Farm = typeof farms.$inferSelect;
 
 // Contact form schema
 export const contactForm = pgTable("contact_inquiries", {
@@ -204,6 +238,7 @@ export const fields = pgTable("fields", {
   userId: integer("user_id")
     .notNull()
     .references(() => users.id),
+  farmId: integer("farm_id").references(() => farms.id), // FK to farms (onboarding / multi-farm)
   name: text("name").notNull(),
   location: text("location"), // Keep for backward compatibility
   locationId: integer("location_id").references(() => locations.id), // Link to precise location data
