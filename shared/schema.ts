@@ -36,7 +36,7 @@ export const users = pgTable("users", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   profileImage: text("profile_image"),
-  phone: text("phone"), // Phone number for SMS notifications
+  phone: text("phone").unique(), // Phone number for SMS notifications (unique per user)
   emailVerified: boolean("email_verified").default(false), // Email verification status
   // Password attempt tracking
   failedLoginAttempts: integer("failed_login_attempts").default(0), // Number of consecutive failed attempts
@@ -609,8 +609,9 @@ export const treatmentProducts = pgTable("treatment_products", {
   name: text("name").notNull(),
   activeIngredient: text("active_ingredient"),
   productType: text("product_type").notNull(), // fungicide, insecticide, herbicide, fertilizer, etc.
-  targetDiseases: text("target_diseases").array(),
+  targetDiseases: text("target_diseases").array(), // disease and pest names (e.g. Late Blight, Fall Armyworm)
   targetCrops: text("target_crops").array(),
+  imageUrl: text("image_url"), // product image for UI
   applicationRate: text("application_rate"),
   safetyClass: text("safety_class"), // I, II, III, IV
   reEntryInterval: integer("re_entry_interval"), // hours

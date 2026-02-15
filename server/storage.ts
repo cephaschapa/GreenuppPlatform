@@ -2016,23 +2016,21 @@ export class DatabaseStorage implements IStorage {
     crop?: string
   ): Promise<TreatmentProduct[]> {
     try {
-      let query = db.select().from(treatmentProducts);
-
+      const conditions = [];
       if (disease && disease !== "Unknown") {
-        // Use proper PostgreSQL array syntax
-        query = query.where(
-          sql`${treatmentProducts.targetDiseases} @> ARRAY[${disease}]::text[]`
-        ) as any;
+        conditions.push(
+          sql`${treatmentProducts.targetDiseases} IS NOT NULL AND ${treatmentProducts.targetDiseases} @> ARRAY[${disease}]::text[]`
+        );
       }
-
       if (crop && crop !== "Unknown") {
-        // Use proper PostgreSQL array syntax
-        query = query.where(
-          sql`${treatmentProducts.targetCrops} @> ARRAY[${crop}]::text[]`
-        ) as any;
+        const cropLower = crop.toLowerCase();
+        conditions.push(
+          sql`${treatmentProducts.targetCrops} IS NOT NULL AND ${treatmentProducts.targetCrops} @> ARRAY[${cropLower}]::text[]`
+        );
       }
-
-      return query;
+      const query = db.select().from(treatmentProducts);
+      if (conditions.length === 0) return query;
+      return query.where(and(...conditions)) as Promise<TreatmentProduct[]>;
     } catch (error) {
       console.error("Error fetching treatment products:", error);
       // Return empty array if table doesn't exist yet or query fails

@@ -39,7 +39,9 @@
     "build:mobile": "vite build && npx cap sync",
     "android:dev": "npx cap open android",
     "android:run": "npx cap run android",
-    "android:sync": "npx cap sync android"
+    "android:sync": "npx cap sync android",
+    "seed:pest": "node scripts/seed-pest-database.js",
+    "seed:treatment-products": "node scripts/seed-treatment-products.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
