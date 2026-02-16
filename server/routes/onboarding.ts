@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { z } from "zod";
+import { eq, asc } from "drizzle-orm";
 import { storage } from "../storage.js";
+import { db } from "../db.js";
+import { cropVarieties } from "@shared/schema";
 import { logger } from "../lib/logger.js";
 import { resolveFarmLocation } from "../services/locationResolverService.js";
 import {
@@ -52,6 +55,13 @@ const onboardingFieldSchema = z.object({
   fieldSizeHa: z.number().min(0.01).max(9999.99),
   soilType: z.enum(["sandy", "loam", "clay", "unknown"]).optional(),
   previousCrop: z.string().max(120).optional(),
+});
+
+const onboardingCropSchema = z.object({
+  fieldId: z.number().int().positive(),
+  cropName: z.string().min(1).max(120),
+  variety: z.string().max(120).optional(),
+  plantingDate: z.string().max(10).optional(), // YYYY-MM-DD
 });
 
 // Onboarding data schemas (legacy complete-onboarding)
@@ -250,6 +260,67 @@ router.post("/onboarding/field", async (req, res) => {
       return res.status(400).json({ message: "Invalid data", errors: error.errors });
     }
     logger.error("Error saving onboarding field:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// GET /onboarding/crop-options — Screen 5: list crop varieties for "What are you growing now?"
+router.get("/onboarding/crop-options", async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const list = await db
+      .select({ id: cropVarieties.id, name: cropVarieties.name, variety: cropVarieties.variety })
+      .from(cropVarieties)
+      .where(eq(cropVarieties.isActive, true))
+      .orderBy(asc(cropVarieties.name));
+
+    res.json({ success: true, options: list });
+  } catch (error) {
+    logger.error("Error fetching crop options:", error);
+    res.status(500).json({ message: "Failed to load crop options" });
+  }
+});
+
+// POST /onboarding/crop — Screen 5: add a crop to a field (Mode A: "What are you growing now?")
+router.post("/onboarding/crop", async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const body = onboardingCropSchema.parse(req.body);
+
+    const field = await storage.getField(body.fieldId);
+    if (!field || field.userId !== req.user.id) {
+      return res.status(400).json({ message: "Field not found or access denied" });
+    }
+
+    const crop = await storage.createCrop({
+      userId: req.user.id,
+      fieldId: body.fieldId,
+      name: body.cropName,
+      variety: body.variety ?? null,
+      plantingDate: body.plantingDate ?? null,
+      status: "planted",
+    });
+
+    const progress = await storage.getUserOnboardingProgress(req.user.id);
+    const cropsList = [...(progress?.data?.crops ?? []), { id: crop.id, name: crop.name, fieldId: crop.fieldId }];
+    await storage.saveUserOnboardingProgress(req.user.id, {
+      currentStep: 5,
+      data: { ...progress?.data, crops: cropsList },
+      updatedAt: new Date(),
+    });
+
+    res.json({ success: true, crop: { id: crop.id, name: crop.name } });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ message: "Invalid data", errors: error.errors });
+    }
+    logger.error("Error saving onboarding crop:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
