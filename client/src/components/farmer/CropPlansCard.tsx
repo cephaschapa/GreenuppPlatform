@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { Link, useLocation } from "wouter";
 import {
   Card,
   CardContent,
@@ -15,16 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Calendar, Sprout, Calculator, Edit, PlusCircle, History } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
+import { Loader2, Calendar, Sprout, Edit, PlusCircle, ChevronRight } from "lucide-react";
 import { Field } from "@shared/schema";
 import {
   AddCropPlanDialog,
@@ -34,15 +27,6 @@ import {
 
 interface CropPlansCardProps {
   field: Field;
-}
-
-interface SimulationRun {
-  id: number;
-  fieldCropPlanId: number;
-  runAt: string;
-  methodVersion: string;
-  outputs?: { conservative?: number; expected?: number; best_case?: number };
-  explanation?: string | null;
 }
 
 function formatDate(s: string | null | undefined) {
@@ -55,15 +39,10 @@ function formatDate(s: string | null | undefined) {
 }
 
 export function CropPlansCard({ field }: CropPlansCardProps) {
-  const { toast } = useToast();
+  const [location] = useLocation();
   const [seasonFilter, setSeasonFilter] = useState<string>("all");
-  const [simulateResult, setSimulateResult] = useState<{
-    conservative: number;
-    expected: number;
-    best_case: number;
-    explanation: string;
-  } | null>(null);
-  const [runsPlanId, setRunsPlanId] = useState<number | null>(null);
+  const basePath = location.split("?")[0];
+  const simsPath = (planId: number) => `${basePath}/${field.id}/plans/${planId}/sims`;
 
   const { data: refSeasons = [] } = useQuery<RefSeason[]>({
     queryKey: ["/api/reference/seasons"],
@@ -87,55 +66,6 @@ export function CropPlansCard({ field }: CropPlansCardProps) {
     },
   });
 
-  const { data: simulationRuns = [] } = useQuery<SimulationRun[]>({
-    queryKey: [`/api/crop-plans/${runsPlanId}/simulation-runs`],
-    queryFn: async () => {
-      const r = await fetch(`/api/crop-plans/${runsPlanId}/simulation-runs`, {
-        credentials: "include",
-      });
-      if (!r.ok) throw new Error("Failed to fetch runs");
-      return r.json();
-    },
-    enabled: runsPlanId != null,
-  });
-
-  const simulateMutation = useMutation({
-    mutationFn: async (planId: number) => {
-      const r = await fetch(`/api/crop-plans/${planId}/simulate-yield`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({}),
-      });
-      if (!r.ok) {
-        const e = await r.json().catch(() => ({}));
-        throw new Error(e.error ?? "Simulation failed");
-      }
-      return r.json();
-    },
-    onSuccess: (data: {
-      run?: { fieldCropPlanId: number };
-      outputs?: { conservative?: number; expected?: number; best_case?: number };
-      explanation?: string;
-    }) => {
-      setSimulateResult({
-        conservative: data.outputs?.conservative ?? 0,
-        expected: data.outputs?.expected ?? 0,
-        best_case: data.outputs?.best_case ?? 0,
-        explanation: data.explanation ?? "",
-      });
-      queryClient.invalidateQueries({ queryKey: [`/api/fields/${field.id}/crop-plans`] as const });
-      if (data.run?.fieldCropPlanId != null) {
-        queryClient.invalidateQueries({
-          queryKey: [`/api/crop-plans/${data.run.fieldCropPlanId}/simulation-runs`],
-        });
-      }
-    },
-    onError: (e: Error) => {
-      toast({ title: "Yield simulation failed", description: e.message, variant: "destructive" });
-    },
-  });
-
   return (
     <>
       <Card>
@@ -147,7 +77,7 @@ export function CropPlansCard({ field }: CropPlansCardProps) {
                 Crop plans
               </CardTitle>
               <CardDescription>
-                Plan crops and varieties per season; run yield simulations
+                Plan crops and varieties per season; click a plan to run and view yield simulations
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -200,40 +130,48 @@ export function CropPlansCard({ field }: CropPlansCardProps) {
               {plans.map((plan) => (
                 <li
                   key={plan.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border bg-muted/30"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
                 >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium">{plan.cropName}</span>
-                      <Badge variant="secondary" className="text-xs">
-                        {plan.seasonName}
-                      </Badge>
-                      {plan.managementLevel && (
-                        <span className="text-xs text-muted-foreground capitalize">
-                          {plan.managementLevel}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-sm text-muted-foreground mt-0.5">
-                      {plan.varietyName ? (
-                        <span>
-                          {plan.varietyName}
-                          {plan.varietyCode && ` (${plan.varietyCode})`}
-                          {plan.companyName && ` · ${plan.companyName}`}
-                        </span>
-                      ) : (
-                        <span>No variety selected</span>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0">
-                      <span>Plant: {formatDate(plan.plantingDate)}</span>
-                      <span>Harvest: {formatDate(plan.expectedHarvestDate)}</span>
-                      {plan.targetAreaHa && (
-                        <span>Area: {plan.targetAreaHa} ha</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <Link href={simsPath(plan.id)} className="min-w-0 flex-1 block">
+                    <a className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium">{plan.cropName}</span>
+                          <Badge variant="secondary" className="text-xs">
+                            {plan.seasonName}
+                          </Badge>
+                          {plan.managementLevel && (
+                            <span className="text-xs text-muted-foreground capitalize">
+                              {plan.managementLevel}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-0.5">
+                          {plan.varietyName ? (
+                            <span>
+                              {plan.varietyName}
+                              {plan.varietyCode && ` (${plan.varietyCode})`}
+                              {plan.companyName && ` · ${plan.companyName}`}
+                            </span>
+                          ) : (
+                            <span>No variety selected</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0">
+                          <span>Plant: {formatDate(plan.plantingDate)}</span>
+                          <span>Harvest: {formatDate(plan.expectedHarvestDate)}</span>
+                          {plan.targetAreaHa && (
+                            <span>Area: {plan.targetAreaHa} ha</span>
+                          )}
+                        </div>
+                      </div>
+                      <span className="shrink-0 text-muted-foreground flex items-center gap-1 text-sm">
+                        View sims
+                        <ChevronRight className="h-4 w-4" />
+                      </span>
+                    </a>
+                  </Link>
+                  <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                     <AddCropPlanDialog
                       field={field}
                       plan={plan}
@@ -244,29 +182,6 @@ export function CropPlansCard({ field }: CropPlansCardProps) {
                         </Button>
                       }
                     />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-1 text-muted-foreground"
-                      onClick={() => setRunsPlanId(plan.id)}
-                    >
-                      <History className="h-3.5 w-3.5" />
-                      Past runs
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1"
-                      onClick={() => simulateMutation.mutate(plan.id)}
-                      disabled={simulateMutation.isPending}
-                    >
-                      {simulateMutation.isPending ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Calculator className="h-3.5 w-3.5" />
-                      )}
-                      Simulate yield
-                    </Button>
                   </div>
                 </li>
               ))}
@@ -274,70 +189,6 @@ export function CropPlansCard({ field }: CropPlansCardProps) {
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={!!simulateResult} onOpenChange={() => setSimulateResult(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Yield simulation result</DialogTitle>
-          </DialogHeader>
-          {simulateResult && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">Conservative</p>
-                  <p className="text-lg font-semibold">{simulateResult.conservative} t/ha</p>
-                </div>
-                <div className="rounded-lg border p-3 bg-primary/5">
-                  <p className="text-xs text-muted-foreground">Expected</p>
-                  <p className="text-lg font-semibold">{simulateResult.expected} t/ha</p>
-                </div>
-                <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">Best case</p>
-                  <p className="text-lg font-semibold">{simulateResult.best_case} t/ha</p>
-                </div>
-              </div>
-              {simulateResult.explanation && (
-                <p className="text-sm text-muted-foreground">{simulateResult.explanation}</p>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={runsPlanId != null} onOpenChange={(open) => !open && setRunsPlanId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Past yield simulations</DialogTitle>
-          </DialogHeader>
-          {runsPlanId != null && (
-            <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-              {simulationRuns.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No simulation runs yet for this plan.</p>
-              ) : (
-                simulationRuns.map((run) => (
-                  <div
-                    key={run.id}
-                    className="rounded-lg border p-3 text-sm space-y-1"
-                  >
-                    <p className="text-muted-foreground text-xs">
-                      {formatDate(run.runAt)} · {run.methodVersion}
-                    </p>
-                    {run.outputs && (
-                      <p className="font-medium">
-                        {run.outputs.conservative ?? "—"} / {run.outputs.expected ?? "—"} / {run.outputs.best_case ?? "—"} t/ha
-                        <span className="text-muted-foreground font-normal text-xs ml-1">(conservative / expected / best)</span>
-                      </p>
-                    )}
-                    {run.explanation && (
-                      <p className="text-muted-foreground text-xs mt-1">{run.explanation}</p>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

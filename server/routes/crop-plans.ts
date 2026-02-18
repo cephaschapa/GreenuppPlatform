@@ -9,7 +9,7 @@ import {
   seedCompanies,
   yieldSimulationRuns,
 } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { isAuthenticated } from "../middleware/auth";
 import { z } from "zod";
 import { runAndPersistYieldSimulation } from "../services/yieldSimulationService";
@@ -145,6 +145,31 @@ router.get("/:id/simulation-runs", isAuthenticated, async (req, res) => {
   } catch (err) {
     console.error("List simulation runs:", err);
     res.status(500).json({ error: "Failed to fetch simulation runs" });
+  }
+});
+
+/** DELETE /api/crop-plans/:id/simulation-runs/:runId — delete one simulation run (field owner only) */
+router.delete("/:id/simulation-runs/:runId", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const planId = parseInt(req.params.id, 10);
+    const runId = parseInt(req.params.runId, 10);
+    if (!userId) return res.status(401).json({ error: "User not authenticated" });
+    if (Number.isNaN(planId) || Number.isNaN(runId)) return res.status(400).json({ error: "Invalid plan id or run id" });
+
+    const auth = await getPlanAndField(planId, userId);
+    if (!auth) return res.status(404).json({ error: "Crop plan not found" });
+
+    const [deleted] = await db
+      .delete(yieldSimulationRuns)
+      .where(and(eq(yieldSimulationRuns.id, runId), eq(yieldSimulationRuns.fieldCropPlanId, planId)))
+      .returning({ id: yieldSimulationRuns.id });
+
+    if (!deleted) return res.status(404).json({ error: "Simulation run not found" });
+    res.status(204).send();
+  } catch (err) {
+    console.error("Delete simulation run:", err);
+    res.status(500).json({ error: "Failed to delete simulation run" });
   }
 });
 

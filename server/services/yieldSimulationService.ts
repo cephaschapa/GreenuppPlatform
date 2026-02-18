@@ -28,6 +28,12 @@ export interface SimulationOutputs {
   conservative: number;
   expected: number;
   best_case: number;
+  /** Area used for total yield (hectares) */
+  areaHa?: number;
+  /** Total yield (tonnes) = t/ha × areaHa */
+  totalConservative?: number;
+  totalExpected?: number;
+  totalBestCase?: number;
   drivers?: Record<string, number>;
 }
 
@@ -69,12 +75,24 @@ export async function runYieldSimulation(
       centerLat: fields.centerLat,
       centerLng: fields.centerLng,
       location: fields.location,
+      size: fields.size,
+      sizeUnit: fields.sizeUnit,
     })
     .from(fields)
     .where(eq(fields.id, planRow.fieldId))
     .limit(1);
 
   if (!fieldRow) throw new Error("Field not found");
+
+  const areaHa = (() => {
+    const planHa = planRow.targetAreaHa != null ? parseFloat(String(planRow.targetAreaHa)) : NaN;
+    if (!Number.isNaN(planHa) && planHa > 0) return Math.round(planHa * 100) / 100;
+    const size = fieldRow.size != null ? parseFloat(String(fieldRow.size)) : NaN;
+    if (Number.isNaN(size) || size <= 0) return 1;
+    const unit = (fieldRow.sizeUnit || "hectares").toLowerCase();
+    if (unit === "acres") return Math.round(size * 0.4047 * 100) / 100;
+    return Math.round(size * 100) / 100;
+  })();
 
   let locationStr = options.locationOverride ?? "";
   if (!locationStr && fieldRow.centerLat != null && fieldRow.centerLng != null) {
@@ -183,10 +201,21 @@ export async function runYieldSimulation(
     varietyYieldMax,
   };
 
+  const perHaConservative = Math.round(conservative * 100) / 100;
+  const perHaExpected = Math.round(expectedYield * 100) / 100;
+  const perHaBestCase = Math.round(bestCase * 100) / 100;
+  const totalConservative = Math.round(perHaConservative * areaHa * 100) / 100;
+  const totalExpected = Math.round(perHaExpected * areaHa * 100) / 100;
+  const totalBestCase = Math.round(perHaBestCase * areaHa * 100) / 100;
+
   const outputs: SimulationOutputs = {
-    conservative: Math.round(conservative * 100) / 100,
-    expected: Math.round(expectedYield * 100) / 100,
-    best_case: Math.round(bestCase * 100) / 100,
+    conservative: perHaConservative,
+    expected: perHaExpected,
+    best_case: perHaBestCase,
+    areaHa,
+    totalConservative,
+    totalExpected,
+    totalBestCase,
     drivers: {
       water_stress_factor: Math.round(waterStressFactor * 1000) / 1000,
       heat_stress_factor: heatStressFactor,
@@ -196,7 +225,8 @@ export async function runYieldSimulation(
   };
 
   const explanation = [
-    `Yield range: ${outputs.conservative}–${outputs.best_case} t/ha (expected ${outputs.expected} t/ha).`,
+    `Yield: ${outputs.conservative}–${outputs.best_case} t/ha (expected ${outputs.expected} t/ha).`,
+    `For ${areaHa} ha: ${outputs.totalConservative}–${outputs.totalBestCase} t total (expected ${outputs.totalExpected} t).`,
     `Based on seasonal rainfall (~${Math.round(seasonalRainMm)} mm), water stress factor ${outputs.drivers?.water_stress_factor ?? waterStressFactor}, management level ${planRow.managementLevel ?? "medium"}.`,
   ].join(" ");
 

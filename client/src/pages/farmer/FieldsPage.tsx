@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   Field,
@@ -84,6 +85,7 @@ import { CropPlansCard } from "@/components/farmer/CropPlansCard";
 import React from "react";
 
 export default function FieldsPage() {
+  const [location] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedField, setSelectedField] = useState<Field | null>(null);
@@ -106,6 +108,21 @@ export default function FieldsPage() {
     },
     enabled: Boolean(user?.id),
   });
+
+  // Preselect field when returning from sims page (?field=id)
+  useEffect(() => {
+    if (!fields?.length) return;
+    const search = location.includes("?") ? location.slice(location.indexOf("?")) : "";
+    const params = new URLSearchParams(search);
+    const fieldId = params.get("field");
+    if (fieldId) {
+      const id = parseInt(fieldId, 10);
+      if (!Number.isNaN(id)) {
+        const field = fields.find((f) => f.id === id);
+        if (field) setSelectedField(field);
+      }
+    }
+  }, [location, fields]);
 
   // Fetch crops
   const { data: crops, isLoading: cropsLoading } = useQuery<Crop[]>({

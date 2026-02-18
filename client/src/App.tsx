@@ -58,6 +58,7 @@ import CreateListingPage from "@/pages/farmer/CreateListingPage";
 import CartPage from "@/pages/farmer/CartPage";
 import CheckoutPage from "@/pages/farmer/CheckoutPage";
 import CropTraceabilityPage from "@/pages/farmer/CropTraceabilityPage";
+import CropPlanSimsPage from "@/pages/farmer/CropPlanSimsPage";
 import ListCropOnMarketplace from "@/pages/farmer/ListCropOnMarketplace";
 import NotificationsPage from "@/pages/farmer/NotificationsPage";
 import NotificationSettingsPage from "@/pages/farmer/NotificationSettingsPage";
@@ -85,6 +86,10 @@ function FarmerRouter({ userId }: { userId: string }) {
         <ProtectedRoute
           path={`/farmer/${userId}/dashboard`}
           component={DashboardOverview}
+        />
+        <ProtectedRoute
+          path={`/farmer/${userId}/fields/:fieldId/plans/:planId/sims`}
+          component={CropPlanSimsPage}
         />
         <ProtectedRoute
           path={`/farmer/${userId}/fields`}

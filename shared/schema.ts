@@ -493,6 +493,10 @@ export const yieldSimulationRuns = pgTable("yield_simulation_runs", {
     conservative?: number;
     expected?: number;
     best_case?: number;
+    areaHa?: number;
+    totalConservative?: number;
+    totalExpected?: number;
+    totalBestCase?: number;
     drivers?: Record<string, number>;
   }>().notNull(),
   explanation: text("explanation"),
