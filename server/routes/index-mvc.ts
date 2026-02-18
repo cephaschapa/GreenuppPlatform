@@ -5,6 +5,8 @@ import fieldRoutes from "./fields.js";
 import cropRoutes from "./crops.js";
 import cropActivityRoutes from "./crop-activities.js";
 import fieldCropRoutes from "./field-crops.js";
+import seedVarietiesRoutes from "./seed-varieties.js";
+import cropPlansRoutes from "./crop-plans.js";
 import taskRoutes from "./tasks.js";
 import weatherRoutes from "./weather.js";
 import weatherPreferencesRoutes from "./weather-preferences.js";
@@ -49,6 +51,12 @@ export function registerMvcRoutes(app: Express): void {
 
   // Field-specific crop routes
   app.use("/api/fields/:fieldId/crops", fieldCropRoutes);
+
+  // Seed varieties (with optional recommendation by field)
+  app.use("/api/seed-varieties", seedVarietiesRoutes);
+
+  // Crop plans by id (PATCH, GET, simulate-yield)
+  app.use("/api/crop-plans", cropPlansRoutes);
 
   // Task management routes
   app.use("/api/tasks", taskRoutes);

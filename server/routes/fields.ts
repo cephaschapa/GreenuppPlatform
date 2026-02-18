@@ -3,8 +3,12 @@ import { db } from "../db";
 import { fields, crops, locations } from "@shared/schema";
 import { eq, and, isNotNull } from "drizzle-orm";
 import { isAuthenticated } from "../middleware/auth";
+import fieldCropPlansRouter from "./field-crop-plans";
 
 const router = Router();
+
+// Mount crop-plans under /:fieldId/crop-plans (before /:id so "crop-plans" is not treated as id)
+router.use("/:fieldId/crop-plans", fieldCropPlansRouter);
 
 // Get all fields for a user
 router.get("/", isAuthenticated, async (req, res) => {

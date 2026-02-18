@@ -393,6 +393,121 @@ export const cropGrowthStages = pgTable("crop_growth_stages", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// ---- Crop Planning + Seed Variety + Yield Simulation (Zambia) ----
+
+/** Reference crop types (Maize, Soybean, etc.) for planning */
+export const cropRef = pgTable("crop_ref", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  category: text("category"), // cereal, legume, tuber, etc.
+  defaultWaterRequirementMm: real("default_water_requirement_mm"),
+  defaultGddRange: jsonb("default_gdd_range").$type<{ min?: number; max?: number }>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** Seed companies (SeedCo, Pioneer/Corteva, etc.) */
+export const seedCompanies = pgTable("seed_companies", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  country: text("country").default("ZM"),
+  website: text("website"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** Seed varieties with Zambia agro-ecological fit and planting windows */
+export const seedVarieties = pgTable("seed_varieties", {
+  id: serial("id").primaryKey(),
+  cropId: integer("crop_id").notNull().references(() => cropRef.id),
+  companyId: integer("company_id").references(() => seedCompanies.id),
+  name: text("name").notNull(),
+  code: text("code"),
+  type: text("type").notNull(), // hybrid | opv
+  grainColor: text("grain_color"),
+  maturityClass: text("maturity_class").notNull(), // ultra_early | early | medium | late
+  daysToMaturityMin: integer("days_to_maturity_min"),
+  daysToMaturityMax: integer("days_to_maturity_max"),
+  yieldPotentialThaMin: real("yield_potential_t_ha_min"),
+  yieldPotentialThaMax: real("yield_potential_t_ha_max"),
+  traits: jsonb("traits").$type<{
+    drought_tolerant?: boolean;
+    disease_tolerance?: string[];
+    standability?: string;
+    [k: string]: unknown;
+  }>(),
+  recommendedRegions: text("recommended_regions").array(), // I, II, III
+  recommendedProvinces: text("recommended_provinces").array(),
+  recommendedPlantingWindow: jsonb("recommended_planting_window").$type<{
+    start_month?: number;
+    end_month?: number;
+    notes?: string;
+  }>(),
+  sourceUrl: text("source_url"),
+  sourceDoc: text("source_doc"),
+  lastVerifiedAt: date("last_verified_at"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** Seasons (e.g. 2026/27) */
+export const seasons = pgTable("seasons", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** Management level for crop plan */
+export const managementLevelEnum = pgEnum("management_level_enum", [
+  "low",
+  "medium",
+  "high",
+]);
+
+/** Field crop plan: crop + optional seed variety per field per season */
+export const fieldCropPlans = pgTable("field_crop_plans", {
+  id: serial("id").primaryKey(),
+  fieldId: integer("field_id").notNull().references(() => fields.id),
+  seasonId: integer("season_id").notNull().references(() => seasons.id),
+  cropId: integer("crop_id").notNull().references(() => cropRef.id),
+  seedVarietyId: integer("seed_variety_id").references(() => seedVarieties.id),
+  targetAreaHa: decimal("target_area_ha", { precision: 10, scale: 2 }),
+  plantingDate: date("planting_date"),
+  expectedHarvestDate: date("expected_harvest_date"),
+  managementLevel: text("management_level").default("medium"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/** Yield simulation run snapshot (auditable) */
+export const yieldSimulationRuns = pgTable("yield_simulation_runs", {
+  id: serial("id").primaryKey(),
+  fieldCropPlanId: integer("field_crop_plan_id")
+    .notNull()
+    .references(() => fieldCropPlans.id),
+  runAt: timestamp("run_at").notNull().defaultNow(),
+  weatherSnapshotJson: jsonb("weather_snapshot_json").$type<Record<string, unknown>>(),
+  methodVersion: text("method_version").notNull().default("mvp_v1"),
+  inputs: jsonb("inputs").$type<Record<string, unknown>>().notNull(),
+  outputs: jsonb("outputs").$type<{
+    conservative?: number;
+    expected?: number;
+    best_case?: number;
+    drivers?: Record<string, number>;
+  }>().notNull(),
+  explanation: text("explanation"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** Province/District → Agro-Ecological Region (I, II, III) for Zambia */
+export const agroEcologicalRegions = pgTable("agro_ecological_regions", {
+  id: serial("id").primaryKey(),
+  province: text("province").notNull(),
+  district: text("district"),
+  region: text("region").notNull(), // I | II | III
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Create schemas for crop management
 export const insertFieldSchema = createInsertSchema(fields).omit({
   id: true,
