@@ -7,6 +7,7 @@ import cropActivityRoutes from "./crop-activities.js";
 import fieldCropRoutes from "./field-crops.js";
 import seedVarietiesRoutes from "./seed-varieties.js";
 import cropPlansRoutes from "./crop-plans.js";
+import referenceRoutes from "./reference.js";
 import taskRoutes from "./tasks.js";
 import weatherRoutes from "./weather.js";
 import weatherPreferencesRoutes from "./weather-preferences.js";
@@ -57,6 +58,9 @@ export function registerMvcRoutes(app: Express): void {
 
   // Crop plans by id (PATCH, GET, simulate-yield)
   app.use("/api/crop-plans", cropPlansRoutes);
+
+  // Reference data for crop planning (crops, seasons)
+  app.use("/api/reference", referenceRoutes);
 
   // Task management routes
   app.use("/api/tasks", taskRoutes);

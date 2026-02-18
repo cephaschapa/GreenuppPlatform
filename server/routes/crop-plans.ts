@@ -7,8 +7,9 @@ import {
   seasons,
   seedVarieties,
   seedCompanies,
+  yieldSimulationRuns,
 } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { isAuthenticated } from "../middleware/auth";
 import { z } from "zod";
 import { runAndPersistYieldSimulation } from "../services/yieldSimulationService";
@@ -112,6 +113,38 @@ router.post("/:id/simulate-yield", isAuthenticated, async (req, res) => {
     res.status(500).json({
       error: err instanceof Error ? err.message : "Failed to run yield simulation",
     });
+  }
+});
+
+/** GET /api/crop-plans/:id/simulation-runs — list yield simulation runs for this plan (field owner only) */
+router.get("/:id/simulation-runs", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const planId = parseInt(req.params.id, 10);
+    if (!userId) return res.status(401).json({ error: "User not authenticated" });
+    if (Number.isNaN(planId)) return res.status(400).json({ error: "Invalid plan id" });
+
+    const auth = await getPlanAndField(planId, userId);
+    if (!auth) return res.status(404).json({ error: "Crop plan not found" });
+
+    const runs = await db
+      .select({
+        id: yieldSimulationRuns.id,
+        fieldCropPlanId: yieldSimulationRuns.fieldCropPlanId,
+        runAt: yieldSimulationRuns.runAt,
+        methodVersion: yieldSimulationRuns.methodVersion,
+        inputs: yieldSimulationRuns.inputs,
+        outputs: yieldSimulationRuns.outputs,
+        explanation: yieldSimulationRuns.explanation,
+      })
+      .from(yieldSimulationRuns)
+      .where(eq(yieldSimulationRuns.fieldCropPlanId, planId))
+      .orderBy(desc(yieldSimulationRuns.runAt));
+
+    res.json(runs);
+  } catch (err) {
+    console.error("List simulation runs:", err);
+    res.status(500).json({ error: "Failed to fetch simulation runs" });
   }
 });
 

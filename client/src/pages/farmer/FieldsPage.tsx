@@ -80,6 +80,7 @@ import AddFieldDialog from "@/components/farmer/AddFieldDialog";
 import EditFieldDialog from "@/components/farmer/EditFieldDialog";
 import DeleteFieldDialog from "@/components/farmer/DeleteFieldDialog";
 import { CropDetailsDialog } from "@/components/farmer/CropDetailsDialog";
+import { CropPlansCard } from "@/components/farmer/CropPlansCard";
 import React from "react";
 
 export default function FieldsPage() {
@@ -720,6 +721,9 @@ export default function FieldsPage() {
                   }}
                   height="400px"
                 />
+
+                {/* Crop plans: plan by season, recommend varieties, simulate yield */}
+                <CropPlansCard field={selectedField} />
 
                 {/* Crops in this field */}
                 <Card>
