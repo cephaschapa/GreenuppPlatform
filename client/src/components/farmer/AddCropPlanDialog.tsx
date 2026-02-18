@@ -104,7 +104,7 @@ export function AddCropPlanDialog({
     enabled: open,
   });
 
-  const { data: refSeasons = [] } = useQuery<RefSeason[]>({
+  const { data: refSeasons = [], isLoading: refSeasonsLoading } = useQuery<RefSeason[]>({
     queryKey: ["/api/reference/seasons"],
     queryFn: async () => {
       const r = await fetch("/api/reference/seasons", { credentials: "include" });
@@ -255,21 +255,31 @@ export function AddCropPlanDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Season</Label>
+            <Label htmlFor="season-select">Season</Label>
             <Select
               value={seasonId === "" ? undefined : String(seasonId)}
               onValueChange={(v) => setSeasonId(v === "" ? "" : Number(v))}
               required
             >
-              <SelectTrigger>
+              <SelectTrigger id="season-select">
                 <SelectValue placeholder="Select season" />
               </SelectTrigger>
-              <SelectContent>
-                {refSeasons.map((s) => (
-                  <SelectItem key={s.id} value={String(s.id)}>
-                    {s.name}
-                  </SelectItem>
-                ))}
+              <SelectContent position="popper">
+                {refSeasonsLoading ? (
+                  <div className="py-2 px-2 text-sm text-muted-foreground">
+                    Loading…
+                  </div>
+                ) : refSeasons.length === 0 ? (
+                  <div className="py-2 px-2 text-sm text-muted-foreground">
+                    No seasons available.
+                  </div>
+                ) : (
+                  refSeasons.map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {s.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>

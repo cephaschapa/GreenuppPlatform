@@ -23,10 +23,10 @@ router.get("/crops", isAuthenticated, async (_req, res) => {
   }
 });
 
-/** GET /api/reference/seasons — list seasons for planning */
+/** GET /api/reference/seasons — list seasons for planning (seeds defaults if empty) */
 router.get("/seasons", isAuthenticated, async (_req, res) => {
   try {
-    const rows = await db
+    let rows = await db
       .select({
         id: seasons.id,
         name: seasons.name,
@@ -35,6 +35,23 @@ router.get("/seasons", isAuthenticated, async (_req, res) => {
       })
       .from(seasons)
       .orderBy(seasons.startDate);
+
+    if (rows.length === 0) {
+      await db.insert(seasons).values([
+        { name: "2025/26", startDate: "2025-10-01", endDate: "2026-04-30" },
+        { name: "2026/27", startDate: "2026-10-01", endDate: "2027-04-30" },
+      ]);
+      rows = await db
+        .select({
+          id: seasons.id,
+          name: seasons.name,
+          startDate: seasons.startDate,
+          endDate: seasons.endDate,
+        })
+        .from(seasons)
+        .orderBy(seasons.startDate);
+    }
+
     res.json(rows);
   } catch (err) {
     console.error("List seasons:", err);
