@@ -12,7 +12,7 @@ import { eq, and } from "drizzle-orm";
 import { isAuthenticated } from "../middleware/auth";
 import { z } from "zod";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 const createCropPlanBody = z.object({
   seasonId: z.number().int().positive(),

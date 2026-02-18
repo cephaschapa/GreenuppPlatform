@@ -29,8 +29,7 @@ SELECT
   ARRAY['I','II','III'],
   '{"start_month": 10, "end_month": 12, "notes": "Early to mid-season"}'::jsonb,
   'https://www.seedco.co.zm', '2025-01-01'::date, true
-FROM crop_ref c WHERE c.name = 'Maize' LIMIT 1
-AND NOT EXISTS (SELECT 1 FROM seed_varieties WHERE code = 'SC719');
+FROM crop_ref c WHERE c.name = 'Maize' AND NOT EXISTS (SELECT 1 FROM seed_varieties WHERE code = 'SC719') LIMIT 1;
 
 INSERT INTO seed_varieties (
   crop_id, company_id, name, code, type, grain_color, maturity_class,
@@ -41,8 +40,7 @@ SELECT c.id, (SELECT id FROM seed_companies WHERE name = 'SeedCo Zambia' LIMIT 1
   'SC 637', 'SC637', 'hybrid', 'white', 'early', 115, 125, 5.5, 9,
   '{"drought_tolerant": true}'::jsonb, ARRAY['I','II'],
   '{"start_month": 11, "end_month": 12}'::jsonb, 'https://www.seedco.co.zm', '2025-01-01'::date, true
-FROM crop_ref c WHERE c.name = 'Maize' LIMIT 1
-AND NOT EXISTS (SELECT 1 FROM seed_varieties WHERE code = 'SC637');
+FROM crop_ref c WHERE c.name = 'Maize' AND NOT EXISTS (SELECT 1 FROM seed_varieties WHERE code = 'SC637') LIMIT 1;
 
 INSERT INTO seed_varieties (
   crop_id, company_id, name, code, type, grain_color, maturity_class,
@@ -53,8 +51,7 @@ SELECT c.id, (SELECT id FROM seed_companies WHERE name = 'SeedCo Zambia' LIMIT 1
   'SC 513', 'SC513', 'hybrid', 'white', 'late', 135, 150, 7, 11,
   '{"drought_tolerant": false}'::jsonb, ARRAY['II','III'],
   '{"start_month": 10, "end_month": 11}'::jsonb, 'https://www.seedco.co.zm', '2025-01-01'::date, true
-FROM crop_ref c WHERE c.name = 'Maize' LIMIT 1
-AND NOT EXISTS (SELECT 1 FROM seed_varieties WHERE code = 'SC513');
+FROM crop_ref c WHERE c.name = 'Maize' AND NOT EXISTS (SELECT 1 FROM seed_varieties WHERE code = 'SC513') LIMIT 1;
 
 INSERT INTO seed_varieties (
   crop_id, company_id, name, code, type, grain_color, maturity_class,
@@ -65,8 +62,7 @@ SELECT c.id, (SELECT id FROM seed_companies WHERE name = 'Pioneer (Corteva)' LIM
   'Pioneer P30B19', 'P30B19', 'hybrid', 'white', 'early', 110, 120, 5, 8.5,
   '{"drought_tolerant": true}'::jsonb, ARRAY['I','II','III'],
   '{"start_month": 10, "end_month": 12}'::jsonb, 'https://www.corteva.com', '2025-01-01'::date, true
-FROM crop_ref c WHERE c.name = 'Maize' LIMIT 1
-AND NOT EXISTS (SELECT 1 FROM seed_varieties WHERE code = 'P30B19');
+FROM crop_ref c WHERE c.name = 'Maize' AND NOT EXISTS (SELECT 1 FROM seed_varieties WHERE code = 'P30B19') LIMIT 1;
 
 INSERT INTO seed_varieties (
   crop_id, company_id, name, code, type, grain_color, maturity_class,
@@ -77,8 +73,7 @@ SELECT c.id, (SELECT id FROM seed_companies WHERE name = 'Pioneer (Corteva)' LIM
   'Pioneer P30G19', 'P30G19', 'hybrid', 'white', 'medium', 120, 130, 6, 10,
   '{"drought_tolerant": true}'::jsonb, ARRAY['II','III'],
   '{"start_month": 10, "end_month": 11}'::jsonb, 'https://www.corteva.com', '2025-01-01'::date, true
-FROM crop_ref c WHERE c.name = 'Maize' LIMIT 1
-AND NOT EXISTS (SELECT 1 FROM seed_varieties WHERE code = 'P30G19');
+FROM crop_ref c WHERE c.name = 'Maize' AND NOT EXISTS (SELECT 1 FROM seed_varieties WHERE code = 'P30G19') LIMIT 1;
 
 -- seasons
 INSERT INTO seasons (name, start_date, end_date)

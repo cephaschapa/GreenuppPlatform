@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,6 +32,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -39,12 +46,31 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle,
+  Calendar as CalendarIcon,
+  Sparkles,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { insertCropSchema } from "@shared/schema";
 import { Field } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
+
+/** Emoji or icon for crop name/category (Zambia-relevant crops) */
+function cropEmoji(name: string, category: string | null): string {
+  const n = (name || "").toLowerCase();
+  const c = (category || "").toLowerCase();
+  if (n.includes("maize")) return "🌽";
+  if (n.includes("wheat")) return "🌾";
+  if (n.includes("rice")) return "🍚";
+  if (n.includes("soy") || n.includes("bean")) return "🫘";
+  if (n.includes("groundnut") || n.includes("peanut")) return "🥜";
+  if (n.includes("sorghum") || n.includes("millet")) return "🌾";
+  if (n.includes("cassava") || c.includes("tuber")) return "🥔";
+  if (c.includes("legume")) return "🫘";
+  if (c.includes("cereal")) return "🌾";
+  return "🌱";
+}
 
 // Step indicators
 const steps = [
@@ -90,6 +116,9 @@ interface AddCropDialogProps {
   trigger?: React.ReactNode;
 }
 
+interface RefCrop { id: number; name: string; category: string | null; }
+interface SeedVarietyRow { id: number; name: string; code: string | null; recommended?: boolean; recommendationReasons?: string[]; }
+
 export function AddCropDialog({ field, trigger }: AddCropDialogProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -97,8 +126,30 @@ export function AddCropDialog({ field, trigger }: AddCropDialogProps) {
   const [formData, setFormData] = useState<
     Partial<z.infer<typeof cropFormSchema>>
   >({});
+  const [selectedCropId, setSelectedCropId] = useState<number | null>(null);
 
   const { user } = useAuth();
+
+  const { data: refCrops = [] } = useQuery<RefCrop[]>({
+    queryKey: ["/api/reference/crops"],
+    queryFn: async () => {
+      const r = await fetch("/api/reference/crops", { credentials: "include" });
+      if (!r.ok) throw new Error("Failed to fetch crops");
+      return r.json();
+    },
+    enabled: isOpen,
+  });
+
+  const { data: seedVarieties = [], isLoading: varietiesLoading } = useQuery<SeedVarietyRow[]>({
+    queryKey: ["/api/seed-varieties", field.id, selectedCropId],
+    queryFn: async () => {
+      const params = new URLSearchParams({ fieldId: String(field.id), cropId: String(selectedCropId) });
+      const r = await fetch(`/api/seed-varieties?${params}`, { credentials: "include" });
+      if (!r.ok) throw new Error("Failed to fetch varieties");
+      return r.json();
+    },
+    enabled: isOpen && selectedCropId != null && selectedCropId > 0,
+  });
   // Form setup
   const form = useForm<z.infer<typeof cropFormSchema>>({
     resolver: zodResolver(cropFormSchema),
@@ -123,10 +174,12 @@ export function AddCropDialog({ field, trigger }: AddCropDialogProps) {
     },
   });
 
-  // Auto-generate batch ID when dialog opens
+  // Auto-generate batch ID and reset crop/variety selection when dialog opens
   useEffect(() => {
     if (isOpen) {
       generateBatchId();
+    } else {
+      setSelectedCropId(null);
     }
   }, [isOpen]);
 
@@ -292,52 +345,137 @@ export function AddCropDialog({ field, trigger }: AddCropDialogProps) {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Crop Name *</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="E.g., Maize, Wheat, Soybean"
-                          {...field}
-                          required
-                        />
-                      </FormControl>
+                      <FormLabel>Crop type *</FormLabel>
+                      <Select
+                        value={selectedCropId != null ? String(selectedCropId) : ""}
+                        onValueChange={(v) => {
+                          const id = v === "" ? null : Number(v);
+                          setSelectedCropId(id);
+                          const crop = refCrops.find((c) => c.id === id);
+                          if (crop) {
+                            field.onChange(crop.name);
+                            form.setValue("variety", "");
+                            form.setValue("seedVariety", "");
+                          }
+                        }}
+                        required
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select crop (e.g. Maize)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {refCrops.map((c) => (
+                            <SelectItem key={c.id} value={String(c.id)}>
+                              <span className="flex items-center gap-2">
+                                <span aria-hidden>{cropEmoji(c.name, c.category)}</span>
+                                {c.name}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="variety"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Variety</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="E.g., SC 513, Pioneer"
-                          {...field}
-                          value={field.value || ""}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {selectedCropId != null && (
+                  <FormField
+                    control={form.control}
+                    name="variety"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-1.5">
+                          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                          Seed variety (optional)
+                        </FormLabel>
+                        <Select
+                          value={field.value ? String(field.value) : "none"}
+                          onValueChange={(v) => {
+                            if (v === "none") {
+                              field.onChange("");
+                              form.setValue("seedVariety", "");
+                              return;
+                            }
+                            const variety = seedVarieties.find((x) => x.name === v || String(x.id) === v);
+                            if (variety) {
+                              field.onChange(variety.name);
+                              form.setValue("seedVariety", variety.code || variety.name);
+                            }
+                          }}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="None or pick recommended" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">No specific variety</SelectItem>
+                            {varietiesLoading ? (
+                              <div className="py-2 px-2 text-sm text-muted-foreground flex items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Loading…
+                              </div>
+                            ) : (
+                              seedVarieties.map((v) => (
+                                <SelectItem key={v.id} value={v.name}>
+                                  <span className="flex items-center gap-2">
+                                    {v.name}
+                                    {v.code && (
+                                      <span className="text-muted-foreground">({v.code})</span>
+                                    )}
+                                    {v.recommended && (
+                                      <span className="text-xs text-green-600">Recommended</span>
+                                    )}
+                                  </span>
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="plantingDate"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Planting Date *</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="date"
-                            {...field}
-                            value={field.value || ""}
-                            required
-                          />
-                        </FormControl>
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Planting date *</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {field.value ? (
+                                  format(new Date(field.value + "T12:00:00"), "PPP")
+                                ) : (
+                                  <span>Pick date</span>
+                                )}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value ? new Date(field.value + "T12:00:00") : undefined}
+                              onSelect={(d) => field.onChange(d ? format(d, "yyyy-MM-dd") : "")}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -346,16 +484,36 @@ export function AddCropDialog({ field, trigger }: AddCropDialogProps) {
                     control={form.control}
                     name="expectedHarvestDate"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Expected Harvest Date *</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="date"
-                            {...field}
-                            value={field.value || ""}
-                            required
-                          />
-                        </FormControl>
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Expected harvest date *</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {field.value ? (
+                                  format(new Date(field.value + "T12:00:00"), "PPP")
+                                ) : (
+                                  <span>Pick date</span>
+                                )}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value ? new Date(field.value + "T12:00:00") : undefined}
+                              onSelect={(d) => field.onChange(d ? format(d, "yyyy-MM-dd") : "")}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}

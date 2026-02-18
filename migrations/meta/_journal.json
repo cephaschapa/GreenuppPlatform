@@ -106,6 +106,27 @@
       "when": 1771009491771,
       "tag": "0014_rare_carnage",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1771010000003,
+      "tag": "0018_crop_planning_seed_variety_yield_simulation",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1771010000004,
+      "tag": "0019_seed_crop_planning_data",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1771010000005,
+      "tag": "0020_add_more_reference_crops",
+      "breakpoints": true
     }
   ]
 }
