@@ -1,6 +1,15 @@
 import { Router } from "express";
 import { db } from "../db";
-import { crops, fields, cropActivities, cropObservations } from "@shared/schema";
+import {
+  crops,
+  fields,
+  cropActivities,
+  cropObservations,
+  plantAnalyses,
+  treatmentPlans,
+  treatmentSteps,
+  pestReports,
+} from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { CropController } from "../controllers/CropController.js";
 import { isAuthenticatedWithUser, isFarmer } from "../middleware/auth.js";
@@ -39,6 +48,22 @@ router.delete("/:id", async (req, res) => {
       .limit(1);
     if (!crop) return res.status(404).json({ error: "Crop not found" });
 
+    const plantIds = await db
+      .select({ id: plantAnalyses.id })
+      .from(plantAnalyses)
+      .where(eq(plantAnalyses.cropId, cropId));
+    for (const p of plantIds) {
+      const plans = await db
+        .select({ id: treatmentPlans.id })
+        .from(treatmentPlans)
+        .where(eq(treatmentPlans.analysisId, p.id));
+      for (const plan of plans) {
+        await db.delete(treatmentSteps).where(eq(treatmentSteps.treatmentPlanId, plan.id));
+      }
+      await db.delete(treatmentPlans).where(eq(treatmentPlans.analysisId, p.id));
+      await db.delete(pestReports).where(eq(pestReports.plantAnalysisId, p.id));
+    }
+    await db.delete(plantAnalyses).where(eq(plantAnalyses.cropId, cropId));
     await db.delete(cropActivities).where(eq(cropActivities.cropId, cropId));
     await db.delete(cropObservations).where(eq(cropObservations.cropId, cropId));
     await db.delete(crops).where(eq(crops.id, cropId));

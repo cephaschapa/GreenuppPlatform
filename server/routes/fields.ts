@@ -290,6 +290,24 @@ router.delete("/:id", isAuthenticated, async (req, res) => {
       .where(eq(crops.fieldId, fieldId));
     if (cropIds.length > 0) {
       const ids = cropIds.map((c) => c.id);
+      const plantAnalysisRows = await db
+        .select({ id: plantAnalyses.id })
+        .from(plantAnalyses)
+        .where(inArray(plantAnalyses.cropId, ids));
+      const plantAnalysisIds = plantAnalysisRows.map((p) => p.id);
+      if (plantAnalysisIds.length > 0) {
+        const plans = await db
+          .select({ id: treatmentPlans.id })
+          .from(treatmentPlans)
+          .where(inArray(treatmentPlans.analysisId, plantAnalysisIds));
+        const planIds = plans.map((t) => t.id);
+        if (planIds.length > 0) {
+          await db.delete(treatmentSteps).where(inArray(treatmentSteps.treatmentPlanId, planIds));
+        }
+        await db.delete(treatmentPlans).where(inArray(treatmentPlans.analysisId, plantAnalysisIds));
+        await db.delete(pestReports).where(inArray(pestReports.plantAnalysisId, plantAnalysisIds));
+      }
+      await db.delete(plantAnalyses).where(inArray(plantAnalyses.cropId, ids));
       await db.delete(cropActivities).where(inArray(cropActivities.cropId, ids));
       await db.delete(cropObservations).where(inArray(cropObservations.cropId, ids));
     }
