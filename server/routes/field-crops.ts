@@ -9,6 +9,7 @@ import {
   treatmentPlans,
   treatmentSteps,
   pestReports,
+  marketplaceListings,
 } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { CropController } from "../controllers/CropController.js";
@@ -66,6 +67,10 @@ router.delete("/:id", async (req, res) => {
     await db.delete(plantAnalyses).where(eq(plantAnalyses.cropId, cropId));
     await db.delete(cropActivities).where(eq(cropActivities.cropId, cropId));
     await db.delete(cropObservations).where(eq(cropObservations.cropId, cropId));
+    await db
+      .update(marketplaceListings)
+      .set({ sourceCropId: null })
+      .where(eq(marketplaceListings.sourceCropId, cropId));
     await db.delete(crops).where(eq(crops.id, cropId));
     res.status(204).send();
   } catch (err) {

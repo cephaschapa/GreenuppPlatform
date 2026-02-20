@@ -7,6 +7,7 @@ import {
   treatmentPlans,
   treatmentSteps,
   pestReports,
+  marketplaceListings,
 } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 
@@ -360,6 +361,10 @@ export class CropModel {
       await db.delete(plantAnalyses).where(eq(plantAnalyses.cropId, id));
       await db.delete(cropActivities).where(eq(cropActivities.cropId, id));
       await db.delete(cropObservations).where(eq(cropObservations.cropId, id));
+      await db
+        .update(marketplaceListings)
+        .set({ sourceCropId: null })
+        .where(eq(marketplaceListings.sourceCropId, id));
       const result = await db.delete(crops).where(eq(crops.id, id)).returning();
 
       return result.length > 0;

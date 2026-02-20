@@ -12,6 +12,7 @@ import {
   treatmentPlans,
   treatmentSteps,
   pestReports,
+  marketplaceListings,
 } from "@shared/schema";
 import { eq, and, isNotNull, inArray } from "drizzle-orm";
 import { isAuthenticated } from "../middleware/auth";
@@ -314,6 +315,10 @@ router.delete("/:id", isAuthenticated, async (req, res) => {
       await db.delete(plantAnalyses).where(inArray(plantAnalyses.cropId, ids));
       await db.delete(cropActivities).where(inArray(cropActivities.cropId, ids));
       await db.delete(cropObservations).where(inArray(cropObservations.cropId, ids));
+      await db
+        .update(marketplaceListings)
+        .set({ sourceCropId: null })
+        .where(inArray(marketplaceListings.sourceCropId, ids));
     }
     await db.delete(crops).where(eq(crops.fieldId, fieldId));
     await db.delete(fields).where(eq(fields.id, fieldId));
