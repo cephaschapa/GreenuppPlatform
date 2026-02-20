@@ -17,7 +17,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Calendar, Sprout, Edit, PlusCircle, ChevronRight } from "lucide-react";
+import { Loader2, Calendar, Sprout, Edit, PlusCircle, ChevronRight, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { Field } from "@shared/schema";
 import {
   AddCropPlanDialog,
@@ -39,10 +42,32 @@ function formatDate(s: string | null | undefined) {
 }
 
 export function CropPlansCard({ field }: CropPlansCardProps) {
+  const { toast } = useToast();
   const [location] = useLocation();
   const [seasonFilter, setSeasonFilter] = useState<string>("all");
   const basePath = location.split("?")[0];
   const simsPath = (planId: number) => `${basePath}/${field.id}/plans/${planId}/sims`;
+
+  const deletePlanMutation = useMutation({
+    mutationFn: async (planId: number) => {
+      const r = await fetch(`/api/fields/${field.id}/crop-plans/${planId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}));
+        throw new Error(typeof body?.error === "string" ? body.error : "Failed to delete plan");
+      }
+      return r.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/fields/${field.id}/crop-plans`] });
+      toast({ title: "Crop plan deleted" });
+    },
+    onError: (e: Error) => {
+      toast({ title: "Could not delete plan", description: e.message, variant: "destructive" });
+    },
+  });
 
   const { data: refSeasons = [] } = useQuery<RefSeason[]>({
     queryKey: ["/api/reference/seasons"],
@@ -171,7 +196,7 @@ export function CropPlansCard({ field }: CropPlansCardProps) {
                       </span>
                     </a>
                   </Link>
-                  <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <div className="shrink-0 flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
                     <AddCropPlanDialog
                       field={field}
                       plan={plan}
@@ -182,6 +207,20 @@ export function CropPlansCard({ field }: CropPlansCardProps) {
                         </Button>
                       }
                     />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1 text-muted-foreground hover:text-destructive"
+                      onClick={() => {
+                        if (window.confirm(`Delete this crop plan (${plan.cropName}, ${plan.seasonName})? This cannot be undone.`)) {
+                          deletePlanMutation.mutate(plan.id);
+                        }
+                      }}
+                      disabled={deletePlanMutation.isPending}
+                      title="Delete plan"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </li>
               ))}

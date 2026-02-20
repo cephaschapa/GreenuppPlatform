@@ -181,20 +181,25 @@ export default function FieldsPage() {
     mutationFn: async (cropId: number) => {
       const response = await fetch(`/api/crops/${cropId}`, {
         method: "DELETE",
+        credentials: "include",
       });
 
       if (!response.ok) {
         throw new Error("Failed to delete crop");
       }
 
+      if (response.status === 204) return undefined;
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, cropId) => {
       toast({
         title: "Crop deleted",
         description: "The crop has been deleted successfully",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/crops"] });
+      if (selectedField) {
+        queryClient.invalidateQueries({ queryKey: [`/api/fields/${selectedField.id}/crops`] });
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -536,12 +541,30 @@ export default function FieldsPage() {
                             {isSelected && (
                               <ArrowRight className="h-4 w-4 text-primary mr-2" />
                             )}
+                            <DeleteFieldDialog
+                              field={field}
+                              cropCount={fieldCrops.length}
+                              onDeleted={(f) => {
+                                if (selectedField?.id === f.id) setSelectedField(null);
+                              }}
+                              trigger={
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                                  title="Delete field"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              }
+                            />
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   className="h-8 w-8 p-0"
+                                  title="Field actions"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
@@ -572,6 +595,9 @@ export default function FieldsPage() {
                                   <DeleteFieldDialog
                                     field={field}
                                     cropCount={fieldCrops.length}
+                                    onDeleted={(f) => {
+                                      if (selectedField?.id === f.id) setSelectedField(null);
+                                    }}
                                     trigger={
                                       <div className="w-full flex items-center text-destructive">
                                         <Trash2 className="h-4 w-4 mr-2" />
@@ -673,6 +699,9 @@ export default function FieldsPage() {
                         <DeleteFieldDialog
                           field={selectedField}
                           cropCount={getFieldCrops(selectedField.id).length}
+                          onDeleted={(f) => {
+                            if (selectedField?.id === f.id) setSelectedField(null);
+                          }}
                           trigger={
                             <Button variant="outline" size="sm">
                               <Trash2 className="h-4 w-4 mr-2" />
@@ -806,72 +835,89 @@ export default function FieldsPage() {
                                       </CardTitle>
                                     </div>
                                   </div>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        <MoreHorizontal className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                      <DropdownMenuLabel>
-                                        Quick Actions
-                                      </DropdownMenuLabel>
-                                      <DropdownMenuItem
-                                        onClick={() => handleCropSelect(crop)}
-                                      >
-                                        <Eye className="h-4 w-4 mr-2" />
-                                        View Details
-                                      </DropdownMenuItem>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuLabel>
-                                        Change Status
-                                      </DropdownMenuLabel>
-                                      <DropdownMenuItem
-                                        onClick={() =>
-                                          handleCropStatusChange(
-                                            crop.id,
-                                            "growing"
-                                          )
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (confirm("Are you sure you want to delete this crop?")) {
+                                          handleDeleteCrop(crop.id);
                                         }
-                                      >
-                                        Mark as Growing
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onClick={() =>
-                                          handleCropStatusChange(
-                                            crop.id,
-                                            "harvesting"
-                                          )
-                                        }
-                                      >
-                                        Mark as Harvesting
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onClick={() =>
-                                          handleCropStatusChange(
-                                            crop.id,
-                                            "completed"
-                                          )
-                                        }
-                                      >
-                                        Mark as Completed
-                                      </DropdownMenuItem>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem
-                                        onClick={() =>
-                                          handleDeleteCrop(crop.id)
-                                        }
-                                        className="text-red-600"
-                                      >
-                                        <Trash2 className="h-4 w-4 mr-2" />
-                                        Delete Crop
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
+                                      }}
+                                      title="Delete crop"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={(e) => e.stopPropagation()}
+                                          title="Crop actions"
+                                        >
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent>
+                                        <DropdownMenuLabel>
+                                          Quick Actions
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuItem
+                                          onClick={() => handleCropSelect(crop)}
+                                        >
+                                          <Eye className="h-4 w-4 mr-2" />
+                                          View Details
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuLabel>
+                                          Change Status
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuItem
+                                          onClick={() =>
+                                            handleCropStatusChange(
+                                              crop.id,
+                                              "growing"
+                                            )
+                                          }
+                                        >
+                                          Mark as Growing
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() =>
+                                            handleCropStatusChange(
+                                              crop.id,
+                                              "harvesting"
+                                            )
+                                          }
+                                        >
+                                          Mark as Harvesting
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() =>
+                                            handleCropStatusChange(
+                                              crop.id,
+                                              "completed"
+                                            )
+                                          }
+                                        >
+                                          Mark as Completed
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                          onClick={() =>
+                                            handleDeleteCrop(crop.id)
+                                          }
+                                          className="text-red-600"
+                                        >
+                                          <Trash2 className="h-4 w-4 mr-2" />
+                                          Delete Crop
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span

@@ -25,6 +25,7 @@ interface DeleteFieldDialogProps {
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onDeleted?: (field: Field) => void;
   cropCount?: number;
 }
 
@@ -33,6 +34,7 @@ export default function DeleteFieldDialog({
   trigger,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
+  onDeleted,
   cropCount = 0,
 }: DeleteFieldDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
@@ -63,6 +65,7 @@ export default function DeleteFieldDialog({
         description: `${field.name} has been deleted successfully`,
       });
       setOpen(false);
+      onDeleted?.(field);
     },
     onError: (error: Error) => {
       toast({

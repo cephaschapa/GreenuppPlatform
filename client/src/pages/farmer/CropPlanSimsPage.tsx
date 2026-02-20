@@ -243,7 +243,7 @@ export default function CropPlanSimsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="shrink-0 text-muted-foreground hover:text-destructive h-8 w-8 p-0"
+                            className="shrink-0 gap-1 text-muted-foreground hover:text-destructive"
                             onClick={() => {
                               if (window.confirm("Delete this simulation run? This cannot be undone.")) {
                                 deleteRunMutation.mutate(run.id);
@@ -253,6 +253,7 @@ export default function CropPlanSimsPage() {
                             title="Delete run"
                           >
                             <Trash2 className="h-4 w-4" />
+                            Delete
                           </Button>
                         </div>
                         {run.outputs && (
