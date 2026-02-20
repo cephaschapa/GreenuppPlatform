@@ -8,6 +8,10 @@ import {
   yieldSimulationRuns,
   cropActivities,
   cropObservations,
+  plantAnalyses,
+  treatmentPlans,
+  treatmentSteps,
+  pestReports,
 } from "@shared/schema";
 import { eq, and, isNotNull, inArray } from "drizzle-orm";
 import { isAuthenticated } from "../middleware/auth";
