@@ -1,5 +1,5 @@
 import { db } from "../db.js";
-import { crops } from "@shared/schema";
+import { crops, cropActivities, cropObservations } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 
 export interface Crop {
@@ -334,6 +334,8 @@ export class CropModel {
    */
   static async delete(id: number): Promise<boolean> {
     try {
+      await db.delete(cropActivities).where(eq(cropActivities.cropId, id));
+      await db.delete(cropObservations).where(eq(cropObservations.cropId, id));
       const result = await db.delete(crops).where(eq(crops.id, id)).returning();
 
       return result.length > 0;

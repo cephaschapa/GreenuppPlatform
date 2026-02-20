@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../db";
-import { crops, fields } from "@shared/schema";
+import { crops, fields, cropActivities, cropObservations } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { CropController } from "../controllers/CropController.js";
 import { isAuthenticatedWithUser, isFarmer } from "../middleware/auth.js";
@@ -18,8 +18,9 @@ router.get("/", CropController.getByField);
 router.delete("/:id", async (req, res) => {
   try {
     const userId = req.user?.id;
-    const fieldId = parseInt(req.params.fieldId, 10);
-    const cropId = parseInt(req.params.id, 10);
+    const params = req.params as { fieldId?: string; id?: string };
+    const fieldId = parseInt(params.fieldId ?? "", 10);
+    const cropId = parseInt(params.id ?? "", 10);
 
     if (!userId) return res.status(401).json({ error: "User not authenticated" });
     if (Number.isNaN(fieldId) || Number.isNaN(cropId)) return res.status(400).json({ error: "Invalid field or crop id" });
@@ -38,6 +39,8 @@ router.delete("/:id", async (req, res) => {
       .limit(1);
     if (!crop) return res.status(404).json({ error: "Crop not found" });
 
+    await db.delete(cropActivities).where(eq(cropActivities.cropId, cropId));
+    await db.delete(cropObservations).where(eq(cropObservations.cropId, cropId));
     await db.delete(crops).where(eq(crops.id, cropId));
     res.status(204).send();
   } catch (err) {

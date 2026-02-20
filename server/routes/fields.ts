@@ -1,6 +1,14 @@
 import { Router } from "express";
 import { db } from "../db";
-import { fields, crops, locations, fieldCropPlans, yieldSimulationRuns } from "@shared/schema";
+import {
+  fields,
+  crops,
+  locations,
+  fieldCropPlans,
+  yieldSimulationRuns,
+  cropActivities,
+  cropObservations,
+} from "@shared/schema";
 import { eq, and, isNotNull, inArray } from "drizzle-orm";
 import { isAuthenticated } from "../middleware/auth";
 import fieldCropPlansRouter from "./field-crop-plans";
@@ -275,6 +283,16 @@ router.delete("/:id", isAuthenticated, async (req, res) => {
     }
 
     await db.delete(fieldCropPlans).where(eq(fieldCropPlans.fieldId, fieldId));
+
+    const cropIds = await db
+      .select({ id: crops.id })
+      .from(crops)
+      .where(eq(crops.fieldId, fieldId));
+    if (cropIds.length > 0) {
+      const ids = cropIds.map((c) => c.id);
+      await db.delete(cropActivities).where(inArray(cropActivities.cropId, ids));
+      await db.delete(cropObservations).where(inArray(cropObservations.cropId, ids));
+    }
     await db.delete(crops).where(eq(crops.fieldId, fieldId));
     await db.delete(fields).where(eq(fields.id, fieldId));
 
