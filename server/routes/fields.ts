@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db";
-import { fields, crops, locations } from "@shared/schema";
-import { eq, and, isNotNull } from "drizzle-orm";
+import { fields, crops, locations, fieldCropPlans, yieldSimulationRuns } from "@shared/schema";
+import { eq, and, isNotNull, inArray } from "drizzle-orm";
 import { isAuthenticated } from "../middleware/auth";
 import fieldCropPlansRouter from "./field-crop-plans";
 
@@ -243,7 +243,7 @@ router.put("/:id", isAuthenticated, async (req, res) => {
   }
 });
 
-// Delete a field
+// Delete a field (and its dependent crops, crop plans, and simulation runs)
 router.delete("/:id", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user?.id;
@@ -253,14 +253,30 @@ router.delete("/:id", isAuthenticated, async (req, res) => {
       return res.status(401).json({ error: "User not authenticated" });
     }
 
-    const [deletedField] = await db
-      .delete(fields)
+    const [field] = await db
+      .select()
+      .from(fields)
       .where(and(eq(fields.id, fieldId), eq(fields.userId, userId)))
-      .returning();
+      .limit(1);
 
-    if (!deletedField) {
+    if (!field) {
       return res.status(404).json({ error: "Field not found" });
     }
+
+    const planIds = await db
+      .select({ id: fieldCropPlans.id })
+      .from(fieldCropPlans)
+      .where(eq(fieldCropPlans.fieldId, fieldId));
+
+    if (planIds.length > 0) {
+      await db
+        .delete(yieldSimulationRuns)
+        .where(inArray(yieldSimulationRuns.fieldCropPlanId, planIds.map((p) => p.id)));
+    }
+
+    await db.delete(fieldCropPlans).where(eq(fieldCropPlans.fieldId, fieldId));
+    await db.delete(crops).where(eq(crops.fieldId, fieldId));
+    await db.delete(fields).where(eq(fields.id, fieldId));
 
     res.json({ message: "Field deleted successfully" });
   } catch (error) {
