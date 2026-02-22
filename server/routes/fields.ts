@@ -289,30 +289,38 @@ router.delete("/:id", isAuthenticated, async (req, res) => {
 
     await db.delete(fieldCropPlans).where(eq(fieldCropPlans.fieldId, fieldId));
 
+    // Remove plant_analyses that reference this field (by field_id) so we can delete the field
+    const fieldPlantAnalysisRows = await db
+      .select({ id: plantAnalyses.id })
+      .from(plantAnalyses)
+      .where(eq(plantAnalyses.fieldId, fieldId));
+    const fieldPlantAnalysisIds = fieldPlantAnalysisRows.map((p) => p.id);
+    if (fieldPlantAnalysisIds.length > 0) {
+      const plansForField = await db
+        .select({ id: treatmentPlans.id })
+        .from(treatmentPlans)
+        .where(inArray(treatmentPlans.analysisId, fieldPlantAnalysisIds));
+      const planIdsForField = plansForField.map((t) => t.id);
+      if (planIdsForField.length > 0) {
+        await db
+          .delete(treatmentSteps)
+          .where(inArray(treatmentSteps.treatmentPlanId, planIdsForField));
+      }
+      await db
+        .delete(treatmentPlans)
+        .where(inArray(treatmentPlans.analysisId, fieldPlantAnalysisIds));
+      await db
+        .delete(pestReports)
+        .where(inArray(pestReports.plantAnalysisId, fieldPlantAnalysisIds));
+    }
+    await db.delete(plantAnalyses).where(eq(plantAnalyses.fieldId, fieldId));
+
     const cropIds = await db
       .select({ id: crops.id })
       .from(crops)
       .where(eq(crops.fieldId, fieldId));
     if (cropIds.length > 0) {
       const ids = cropIds.map((c) => c.id);
-      const plantAnalysisRows = await db
-        .select({ id: plantAnalyses.id })
-        .from(plantAnalyses)
-        .where(inArray(plantAnalyses.cropId, ids));
-      const plantAnalysisIds = plantAnalysisRows.map((p) => p.id);
-      if (plantAnalysisIds.length > 0) {
-        const plans = await db
-          .select({ id: treatmentPlans.id })
-          .from(treatmentPlans)
-          .where(inArray(treatmentPlans.analysisId, plantAnalysisIds));
-        const planIds = plans.map((t) => t.id);
-        if (planIds.length > 0) {
-          await db.delete(treatmentSteps).where(inArray(treatmentSteps.treatmentPlanId, planIds));
-        }
-        await db.delete(treatmentPlans).where(inArray(treatmentPlans.analysisId, plantAnalysisIds));
-        await db.delete(pestReports).where(inArray(pestReports.plantAnalysisId, plantAnalysisIds));
-      }
-      await db.delete(plantAnalyses).where(inArray(plantAnalyses.cropId, ids));
       await db.delete(cropActivities).where(inArray(cropActivities.cropId, ids));
       await db.delete(cropObservations).where(inArray(cropObservations.cropId, ids));
       await db
