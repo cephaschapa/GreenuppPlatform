@@ -12,12 +12,13 @@ import {
   treatmentPlans,
   treatmentSteps,
   pestReports,
+  pestDiseaseTypes,
   marketplaceListings,
 } from "@shared/schema";
 import { eq, and, isNotNull, inArray } from "drizzle-orm";
 import { isAuthenticated } from "../middleware/auth";
 import fieldCropPlansRouter from "./field-crop-plans";
-import { getPlantingAdvisory } from "../services/plantingAdvisoryService";
+import { getPlantingAdvisory, getFieldContext } from "../services/plantingAdvisoryService";
 
 const router = Router();
 
@@ -148,6 +149,81 @@ router.get("/:fieldId/planting-advisory/:cropId", isAuthenticated, async (req, r
   } catch (err) {
     console.error("Get planting advisory for field:", err);
     res.status(500).json({ error: "Failed to get planting advisory" });
+  }
+});
+
+/** GET /api/fields/:fieldId/context — region, climate summary, monthly rainfall, and diagnoses (with pest reports) for field details card */
+router.get("/:fieldId/context", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const fieldId = parseInt(req.params.fieldId, 10);
+    if (!userId) return res.status(401).json({ error: "User not authenticated" });
+    if (Number.isNaN(fieldId)) return res.status(400).json({ error: "Invalid field id" });
+    const [field] = await db
+      .select()
+      .from(fields)
+      .where(and(eq(fields.id, fieldId), eq(fields.userId, userId)))
+      .limit(1);
+    if (!field) return res.status(404).json({ error: "Field not found" });
+
+    const [context, analysesRows] = await Promise.all([
+      getFieldContext(fieldId),
+      db
+        .select({
+          id: plantAnalyses.id,
+          analysisDate: plantAnalyses.analysisDate,
+          diseaseDetected: plantAnalyses.diseaseDetected,
+          healthStatus: plantAnalyses.healthStatus,
+        })
+        .from(plantAnalyses)
+        .where(and(eq(plantAnalyses.fieldId, fieldId), eq(plantAnalyses.userId, userId)))
+        .orderBy(plantAnalyses.analysisDate),
+    ]);
+
+    const analysisIds = analysesRows.map((a) => a.id);
+    const reportsRows =
+      analysisIds.length > 0
+        ? await db
+            .select({
+              plantAnalysisId: pestReports.plantAnalysisId,
+              severity: pestReports.severity,
+              pestName: pestDiseaseTypes.name,
+            })
+            .from(pestReports)
+            .innerJoin(pestDiseaseTypes, eq(pestReports.pestDiseaseId, pestDiseaseTypes.id))
+            .where(inArray(pestReports.plantAnalysisId, analysisIds))
+        : [];
+
+    const reportsByAnalysis = analysisIds.reduce((acc, id) => {
+      acc[id] = reportsRows.filter((r) => r.plantAnalysisId === id).map((r) => ({ pestName: r.pestName ?? "Unknown", severity: r.severity }));
+      return acc;
+    }, {} as Record<number, { pestName: string; severity: string }[]>);
+
+    const diagnoses = analysesRows.map((a) => ({
+      id: a.id,
+      analysisDate: a.analysisDate,
+      diseaseDetected: a.diseaseDetected,
+      healthStatus: a.healthStatus,
+      pestReports: reportsByAnalysis[a.id] ?? [],
+    }));
+
+    res.json({
+      ...(context ?? {
+        region: { province: null, region: null },
+        climateSummary: {
+          location: "",
+          growingSeasonLengthDays: 180,
+          avgTempC: 22,
+          totalRainfallMm: 0,
+          onsetOfRainsMonth: null,
+        },
+        monthlyRainfall: [],
+      }),
+      diagnoses,
+    });
+  } catch (err) {
+    console.error("Get field context:", err);
+    res.status(500).json({ error: "Failed to get field context" });
   }
 });
 
