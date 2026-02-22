@@ -65,6 +65,13 @@ export interface PlantingAdvisoryResult {
   recommendedVarieties: RecommendedVariety[];
 }
 
+/** Field context for details card: region, climate summary, and monthly rainfall (no crop). */
+export interface FieldContextResult {
+  region: { province: string | null; region: string | null };
+  climateSummary: ClimateSummary;
+  monthlyRainfall: Array<{ month: string; averagePrecipitation: number }>;
+}
+
 function normalizeProvinceForMatch(name: string | undefined): string {
   if (!name) return "";
   const n = name.trim().replace(/\s+/g, " ");
@@ -361,6 +368,93 @@ export async function getPlantingAdvisory(
     bestPlantingWindow,
     climateSummary,
     recommendedVarieties,
+  };
+}
+
+/**
+ * Get field context for the details card: region (province + agro-ecological), climate summary, and monthly rainfall.
+ * Does not check ownership; caller must ensure the field belongs to the user.
+ */
+export async function getFieldContext(fieldId: number): Promise<FieldContextResult | null> {
+  const [field] = await db
+    .select({
+      location: fields.location,
+      centerLat: fields.centerLat,
+      centerLng: fields.centerLng,
+      locationId: fields.locationId,
+    })
+    .from(fields)
+    .where(eq(fields.id, fieldId))
+    .limit(1);
+
+  if (!field) return null;
+
+  let locationStr = field.location ?? "";
+  if (!locationStr && field.centerLat != null && field.centerLng != null) {
+    locationStr = `${field.centerLat},${field.centerLng}`;
+  }
+  if (!locationStr && field.locationId) {
+    const [loc] = await db
+      .select({
+        lat: locations.latitude,
+        lon: locations.longitude,
+        formatted: locations.formattedAddress,
+      })
+      .from(locations)
+      .where(eq(locations.id, field.locationId))
+      .limit(1);
+    if (loc?.lat != null && loc?.lon != null) {
+      locationStr = `${loc.lat},${loc.lon}`;
+    } else if (loc?.formatted) {
+      locationStr = loc.formatted;
+    }
+  }
+  if (!locationStr) locationStr = "Lusaka, Zambia";
+
+  const [climateData, regionResult] = await Promise.all([
+    getClimateData(locationStr).catch(() => null),
+    resolveRegionFromField(
+      field.centerLat != null ? Number(field.centerLat) : null,
+      field.centerLng != null ? Number(field.centerLng) : null,
+      field.location
+    ),
+  ]);
+
+  const monthlyAverages = climateData?.monthlyAverages ?? [];
+  const avgTemp =
+    monthlyAverages.length > 0
+      ? monthlyAverages.reduce((s, m) => s + (m.averageTemp ?? 0), 0) / monthlyAverages.length
+      : 22;
+  const totalRainfall =
+    monthlyAverages.length > 0
+      ? monthlyAverages.reduce((s, m) => s + (m.averagePrecipitation ?? 0), 0)
+      : 0;
+  let onsetOfRainsMonth: number | null = null;
+  for (let i = 0; i < monthlyAverages.length; i++) {
+    const m = monthlyAverages[i];
+    if ((m.averagePrecipitation ?? 0) >= ONSET_RAIN_MM && (m.averageTemp ?? 0) >= MIN_TEMP_PLANTING) {
+      onsetOfRainsMonth = i + 1;
+      break;
+    }
+  }
+
+  const climateSummary: ClimateSummary = {
+    location: climateData?.location ?? locationStr,
+    growingSeasonLengthDays: climateData?.growingSeasonLength ?? 180,
+    avgTempC: Math.round(avgTemp * 10) / 10,
+    totalRainfallMm: Math.round(totalRainfall),
+    onsetOfRainsMonth,
+  };
+
+  const monthlyRainfall = monthlyAverages.map((m, i) => ({
+    month: m.month ?? MONTH_NAMES[i] ?? "",
+    averagePrecipitation: m.averagePrecipitation ?? 0,
+  }));
+
+  return {
+    region: { province: regionResult.province, region: regionResult.region },
+    climateSummary,
+    monthlyRainfall,
   };
 }
 
