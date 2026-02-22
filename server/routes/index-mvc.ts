@@ -30,6 +30,7 @@ import adminRoutes from "./admin.js";
 import adminAuthRoutes from "./admin-auth.js";
 import pushNotificationRoutes from "./push-notifications.js";
 import ussdRoutes from "./ussd.js";
+import alertsRoutes from "./alerts.js";
 
 /**
  * Register all routes following MVC pattern
@@ -127,6 +128,9 @@ export function registerMvcRoutes(app: Express): void {
 
   // USSD routes
   app.use("/api/ussd", ussdRoutes);
+
+  // Hazard & pest alerts (events, subscriptions, test)
+  app.use("/api/alerts", alertsRoutes);
 
   // You can add more route modules here:
   // app.use("/api/products", productRoutes);

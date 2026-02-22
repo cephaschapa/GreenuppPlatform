@@ -12,6 +12,7 @@ import {
   varchar,
   json,
   real,
+  unique,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -2176,3 +2177,118 @@ export const riskAssessments = pgTable("risk_assessments", {
   alertTriggered: boolean("alert_triggered").default(false),
   assessmentDate: timestamp("assessment_date").notNull().defaultNow(),
 });
+
+// ========== Hazard & Pest Alerts subsystem ==========
+// Normalized alert events from GDACS, ReliefWeb, OpenWeather, pest feeds, etc.
+
+export const alertEventTypeEnum = pgEnum("alert_event_type", [
+  "flood",
+  "drought",
+  "storm",
+  "heat",
+  "extreme_rain",
+  "pest_outbreak",
+  "disease_risk",
+  "advisory",
+]);
+export const alertHazardClassEnum = pgEnum("alert_hazard_class", [
+  "weather",
+  "climate",
+  "pest",
+]);
+export const alertStatusEnum = pgEnum("alert_status", [
+  "active",
+  "resolved",
+  "test",
+]);
+export const alertSubscriptionScopeEnum = pgEnum("alert_subscription_scope", [
+  "my_location",
+  "my_fields",
+  "custom_area",
+]);
+export const alertDeliveryChannelEnum = pgEnum("alert_delivery_channel", [
+  "push",
+  "in_app",
+  "email",
+]);
+export const alertDeliveryStatusEnum = pgEnum("alert_delivery_status", [
+  "sent",
+  "failed",
+  "skipped",
+]);
+
+export const alertEvents = pgTable("alert_events", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  eventType: text("event_type").notNull(), // flood | drought | storm | heat | extreme_rain | pest_outbreak | disease_risk | advisory
+  hazardClass: text("hazard_class").notNull(), // weather | climate | pest
+  severity: integer("severity").notNull(), // 1..5
+  confidence: real("confidence"), // 0..1
+  headline: text("headline").notNull(),
+  summary: text("summary"),
+  recommendedActions: jsonb("recommended_actions")
+    .$type<string[]>()
+    .default([]),
+  geojson: jsonb("geojson").$type<GeoJSONGeometry>(),
+  province: text("province"),
+  district: text("district"),
+  country: text("country").default("ZM"),
+  startAt: timestamp("start_at"),
+  endAt: timestamp("end_at"),
+  firstSeenAt: timestamp("first_seen_at").notNull().defaultNow(),
+  lastSeenAt: timestamp("last_seen_at").notNull().defaultNow(),
+  sourceName: text("source_name").notNull(),
+  sourceType: text("source_type").notNull(), // rss | api | model
+  sourceUrl: text("source_url"),
+  externalId: text("external_id"),
+  dedupeKey: text("dedupe_key").notNull().unique(),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type GeoJSONGeometry =
+  | { type: "Point"; coordinates: [number, number] }
+  | { type: "Polygon"; coordinates: number[][][] }
+  | { type: "MultiPolygon"; coordinates: number[][][][] };
+
+export const userAlertSubscriptions = pgTable("user_alert_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  scope: text("scope").notNull().default("my_location"), // my_location | my_fields | custom_area
+  customGeojson: jsonb("custom_geojson").$type<GeoJSONGeometry>(),
+  eventTypes: jsonb("event_types").$type<string[]>().default([]), // empty = all
+  minSeverity: integer("min_severity").notNull().default(1),
+  digestMode: boolean("digest_mode").default(false),
+  quietHoursStart: integer("quiet_hours_start"), // 0-23 (Africa/Lusaka)
+  quietHoursEnd: integer("quiet_hours_end"), // 0-23
+  enabled: boolean("enabled").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const alertDeliveries = pgTable(
+  "alert_deliveries",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    alertEventId: text("alert_event_id")
+      .notNull()
+      .references(() => alertEvents.id),
+    channel: text("channel").notNull(), // push | in_app | email
+    deliveredAt: timestamp("delivered_at").notNull().defaultNow(),
+    deliveryStatus: text("delivery_status").notNull().default("sent"),
+    reason: text("reason"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    unique("alert_deliveries_user_event_channel_unique").on(
+      t.userId,
+      t.alertEventId,
+      t.channel
+    ),
+  ]
+);

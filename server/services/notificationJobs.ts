@@ -366,11 +366,21 @@ async function runWeeklyOutlook(): Promise<void> {
   }
 }
 
+import { runAlertsIngestion, runAlertsDelivery } from "./alerts/scheduler.js";
+
+async function runHazardPestAlerts(): Promise<void> {
+  await runAlertsIngestion();
+  await runAlertsDelivery();
+}
+
 export function startNotificationJobs(): void {
   if (typeof cron.schedule !== "function") {
     logger.warn("notificationJobs: node-cron not available, skipping scheduled jobs");
     return;
   }
+  // Hazard & pest alerts: ingest + delivery every 15 min
+  cron.schedule("*/15 * * * *", () => runHazardPestAlerts().catch((err) => logger.error("alerts job error", err)), { timezone: "Africa/Lusaka" });
+  logger.info("notificationJobs: hazard & pest alerts scheduled (every 15 min)");
   // Weather alerts: every 6 hours
   cron.schedule("0 */6 * * *", runWeatherAlerts, { timezone: "Africa/Lusaka" });
   logger.info("notificationJobs: weather alerts scheduled (every 6h)");
