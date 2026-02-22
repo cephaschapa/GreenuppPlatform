@@ -17,6 +17,7 @@ import {
 import { eq, and, isNotNull, inArray } from "drizzle-orm";
 import { isAuthenticated } from "../middleware/auth";
 import fieldCropPlansRouter from "./field-crop-plans";
+import { getPlantingAdvisory } from "../services/plantingAdvisoryService";
 
 const router = Router();
 
@@ -122,6 +123,31 @@ router.get("/with-locations", isAuthenticated, async (req, res) => {
   } catch (error) {
     console.error("Error fetching fields with locations:", error);
     res.status(500).json({ error: "Failed to fetch fields with locations" });
+  }
+});
+
+/** GET /api/fields/:fieldId/planting-advisory/:cropId — best planting time and varieties for this field (by region and climate) */
+router.get("/:fieldId/planting-advisory/:cropId", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const fieldId = parseInt(req.params.fieldId, 10);
+    const cropId = parseInt(req.params.cropId, 10);
+    if (!userId) return res.status(401).json({ error: "User not authenticated" });
+    if (Number.isNaN(fieldId) || Number.isNaN(cropId)) {
+      return res.status(400).json({ error: "Invalid field or crop id" });
+    }
+    const [field] = await db
+      .select()
+      .from(fields)
+      .where(and(eq(fields.id, fieldId), eq(fields.userId, userId)))
+      .limit(1);
+    if (!field) return res.status(404).json({ error: "Field not found" });
+    const advisory = await getPlantingAdvisory(fieldId, cropId);
+    if (!advisory) return res.status(404).json({ error: "Crop not found or could not build advisory" });
+    res.json(advisory);
+  } catch (err) {
+    console.error("Get planting advisory for field:", err);
+    res.status(500).json({ error: "Failed to get planting advisory" });
   }
 });
 

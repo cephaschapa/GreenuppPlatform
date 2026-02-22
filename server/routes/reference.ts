@@ -3,6 +3,7 @@ import { db } from "../db";
 import { cropRef, seasons } from "@shared/schema";
 import { isAuthenticated } from "../middleware/auth";
 import { getStagesForCropType, CROP_ACTIVITY_TYPES } from "../services/cropStageService";
+import { getPlantingAdvisoryByLocation } from "../services/plantingAdvisoryService";
 
 const router = Router();
 
@@ -22,6 +23,25 @@ router.get("/crops/:cropName/stages", isAuthenticated, async (req, res) => {
 /** GET /api/reference/activity-types — standard crop activity types (planting, spraying, weeding, etc.) */
 router.get("/activity-types", isAuthenticated, (_req, res) => {
   res.json({ activityTypes: CROP_ACTIVITY_TYPES });
+});
+
+/** GET /api/reference/planting-advisory — best planting time and seed varieties by region and climate */
+router.get("/planting-advisory", isAuthenticated, async (req, res) => {
+  try {
+    const location = (req.query.location as string)?.trim();
+    const cropId = parseInt(req.query.cropId as string, 10);
+    if (!location || Number.isNaN(cropId)) {
+      return res.status(400).json({
+        error: "Query params 'location' and 'cropId' (number) are required",
+      });
+    }
+    const advisory = await getPlantingAdvisoryByLocation(location, cropId);
+    if (!advisory) return res.status(404).json({ error: "Crop not found or location could not be resolved" });
+    res.json(advisory);
+  } catch (err) {
+    console.error("Get planting advisory:", err);
+    res.status(500).json({ error: "Failed to get planting advisory" });
+  }
 });
 
 /** GET /api/reference/crops — list reference crops (crop_ref) for planning */
