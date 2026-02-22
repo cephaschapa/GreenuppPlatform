@@ -184,6 +184,28 @@ router.patch("/subscriptions/:id", isAuthenticated, async (req: Request, res: Re
   }
 });
 
+/** POST /api/alerts/run-ingestion — admin only: run GDACS + ReliefWeb ingestion now and return results (verify feeds are working) */
+router.post("/run-ingestion", isAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const user = req.user as { id: number; role?: string } | undefined;
+    if (!user) return res.status(401).json({ error: "Not authenticated" });
+    if (user.role !== "admin") return res.status(403).json({ error: "Admin only" });
+
+    const results = await runIngestion();
+    const totalNew = results.reduce((s, r) => s + r.newCount, 0);
+    const totalUpdated = results.reduce((s, r) => s + r.updatedCount, 0);
+    return res.json({
+      ok: true,
+      message: "Ingestion complete",
+      results,
+      summary: { totalNew, totalUpdated },
+    });
+  } catch (err) {
+    logger.error("POST /api/alerts/run-ingestion", err);
+    res.status(500).json({ error: "Ingestion failed", details: (err as Error).message });
+  }
+});
+
 /** POST /api/alerts/test — admin/dev: inject a fake event for QA */
 router.post("/test", isAuthenticated, async (req: Request, res: Response) => {
   try {

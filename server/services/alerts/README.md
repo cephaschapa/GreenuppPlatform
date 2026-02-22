@@ -46,3 +46,31 @@ Config (env):
 
 - Feeds/APIs first; no HTML scraping. Source URL and timestamp stored for traceability.
 - Quiet hours and digest mode use Africa/Lusaka. Update notifications only when severity or summary changes meaningfully (future enhancement).
+
+---
+
+## How to verify ingestion is working
+
+We use **feeds and APIs** (not web scraping): GDACS RSS and ReliefWeb API. To confirm they’re working:
+
+1. **Trigger ingestion manually (admin)**  
+   Call from an authenticated admin session:
+   ```http
+   POST /api/alerts/run-ingestion
+   ```
+   Response includes per-source `results` (e.g. GDACS, ReliefWeb) with `newCount`, `updatedCount`, `skipped`, and any `error`. If you see `newCount` or `updatedCount` > 0, events were fetched and upserted. If `error` is set, the fetch for that source failed (e.g. network or rate limit).
+
+2. **Check server logs**  
+   Each run logs:
+   - `alerts: GDACS fetch` (with count)
+   - `alerts: ReliefWeb fetch` (with count)
+   - `alerts: ingestion run complete` (with `results`).
+
+3. **Check the database**  
+   Query `alert_events`: after a successful run you should see rows (especially if GDACS/ReliefWeb have Zambia-relevant events). Many GDACS events are global; we only insert when `isZambiaRelevant(ev)` is true (country ZM/ZMB or point inside Zambia bbox), so `skipped` may be high.
+
+4. **Scheduled runs**  
+   Ingestion runs every 15 minutes (Africa/Lusaka) via `notificationJobs`. Ensure the server process that registers cron jobs is running (e.g. the main app entrypoint that calls `startNotificationJobs()`).
+
+5. **Optional: inject a test event**  
+   `POST /api/alerts/test` (admin) inserts one OpenWeather-derived test event so you can confirm the Alerts UI and delivery path without relying on external feeds.

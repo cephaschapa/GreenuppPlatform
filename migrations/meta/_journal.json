@@ -127,6 +127,13 @@
       "when": 1771010000005,
       "tag": "0020_add_more_reference_crops",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1771010000006,
+      "tag": "0022_hazard_pest_alerts",
+      "breakpoints": true
     }
   ]
 }

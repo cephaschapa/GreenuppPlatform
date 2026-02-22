@@ -32,6 +32,7 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminLoginPage from "@/pages/admin/AdminLoginPage";
 import WaitlistManagementPage from "@/pages/admin/WaitlistManagementPage";
 import SecuritySettings from "@/pages/auth/SecuritySettings";
+import AlertsPage from "@/pages/farmer/AlertsPage";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { SocketIOProvider } from "@/hooks/use-socketio";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -106,6 +107,10 @@ function FarmerRouter({ userId }: { userId: string }) {
         <ProtectedRoute
           path={`/farmer/${userId}/weather`}
           component={WeatherPage}
+        />
+        <ProtectedRoute
+          path={`/farmer/${userId}/alerts`}
+          component={AlertsPage}
         />
         <ProtectedRoute
           path={`/farmer/${userId}/diagnose`}

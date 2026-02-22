@@ -29,6 +29,7 @@ import {
   Brain,
   MessageSquare,
   Activity,
+  AlertTriangle,
 } from "lucide-react";
 import greenuppLogo from "@/assets/greenupp-full-logo.png";
 import { cn } from "@/lib/utils";
@@ -137,6 +138,14 @@ export function Sidebar() {
       icon: <Cloud className="h-5 w-5" />,
       mobileIcon: <Cloud className="h-6 w-6" />,
       active: location === `${basePath}/weather`,
+      showInMobileNav: true,
+    },
+    {
+      title: "Alerts",
+      href: `${basePath}/alerts`,
+      icon: <AlertTriangle className="h-5 w-5" />,
+      mobileIcon: <AlertTriangle className="h-6 w-6" />,
+      active: location === `${basePath}/alerts`,
       showInMobileNav: true,
     },
     {
