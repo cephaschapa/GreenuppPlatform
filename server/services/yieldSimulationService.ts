@@ -47,6 +47,7 @@ export interface SimulationResult {
 /**
  * Run a deterministic yield simulation for a field crop plan.
  * Uses climate data (monthly rain, GDD), water stress, heat stress, and management factor.
+ * Full formulas, examples and scenarios: platform/docs/YIELD_ESTIMATION_CALCULATIONS.md
  */
 export async function runYieldSimulation(
   planId: number,
@@ -86,12 +87,16 @@ export async function runYieldSimulation(
 
   const areaHa = (() => {
     const planHa = planRow.targetAreaHa != null ? parseFloat(String(planRow.targetAreaHa)) : NaN;
-    if (!Number.isNaN(planHa) && planHa > 0) return Math.round(planHa * 100) / 100;
+    if (!Number.isNaN(planHa) && planHa > 0) {
+      const ha = Math.round(planHa * 100) / 100;
+      return Math.max(0.01, ha);
+    }
     const size = fieldRow.size != null ? parseFloat(String(fieldRow.size)) : NaN;
     if (Number.isNaN(size) || size <= 0) return 1;
     const unit = (fieldRow.sizeUnit || "hectares").toLowerCase();
-    if (unit === "acres") return Math.round(size * 0.4047 * 100) / 100;
-    return Math.round(size * 100) / 100;
+    const ha =
+      unit === "acres" ? Math.round(size * 0.4047 * 100) / 100 : Math.round(size * 100) / 100;
+    return Math.max(0.01, ha);
   })();
 
   let locationStr = options.locationOverride ?? "";
@@ -142,9 +147,11 @@ export async function runYieldSimulation(
     }
   }
 
-  const cropWaterMm = cropRow?.defaultWaterRequirementMm ?? 500;
-  const baseYieldMin = varietyYieldMin ?? 4;
-  const baseYieldMax = varietyYieldMax ?? 8;
+  const cropWaterMm = Math.max(1, Number(cropRow?.defaultWaterRequirementMm) || 500);
+  const baseYieldMin =
+    varietyYieldMin != null && varietyYieldMin > 0 ? varietyYieldMin : 4;
+  const baseYieldMax =
+    varietyYieldMax != null && varietyYieldMax > 0 ? varietyYieldMax : 8;
 
   let climateData: Awaited<ReturnType<typeof getClimateData>>;
   let weatherSnapshot: Record<string, unknown> = {};
@@ -175,8 +182,11 @@ export async function runYieldSimulation(
     (s, m) => s + (m.averagePrecipitation ?? 0),
     0
   );
-  const seasonalRainMm = totalRain; // approximate seasonal
-  const waterStressFactor = Math.min(1, seasonalRainMm / cropWaterMm);
+  const seasonalRainMm = Math.max(0, totalRain);
+  const waterStressFactor =
+    cropWaterMm <= 0
+      ? 1
+      : Math.max(0.2, Math.min(1, seasonalRainMm / cropWaterMm));
   const avgTemp =
     climateData.monthlyAverages.reduce((s, m) => s + (m.averageTemp ?? 20), 0) /
     climateData.monthlyAverages.length;
