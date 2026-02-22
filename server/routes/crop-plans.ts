@@ -13,6 +13,7 @@ import { eq, desc, and } from "drizzle-orm";
 import { isAuthenticated } from "../middleware/auth";
 import { z } from "zod";
 import { runAndPersistYieldSimulation } from "../services/yieldSimulationService";
+import { getPlanStageAndAdvice } from "../services/cropStageService";
 
 const router = Router();
 
@@ -39,6 +40,26 @@ const patchBody = z.object({
   plantingDate: z.string().nullable().optional(),
   expectedHarvestDate: z.string().nullable().optional(),
   managementLevel: z.enum(["low", "medium", "high"]).optional(),
+});
+
+/** GET /api/crop-plans/:id/stage — current growth stage, advice, recommended activities (variety maturity applied) */
+router.get("/:id/stage", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const planId = parseInt(req.params.id, 10);
+    if (!userId) return res.status(401).json({ error: "User not authenticated" });
+    if (Number.isNaN(planId)) return res.status(400).json({ error: "Invalid plan id" });
+
+    const auth = await getPlanAndField(planId, userId);
+    if (!auth) return res.status(404).json({ error: "Crop plan not found" });
+
+    const stage = await getPlanStageAndAdvice(planId);
+    if (!stage) return res.status(404).json({ error: "Stage info not found for this crop type" });
+    res.json(stage);
+  } catch (err) {
+    console.error("Get plan stage:", err);
+    res.status(500).json({ error: "Failed to get plan stage" });
+  }
 });
 
 /** PATCH /api/crop-plans/:id — update crop plan (field owner only) */

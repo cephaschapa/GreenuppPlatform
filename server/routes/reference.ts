@@ -2,8 +2,27 @@ import { Router } from "express";
 import { db } from "../db";
 import { cropRef, seasons } from "@shared/schema";
 import { isAuthenticated } from "../middleware/auth";
+import { getStagesForCropType, CROP_ACTIVITY_TYPES } from "../services/cropStageService";
 
 const router = Router();
+
+/** GET /api/reference/crops/:cropName/stages — growth stages and advice for a crop type (e.g. Maize, Tomato) */
+router.get("/crops/:cropName/stages", isAuthenticated, async (req, res) => {
+  try {
+    const cropName = decodeURIComponent((req.params as { cropName: string }).cropName || "");
+    if (!cropName) return res.status(400).json({ error: "Crop name required" });
+    const stages = await getStagesForCropType(cropName);
+    res.json(stages);
+  } catch (err) {
+    console.error("Get crop type stages:", err);
+    res.status(500).json({ error: "Failed to fetch stages" });
+  }
+});
+
+/** GET /api/reference/activity-types — standard crop activity types (planting, spraying, weeding, etc.) */
+router.get("/activity-types", isAuthenticated, (_req, res) => {
+  res.json({ activityTypes: CROP_ACTIVITY_TYPES });
+});
 
 /** GET /api/reference/crops — list reference crops (crop_ref) for planning */
 router.get("/crops", isAuthenticated, async (_req, res) => {

@@ -14,6 +14,7 @@ import {
 import { eq, and } from "drizzle-orm";
 import { CropController } from "../controllers/CropController.js";
 import { isAuthenticatedWithUser, isFarmer } from "../middleware/auth.js";
+import { getCropStageAndAdvice } from "../services/cropStageService.js";
 
 const router = Router({ mergeParams: true });
 
@@ -23,6 +24,41 @@ router.use(isFarmer);
 
 // GET /api/fields/:fieldId/crops - Get crops for a specific field
 router.get("/", CropController.getByField);
+
+/** GET /api/fields/:fieldId/crops/:id/stage — current growth stage, advice, and recommended activities */
+router.get("/:id/stage", async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const params = req.params as { fieldId?: string; id?: string };
+    const fieldId = parseInt(params.fieldId ?? "", 10);
+    const cropId = parseInt(params.id ?? "", 10);
+
+    if (!userId) return res.status(401).json({ error: "User not authenticated" });
+    if (Number.isNaN(fieldId) || Number.isNaN(cropId))
+      return res.status(400).json({ error: "Invalid field or crop id" });
+
+    const [field] = await db
+      .select()
+      .from(fields)
+      .where(and(eq(fields.id, fieldId), eq(fields.userId, userId)))
+      .limit(1);
+    if (!field) return res.status(404).json({ error: "Field not found" });
+
+    const [crop] = await db
+      .select()
+      .from(crops)
+      .where(and(eq(crops.id, cropId), eq(crops.userId, userId), eq(crops.fieldId, fieldId)))
+      .limit(1);
+    if (!crop) return res.status(404).json({ error: "Crop not found" });
+
+    const stage = await getCropStageAndAdvice(cropId);
+    if (!stage) return res.status(404).json({ error: "Stage info not found for this crop type" });
+    res.json(stage);
+  } catch (err) {
+    console.error("Get crop stage:", err);
+    res.status(500).json({ error: "Failed to get crop stage" });
+  }
+});
 
 /** DELETE /api/fields/:fieldId/crops/:id — delete a crop (must belong to this field and to the authenticated user) */
 router.delete("/:id", async (req, res) => {
