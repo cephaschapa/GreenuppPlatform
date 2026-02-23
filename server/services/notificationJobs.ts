@@ -368,6 +368,83 @@ async function runWeeklyOutlook(): Promise<void> {
 
 import { runAlertsIngestion, runAlertsDelivery } from "./alerts/scheduler.js";
 
+/** Get current hour (0-23) in Africa/Lusaka */
+function getHourLusaka(): number {
+  return parseInt(
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lusaka", hour: "numeric", hour12: false }).format(new Date()),
+    10
+  );
+}
+
+/**
+ * Daily weather notification: morning (8am), afternoon (12pm), evening (6pm).
+ * "Hey {name}, current {period} temperature is XX°C — carry a coat."
+ */
+async function runDailyWeatherNotification(): Promise<void> {
+  const hour = getHourLusaka();
+  let period: "morning" | "afternoon" | "evening";
+  let greeting: string;
+  if (hour >= 5 && hour < 11) {
+    period = "morning";
+    greeting = "Good morning";
+  } else if (hour >= 11 && hour < 17) {
+    period = "afternoon";
+    greeting = "Good afternoon";
+  } else {
+    period = "evening";
+    greeting = "Good evening";
+  }
+
+  try {
+    const rows = await db
+      .select({
+        userId: notificationSettings.userId,
+        firstName: users.firstName,
+      })
+      .from(notificationSettings)
+      .innerJoin(users, eq(notificationSettings.userId, users.id))
+      .where(eq(notificationSettings.weatherAlerts, true));
+
+    for (const { userId, firstName } of rows) {
+      try {
+        const [profile] = await db
+          .select({ farmLocation: farmerProfiles.farmLocation })
+          .from(farmerProfiles)
+          .where(eq(farmerProfiles.userId, userId))
+          .limit(1);
+        const farmLocationText = profile?.farmLocation ?? null;
+        if (!farmLocationText) continue;
+
+        const location = await resolveFarmLocation(userId, farmLocationText);
+        if (!location) continue;
+
+        const { summary } = await getOrCreateWeatherSnapshot(userId, location);
+        const temp = Math.round(summary.currentTemp);
+        const name = (firstName || "there").trim() || "there";
+        const coatTip = temp < 22 ? " — carry a coat if you're heading out." : ".";
+
+        const { send } = await shouldSendNotification(userId, "weather_alert", { priority: "low" });
+        if (!send) continue;
+
+        await createNotification({
+          userId,
+          type: "weather_alert",
+          title: `${greeting}, ${name}!`,
+          message: `Current ${period} temperature is ${temp}°C${coatTip}`,
+          data: { period, tempC: temp, locationLabel: location.displayName ?? location.formattedAddress ?? "" },
+          priority: "low",
+          deepLink: "greenupp://weather",
+        });
+        logger.info("notificationJobs: daily weather sent", { userId, period, temp });
+      } catch (err) {
+        logger.warn("notificationJobs: daily weather failed for user", { userId, err });
+      }
+    }
+  } catch (err) {
+    logger.error("notificationJobs: runDailyWeatherNotification failed", err);
+  }
+}
+
 async function runHazardPestAlerts(): Promise<void> {
   await runAlertsIngestion();
   await runAlertsDelivery();
@@ -384,6 +461,9 @@ export function startNotificationJobs(): void {
   // Weather alerts: every 6 hours
   cron.schedule("0 */6 * * *", runWeatherAlerts, { timezone: "Africa/Lusaka" });
   logger.info("notificationJobs: weather alerts scheduled (every 6h)");
+  // Daily weather: 8am, 12pm, 6pm (morning, afternoon, evening)
+  cron.schedule("0 8,12,18 * * *", runDailyWeatherNotification, { timezone: "Africa/Lusaka" });
+  logger.info("notificationJobs: daily weather (8am, 12pm, 6pm) scheduled");
   // Task reminders: daily at 8:00
   cron.schedule("0 8 * * *", runTaskReminders, { timezone: "Africa/Lusaka" });
   logger.info("notificationJobs: task reminders scheduled (daily 8:00)");

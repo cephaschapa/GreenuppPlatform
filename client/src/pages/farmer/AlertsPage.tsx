@@ -126,6 +126,8 @@ export default function AlertsPage() {
   if (filterType) events = events.filter((e) => e.eventType === filterType);
   events = events.filter((e) => e.severity >= filterMinSeverity);
 
+  const isSaving = updateSubscription.isPending || patchSubscription.isPending;
+
   const saveSubscription = (updates: Partial<AlertSubscription>) => {
     if (sub) {
       patchSubscription.mutate({ id: sub.id, payload: updates });
@@ -155,13 +157,17 @@ export default function AlertsPage() {
               <CardDescription>Control which alerts you receive and when.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <Label htmlFor="alerts-enabled">Alerts enabled</Label>
-                <Switch
-                  id="alerts-enabled"
-                  checked={sub?.enabled ?? true}
-                  onCheckedChange={(checked) => saveSubscription({ enabled: checked })}
-                />
+                <div className="flex items-center gap-2">
+                  {isSaving && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                  <Switch
+                    id="alerts-enabled"
+                    checked={sub?.enabled ?? true}
+                    onCheckedChange={(checked) => saveSubscription({ enabled: checked })}
+                    disabled={isSaving}
+                  />
+                </div>
               </div>
               <div>
                 <Label>Minimum severity (1–5)</Label>
@@ -172,6 +178,7 @@ export default function AlertsPage() {
                       variant={sub?.minSeverity === s ? "default" : "outline"}
                       size="sm"
                       onClick={() => saveSubscription({ minSeverity: s })}
+                      disabled={isSaving}
                     >
                       {s}
                     </Button>
