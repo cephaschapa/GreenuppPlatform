@@ -12,7 +12,7 @@ import {
   users,
 } from "@shared/schema";
 import { eq, and, gte, lte, isNotNull } from "drizzle-orm";
-import { createNotification, shouldSendNotification } from "./notifications.js";
+import { createNotification, shouldSendNotification, getUserNotificationSettings, createDefaultNotificationSettings } from "./notifications.js";
 import { resolveFarmLocation } from "./locationResolverService.js";
 import {
   getOrCreateWeatherSnapshot,
@@ -396,24 +396,24 @@ async function runDailyWeatherNotification(): Promise<void> {
   }
 
   try {
+    // Include all farmers with a farm location (get or create notification settings so we don't miss new users)
     const rows = await db
       .select({
-        userId: notificationSettings.userId,
+        userId: farmerProfiles.userId,
+        farmLocation: farmerProfiles.farmLocation,
         firstName: users.firstName,
       })
-      .from(notificationSettings)
-      .innerJoin(users, eq(notificationSettings.userId, users.id))
-      .where(eq(notificationSettings.weatherAlerts, true));
+      .from(farmerProfiles)
+      .innerJoin(users, eq(farmerProfiles.userId, users.id))
+      .where(isNotNull(farmerProfiles.farmLocation));
 
-    for (const { userId, firstName } of rows) {
+    for (const row of rows) {
+      const { userId, farmLocation: farmLocationText, firstName } = row;
+      if (!farmLocationText) continue;
       try {
-        const [profile] = await db
-          .select({ farmLocation: farmerProfiles.farmLocation })
-          .from(farmerProfiles)
-          .where(eq(farmerProfiles.userId, userId))
-          .limit(1);
-        const farmLocationText = profile?.farmLocation ?? null;
-        if (!farmLocationText) continue;
+        let settings = await getUserNotificationSettings(userId);
+        if (!settings) settings = await createDefaultNotificationSettings(userId);
+        if (!settings.weatherAlerts) continue;
 
         const location = await resolveFarmLocation(userId, farmLocationText);
         if (!location) continue;
@@ -446,8 +446,16 @@ async function runDailyWeatherNotification(): Promise<void> {
 }
 
 async function runHazardPestAlerts(): Promise<void> {
-  await runAlertsIngestion();
-  await runAlertsDelivery();
+  try {
+    await runAlertsIngestion();
+  } catch (err) {
+    logger.error("notificationJobs: hazard/pest ingestion failed", { err });
+  }
+  try {
+    await runAlertsDelivery();
+  } catch (err) {
+    logger.error("notificationJobs: hazard/pest delivery failed", { err });
+  }
 }
 
 export function startNotificationJobs(): void {

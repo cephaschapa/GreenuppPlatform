@@ -254,6 +254,13 @@ const adminNavItems: AdminNavItem[] = [
     category: "platform",
   },
   {
+    icon: AlertTriangle,
+    label: "Alerts & Ingestion",
+    href: "/admin/alerts",
+    description: "Hazard/pest ingestion data & last run",
+    category: "platform",
+  },
+  {
     icon: Megaphone,
     label: "Announcements",
     href: "/admin/announcements",

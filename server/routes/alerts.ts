@@ -10,7 +10,7 @@ import {
   alertDeliveries,
   fields,
 } from "@shared/schema";
-import { eq, and, gte, sql, desc } from "drizzle-orm";
+import { eq, and, gte, sql, desc, max } from "drizzle-orm";
 import { isAuthenticated } from "../middleware/auth.js";
 import { eventMatchesUserPoint } from "../services/alerts/geo.js";
 import type { GeoJSONGeometry } from "../services/alerts/types.js";
@@ -61,17 +61,30 @@ router.get("/events", isAuthenticated, async (req: Request, res: Response) => {
   }
 });
 
-/** GET /api/alerts/me — alerts relevant to current user + subscription settings */
+/** GET /api/alerts/me — alerts relevant to current user + subscription settings. Auto-creates default subscription if none. */
 router.get("/me", isAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: "Not authenticated" });
 
-    const [sub] = await db
+    let [sub] = await db
       .select()
       .from(userAlertSubscriptions)
       .where(eq(userAlertSubscriptions.userId, userId))
       .limit(1);
+
+    if (!sub) {
+      const [created] = await db
+        .insert(userAlertSubscriptions)
+        .values({
+          userId,
+          scope: "my_location",
+          minSeverity: 1,
+          enabled: true,
+        })
+        .returning();
+      sub = created ?? null;
+    }
 
     const userFields = await db
       .select({ centerLat: fields.centerLat, centerLng: fields.centerLng })
@@ -184,10 +197,72 @@ router.patch("/subscriptions/:id", isAuthenticated, async (req: Request, res: Re
   }
 });
 
+/** GET /api/alerts/admin/ingestion-status — admin only: ingestion stats, last ingested per source, recent events */
+router.get("/admin/ingestion-status", isAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const user = (req.user ?? (req as any).session?.user) as { id: number; role?: string } | undefined;
+    if (!user) return res.status(401).json({ error: "Not authenticated" });
+    if (user.role !== "admin") return res.status(403).json({ error: "Admin only" });
+
+    const ingestIntervalMin = Number(process.env.ALERTS_INGEST_INTERVAL_MIN) || 15;
+    const deliveryIntervalMin = Number(process.env.ALERTS_DELIVERY_INTERVAL_MIN) || 15;
+
+    const [totalRow] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(alertEvents);
+    const totalEvents = Number((totalRow as { count: number })?.count ?? 0);
+
+    const bySourceRows = await db
+      .select({
+        sourceName: alertEvents.sourceName,
+        count: sql<number>`count(*)::int`,
+        lastSeen: max(alertEvents.lastSeenAt),
+      })
+      .from(alertEvents)
+      .groupBy(alertEvents.sourceName);
+    const bySource: Record<string, number> = {};
+    const lastIngestedBySource: Record<string, string | null> = {};
+    for (const r of bySourceRows) {
+      bySource[r.sourceName] = r.count;
+      lastIngestedBySource[r.sourceName] = r.lastSeen ? r.lastSeen.toISOString() : null;
+    }
+
+    const byStatusRows = await db
+      .select({
+        status: alertEvents.status,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(alertEvents)
+      .groupBy(alertEvents.status);
+    const byStatus: Record<string, number> = {};
+    for (const r of byStatusRows) byStatus[r.status] = r.count;
+
+    const recentEvents = await db
+      .select()
+      .from(alertEvents)
+      .orderBy(desc(alertEvents.updatedAt))
+      .limit(50);
+
+    return res.json({
+      eventCounts: { total: totalEvents, bySource, byStatus },
+      lastIngestedBySource,
+      recentEvents,
+      scheduler: {
+        ingestIntervalMin,
+        deliveryIntervalMin,
+        description: `Ingestion runs every ${ingestIntervalMin} min; delivery every ${deliveryIntervalMin} min.`,
+      },
+    });
+  } catch (err) {
+    logger.error("GET /api/alerts/admin/ingestion-status", err);
+    res.status(500).json({ error: "Failed to fetch ingestion status" });
+  }
+});
+
 /** POST /api/alerts/run-ingestion — admin only: run GDACS + ReliefWeb ingestion now and return results (verify feeds are working) */
 router.post("/run-ingestion", isAuthenticated, async (req: Request, res: Response) => {
   try {
-    const user = req.user as { id: number; role?: string } | undefined;
+    const user = (req.user ?? (req as any).session?.user) as { id: number; role?: string } | undefined;
     if (!user) return res.status(401).json({ error: "Not authenticated" });
     if (user.role !== "admin") return res.status(403).json({ error: "Admin only" });
 
@@ -209,7 +284,7 @@ router.post("/run-ingestion", isAuthenticated, async (req: Request, res: Respons
 /** POST /api/alerts/test — admin/dev: inject a fake event for QA */
 router.post("/test", isAuthenticated, async (req: Request, res: Response) => {
   try {
-    const user = req.user as { id: number; role?: string } | undefined;
+    const user = (req.user ?? (req as any).session?.user) as { id: number; role?: string } | undefined;
     if (!user) return res.status(401).json({ error: "Not authenticated" });
     if (user.role !== "admin") return res.status(403).json({ error: "Admin only" });
 

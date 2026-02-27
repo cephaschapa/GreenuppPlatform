@@ -102,6 +102,14 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Ensure admin session sets req.user so routes can use req.user (e.g. alerts run-ingestion)
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (!req.user && req.session?.user) {
+      (req as any).user = req.session.user;
+    }
+    next();
+  });
+
   // Debug middleware to log session info on each request
   app.use((req, res, next) => {
     // Skip authentication logging for health check endpoints

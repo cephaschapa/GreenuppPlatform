@@ -10,6 +10,7 @@ import {
   FileText,
   ShoppingCart,
   MessageSquare,
+  AlertTriangle,
 } from "lucide-react";
 
 interface AdminNavProps {
@@ -30,6 +31,12 @@ export function AdminNav({ className }: AdminNavProps) {
       label: "Dashboard",
       icon: Activity,
       description: "Admin overview and metrics",
+    },
+    {
+      href: "/admin/alerts",
+      label: "Alerts & Ingestion",
+      icon: AlertTriangle,
+      description: "Ingestion data, processes, last ingested",
     },
     {
       href: "/admin/system-health",

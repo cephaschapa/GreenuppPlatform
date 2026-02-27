@@ -31,6 +31,7 @@ import SystemHealthPage from "@/pages/admin/SystemHealthPage";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminLoginPage from "@/pages/admin/AdminLoginPage";
 import WaitlistManagementPage from "@/pages/admin/WaitlistManagementPage";
+import AdminAlertsPage from "@/pages/admin/AdminAlertsPage";
 import SecuritySettings from "@/pages/auth/SecuritySettings";
 import AlertsPage from "@/pages/farmer/AlertsPage";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
@@ -575,6 +576,10 @@ function Router({ isAppSubdomain = false }: { isAppSubdomain?: boolean }) {
       <ProtectedRoute
         path="/admin/waitlist-management"
         component={WaitlistManagementPage}
+      />
+      <ProtectedRoute
+        path="/admin/alerts"
+        component={AdminAlertsPage}
       />
 
       {/* Profile creation - role-agnostic */}
