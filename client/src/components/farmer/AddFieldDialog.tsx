@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,6 +32,7 @@ interface AddFieldDialogProps {
 
 export default function AddFieldDialog({ trigger }: AddFieldDialogProps) {
   const [open, setOpen] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [locationData, setLocationData] = useState<FieldLocationData | null>(
@@ -46,6 +48,16 @@ export default function AddFieldDialog({ trigger }: AddFieldDialogProps) {
   const [detectedLocation, setDetectedLocation] = useState<DetectedLocation | null>(null);
 
   const queryClient = useQueryClient();
+
+  // Defer mounting maps until dialog is open and DOM is ready (avoids Leaflet crash in built app)
+  useEffect(() => {
+    if (!open) {
+      setMapReady(false);
+      return;
+    }
+    const t = setTimeout(() => setMapReady(true), 100);
+    return () => clearTimeout(t);
+  }, [open]);
 
   const handleLocationDetected = (location: DetectedLocation) => {
     setDetectedLocation(location);
@@ -108,8 +120,12 @@ export default function AddFieldDialog({ trigger }: AddFieldDialogProps) {
         });
 
         if (locationResponse.ok) {
-          const locationResult = await locationResponse.json();
-          locationId = locationResult.id;
+          try {
+            const locationResult = await locationResponse.json();
+            locationId = typeof locationResult?.id === "number" ? locationResult.id : undefined;
+          } catch {
+            locationId = undefined;
+          }
         }
       }
 
@@ -135,14 +151,25 @@ export default function AddFieldDialog({ trigger }: AddFieldDialogProps) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create field");
+        let message = "Failed to create field";
+        try {
+          const error = await response.json();
+          message = error?.error || message;
+        } catch {
+          // ignore non-JSON body
+        }
+        throw new Error(message);
       }
 
-      return response.json();
+      try {
+        return await response.json();
+      } catch {
+        throw new Error("Invalid response from server");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["fields"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/fields"] });
       queryClient.invalidateQueries({ queryKey: ["fields-with-locations"] });
       toast({
         title: "Field created",
@@ -316,30 +343,38 @@ export default function AddFieldDialog({ trigger }: AddFieldDialogProps) {
             </div>
           </div>
 
-          {/* Location & Boundary Picker */}
+          {/* Location & Boundary Picker - deferred so map mounts after dialog is in DOM */}
           <div>
-            <Tabs defaultValue="location" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="location">Point Location</TabsTrigger>
-                <TabsTrigger value="boundary">Field Boundary</TabsTrigger>
-              </TabsList>
+            <ErrorBoundary>
+              {mapReady ? (
+                <Tabs defaultValue="location" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="location">Point Location</TabsTrigger>
+                    <TabsTrigger value="boundary">Field Boundary</TabsTrigger>
+                  </TabsList>
 
-              <TabsContent value="location" className="mt-4">
-                <FieldLocationPicker
-                  initialLocation={locationData}
-                  onLocationSelect={handleLocationSelect}
-                  onLocationClear={handleLocationClear}
-                />
-              </TabsContent>
+                  <TabsContent value="location" className="mt-4">
+                    <FieldLocationPicker
+                      initialLocation={locationData}
+                      onLocationSelect={handleLocationSelect}
+                      onLocationClear={handleLocationClear}
+                    />
+                  </TabsContent>
 
-              <TabsContent value="boundary" className="mt-4">
-                <FieldBoundaryPicker
-                  initialBoundary={boundaryData}
-                  onBoundarySelect={handleBoundarySelect}
-                  onBoundaryClear={handleBoundaryClear}
-                />
-              </TabsContent>
-            </Tabs>
+                  <TabsContent value="boundary" className="mt-4">
+                    <FieldBoundaryPicker
+                      initialBoundary={boundaryData}
+                      onBoundarySelect={handleBoundarySelect}
+                      onBoundaryClear={handleBoundaryClear}
+                    />
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <div className="rounded-md border bg-muted/50 p-6 text-center text-sm text-muted-foreground">
+                  Loading map…
+                </div>
+              )}
+            </ErrorBoundary>
           </div>
 
           {/* Notes */}

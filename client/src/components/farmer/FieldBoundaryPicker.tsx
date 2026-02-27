@@ -183,14 +183,19 @@ export default function FieldBoundaryPicker({
   // Default center (can be customized based on user's region)
   const defaultCenter: [number, number] = [-15.4067, 28.2871]; // Zambia center
 
-  // Calculate bounds for the current view
+  // Calculate bounds for the current view (need ≥2 points for valid bounds)
   const bounds = savedBoundary
     ? (() => {
-        const coords = savedBoundary.boundary.coordinates[0];
+        const coords = savedBoundary.boundary?.coordinates?.[0];
+        if (!Array.isArray(coords) || coords.length < 2) return null;
         const latLngs = coords.map(
           (coord) => [coord[1], coord[0]] as [number, number]
         );
-        return L.latLngBounds(latLngs);
+        try {
+          return L.latLngBounds(latLngs);
+        } catch {
+          return null;
+        }
       })()
     : null;
 

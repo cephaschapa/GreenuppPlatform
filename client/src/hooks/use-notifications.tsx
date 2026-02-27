@@ -93,16 +93,19 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, [connected, isAuthenticated]);
 
-  // Get all notifications
+  // Get all notifications (all statuses, higher limit for full notifications screen)
   const {
     data: notifications = [],
     isLoading,
     refetch: refetchNotifications,
   } = useQuery({
-    queryKey: ["/api/notifications"],
+    queryKey: ["/api/notifications", "all", 200],
     queryFn: async () => {
       if (!isAuthenticated) return [];
-      const res = await apiRequest("GET", "/api/notifications");
+      const res = await apiRequest(
+        "GET",
+        "/api/notifications?status=all&limit=200"
+      );
       return await res.json();
     },
     enabled: isAuthenticated,

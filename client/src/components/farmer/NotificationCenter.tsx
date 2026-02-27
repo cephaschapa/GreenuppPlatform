@@ -23,10 +23,15 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  getNotificationTargetPath,
+  hasExternalActionUrl,
+} from "@/lib/notificationLinks";
 
 interface Notification {
   id: number;
@@ -36,9 +41,12 @@ interface Notification {
   status: string;
   createdAt: string;
   actionUrl?: string;
+  data?: Record<string, unknown>;
 }
 
 export function NotificationCenter() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("unread");
   const queryClient = useQueryClient();
@@ -73,7 +81,7 @@ export function NotificationCenter() {
     queryFn: async () => {
       const response = await apiRequest(
         "GET",
-        `/api/notifications?status=${activeTab}`
+        `/api/notifications?status=${activeTab}&limit=${activeTab === "all" ? 100 : 50}`
       );
       return await response.json();
     },
@@ -122,10 +130,30 @@ export function NotificationCenter() {
     }
   }, [open, refetchNotifications, refetchCount]);
 
-  // Mark notification as read when clicked
+  const getViewDetailsHref = (notification: Notification): string | null => {
+    const userId = user?.id?.toString();
+    if (!userId) return notification.actionUrl ?? null;
+    const inApp = getNotificationTargetPath(notification, userId);
+    if (inApp) return inApp;
+    return hasExternalActionUrl(notification) ? notification.actionUrl! : null;
+  };
+
+  // Mark as read and navigate to the linked screen (weather, tasks, etc.)
   const handleNotificationClick = (notification: Notification) => {
     if (notification.status === "unread") {
       markAsReadMutation.mutate(notification.id);
+    }
+    setOpen(false);
+    const userId = user?.id?.toString();
+    if (userId) {
+      const inAppPath = getNotificationTargetPath(notification, userId);
+      if (inAppPath) {
+        setLocation(inAppPath);
+        return;
+      }
+    }
+    if (hasExternalActionUrl(notification)) {
+      window.location.href = notification.actionUrl!;
     }
   };
 
@@ -191,9 +219,33 @@ export function NotificationCenter() {
       <PopoverContent className="w-[380px] p-0" align="end">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h3 className="font-medium">Notifications</h3>
-          <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {notifications.some((n: Notification) => n.status === "unread") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-8"
+                onClick={async () => {
+                  const unreadIds = notifications
+                    .filter((n: Notification) => n.status === "unread")
+                    .map((n: Notification) => n.id);
+                  try {
+                    await Promise.all(unreadIds.map((id) => markAsReadMutation.mutateAsync(id)));
+                    queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+                    queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread/count"] });
+                    toast({ title: "Marked all as read", description: `${unreadIds.length} notification(s).` });
+                  } catch {
+                    toast({ title: "Could not mark all as read", variant: "destructive" });
+                  }
+                }}
+              >
+                Mark all read
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -222,6 +274,7 @@ export function NotificationCenter() {
               getNotificationIcon={getNotificationIcon}
               emptyMessage="No unread notifications"
               refetch={refetchNotifications}
+              getViewDetailsHref={getViewDetailsHref}
             />
           </TabsContent>
 
@@ -236,6 +289,7 @@ export function NotificationCenter() {
               getNotificationIcon={getNotificationIcon}
               emptyMessage="No notifications"
               refetch={refetchNotifications}
+              getViewDetailsHref={getViewDetailsHref}
             />
           </TabsContent>
         </Tabs>
@@ -247,7 +301,7 @@ export function NotificationCenter() {
             size="sm"
             className="w-full justify-between"
           >
-            <Link href="/notifications">
+            <Link href={user?.id ? `/farmer/${user.id}/notifications` : "/notifications"}>
               View All Notifications
               <ChevronRight className="h-4 w-4" />
             </Link>
@@ -268,6 +322,8 @@ interface NotificationListProps {
   getNotificationIcon: (type: string) => JSX.Element;
   emptyMessage: string;
   refetch: () => void;
+  /** Resolved in-app path or external URL for "View Details"; null if no target */
+  getViewDetailsHref?: (notification: Notification) => string | null;
 }
 
 function NotificationList({
@@ -280,6 +336,7 @@ function NotificationList({
   getNotificationIcon,
   emptyMessage,
   refetch,
+  getViewDetailsHref,
 }: NotificationListProps) {
   const { toast } = useToast();
 
@@ -357,8 +414,8 @@ function NotificationList({
               <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                 {notification.message}
               </p>
-              {notification.actionUrl && (
-                <Link href={notification.actionUrl}>
+              {getViewDetailsHref?.(notification) && (
+                <Link href={getViewDetailsHref(notification)!}>
                   <Button
                     size="sm"
                     variant="ghost"

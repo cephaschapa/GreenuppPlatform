@@ -1,6 +1,12 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Bell } from "lucide-react";
 import { useNotifications } from "@/hooks/use-notifications";
+import { useAuth } from "@/hooks/use-auth";
+import {
+  getNotificationTargetPath,
+  hasExternalActionUrl,
+} from "@/lib/notificationLinks";
 import {
   Popover,
   PopoverContent,
@@ -14,6 +20,8 @@ import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
 
 export function NotificationBell() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const {
     notifications,
     unreadCount,
@@ -55,11 +63,22 @@ export function NotificationBell() {
     }
   };
 
-  const handleNotificationClick = async (id: number, actionUrl?: string) => {
+  const handleNotificationClick = async (
+    id: number,
+    notification: { type: string; actionUrl?: string | null; data?: Record<string, unknown> | null }
+  ) => {
     await markAsRead(id);
     setOpen(false);
-    if (actionUrl) {
-      window.location.href = actionUrl;
+    const userId = user?.id?.toString();
+    if (userId) {
+      const inAppPath = getNotificationTargetPath(notification, userId);
+      if (inAppPath) {
+        setLocation(inAppPath);
+        return;
+      }
+    }
+    if (hasExternalActionUrl(notification)) {
+      window.location.href = notification.actionUrl!;
     }
   };
 
@@ -131,10 +150,11 @@ export function NotificationBell() {
                           "border-l-4 border-red-500 bg-red-50 dark:bg-red-950/20"
                       )}
                       onClick={() =>
-                        handleNotificationClick(
-                          notification.id,
-                          notification.actionUrl
-                        )
+                        handleNotificationClick(notification.id, {
+                          type: notification.type,
+                          actionUrl: notification.actionUrl,
+                          data: notification.data,
+                        })
                       }
                     >
                       <div className="flex items-start justify-between">
@@ -209,9 +229,18 @@ export function NotificationBell() {
           )}
         </ScrollArea>
         <Separator />
-        <div className="p-2">
-          <Button variant="ghost" size="sm" className="w-full" asChild>
-            <a href="/notifications/settings">Manage Notifications</a>
+        <div className="p-2 flex flex-col gap-1">
+          {user?.id && (
+            <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
+              <a href={user.role === "farmer" ? `/farmer/${user.id}/notifications` : `/notifications`}>
+                View all notifications
+              </a>
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
+            <a href={user?.id && user.role === "farmer" ? `/farmer/${user.id}/notification-settings` : "/notifications/settings"}>
+              Manage Notifications
+            </a>
           </Button>
         </div>
       </PopoverContent>

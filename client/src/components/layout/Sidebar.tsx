@@ -149,6 +149,14 @@ export function Sidebar() {
       showInMobileNav: true,
     },
     {
+      title: "Notifications",
+      href: `${basePath}/notifications`,
+      icon: <Bell className="h-5 w-5" />,
+      mobileIcon: <Bell className="h-6 w-6" />,
+      active: location === `${basePath}/notifications`,
+      showInMobileNav: true,
+    },
+    {
       title: "Diagnose",
       href: `${basePath}/diagnose`,
       icon: <Sprout className="h-5 w-5" />,

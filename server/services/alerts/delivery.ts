@@ -183,6 +183,7 @@ export async function runDelivery(): Promise<DeliveryResult[]> {
           message,
           data: { alertEventId: event.id, severity: event.severity, eventType },
           priority: severity >= 4 ? "high" : "medium",
+          deepLink: "greenupp://weather",
         });
         for (const channel of ["in_app", "push"] as const) {
           await db.insert(alertDeliveries).values({

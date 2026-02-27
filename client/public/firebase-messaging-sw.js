@@ -62,8 +62,10 @@ self.addEventListener("notificationclick", function (event) {
     return;
   }
 
-  // Default action or "view" action - open the app
-  const urlToOpen = actionUrl || self.location.origin;
+  // Default action or "view" action - open the app (resolve relative paths to full URL)
+  const urlToOpen = actionUrl
+    ? (actionUrl.startsWith("http") ? actionUrl : new URL(actionUrl, self.location.origin).href)
+    : self.location.origin;
 
   event.waitUntil(
     clients

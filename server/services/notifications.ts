@@ -45,6 +45,31 @@ export const notificationTypes = [
 
 export type NotificationType = (typeof notificationTypes)[number];
 
+const DEEP_LINK_SEGMENTS: Record<string, string> = {
+  weather: "weather",
+  tasks: "tasks",
+  dashboard: "dashboard",
+  marketplace: "marketplace",
+  home: "dashboard",
+  alerts: "alerts",
+  chat: "chat",
+  diagnose: "diagnose",
+  security: "security",
+  profile: "profile",
+  settings: "settings",
+  notifications: "notifications",
+  "notification-settings": "notification-settings",
+};
+
+/** Resolve greenupp://<segment> to in-app path for storage and push (so notification clicks open the right screen). */
+function resolveDeepLinkToPath(deepLink: string, userId: number): string {
+  const scheme = "greenupp://";
+  if (!deepLink.startsWith(scheme)) return "";
+  const target = deepLink.slice(scheme.length).replace(/\?.*$/, "").trim();
+  const segment = DEEP_LINK_SEGMENTS[target] ?? target;
+  return `/farmer/${userId}/${segment}`;
+}
+
 export interface NotificationOptions {
   userId: number;
   type: NotificationType;
@@ -97,6 +122,10 @@ export async function createNotification({
     throw new Error(`User has disabled ${type} notifications`);
   }
 
+  // When only deepLink is provided, set actionUrl so in-app and push clicks open the right screen
+  const resolvedActionUrl =
+    actionUrl ?? (deepLink ? resolveDeepLinkToPath(deepLink, userId) : undefined);
+
   // Merge guide payload fields into data for storage and push (§6 NOTIFICATION_GUIDE)
   const dataWithMeta = {
     ...data,
@@ -118,7 +147,7 @@ export async function createNotification({
       title,
       message,
       data: dataWithMeta,
-      actionUrl,
+      actionUrl: resolvedActionUrl ?? actionUrl,
       expiresAt,
       sentViaEmail: false,
     })
@@ -134,7 +163,7 @@ export async function createNotification({
       const firebaseData: Record<string, string> = {
         notificationId: notification.id.toString(),
         type,
-        actionUrl: actionUrl || "",
+        actionUrl: (resolvedActionUrl ?? actionUrl) || "",
         ...(deepLink != null && { deepLink }),
         ...(decisionId != null && { decisionId: String(decisionId) }),
         ...(triggerType != null && { triggerType }),
