@@ -2179,12 +2179,28 @@ export class DatabaseStorage implements IStorage {
       0
     );
 
-    // Create order
+    // Resolve seller from first item so we never insert sellerId that violates users FK
+    const firstListing = await this.getMarketplaceListing(
+      orderData.items[0].listingId
+    );
+    if (!firstListing || firstListing.sellerId == null) {
+      throw new Error(
+        `Listing ${orderData.items[0].listingId} not found or has no seller`
+      );
+    }
+    const sellerId = Number(firstListing.sellerId);
+    if (!Number.isInteger(sellerId) || sellerId < 1) {
+      throw new Error(
+        `Invalid seller for listing ${orderData.items[0].listingId}`
+      );
+    }
+
+    // Create order with valid sellerId (required by orders_seller_id_users_id_fk)
     const [order] = await db
       .insert(ordersTable)
       .values({
         userId: orderData.userId,
-        sellerId: 0, // Will be set from first item
+        sellerId,
         orderNumber,
         totalAmount: totalAmount.toString(),
         currency: "ZMW",
@@ -2193,17 +2209,6 @@ export class DatabaseStorage implements IStorage {
         paymentMethod: orderData.paymentMethod,
       })
       .returning();
-
-    // Get seller ID from first item
-    const firstListing = await this.getMarketplaceListing(
-      orderData.items[0].listingId
-    );
-    if (firstListing) {
-      await db
-        .update(ordersTable)
-        .set({ sellerId: firstListing.sellerId })
-        .where(eq(ordersTable.id, order.id));
-    }
 
     // Create order items
     const orderItemsData = orderData.items.map((item) => ({
