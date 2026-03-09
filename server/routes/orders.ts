@@ -13,16 +13,19 @@ function isAuthenticated(req: Request, res: Response, next: Function) {
 }
 
 // Create order from cart payload (request quote – no payment)
+// Coerce so listingId/quantity/unitPrice sent as strings (e.g. from JSON) are accepted
 const createOrderSchema = z.object({
   shippingAddress: z.string().optional(),
   notes: z.string().optional(),
-  items: z.array(
-    z.object({
-      listingId: z.number().int().positive(),
-      quantity: z.number().int().positive(),
-      unitPrice: z.number().nonnegative(),
-    })
-  ).min(1, "At least one item is required"),
+  items: z
+    .array(
+      z.object({
+        listingId: z.coerce.number().int().positive(),
+        quantity: z.coerce.number().int().positive(),
+        unitPrice: z.coerce.number().nonnegative(),
+      })
+    )
+    .min(1, "At least one item is required"),
 });
 
 // Update order status schema
