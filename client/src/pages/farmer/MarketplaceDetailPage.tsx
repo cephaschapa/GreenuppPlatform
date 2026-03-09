@@ -27,6 +27,7 @@ import {
 import { useCart } from "@/hooks/use-cart";
 import { formatDistanceToNow } from "date-fns";
 import { MarketplaceListing } from "@shared/schema";
+import { getCategoryLabel } from "@shared/marketplaceCategories";
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -79,27 +80,6 @@ function getConditionLabel(condition: string | null): string {
   };
 
   return conditionMap[condition] || condition;
-}
-
-// Get the category label
-function getCategoryLabel(category: string | null): string {
-  if (!category) return "Other";
-
-  const categoryMap: Record<string, string> = {
-    seeds: "Seeds",
-    equipment: "Equipment",
-    livestock: "Livestock",
-    crops: "Crops",
-    fertilizer: "Fertilizer",
-    pesticides: "Pesticides",
-    tools: "Tools",
-    feed: "Animal Feed",
-    services: "Services",
-    land: "Land",
-    other: "Other",
-  };
-
-  return categoryMap[category] || category;
 }
 
 export default function MarketplaceDetailPage() {

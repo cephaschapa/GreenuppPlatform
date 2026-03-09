@@ -44,19 +44,9 @@ interface SearchBarProps {
   disabled?: boolean;
 }
 
-const MARKETPLACE_CATEGORIES = [
-  { id: "all", name: "All Categories", icon: "📋" },
-  { id: "seeds", name: "Seeds & Plants", icon: "🌾" },
-  { id: "fertilizers", name: "Fertilizers", icon: "🌱" },
-  { id: "pesticides", name: "Pesticides", icon: "🦠" },
-  { id: "tools", name: "Tools & Equipment", icon: "🔧" },
-  { id: "equipment", name: "Machinery", icon: "🚜" },
-  { id: "livestock", name: "Livestock", icon: "🐄" },
-  { id: "harvest", name: "Harvest & Produce", icon: "🥕" },
-  { id: "feed", name: "Animal Feed", icon: "🌾" },
-  { id: "irrigation", name: "Irrigation Supplies", icon: "💧" },
-  { id: "other", name: "Other", icon: "📦" },
-];
+import { CATEGORIES_FOR_FILTER } from "@shared/marketplaceCategories";
+
+const MARKETPLACE_CATEGORIES = CATEGORIES_FOR_FILTER;
 
 export function SearchBar({
   value,

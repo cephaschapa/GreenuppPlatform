@@ -16,6 +16,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { ALLOWED_CATEGORY_IDS } from "./marketplaceCategories";
 
 // Enum for user roles
 export const UserRole = {
@@ -1007,7 +1008,7 @@ export const marketplaceListings = pgTable("marketplace_listings", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   priceCurrency: text("price_currency").notNull().default("ZMW"),
   priceUnit: text("price_unit"), // per kg, per ton, per unit, etc.
-  quantity: decimal("quantity", { precision: 10, scale: 2 }),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }), // Display/summary; when inventory row exists, inventory is source of truth for available quantity
   quantityUnit: text("quantity_unit"), // kg, ton, unit, etc.
   condition: text("condition"), // new, used, etc.
   locationId: integer("location_id").references(() => locations.id),
@@ -1163,6 +1164,11 @@ export const insertMarketplaceListingSchema = createInsertSchema(
     favoriteCount: true,
   })
   .extend({
+    category: z
+      .string()
+      .refine((v) => (ALLOWED_CATEGORY_IDS as readonly string[]).includes(v), {
+        message: "Invalid category; use a value from marketplace categories",
+      }),
     // Allow 'true'/'false' strings to be parsed as booleans
     isNegotiable: z
       .union([z.boolean(), z.string().transform((val) => val === "true")])
@@ -1421,7 +1427,11 @@ export const insertMarketplaceListingSchema = createInsertSchema(
       ])
       .optional()
       .nullable(),
-  });
+  })
+  .refine(
+    (data) => !data.category || ALLOWED_CATEGORY_IDS.includes(data.category),
+    { message: "Invalid category", path: ["category"] }
+  );
 
 export const insertMarketplaceReviewSchema = createInsertSchema(
   marketplaceReviews
@@ -1817,7 +1827,7 @@ export const orderStatusHistory = pgTable("order_status_history", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Inventory Management
+// Inventory Management — source of truth for available/reserved quantity when present; sync from listing.quantity on create
 export const inventory = pgTable("inventory", {
   id: serial("id").primaryKey(),
   listingId: integer("listing_id")

@@ -71,27 +71,9 @@ import { MarketplaceListing } from "@shared/schema";
 import { useMarketplaceFavorites } from "@/hooks/use-marketplace-favorites";
 import { useMarketplaceReviews } from "@/hooks/use-marketplace-reviews";
 import { useAuth } from "@/hooks/use-auth";
+import { CATEGORIES_FOR_FILTER } from "@shared/marketplaceCategories";
 
-// Marketplace category list
-const MARKETPLACE_CATEGORIES = [
-  { id: "pesticides", name: "Pesticides & Herbicides", icon: "🦠" },
-  { id: "fertilizers", name: "Fertilizers & Soil Amendments", icon: "🌱" },
-  { id: "seeds", name: "Seeds & Plants", icon: "🌾" },
-  { id: "equipment", name: "Farm Equipment", icon: "🚜" },
-  { id: "tools", name: "Tools & Supplies", icon: "🔧" },
-  { id: "livestock", name: "Livestock & Feed", icon: "🐄" },
-  { id: "irrigation", name: "Irrigation Systems", icon: "💧" },
-  { id: "organic", name: "Organic Products", icon: "🌿" },
-  { id: "biocontrol", name: "Biological Control", icon: "🦗" },
-  { id: "soil-health", name: "Soil Health Products", icon: "🏞️" },
-  { id: "crop-protection", name: "Crop Protection", icon: "🛡️" },
-  { id: "precision-ag", name: "Precision Agriculture", icon: "📡" },
-  { id: "post-harvest", name: "Post-Harvest Solutions", icon: "📦" },
-  { id: "services", name: "Agricultural Services", icon: "👨‍🌾" },
-  { id: "produce", name: "Farm Produce", icon: "🥕" },
-  { id: "other", name: "Other", icon: "📋" },
-];
-
+const MARKETPLACE_CATEGORIES = CATEGORIES_FOR_FILTER.filter((c) => c.id !== "all");
 const MARKETING_CATEGORY_LOOKUP = MARKETPLACE_CATEGORIES.reduce<
   Record<string, string>
 >((acc, category) => {
@@ -1799,7 +1781,7 @@ export default function MarketplacePage() {
                 </SelectTrigger>
                 <SelectContent className="border-border/50 shadow-lg">
                   <SelectItem value="all">All Categories</SelectItem>
-                  {MARKETPLACE_CATEGORIES.map((category) => (
+                  {CATEGORIES_FOR_FILTER.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>

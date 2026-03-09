@@ -42,46 +42,10 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-
-// Marketplace category list
-const MARKETPLACE_CATEGORIES = [
-  { id: "pesticides", name: "Pesticides & Herbicides", icon: "🦠" },
-  { id: "fertilizers", name: "Fertilizers & Soil Amendments", icon: "🌱" },
-  { id: "seeds", name: "Seeds & Plants", icon: "🌾" },
-  { id: "equipment", name: "Farm Equipment", icon: "🚜" },
-  { id: "tools", name: "Tools & Supplies", icon: "🔧" },
-  { id: "livestock", name: "Livestock & Feed", icon: "🐄" },
-  { id: "irrigation", name: "Irrigation Systems", icon: "💧" },
-  { id: "organic", name: "Organic Products", icon: "🌿" },
-  { id: "biocontrol", name: "Biological Control", icon: "🦗" },
-  { id: "soil-health", name: "Soil Health Products", icon: "🏞️" },
-  { id: "crop-protection", name: "Crop Protection", icon: "🛡️" },
-  { id: "precision-ag", name: "Precision Agriculture", icon: "📡" },
-  { id: "post-harvest", name: "Post-Harvest Solutions", icon: "📦" },
-  { id: "services", name: "Agricultural Services", icon: "👨‍🌾" },
-  { id: "produce", name: "Farm Produce", icon: "🥕" },
-  { id: "other", name: "Other", icon: "📋" },
-];
-
-// Category specific subcategories
-const SUBCATEGORIES: Record<string, { id: string; name: string }[]> = {
-  seeds: [
-    { id: "maize", name: "Maize" },
-    { id: "wheat", name: "Wheat" },
-    { id: "rice", name: "Rice" },
-    { id: "vegetables", name: "Vegetables" },
-    { id: "fruits", name: "Fruits" },
-    { id: "other_seeds", name: "Other Seeds" },
-  ],
-  equipment: [
-    { id: "tractors", name: "Tractors" },
-    { id: "harvesters", name: "Harvesters" },
-    { id: "ploughs", name: "Ploughs" },
-    { id: "irrigation", name: "Irrigation Equipment" },
-    { id: "other_equipment", name: "Other Equipment" },
-  ],
-  // Add more subcategories for other categories as needed
-};
+import {
+  MARKETPLACE_CATEGORIES,
+  SUBCATEGORIES,
+} from "@shared/marketplaceCategories";
 
 // Form schema with validation
 const listingSchema = z.object({

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import FieldLocationPicker, { FieldLocationData } from "./FieldLocationPicker";
-import FieldBoundaryPicker, { FieldBoundaryData } from "./FieldBoundaryPicker";
+import type { FieldLocationData } from "./FieldLocationPicker";
+import type { FieldBoundaryData } from "./FieldBoundaryPicker";
 import LocationAutoDetect, { type DetectedLocation } from "@/components/LocationAutoDetect";
+
+// Lazy-load map components so Leaflet only runs after dialog is open (avoids crash in production build)
+const FieldLocationPicker = lazy(() => import("./FieldLocationPicker"));
+const FieldBoundaryPicker = lazy(() => import("./FieldBoundaryPicker"));
 
 interface AddFieldDialogProps {
   trigger?: React.ReactNode;
@@ -49,13 +53,14 @@ export default function AddFieldDialog({ trigger }: AddFieldDialogProps) {
 
   const queryClient = useQueryClient();
 
-  // Defer mounting maps until dialog is open and DOM is ready (avoids Leaflet crash in built app)
+  // Defer mounting maps until dialog is open and DOM is ready (avoids Leaflet crash in built app).
+  // No map API key required: tiles and geocoding use OpenStreetMap / Nominatim.
   useEffect(() => {
     if (!open) {
       setMapReady(false);
       return;
     }
-    const t = setTimeout(() => setMapReady(true), 100);
+    const t = setTimeout(() => setMapReady(true), 200);
     return () => clearTimeout(t);
   }, [open]);
 
@@ -354,19 +359,35 @@ export default function AddFieldDialog({ trigger }: AddFieldDialogProps) {
                   </TabsList>
 
                   <TabsContent value="location" className="mt-4">
-                    <FieldLocationPicker
-                      initialLocation={locationData}
-                      onLocationSelect={handleLocationSelect}
-                      onLocationClear={handleLocationClear}
-                    />
+                    <Suspense
+                      fallback={
+                        <div className="rounded-md border bg-muted/50 p-6 text-center text-sm text-muted-foreground">
+                          Loading map…
+                        </div>
+                      }
+                    >
+                      <FieldLocationPicker
+                        initialLocation={locationData}
+                        onLocationSelect={handleLocationSelect}
+                        onLocationClear={handleLocationClear}
+                      />
+                    </Suspense>
                   </TabsContent>
 
                   <TabsContent value="boundary" className="mt-4">
-                    <FieldBoundaryPicker
-                      initialBoundary={boundaryData}
-                      onBoundarySelect={handleBoundarySelect}
-                      onBoundaryClear={handleBoundaryClear}
-                    />
+                    <Suspense
+                      fallback={
+                        <div className="rounded-md border bg-muted/50 p-6 text-center text-sm text-muted-foreground">
+                          Loading map…
+                        </div>
+                      }
+                    >
+                      <FieldBoundaryPicker
+                        initialBoundary={boundaryData}
+                        onBoundarySelect={handleBoundarySelect}
+                        onBoundaryClear={handleBoundaryClear}
+                      />
+                    </Suspense>
                   </TabsContent>
                 </Tabs>
               ) : (

@@ -5,6 +5,7 @@ import {
   carts,
   cartItems,
   marketplaceListings,
+  inventory,
   insertCartItemSchema,
   type Cart,
 } from "../../shared/schema";
@@ -16,6 +17,8 @@ import {
   createMetatronPayIntent,
   verifyMetatronPayment,
 } from "../payment/metatronPay";
+import { storage } from "../storage.js";
+import { createNotification } from "../services/notifications.js";
 
 // Create a new router
 const router = Router();
@@ -179,6 +182,26 @@ router.post("/items", isAuthenticated, async (req, res) => {
       return res.status(404).json({ message: "Listing not found" });
     }
 
+    const requestedQty = quantity ?? 1;
+
+    // If listing has inventory, enforce available quantity (single source of truth)
+    const [inv] = await db
+      .select()
+      .from(inventory)
+      .where(eq(inventory.listingId, listingId))
+      .limit(1);
+    if (inv) {
+      const available = parseFloat(inv.availableQuantity ?? "0");
+      if (requestedQty > available) {
+        return res.status(400).json({
+          message:
+            available <= 0
+              ? "This item is out of stock"
+              : `Only ${available} available. Reduce quantity and try again.`,
+        });
+      }
+    }
+
     // Get or create the user's cart
     const cart = await getOrCreateCart(userId);
 
@@ -191,11 +214,23 @@ router.post("/items", isAuthenticated, async (req, res) => {
       );
 
     if (existingItem) {
+      const newQty = existingItem.quantity + (quantity || 1);
+      if (inv) {
+        const available = parseFloat(inv.availableQuantity ?? "0");
+        if (newQty > available) {
+          return res.status(400).json({
+            message:
+              available <= 0
+                ? "This item is out of stock"
+                : `Only ${available} available. You have ${existingItem.quantity} in cart. Reduce and try again.`,
+          });
+        }
+      }
       // Update quantity if item already exists
       const [updatedItem] = await db
         .update(cartItems)
         .set({
-          quantity: existingItem.quantity + (quantity || 1),
+          quantity: newQty,
           notes,
           updatedAt: new Date(),
         })
@@ -272,6 +307,23 @@ router.put("/items/:id", isAuthenticated, async (req, res) => {
     // Check if the item belongs to user's cart
     if (item.cartId !== userCart.id) {
       return res.status(404).json({ message: "Item not found in your cart" });
+    }
+
+    const [inv] = await db
+      .select()
+      .from(inventory)
+      .where(eq(inventory.listingId, item.listingId))
+      .limit(1);
+    if (inv) {
+      const available = parseFloat(inv.availableQuantity ?? "0");
+      if (quantity > available) {
+        return res.status(400).json({
+          message:
+            available <= 0
+              ? "This item is out of stock"
+              : `Only ${available} available. Reduce quantity and try again.`,
+        });
+      }
     }
 
     // Update the item quantity
@@ -614,19 +666,81 @@ router.post("/payment/confirm", isAuthenticated, async (req, res) => {
       });
     }
 
+    // Get cart items with listing info to group by seller and build order payload
+    const cartItemsList = await db
+      .select()
+      .from(cartItems)
+      .where(eq(cartItems.cartId, userCart.id));
+
+    const sellerToItems = new Map<
+      number,
+      Array<{ listingId: number; quantity: number; unitPrice: number }>
+    >();
+
+    for (const item of cartItemsList) {
+      const listing = await storage.getMarketplaceListing(item.listingId);
+      if (!listing) {
+        return res.status(400).json({
+          message: `Listing ${item.listingId} not found`,
+        });
+      }
+      const sellerId = listing.sellerId;
+      const unitPrice = Number(item.price);
+      if (!Number.isFinite(unitPrice)) {
+        return res.status(400).json({
+          message: `Invalid price for listing ${item.listingId}`,
+        });
+      }
+      const list = sellerToItems.get(sellerId) ?? [];
+      list.push({
+        listingId: item.listingId,
+        quantity: item.quantity,
+        unitPrice,
+      });
+      sellerToItems.set(sellerId, list);
+    }
+
+    const createdOrders: Array<{ id: number; orderNumber: string }> = [];
+    const paymentMethod =
+      provider === "stripe" ? "stripe" : provider === "metatron" ? "metatron" : provider;
+
+    for (const [, items] of sellerToItems) {
+      const order = await storage.createOrder({
+        userId,
+        items,
+        paymentMethod,
+      });
+      createdOrders.push({
+        id: order.id,
+        orderNumber: order.orderNumber,
+      });
+      try {
+        await createNotification({
+          userId: order.sellerId,
+          type: "new_order",
+          title: `New order ${order.orderNumber}`,
+          message: `You have a new order. Contact the buyer to confirm delivery.`,
+          data: { orderId: order.id, orderNumber: order.orderNumber },
+        });
+      } catch (e) {
+        console.error("Failed to notify seller of new order:", e);
+      }
+    }
+
     // Update cart status to completed
-    const [completedCart] = await db
+    await db
       .update(carts)
       .set({
         status: "completed",
         updatedAt: new Date(),
       })
-      .where(eq(carts.id, userCart.id))
-      .returning();
+      .where(eq(carts.id, userCart.id));
 
     res.status(200).json({
       message: "Payment confirmed and order completed",
-      cart: completedCart,
+      orderIds: createdOrders.map((o) => o.id),
+      orderNumbers: createdOrders.map((o) => o.orderNumber),
+      orders: createdOrders,
     });
   } catch (error) {
     console.error("Error confirming payment:", error);

@@ -4,6 +4,7 @@ import {
   marketplaceReviews,
   marketplaceFavorites,
   marketplaceMessages,
+  locations,
 } from "@shared/schema";
 import {
   eq,
@@ -122,22 +123,30 @@ export class MarketplaceModel {
     lng: number,
     radiusKm: number = 50
   ): Promise<MarketplaceListing[]> {
-    // Using Haversine formula to calculate distance
-    const listings = await db
-      .select()
+    // Join with locations; Haversine uses location's lat/lng (listings have locationId only)
+    const rows = await db
+      .select({ listing: marketplaceListings })
       .from(marketplaceListings)
+      .innerJoin(
+        locations,
+        eq(marketplaceListings.locationId, locations.id)
+      )
       .where(
-        sql`(
-          6371 * acos(
-            cos(radians(${lat})) * cos(radians(latitude)) *
-            cos(radians(longitude) - radians(${lng})) +
-            sin(radians(${lat})) * sin(radians(latitude))
-          )
-        ) <= ${radiusKm}`
+        and(
+          sql`${locations.latitude} IS NOT NULL`,
+          sql`${locations.longitude} IS NOT NULL`,
+          sql`(
+            6371 * acos(
+              cos(radians(${lat})) * cos(radians(${locations.latitude})) *
+              cos(radians(${locations.longitude}) - radians(${lng})) +
+              sin(radians(${lat})) * sin(radians(${locations.latitude}))
+            )
+          ) <= ${radiusKm}`
+        )
       )
       .orderBy(desc(marketplaceListings.createdAt));
 
-    return listings;
+    return rows.map((r) => r.listing);
   }
 
   async getListingsBySeller(sellerId: number): Promise<MarketplaceListing[]> {

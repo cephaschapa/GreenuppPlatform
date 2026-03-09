@@ -1,6 +1,8 @@
 # GreenUpp Mobile Apps Architecture
 ## Expo React Native Apps - Complete Architecture Document
 
+**Scope: Expo app(s) + platform backend.** The web client is out of scope. See `docs/SCOPE_EXPO_AND_BACKEND.md`.
+
 ---
 
 ## 📱 App Overview

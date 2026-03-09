@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import fs from "fs";
 import { MarketplaceModel } from "../models/MarketplaceModel";
+import { InventoryModel } from "../models/InventoryModel";
 import { logger } from "../lib/logger";
 import {
   ValidationError,
@@ -61,9 +62,11 @@ async function processListingImages(
 
 export class MarketplaceController {
   private model: MarketplaceModel;
+  private inventoryModel: InventoryModel;
 
   constructor() {
     this.model = new MarketplaceModel();
+    this.inventoryModel = new InventoryModel();
   }
 
   // Listings methods
