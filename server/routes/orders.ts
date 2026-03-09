@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { storage } from "../storage.js";
+import { createNotification } from "../services/notifications.js";
 
 const router = Router();
 
@@ -81,7 +82,7 @@ router.post("/", isAuthenticated, async (req: Request, res: Response) => {
       });
       created.push(order);
       try {
-        await storage.createNotification({
+        await createNotification({
           userId: order.sellerId,
           type: "new_order",
           title: `New order ${order.orderNumber}`,
@@ -185,7 +186,7 @@ router.put(
 
       // Send notification to buyer about status change
       try {
-        await storage.createNotification({
+        await createNotification({
           userId: order.userId,
           type: "order_status_update",
           title: `Order ${order.orderNumber} ${status}`,
@@ -254,7 +255,7 @@ router.post(
       const userRole = order.userId === userId ? "buyer" : "seller";
 
       try {
-        await storage.createNotification({
+        await createNotification({
           userId: notificationUserId,
           type: "order_cancelled",
           title: `Order ${order.orderNumber} cancelled`,
@@ -315,7 +316,7 @@ router.post(
 
       // Send notification to seller
       try {
-        await storage.createNotification({
+        await createNotification({
           userId: order.sellerId,
           type: "refund_requested",
           title: `Refund requested for order ${order.orderNumber}`,
