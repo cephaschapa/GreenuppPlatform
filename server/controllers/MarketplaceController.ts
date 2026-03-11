@@ -12,6 +12,7 @@ import {
 } from "../lib/errors";
 import {
   insertMarketplaceListingSchema,
+  updateMarketplaceListingSchema,
   insertMarketplaceReviewSchema,
   insertMarketplaceFavoriteSchema,
   insertMarketplaceMessageSchema,
@@ -440,9 +441,7 @@ export class MarketplaceController {
         };
       }
 
-      const listingData = insertMarketplaceListingSchema
-        .partial()
-        .parse(parsedData);
+      const listingData = updateMarketplaceListingSchema.parse(parsedData);
 
       // Helper function to validate and clean dates
       const cleanDate = (date: any) => {

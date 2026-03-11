@@ -1153,7 +1153,7 @@ export const insertLocationSchema = createInsertSchema(locations).omit({
   updatedAt: true,
 });
 
-export const insertMarketplaceListingSchema = createInsertSchema(
+const insertMarketplaceListingSchemaBase = createInsertSchema(
   marketplaceListings
 )
   .omit({
@@ -1418,7 +1418,7 @@ export const insertMarketplaceListingSchema = createInsertSchema(
       .union([
         z.date(),
         z.string().transform((val) => {
-          if (!val || val === "" || val === "undefined" || val === "null") {
+          if (!val || val === "undefined" || val === "null") {
             return undefined;
           }
           const date = new Date(val);
@@ -1427,11 +1427,15 @@ export const insertMarketplaceListingSchema = createInsertSchema(
       ])
       .optional()
       .nullable(),
-  })
-  .refine(
-    (data) => !data.category || ALLOWED_CATEGORY_IDS.includes(data.category),
-    { message: "Invalid category", path: ["category"] }
-  );
+  });
+
+export const insertMarketplaceListingSchema = insertMarketplaceListingSchemaBase.refine(
+  (data) => !data.category || ALLOWED_CATEGORY_IDS.includes(data.category),
+  { message: "Invalid category", path: ["category"] }
+);
+
+/** Partial schema for updates (ZodEffects from .refine() has no .partial(); use this for PUT). */
+export const updateMarketplaceListingSchema = insertMarketplaceListingSchemaBase.partial();
 
 export const insertMarketplaceReviewSchema = createInsertSchema(
   marketplaceReviews
