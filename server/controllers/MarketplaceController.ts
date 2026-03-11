@@ -424,7 +424,7 @@ export class MarketplaceController {
         throw new NotFoundError("Listing not found");
       }
 
-      if (existingListing.sellerId !== req.user.id) {
+      if (Number(existingListing.sellerId) !== Number(req.user.id)) {
         throw new AuthorizationError("You can only update your own listings");
       }
 
@@ -542,7 +542,7 @@ export class MarketplaceController {
         throw new NotFoundError("Listing not found");
       }
 
-      if (existingListing.sellerId !== req.user.id) {
+      if (Number(existingListing.sellerId) !== Number(req.user.id)) {
         throw new AuthorizationError("You can only delete your own listings");
       }
 
